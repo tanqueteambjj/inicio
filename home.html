@@ -23,32 +23,54 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuração Firebase (Injetada pelo ambiente ou placeholder)
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "demo-key", authDomain: "demo.firebaseapp.com", projectId: "demo-project" };
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'tanqueteam-bjj';
+        try {
+            // Configuração Firebase (Injetada pelo ambiente ou placeholder seguro)
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'tanqueteam-bjj';
 
-        // Inicializar Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+            if (firebaseConfig) {
+                // Inicializar Firebase apenas se a config existir
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                const db = getFirestore(app);
 
-        // Autenticação Anônima para acesso ao banco
-        signInAnonymously(auth).catch((error) => {
-            console.error("Erro na autenticação anônima:", error);
-        });
+                // Autenticação
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (e) {
+                        console.error("Erro na autenticação Firebase:", e);
+                    }
+                };
+                initAuth();
 
-        // Expor funções globalmente para uso no HTML
-        window.db = db;
-        window.collection = collection;
-        window.addDoc = addDoc;
-        window.getDocs = getDocs;
-        window.deleteDoc = deleteDoc;
-        window.updateDoc = updateDoc;
-        window.doc = doc;
-        window.appId = appId;
+                // Expor funções globalmente para uso no HTML
+                window.db = db;
+                window.collection = collection;
+                window.addDoc = addDoc;
+                window.getDocs = getDocs;
+                window.deleteDoc = deleteDoc;
+                window.updateDoc = updateDoc;
+                window.doc = doc;
+                window.query = query;
+                window.orderBy = orderBy;
+                window.appId = appId;
+                window.firebaseInitialized = true;
+            } else {
+                console.warn("Firebase Config não encontrada. O banco de dados não funcionará, mas o site continuará operando.");
+                window.firebaseInitialized = false;
+            }
+        } catch (error) {
+            console.error("Erro crítico ao inicializar Firebase:", error);
+            window.firebaseInitialized = false;
+        }
     </script>
 
     <script>
@@ -707,7 +729,7 @@
             const dobParts = studentDob.split('-');
             const formattedDob = `${dobParts[2]}/${dobParts[1]}/${dobParts[0]}`;
             
-            // --- FIREBASE SAVE ---
+            // --- FIREBASE SAVE (Com proteção) ---
             const regDate = new Date();
             let endDate = new Date(regDate);
             if(plan.includes('mensal')) endDate.setMonth(endDate.getMonth() + 1);
@@ -729,13 +751,16 @@
             };
 
             try {
-                await window.addDoc(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'students'), studentData);
+                if (window.firebaseInitialized && window.addDoc) {
+                    await window.addDoc(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'students'), studentData);
+                } else {
+                    console.warn("Firebase não inicializado. Dados salvos apenas localmente/email.");
+                }
             } catch(err) {
                 console.error("Erro ao salvar no banco:", err);
-                // Continue execution to send email even if DB fails
             }
 
-            // Populate Modal
+            // Populate Modal & Printable Contract
             document.getElementById('modalClientName').innerText = studentName; 
             document.getElementById('modalPlanName').innerText = displayName;
 
@@ -748,7 +773,6 @@
                 paymentBtnContainer.classList.add('hidden');
             }
 
-            // Populate Printable Contract
             document.getElementById('printContratante').innerText = contratanteName;
             document.getElementById('printStudent').innerText = studentName;
             document.getElementById('printDob').innerText = formattedDob;
@@ -783,7 +807,9 @@
             const messageAdmin = `NOVA MATRÍCULA REALIZADA (Cópia Admin):\n-----------------------------------\nAluno: ${studentName}\nNascimento: ${formattedDob}\nGraduação: ${graduationText}\n${isInfantil ? `Responsável: ${guardianName}` : ''}\nCPF: ${cpf}\nEmail: ${email}\nTelefone: ${phone}\nEndereço: ${address}\n\nDETALHES DO PLANO:\n-----------------------------------\nPlano: ${displayName}\nValor: ${price} ${promoNote}\nData: ${today.toLocaleDateString('pt-BR')}\n\nStatus: Contrato Assinado Digitalmente.`;
 
             const paramsStudent = { to_name: contratanteName, to_email: email, plan_name: displayName, reply_to: 'contato@tanqueteambjj.com', subject: `🥋 Bem-vindo à Família! Confirmação de Matrícula - ${studentName}`, message: messageStudent };
-            const paramsAdmin = { to_name: "Administração", to_email: 'cledson.sales@gmail.com', plan_name: displayName, reply_to: email, subject: `Nova Matrícula: ${studentName} - ${displayName}`, message: messageAdmin };
+            
+            // CORREÇÃO DO EMAIL DE ADMINISTRAÇÃO
+            const paramsAdmin = { to_name: "Administração", to_email: 'administracao@tanqueteambjj.com.br', plan_name: displayName, reply_to: email, subject: `Nova Matrícula: ${studentName} - ${displayName}`, message: messageAdmin };
 
             const sendStudent = emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, paramsStudent, EMAILJS_PUBLIC_KEY);
             const sendAdmin = emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, paramsAdmin, EMAILJS_PUBLIC_KEY);
@@ -797,6 +823,7 @@
                 if(emailMsg) { emailMsg.className = "text-sm text-green-600 mt-2 font-semibold"; emailMsg.innerHTML = `<i class="fa-solid fa-envelope-circle-check"></i> Matrícula confirmada! E-mail enviado para ${email}.`; }
                 document.getElementById('successModal').classList.remove('hidden');
             }, function(error) {
+                // FALLBACK DE ERRO NO EMAIL (EVITA TRAVAMENTO)
                 confirmBtn.innerText = originalBtnText;
                 confirmBtn.disabled = false;
                 confirmBtn.classList.remove('opacity-75', 'cursor-not-allowed');
@@ -827,7 +854,11 @@
             if(email === "admistracao@tanqueteambjj.com.br" && pass === "32573515") {
                 closeAdminLogin();
                 document.getElementById('admin-dashboard').classList.remove('hidden');
-                await loadAdminData();
+                if(window.firebaseInitialized) {
+                    await loadAdminData();
+                } else {
+                    alert("Banco de dados não disponível. Verifique a conexão.");
+                }
             } else {
                 alert("Credenciais inválidas");
             }
@@ -839,11 +870,16 @@
         let currentTab = 'adults';
 
         async function loadAdminData() {
-            const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'students'), window.orderBy("registrationDate", "desc"));
-            const snapshot = await window.getDocs(q);
-            allStudents = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-            renderTable();
-            updateStats();
+            try {
+                const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'students'), window.orderBy("registrationDate", "desc"));
+                const snapshot = await window.getDocs(q);
+                allStudents = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderTable();
+                updateStats();
+            } catch(e) {
+                console.error("Erro ao carregar dados:", e);
+                alert("Erro ao carregar lista de alunos.");
+            }
         }
 
         function getAge(dob) {
