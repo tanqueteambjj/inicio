@@ -8,6 +8,9 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- EmailJS SDK (Para envio de e-mails) -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     
@@ -381,7 +384,7 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="w-full mt-6 bg-brand-red text-white font-bold py-4 rounded text-lg uppercase tracking-wider hover:bg-red-700 transition shadow-lg flex justify-center items-center gap-2">
+                        <button type="submit" id="submitBtn" class="w-full mt-6 bg-brand-red text-white font-bold py-4 rounded text-lg uppercase tracking-wider hover:bg-red-700 transition shadow-lg flex justify-center items-center gap-2">
                             <span>Confirmar Matrícula</span>
                             <i class="fa-solid fa-file-pen"></i>
                         </button>
@@ -489,7 +492,12 @@
                                     Bem-vindo à família Tanque Team, <span id="modalClientName" class="font-bold"></span>!
                                 </p>
                                 <p class="text-sm text-gray-500 mt-2">
-                                    Seu contrato do plano <span id="modalPlanName" class="font-bold"></span> foi gerado. Enviamos uma cópia para o seu e-mail.
+                                    Seu contrato do plano <span id="modalPlanName" class="font-bold"></span> foi gerado.
+                                </p>
+                                <!-- Email Confirmation Message -->
+                                <p class="text-sm text-green-600 mt-2 font-semibold">
+                                    <i class="fa-solid fa-envelope-circle-check"></i> 
+                                    Cópias do contrato foram enviadas para o seu e-mail e para a administração.
                                 </p>
                                 <div class="mt-4 bg-gray-50 p-3 rounded border border-dashed border-gray-300">
                                     <p class="text-xs text-gray-400 uppercase">Próximo Passo:</p>
@@ -513,6 +521,17 @@
 
     <!-- JavaScript Logic -->
     <script>
+        // --- EMAIL JS CONFIGURATION ---
+        // Preencha as chaves abaixo para ativar o envio de e-mails
+        const EMAILJS_SERVICE_ID = "service_60s9ocd"; 
+        const EMAILJS_TEMPLATE_ID = "template_few5bna"; 
+        const EMAILJS_PUBLIC_KEY = "joP6USyQXdqGI3GN5";   
+
+        // Inicialização do EmailJS
+        (function(){
+           emailjs.init(EMAILJS_PUBLIC_KEY);
+        })();
+
         // Mobile Menu Toggle
         const btn = document.getElementById('mobile-menu-btn');
         const menu = document.getElementById('mobile-menu');
@@ -576,25 +595,28 @@
                 return;
             }
 
-            // Get user name and details for Modal
-            const name = document.getElementById('fullName').value;
-            document.getElementById('modalClientName').innerText = name;
-            document.getElementById('modalPlanName').innerText = plan.toUpperCase();
+            // UI Feedback: Show "Sending..." state
+            const submitBtn = document.getElementById('submitBtn');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
 
-            // --- POPULATE PRINTABLE CONTRACT ---
+            // Collect Data
+            const name = document.getElementById('fullName').value;
             const cpf = document.getElementById('cpfInput').value;
             const email = document.getElementById('emailInput').value;
             const phone = document.getElementById('phoneInput').value;
             const address = document.getElementById('addressInput').value;
             const signature = document.getElementById('signatureInput').value;
-
-            // Calculate Price based on Plan
             let price = "R$ 0,00";
             if(plan === 'iniciante') price = "R$ 180,00";
             if(plan === 'guerreiro') price = "R$ 250,00";
             if(plan === 'competidor') price = "R$ 200,00";
 
-            // Fill Fields
+            // Populate Modal & Printable Contract (UI Logic)
+            document.getElementById('modalClientName').innerText = name;
+            document.getElementById('modalPlanName').innerText = plan.toUpperCase();
             document.getElementById('printName').innerText = name;
             document.getElementById('printCPF').innerText = cpf;
             document.getElementById('printEmail').innerText = email;
@@ -603,14 +625,38 @@
             document.getElementById('printPlan').innerText = plan.toUpperCase();
             document.getElementById('printPrice').innerText = price;
             document.getElementById('printSignature').innerText = signature;
-
-            // Date
             const today = new Date();
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
             document.getElementById('printDate').innerText = today.toLocaleDateString('pt-BR', options);
 
-            // Show Modal
-            document.getElementById('successModal').classList.remove('hidden');
+
+            // --- EMAIL SENDING LOGIC ---
+            
+            const templateParams = {
+                to_name: name,
+                to_email: email, 
+                plan_name: plan.toUpperCase(),
+                reply_to: 'contato@tanqueteambjj.com',
+                message: `Novo contrato gerado para ${name}. Plano: ${plan.toUpperCase()}`
+            };
+
+            
+            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+                .then(function(response) {
+                   console.log('SUCCESS!', response.status, response.text);
+                   // Reset Button
+                   submitBtn.innerHTML = originalBtnText;
+                   submitBtn.disabled = false;
+                   submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                   // Show Success Modal
+                   document.getElementById('successModal').classList.remove('hidden');
+                }, function(error) {
+                   console.log('FAILED...', error);
+                   alert('Erro ao enviar e-mail. Verifique se o serviço de email está configurado corretamente no EmailJS e tente novamente.');
+                   submitBtn.innerHTML = originalBtnText;
+                   submitBtn.disabled = false;
+                   submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                });
         }
 
         function closeModal() {
