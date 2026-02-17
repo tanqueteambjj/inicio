@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tanque Team Jiu-Jitsu | Matrícula Online</title>
     
+    <!-- Favicon (Logo na aba do navegador) -->
+    <link rel="icon" href="https://i.ibb.co/mC2zPJbm/1771300330359.png" type="image/png">
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -281,22 +284,26 @@
                     <p class="text-gray-400 mb-8">Preencha seus dados para gerar seu contrato digital. Ao finalizar, sua matrícula estará pré-aprovada e você poderá vir buscar seu kit de boas-vindas.</p>
                     
                     <div class="space-y-6">
-                        <div class="flex items-center">
-                            <div class="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center text-brand-red mr-4">
+                        <!-- Localização Clicável -->
+                        <a href="https://maps.app.goo.gl/Qr4yLUTsVaZPiery9" target="_blank" class="flex items-center group hover:bg-gray-800 p-3 -ml-3 rounded-lg transition duration-300 cursor-pointer">
+                            <div class="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center text-brand-red mr-4 group-hover:bg-brand-red group-hover:text-white transition duration-300">
                                 <i class="fa-solid fa-location-dot"></i>
                             </div>
                             <div>
-                                <h4 class="font-bold">Localização</h4>
-                                <p class="text-gray-400 text-sm">Rua das Faixas, 123 - Centro</p>
+                                <h4 class="font-bold group-hover:text-brand-red transition duration-300">
+                                    Localização <i class="fa-solid fa-arrow-up-right-from-square text-xs ml-1 opacity-50"></i>
+                                </h4>
+                                <p class="text-gray-400 text-sm group-hover:text-gray-200 transition duration-300">Rua José Custodio de Almeida, Nº 9 <br>Parque Verde - Belém-PA</p>
                             </div>
-                        </div>
-                        <div class="flex items-center">
+                        </a>
+
+                        <div class="flex items-center px-3">
                             <div class="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center text-brand-red mr-4">
                                 <i class="fa-brands fa-whatsapp"></i>
                             </div>
                             <div>
                                 <h4 class="font-bold">WhatsApp</h4>
-                                <p class="text-gray-400 text-sm">(11) 99999-9999</p>
+                                <p class="text-gray-400 text-sm">(91) 99999-9999</p>
                             </div>
                         </div>
                     </div>
@@ -332,7 +339,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-bold mb-1 text-gray-600">Telefone</label>
-                                <input type="tel" id="phoneInput" required class="w-full bg-gray-100 border border-gray-300 rounded p-3 focus:outline-none focus:border-brand-red" placeholder="(00) 00000-0000">
+                                <input type="tel" id="phoneInput" required maxlength="15" class="w-full bg-gray-100 border border-gray-300 rounded p-3 focus:outline-none focus:border-brand-red" placeholder="(91) 90000-0000">
                             </div>
                         </div>
                         <div class="mb-6">
@@ -415,8 +422,8 @@
         <div class="header-section text-center mb-6 border-b-2 border-black pb-4">
             <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
             <p class="text-xs">CNPJ: 00.000.000/0001-00</p>
-            <p class="text-xs">Rua das Faixas, 123 - Centro - São Paulo/SP - CEP 01000-000</p>
-            <p class="text-xs">Tel: (11) 99999-9999 | Email: contato@tanqueteambjj.com</p>
+            <p class="text-xs">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, CEP 66635-110</p>
+            <p class="text-xs">Tel: (91) 99999-9999 | Email: contato@tanqueteambjj.com</p>
         </div>
         
         <!-- Title -->
@@ -447,7 +454,7 @@
 
         <!-- Date and Signatures -->
         <div class="signatures-section mt-8 page-break-inside-avoid">
-            <p class="mb-12 text-right text-xs">São Paulo, <span id="printDate"></span>.</p>
+            <p class="mb-12 text-right text-xs">Belém-PA, <span id="printDate"></span>.</p>
             
             <div class="flex justify-between gap-8">
                 <div class="w-1/2 text-center">
@@ -558,6 +565,26 @@
             e.target.value = value;
         });
 
+        // --- PHONE MASK LOGIC ---
+        const phoneInput = document.getElementById('phoneInput');
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+            if (value.length > 11) value = value.slice(0, 11); // Limit length to 11 digits (2 area + 9 number)
+            
+            // Apply mask (XX) XXXXX-XXXX
+            if (value.length > 10) {
+                value = value.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
+            } else if (value.length > 6) {
+                value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
+            } else if (value.length > 2) {
+                value = value.replace(/^(\d{2})(\d{0,5}).*/, '($1) $2');
+            } else {
+                value = value.replace(/^(\d*)/, '($1');
+            }
+            
+            e.target.value = value;
+        });
+
         // Plan Selection Logic
         function selectPlan(planName, price) {
             // Update visual summary
@@ -637,7 +664,22 @@
                 to_email: email, 
                 plan_name: plan.toUpperCase(),
                 reply_to: 'contato@tanqueteambjj.com',
-                message: `Novo contrato gerado para ${name}. Plano: ${plan.toUpperCase()}`
+                message: `
+                    NOVA MATRÍCULA REALIZADA:
+                    -----------------------------------
+                    Nome: ${name}
+                    CPF: ${cpf}
+                    Email: ${email}
+                    Telefone: ${phone}
+                    Endereço: ${address}
+                    
+                    DETALHES DO PLANO:
+                    -----------------------------------
+                    Plano: ${plan.toUpperCase()}
+                    Valor: ${price}
+                    Data: ${today.toLocaleDateString('pt-BR')}
+                    
+                    Status: Contrato Assinado Digitalmente.`
             };
 
             
