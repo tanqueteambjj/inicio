@@ -27,12 +27,27 @@
         import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         try {
-            // Configuração Firebase (Injetada pelo ambiente ou placeholder seguro)
-            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+            // --- DADOS DO FIREBASE PREENCHIDOS ---
+            const manualConfig = {
+                apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
+                authDomain: "tanqueteambjj.firebaseapp.com",
+                projectId: "tanqueteambjj",
+                storageBucket: "tanqueteambjj.firebasestorage.app",
+                messagingSenderId: "410605992451",
+                appId: "1:410605992451:web:f0f341f4594fe75f376c36",
+                measurementId: "G-SW8PP8X7WM"
+            };
+
+            // Lógica de seleção de config (Ambiente vs Manual)
+            // Se estiver hospedado, ele usará 'manualConfig'. Se não preenchido, o banco não conecta.
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : manualConfig;
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'tanqueteam-bjj';
 
-            if (firebaseConfig) {
-                // Inicializar Firebase apenas se a config existir
+            // Verificação básica se a config é válida
+            const isConfigured = firebaseConfig && firebaseConfig.apiKey !== "SUA_API_KEY_AQUI";
+
+            if (isConfigured) {
+                // Inicializar Firebase
                 const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
                 const db = getFirestore(app);
@@ -64,7 +79,7 @@
                 window.appId = appId;
                 window.firebaseInitialized = true;
             } else {
-                console.warn("Firebase Config não encontrada. O banco de dados não funcionará, mas o site continuará operando.");
+                console.warn("Firebase Config não configurada corretamente.");
                 window.firebaseInitialized = false;
             }
         } catch (error) {
@@ -505,6 +520,7 @@
                             <th class="p-3 border-b">Nome</th>
                             <th class="p-3 border-b">CPF</th>
                             <th class="p-3 border-b">Faixa</th>
+                            <th class="p-3 border-b">Telefone</th> <!-- Coluna Nova -->
                             <th class="p-3 border-b">Idade</th>
                             <th class="p-3 border-b">Matrícula</th>
                             <th class="p-3 border-b">Fim Contrato</th>
@@ -851,6 +867,7 @@
             const email = document.getElementById('adminEmail').value;
             const pass = document.getElementById('adminPass').value;
             
+            // CORREÇÃO DO EMAIL DE ADMINISTRAÇÃO
             if(email === "administracao@tanqueteambjj.com.br" && pass === "32573515") {
                 closeAdminLogin();
                 document.getElementById('admin-dashboard').classList.remove('hidden');
@@ -930,6 +947,7 @@
                     <td class="p-3">${s.name}</td>
                     <td class="p-3">${s.cpf}</td>
                     <td class="p-3">${s.belt}</td>
+                    <td class="p-3">${s.phone}</td>
                     <td class="p-3">${getAge(s.dob)} anos</td>
                     <td class="p-3">${formatDate(s.registrationDate)}</td>
                     <td class="p-3 font-bold ${new Date(s.contractEndDate) < new Date() ? 'text-red-600' : 'text-green-600'}">${formatDate(s.contractEndDate)}</td>
