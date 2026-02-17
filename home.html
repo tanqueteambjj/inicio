@@ -396,7 +396,18 @@
                         <div id="graduationContainer" class="hidden grid md:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 border border-gray-200 rounded">
                             <div>
                                 <label class="block text-sm font-bold mb-1 text-gray-600">Cor da Faixa</label>
-                                <input type="text" id="beltColor" class="w-full bg-white border border-gray-300 rounded p-3 focus:outline-none focus:border-brand-red" placeholder="Ex: Branca, Azul, Cinza...">
+                                <select id="beltColor" class="w-full bg-white border border-gray-300 rounded p-3 focus:outline-none focus:border-brand-red">
+                                    <option value="" disabled selected>Selecione a cor</option>
+                                    <option value="Branca">Branca</option>
+                                    <option value="Cinza">Cinza</option>
+                                    <option value="Amarela">Amarela</option>
+                                    <option value="Laranja">Laranja</option>
+                                    <option value="Verde">Verde</option>
+                                    <option value="Azul">Azul</option>
+                                    <option value="Roxa">Roxa</option>
+                                    <option value="Marrom">Marrom</option>
+                                    <option value="Preta">Preta</option>
+                                </select>
                             </div>
                             <div>
                                 <label class="block text-sm font-bold mb-1 text-gray-600">Grau(s)</label>
@@ -432,7 +443,7 @@
                             </div>
                             <div class="md:col-span-2">
                                 <label id="lblEmail" class="block text-sm font-bold mb-1 text-gray-600">E-mail</label>
-                                <input type="email" id="emailInput" required class="w-full bg-gray-100 border border-gray-300 rounded p-3 focus:outline-none focus:border-brand-red" placeholder="seu@email.com">
+                                <input type="email" id="emailInput" required class="w-full bg-gray-100 border border-gray-300 rounded p-3 focus:outline-none focus:border-brand-red" placeholder="seu@email.com" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Formato inválido. Ex: nome@email.com">
                             </div>
                         </div>
                         <div class="mb-6">
@@ -894,38 +905,103 @@
             document.getElementById('printDate').innerText = today.toLocaleDateString('pt-BR', options);
 
 
-            // --- EMAIL SENDING LOGIC ---
+            // --- EMAIL SENDING LOGIC (ENVIO DUPLO) ---
             
-            const templateParams = {
-                to_name: contratanteName, // Email endereçado ao contratante
-                to_email: email, 
+            // 1. Mensagem para o ALUNO (Formato HTML Bonito)
+            const messageStudent = `
+                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+                    <div style="text-align: center; margin-bottom: 20px; background-color: #000; padding: 20px; border-radius: 8px 8px 0 0;">
+                        <img src="https://i.ibb.co/mC2zPJbm/1771300330359.png" alt="Tanque Team BJJ" style="width: 100px; height: auto;">
+                        <h2 style="color: #fff; margin: 10px 0 0 0;">TANQUE TEAM BJJ</h2>
+                    </div>
+                    
+                    <h2 style="color: #D90429;">Olá, ${studentName}!</h2>
+                    
+                    <p>É com grande satisfação que confirmamos a sua matrícula na <strong>Tanque Team BJJ</strong>! 👊</p>
+                    <p>Você acaba de dar o primeiro passo na sua jornada no Jiu-Jitsu. Mais do que técnica, aqui você encontrará disciplina, família e um tatame preparado para o seu desenvolvimento.</p>
+                    
+                    <div style="background-color: #f8f9fa; border-left: 5px solid #D90429; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                        <h3 style="margin-top: 0; color: #D90429; border-bottom: 1px solid #ddd; padding-bottom: 10px;">✅ Resumo da sua Matrícula</h3>
+                        <p style="margin: 5px 0;"><strong>Aluno:</strong> ${studentName}</p>
+                        <p style="margin: 5px 0;"><strong>Plano:</strong> ${displayName}</p>
+                        <p style="margin: 5px 0;"><strong>Valor:</strong> ${price} <span style="color: #D90429; font-weight: bold;">${promoNote}</span></p>
+                        <p style="margin: 5px 0;"><strong>Nascimento:</strong> ${formattedDob}</p>
+                        <p style="margin: 5px 0;"><strong>Graduação:</strong> ${graduationText}</p>
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
+                        ${isInfantil ? `<p style="margin: 5px 0;"><strong>Responsável:</strong> ${guardianName}</p>` : ''}
+                        <p style="margin: 5px 0;"><strong>CPF:</strong> ${cpf}</p>
+                        <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
+                        <p style="margin: 5px 0;"><strong>Telefone:</strong> ${phone}</p>
+                        <p style="margin: 5px 0;"><strong>Endereço:</strong> ${address}</p>
+                    </div>
+
+                    <h3 style="color: #D90429;">📋 Próximos Passos:</h3>
+                    <ul>
+                        <li style="margin-bottom: 8px;"><strong>Uniforme:</strong> Caso ainda não tenha, nossa equipe está pronta para ajudar com o seu kimono.</li>
+                        <li style="margin-bottom: 8px;"><strong>Primeiro Treino:</strong> Chegue 15 minutos antes para se ambientar e conhecer o professor.</li>
+                        <li style="margin-bottom: 8px;"><strong>Higiene:</strong> Lembre-se de trazer chinelos para circular fora do tatame.</li>
+                    </ul>
+
+                    <div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                        <p style="margin: 0;"><strong>📍 Localização:</strong> <a href="https://maps.app.goo.gl/Qr4yLUTsVaZPiery9" style="color: #2e7d32; text-decoration: none;">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</a></p>
+                    </div>
+                    
+                    <p style="margin-top: 20px;">Se tiver dúvidas, responda a este e-mail ou entre em contato pelo WhatsApp: <a href="https://wa.me/5591998192610" style="color: #25D366; font-weight: bold; text-decoration: none;">(91) 99819-2610</a>.</p>
+
+                    <p style="font-size: 1.2em;">Estamos ansiosos para te ver no tatame!<br><strong>OSS!</strong></p>
+                    
+                    <hr style="border: 0; border-top: 1px solid #ccc; margin: 30px 0;">
+                    <p style="font-size: 12px; color: #777; text-align: center;">Atenciosamente,<br>Equipe Tanque Team BJJ</p>
+                </div>
+            `;
+
+            // 2. Mensagem para a EMPRESA (Formato Texto Simples - Versão Anterior)
+            const messageAdmin = `
+NOVA MATRÍCULA REALIZADA (Cópia Admin):
+-----------------------------------
+Aluno: ${studentName}
+Nascimento: ${formattedDob}
+Graduação: ${graduationText}
+${isInfantil ? `Responsável: ${guardianName}` : ''}
+CPF (Resp./Fin.): ${cpf}
+Email: ${email}
+Telefone: ${phone}
+Endereço: ${address}
+
+DETALHES DO PLANO:
+-----------------------------------
+Plano: ${displayName}
+Valor: ${price} ${promoNote}
+Data: ${today.toLocaleDateString('pt-BR')}
+
+Status: Contrato Assinado Digitalmente.`;
+
+            // Configuração dos Parâmetros
+            const paramsStudent = {
+                to_name: contratanteName,
+                to_email: email, // Vai para o Aluno
                 plan_name: displayName,
                 reply_to: 'contato@tanqueteambjj.com',
-                message: `
-                    NOVA MATRÍCULA REALIZADA:
-                    -----------------------------------
-                    Aluno: ${studentName}
-                    Nascimento: ${formattedDob}
-                    Graduação: ${graduationText}
-                    ${isInfantil ? `Responsável: ${guardianName}` : ''}
-                    CPF (Resp./Fin.): ${cpf}
-                    Email: ${email}
-                    Telefone: ${phone}
-                    Endereço: ${address}
-                    
-                    DETALHES DO PLANO:
-                    -----------------------------------
-                    Plano: ${displayName}
-                    Valor: ${price} ${promoNote}
-                    Data: ${today.toLocaleDateString('pt-BR')}
-                    
-                    Status: Contrato Assinado Digitalmente.`
+                subject: `🥋 Bem-vindo à Família! Confirmação de Matrícula - ${studentName}`,
+                message: messageStudent
             };
 
-            
-            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams, EMAILJS_PUBLIC_KEY)
-                .then(function(response) {
-                   console.log('SUCCESS!', response.status, response.text);
+            const paramsAdmin = {
+                to_name: "Administração",
+                to_email: 'cledson.sales@gmail.com', // Defina aqui o e-mail da empresa que receberá a versão texto
+                plan_name: displayName,
+                reply_to: email,
+                subject: `Nova Matrícula: ${studentName} - ${displayName}`,
+                message: messageAdmin
+            };
+
+            // Envio Simultâneo (Promise.all)
+            const sendStudent = emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, paramsStudent, EMAILJS_PUBLIC_KEY);
+            const sendAdmin = emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, paramsAdmin, EMAILJS_PUBLIC_KEY);
+
+            Promise.all([sendStudent, sendAdmin])
+                .then(function(responses) {
+                   console.log('SUCCESS!', responses);
                    // Reset Button
                    submitBtn.innerHTML = originalBtnText;
                    submitBtn.disabled = false;
@@ -935,13 +1011,14 @@
                    const emailMsg = document.getElementById('email-status-msg');
                    if(emailMsg) {
                        emailMsg.className = "text-sm text-green-600 mt-2 font-semibold";
-                       emailMsg.innerHTML = '<i class="fa-solid fa-envelope-circle-check"></i> Cópias do contrato foram enviadas para o seu e-mail.';
+                       emailMsg.innerHTML = `<i class="fa-solid fa-envelope-circle-check"></i> Matrícula confirmada! E-mail enviado para ${email}.`;
                    }
 
                    // Show Success Modal
                    document.getElementById('successModal').classList.remove('hidden');
                 }, function(error) {
                    console.log('FAILED...', error);
+                   
                    // Reset Button
                    submitBtn.innerHTML = originalBtnText;
                    submitBtn.disabled = false;
@@ -951,7 +1028,7 @@
                    const emailMsg = document.getElementById('email-status-msg');
                    if(emailMsg) {
                        emailMsg.className = "text-sm text-red-600 mt-2 font-semibold bg-red-100 p-2 rounded border border-red-200";
-                       emailMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> <strong>Aviso:</strong> O envio do e-mail falhou (Erro de Permissão do Gmail), mas seu contrato foi gerado abaixo.';
+                       emailMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> <strong>Aviso:</strong> Houve um erro no envio do e-mail, mas o contrato foi gerado para impressão/PDF.';
                    }
 
                    // Show Success Modal ANYWAY so user can print
