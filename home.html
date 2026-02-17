@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -29,6 +29,7 @@
                     fontFamily: {
                         sans: ['Roboto', 'sans-serif'],
                         display: ['Oswald', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
                     }
                 }
             }
@@ -72,6 +73,37 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- PRINT STYLES --- */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-contract, #printable-contract * {
+                visibility: visible;
+            }
+            #printable-contract {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                display: block !important;
+                background: white;
+                color: black;
+                padding: 0;
+                margin: 0;
+            }
+            /* Hide web elements explicitly */
+            nav, section, footer, #successModal {
+                display: none !important;
+            }
+            /* Reset body for print */
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
         }
     </style>
 </head>
@@ -281,15 +313,15 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-bold mb-1 text-gray-600">CPF</label>
-                                <input type="text" required class="w-full bg-gray-100 border border-gray-300 rounded p-3 focus:outline-none focus:border-brand-red" placeholder="000.000.000-00">
+                                <input type="text" id="cpfInput" required class="w-full bg-gray-100 border border-gray-300 rounded p-3 focus:outline-none focus:border-brand-red" placeholder="000.000.000-00">
                             </div>
                             <div>
                                 <label class="block text-sm font-bold mb-1 text-gray-600">E-mail</label>
-                                <input type="email" required class="w-full bg-gray-100 border border-gray-300 rounded p-3 focus:outline-none focus:border-brand-red" placeholder="seu@email.com">
+                                <input type="email" id="emailInput" required class="w-full bg-gray-100 border border-gray-300 rounded p-3 focus:outline-none focus:border-brand-red" placeholder="seu@email.com">
                             </div>
                             <div>
                                 <label class="block text-sm font-bold mb-1 text-gray-600">Telefone</label>
-                                <input type="tel" required class="w-full bg-gray-100 border border-gray-300 rounded p-3 focus:outline-none focus:border-brand-red" placeholder="(00) 00000-0000">
+                                <input type="tel" id="phoneInput" required class="w-full bg-gray-100 border border-gray-300 rounded p-3 focus:outline-none focus:border-brand-red" placeholder="(00) 00000-0000">
                             </div>
                         </div>
 
@@ -361,6 +393,74 @@
         </div>
     </footer>
 
+    <!-- Printable Contract (Hidden in Web, Visible in Print) -->
+    <div id="printable-contract" class="hidden bg-white text-black p-12 font-serif">
+        
+        <!-- Header -->
+        <div class="text-center mb-10 border-b-2 border-black pb-6">
+            <h1 class="text-4xl font-bold uppercase tracking-wider mb-2">Tanque Team BJJ</h1>
+            <p class="text-sm">CNPJ: 00.000.000/0001-00</p>
+            <p class="text-sm">Rua das Faixas, 123 - Centro - São Paulo/SP - CEP 01000-000</p>
+            <p class="text-sm">Tel: (11) 99999-9999 | Email: contato@tanqueteambjj.com</p>
+        </div>
+        
+        <!-- Title -->
+        <h2 class="text-center font-bold text-xl mb-8 uppercase underline tracking-wide">Contrato de Prestação de Serviços de Ensino Esportivo</h2>
+
+        <!-- Parties -->
+        <div class="mb-8 text-sm leading-relaxed text-justify">
+            <p class="mb-4"><strong>CONTRATADA:</strong> <span class="uppercase">Tanque Team Academia de Artes Marciais LTDA</span>, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº 00.000.000/0001-00, doravante denominada <strong>ACADEMIA</strong>.</p>
+            <p><strong>CONTRATANTE:</strong> <span id="printName" class="font-bold uppercase"></span>, inscrito(a) no CPF sob o nº <span id="printCPF" class="font-mono"></span>, residente e domiciliado(a) nesta capital, Telefone <span id="printPhone"></span>, E-mail <span id="printEmail"></span>, doravante denominado(a) <strong>ALUNO(A)</strong>.</p>
+        </div>
+
+        <!-- Clauses -->
+        <div class="text-sm text-justify mb-10 space-y-4 leading-relaxed">
+            <p><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao ALUNO, conforme o plano escolhido, disponibilizando espaço físico, instrutores capacitados e horários pré-estabelecidos.</p>
+            
+            <p><strong>CLÁUSULA 2ª - DO PLANO E VALOR:</strong> O ALUNO opta pelo plano <strong id="printPlan" class="uppercase bg-gray-100 px-1"></strong>, com valor mensal acordado de <strong id="printPrice" class="bg-gray-100 px-1"></strong>. O pagamento deverá ser efetuado até o dia 10 (dez) de cada mês corrente.</p>
+
+            <p><strong>CLÁUSULA 3ª - DAS OBRIGAÇÕES DO ALUNO:</strong> O ALUNO declara, neste ato, estar em perfeitas condições de saúde e aptidão física para a prática de atividades de alto impacto. Compromete-se a:
+                <br>a) Respeitar rigorosamente o regulamento interno e a hierarquia do Dojô;
+                <br>b) Manter a higiene pessoal e a conservação do kimono;
+                <br>c) Utilizar os equipamentos de forma adequada, respondendo por danos causados por mau uso.
+            </p>
+            
+            <p><strong>CLÁUSULA 4ª - DA INADIMPLÊNCIA:</strong> O atraso no pagamento da mensalidade superior a 30 (trinta) dias poderá acarretar na suspensão automática do acesso às aulas e às dependências da academia, sem prejuízo da cobrança judicial dos valores em aberto acrescidos de multa de 2% e juros legais.</p>
+
+            <p><strong>CLÁUSULA 5ª - DO CANCELAMENTO:</strong> O pedido de cancelamento deverá ser formalizado por escrito na recepção da academia com antecedência mínima de 30 (trinta) dias. Para planos anuais ou semestrais, incidirá multa de 20% sobre o valor das parcelas vincendas.</p>
+            
+            <p><strong>CLÁUSULA 6ª - DO USO DE IMAGEM:</strong> O ALUNO autoriza, a título gratuito e por prazo indeterminado, o uso de sua imagem em materiais publicitários, redes sociais e divulgações institucionais da ACADEMIA.</p>
+
+            <p><strong>CLÁUSULA 7ª - DO FORO:</strong> As partes elegem o foro da Comarca de São Paulo/SP para dirimir quaisquer dúvidas oriundas deste contrato.</p>
+        </div>
+
+        <!-- Date and Signatures -->
+        <div class="mt-16 page-break-inside-avoid">
+            <p class="mb-16 text-right">São Paulo, <span id="printDate"></span>.</p>
+            
+            <div class="flex justify-between gap-12">
+                <div class="w-1/2 text-center">
+                    <div class="border-t border-black pt-2 mx-4">
+                        <p class="font-bold text-lg signature-font mb-1">Tanque Team</p>
+                        <p class="font-bold uppercase text-xs tracking-wider">Tanque Team BJJ</p>
+                        <p class="text-[10px] text-gray-500">CONTRATADA</p>
+                    </div>
+                </div>
+                <div class="w-1/2 text-center">
+                    <div class="border-t border-black pt-2 mx-4">
+                        <p id="printSignature" class="signature-font text-2xl mb-1"></p>
+                        <p class="font-bold uppercase text-xs tracking-wider">Assinatura do Aluno</p>
+                        <p class="text-[10px] text-gray-500">CONTRATANTE (Aceite Digital)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-12 text-center text-[10px] text-gray-400 border-t pt-2">
+            Documento gerado digitalmente em tanque-team.com.br. A validade jurídica deste documento é assegurada pela Medida Provisória nº 2.200-2/2001.
+        </div>
+    </div>
+
     <!-- Success Modal -->
     <div id="successModal" class="fixed inset-0 z-[60] hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -396,7 +496,7 @@
                         Entendido, Oss!
                     </button>
                     <button type="button" onclick="window.print()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                        Imprimir Contrato
+                        <i class="fa-solid fa-print mr-2"></i> Imprimir Contrato Oficial
                     </button>
                 </div>
             </div>
@@ -450,12 +550,36 @@
                 return;
             }
 
-            // Get user name
+            // Get user name and details for Modal
             const name = document.getElementById('fullName').value;
-            
-            // Populate Modal
             document.getElementById('modalClientName').innerText = name;
             document.getElementById('modalPlanName').innerText = plan.toUpperCase();
+
+            // --- POPULATE PRINTABLE CONTRACT ---
+            const cpf = document.getElementById('cpfInput').value;
+            const email = document.getElementById('emailInput').value;
+            const phone = document.getElementById('phoneInput').value;
+            const signature = document.getElementById('signatureInput').value;
+
+            // Calculate Price based on Plan
+            let price = "R$ 0,00";
+            if(plan === 'iniciante') price = "R$ 180,00";
+            if(plan === 'guerreiro') price = "R$ 250,00";
+            if(plan === 'competidor') price = "R$ 200,00";
+
+            // Fill Fields
+            document.getElementById('printName').innerText = name;
+            document.getElementById('printCPF').innerText = cpf;
+            document.getElementById('printEmail').innerText = email;
+            document.getElementById('printPhone').innerText = phone;
+            document.getElementById('printPlan').innerText = plan.toUpperCase();
+            document.getElementById('printPrice').innerText = price;
+            document.getElementById('printSignature').innerText = signature;
+
+            // Date
+            const today = new Date();
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            document.getElementById('printDate').innerText = today.toLocaleDateString('pt-BR', options);
 
             // Show Modal
             document.getElementById('successModal').classList.remove('hidden');
