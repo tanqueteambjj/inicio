@@ -495,7 +495,7 @@
                                     Seu contrato do plano <span id="modalPlanName" class="font-bold"></span> foi gerado.
                                 </p>
                                 <!-- Email Confirmation Message -->
-                                <p class="text-sm text-green-600 mt-2 font-semibold">
+                                <p id="email-status-msg" class="text-sm text-green-600 mt-2 font-semibold">
                                     <i class="fa-solid fa-envelope-circle-check"></i> 
                                     Cópias do contrato foram enviadas para o seu e-mail e para a administração.
                                 </p>
@@ -648,14 +648,35 @@
                    submitBtn.innerHTML = originalBtnText;
                    submitBtn.disabled = false;
                    submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                   
+                   // Success Message in Modal
+                   const emailMsg = document.getElementById('email-status-msg');
+                   if(emailMsg) {
+                       emailMsg.className = "text-sm text-green-600 mt-2 font-semibold";
+                       emailMsg.innerHTML = '<i class="fa-solid fa-envelope-circle-check"></i> Cópias do contrato foram enviadas para o seu e-mail.';
+                   }
+
                    // Show Success Modal
                    document.getElementById('successModal').classList.remove('hidden');
                 }, function(error) {
                    console.log('FAILED...', error);
-                   alert('Erro ao enviar e-mail. Verifique se o serviço de email está configurado corretamente no EmailJS e tente novamente.');
+                   // Alert specific error text
+                   alert('Atenção: O envio automático do e-mail falhou (' + (error.text || 'Erro de configuração') + '), mas o contrato foi gerado para impressão. Erro técnico: ' + JSON.stringify(error));
+                   
+                   // Reset Button
                    submitBtn.innerHTML = originalBtnText;
                    submitBtn.disabled = false;
                    submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                   
+                   // Change Message in Modal to Warning
+                   const emailMsg = document.getElementById('email-status-msg');
+                   if(emailMsg) {
+                       emailMsg.className = "text-sm text-red-600 mt-2 font-semibold";
+                       emailMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Envio de e-mail falhou. Imprima sua via abaixo.';
+                   }
+
+                   // Show Success Modal ANYWAY so user can print
+                   document.getElementById('successModal').classList.remove('hidden');
                 });
         }
 
