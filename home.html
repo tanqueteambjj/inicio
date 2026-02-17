@@ -60,10 +60,8 @@
                         } else {
                             await signInAnonymously(auth);
                         }
-                        console.log("Firebase Auth iniciado.");
                     } catch (e) {
                         console.error("Erro na autenticação Firebase:", e);
-                        alert("Erro de conexão com o banco de dados (Auth): " + e.message);
                     }
                 };
                 initAuth();
@@ -135,12 +133,25 @@
         .fade-in { animation: fadeIn 0.5s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Print Styles */
+        /* Print Styles - DUAL MODE (Contract vs Report) */
         @media print {
             @page { margin: 1cm; size: auto; }
-            body * { visibility: hidden; }
-            #printable-contract, #printable-contract * { visibility: visible; }
-            #printable-contract { position: absolute; left: 0; top: 0; width: 100%; display: block !important; background: white; color: black; padding: 0; margin: 0; font-size: 10pt; line-height: 1.3; }
+            
+            /* --- Common Print Hides --- */
+            /* Hide web navigation, footer, modals by default */
+            nav, #home, #about, #plans, #register, footer, #successModal, #confirmationModal, #admin-login-modal, #edit-modal, .no-print { 
+                display: none !important; 
+            }
+            body { background: white; padding: 0; margin: 0; }
+
+            /* --- MODE 1: PRINTING CONTRACT (Default) --- */
+            body:not(.printing-report) #printable-contract {
+                position: absolute; left: 0; top: 0; width: 100%; display: block !important; visibility: visible;
+                background: white; color: black; padding: 0; margin: 0; font-size: 10pt; line-height: 1.3;
+            }
+            body:not(.printing-report) #printable-contract * { visibility: visible; }
+            body:not(.printing-report) #admin-dashboard { display: none !important; }
+
             #printable-contract h1 { font-size: 18pt; margin-bottom: 0.2rem; }
             #printable-contract h2 { font-size: 12pt; margin-bottom: 1rem; margin-top: 0.5rem; }
             #printable-contract .header-section { margin-bottom: 1rem; border-bottom-width: 1px; padding-bottom: 0.5rem; }
@@ -148,8 +159,26 @@
             #printable-contract .clauses-section { margin-bottom: 1rem; gap: 0.5rem; }
             #printable-contract .clauses-section p { margin-bottom: 0.5rem; text-align: justify; }
             #printable-contract .signatures-section { margin-top: 2rem; }
-            nav, section, footer, #successModal, #confirmationModal, #admin-login-modal, #admin-dashboard { display: none !important; }
-            body { background: white; padding: 0; margin: 0; }
+
+            /* --- MODE 2: PRINTING ADMIN REPORT --- */
+            body.printing-report #printable-contract { display: none !important; }
+            body.printing-report #admin-dashboard { 
+                display: block !important; position: static; height: auto; overflow: visible; background: white; 
+                visibility: visible;
+            }
+            body.printing-report #admin-dashboard * { visibility: visible; }
+            
+            /* Hide dashboard controls when printing report */
+            body.printing-report #admin-controls, 
+            body.printing-report button,
+            body.printing-report .no-print-col { 
+                display: none !important; 
+            }
+            
+            /* Adjust table for print */
+            body.printing-report table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+            body.printing-report th, body.printing-report td { border: 1px solid #ddd; padding: 4px; text-align: left; }
+            body.printing-report th { background-color: #f3f3f3; color: black; }
         }
     </style>
 </head>
@@ -486,9 +515,12 @@
 
     <!-- Admin Dashboard (Full Screen) -->
     <div id="admin-dashboard" class="fixed inset-0 z-[100] hidden bg-gray-100 overflow-y-auto">
-        <div class="bg-brand-dark text-white p-4 sticky top-0 z-10 flex justify-between items-center shadow-md">
+        <div class="bg-brand-dark text-white p-4 sticky top-0 z-10 flex justify-between items-center shadow-md" id="admin-controls">
             <h2 class="font-display text-xl font-bold">PAINEL ADMINISTRATIVO - TANQUE TEAM</h2>
-            <button onclick="closeAdminDashboard()" class="bg-red-600 px-4 py-2 rounded text-sm hover:bg-red-700">SAIR</button>
+            <div class="flex gap-2">
+                <button onclick="printReport()" class="bg-blue-600 px-4 py-2 rounded text-sm hover:bg-blue-700"><i class="fa-solid fa-print mr-2"></i>IMPRIMIR RELATÓRIO</button>
+                <button onclick="closeAdminDashboard()" class="bg-red-600 px-4 py-2 rounded text-sm hover:bg-red-700">SAIR</button>
+            </div>
         </div>
         
         <div class="container mx-auto px-4 py-8">
@@ -518,15 +550,8 @@
             <div class="bg-white rounded shadow overflow-x-auto p-4">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-gray-100 text-gray-600 text-xs uppercase">
-                            <th class="p-3 border-b">Nome</th>
-                            <th class="p-3 border-b">CPF</th>
-                            <th class="p-3 border-b">Faixa</th>
-                            <th class="p-3 border-b">Telefone</th>
-                            <th class="p-3 border-b">Idade</th>
-                            <th class="p-3 border-b">Matrícula</th>
-                            <th class="p-3 border-b">Fim Contrato</th>
-                            <th class="p-3 border-b text-center">Ações</th>
+                        <tr class="bg-gray-100 text-gray-600 text-xs uppercase" id="admin-table-head">
+                            <!-- Headers populated by JS -->
                         </tr>
                     </thead>
                     <tbody id="admin-table-body" class="text-sm text-gray-700">
@@ -937,29 +962,67 @@
             renderTable();
         }
 
+        function printReport() {
+            document.body.classList.add('printing-report');
+            window.print();
+            document.body.classList.remove('printing-report');
+        }
+
         function renderTable() {
             const tbody = document.getElementById('admin-table-body');
+            const theadRow = document.getElementById('admin-table-head');
             tbody.innerHTML = '';
             
             const categoryFilter = currentTab === 'adults' ? 'Adulto' : 'Infantil';
+            
+            // Dynamic Header Generation
+            let headerHTML = `
+                <th class="p-3 border-b">Nome</th>
+                <th class="p-3 border-b">CPF</th>
+                <th class="p-3 border-b">Faixa</th>
+                <th class="p-3 border-b">Telefone</th>
+            `;
+            
+            if (currentTab === 'kids') {
+                headerHTML += `<th class="p-3 border-b">Responsável</th>`;
+            }
+            
+            headerHTML += `
+                <th class="p-3 border-b">Idade</th>
+                <th class="p-3 border-b">Matrícula</th>
+                <th class="p-3 border-b">Fim Contrato</th>
+                <th class="p-3 border-b text-center no-print-col">Ações</th>
+            `;
+            theadRow.innerHTML = headerHTML;
+
             const filtered = allStudents.filter(s => s.category === categoryFilter);
 
             filtered.forEach(s => {
                 const tr = document.createElement('tr');
                 tr.className = "border-b hover:bg-gray-50";
-                tr.innerHTML = `
+                
+                let rowHTML = `
                     <td class="p-3">${s.name}</td>
                     <td class="p-3">${s.cpf}</td>
                     <td class="p-3">${s.belt}</td>
                     <td class="p-3">${s.phone}</td>
+                `;
+                
+                if (currentTab === 'kids') {
+                    rowHTML += `<td class="p-3">${s.guardian || '-'}</td>`;
+                }
+                
+                rowHTML += `
                     <td class="p-3">${getAge(s.dob)} anos</td>
                     <td class="p-3">${formatDate(s.registrationDate)}</td>
                     <td class="p-3 font-bold ${new Date(s.contractEndDate) < new Date() ? 'text-red-600' : 'text-green-600'}">${formatDate(s.contractEndDate)}</td>
-                    <td class="p-3 text-center">
+                    <td class="p-3 text-center no-print-col">
                         <button onclick="editStudent('${s.id}')" class="text-blue-600 hover:text-blue-800 mr-2"><i class="fa-solid fa-pen"></i></button>
                         <button onclick="deleteStudent('${s.id}')" class="text-red-600 hover:text-red-800"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 `;
+                
+                tr.innerHTML = rowHTML;
                 tbody.appendChild(tr);
             });
         }
