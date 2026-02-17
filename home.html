@@ -60,8 +60,10 @@
                         } else {
                             await signInAnonymously(auth);
                         }
+                        console.log("Firebase Auth iniciado.");
                     } catch (e) {
                         console.error("Erro na autenticação Firebase:", e);
+                        alert("Erro de conexão com o banco de dados (Auth): " + e.message);
                     }
                 };
                 initAuth();
@@ -520,7 +522,7 @@
                             <th class="p-3 border-b">Nome</th>
                             <th class="p-3 border-b">CPF</th>
                             <th class="p-3 border-b">Faixa</th>
-                            <th class="p-3 border-b">Telefone</th> <!-- Coluna Nova -->
+                            <th class="p-3 border-b">Telefone</th>
                             <th class="p-3 border-b">Idade</th>
                             <th class="p-3 border-b">Matrícula</th>
                             <th class="p-3 border-b">Fim Contrato</th>
@@ -888,6 +890,7 @@
 
         async function loadAdminData() {
             try {
+                // console.log("Tentando carregar dados do caminho:", `artifacts/${window.appId}/public/data/students`);
                 const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'students'), window.orderBy("registrationDate", "desc"));
                 const snapshot = await window.getDocs(q);
                 allStudents = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -895,7 +898,8 @@
                 updateStats();
             } catch(e) {
                 console.error("Erro ao carregar dados:", e);
-                alert("Erro ao carregar lista de alunos.");
+                // IMPROVED ALERT
+                alert(`Erro ao carregar lista de alunos: ${e.message}\n\nVerifique se as Regras de Segurança do Firestore (Firestore Rules) permitem leitura/escrita.`);
             }
         }
 
