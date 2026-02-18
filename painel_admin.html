@@ -661,8 +661,7 @@
 
         function updateStats() {
             const total = window.students.length;
-            const active = window.students.filter(s => s.paymentStatus === 'Em dia').length;
-            const pending = total - active;
+            // Removed active/pending logic calculation if not displayed, or keep calculation but don't update DOM if elements missing.
             
             let kidsCount = 0;
             let adultsCount = 0;
@@ -672,11 +671,15 @@
                 else adultsCount++;
             });
 
-            document.getElementById('stat-total').innerText = total;
-            document.getElementById('stat-active').innerText = active;
-            document.getElementById('stat-pending').innerText = pending;
-            document.getElementById('stat-infantil').innerText = kidsCount;
-            document.getElementById('stat-adulto').innerText = adultsCount;
+            const statTotal = document.getElementById('stat-total');
+            if(statTotal) statTotal.innerText = total;
+
+            // Fix: Check existence before setting innerText to avoid crash
+            const statInfantil = document.getElementById('stat-infantil');
+            if(statInfantil) statInfantil.innerText = kidsCount;
+
+            const statAdulto = document.getElementById('stat-adulto');
+            if(statAdulto) statAdulto.innerText = adultsCount;
         }
 
         // --- SELECTION LOGIC ---
