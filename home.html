@@ -39,20 +39,16 @@
             };
 
             // Lógica de seleção de config (Ambiente vs Manual)
-            // Se estiver hospedado, ele usará 'manualConfig'. Se não preenchido, o banco não conecta.
             const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : manualConfig;
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'tanqueteam-bjj';
 
-            // Verificação básica se a config é válida
             const isConfigured = firebaseConfig && firebaseConfig.apiKey !== "SUA_API_KEY_AQUI";
 
             if (isConfigured) {
-                // Inicializar Firebase
                 const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
                 const db = getFirestore(app);
 
-                // Autenticação
                 const initAuth = async () => {
                     try {
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -66,7 +62,6 @@
                 };
                 initAuth();
 
-                // Expor funções globalmente para uso no HTML
                 window.db = db;
                 window.collection = collection;
                 window.addDoc = addDoc;
@@ -124,7 +119,6 @@
             color: #000;
         }
 
-        /* Custom Scrollbar */
         .contract-scroll::-webkit-scrollbar { width: 8px; }
         .contract-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
         .contract-scroll::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
@@ -133,18 +127,11 @@
         .fade-in { animation: fadeIn 0.5s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Print Styles - DUAL MODE (Contract vs Report) */
         @media print {
             @page { margin: 1cm; size: auto; }
-            
-            /* --- Common Print Hides --- */
-            /* Hide web navigation, footer, modals by default */
-            nav, #home, #about, #plans, #register, footer, #successModal, #confirmationModal, #admin-login-modal, #edit-modal, .no-print { 
-                display: none !important; 
-            }
+            nav, #home, #about, #plans, #register, footer, #successModal, #confirmationModal, #admin-login-modal, #edit-modal, .no-print { display: none !important; }
             body { background: white; padding: 0; margin: 0; }
 
-            /* --- MODE 1: PRINTING CONTRACT (Default) --- */
             body:not(.printing-report) #printable-contract {
                 position: absolute; left: 0; top: 0; width: 100%; display: block !important; visibility: visible;
                 background: white; color: black; padding: 0; margin: 0; font-size: 10pt; line-height: 1.3;
@@ -160,7 +147,6 @@
             #printable-contract .clauses-section p { margin-bottom: 0.5rem; text-align: justify; }
             #printable-contract .signatures-section { margin-top: 2rem; }
 
-            /* --- MODE 2: PRINTING ADMIN REPORT --- */
             body.printing-report #printable-contract { display: none !important; }
             body.printing-report #admin-dashboard { 
                 display: block !important; position: static; height: auto; overflow: visible; background: white; 
@@ -168,14 +154,10 @@
             }
             body.printing-report #admin-dashboard * { visibility: visible; }
             
-            /* Hide dashboard controls when printing report */
             body.printing-report #admin-controls, 
             body.printing-report button,
-            body.printing-report .no-print-col { 
-                display: none !important; 
-            }
+            body.printing-report .no-print-col { display: none !important; }
             
-            /* Adjust table for print */
             body.printing-report table { width: 100%; border-collapse: collapse; font-size: 9pt; }
             body.printing-report th, body.printing-report td { border: 1px solid #ddd; padding: 4px; text-align: left; }
             body.printing-report th { background-color: #f3f3f3; color: black; }
@@ -271,6 +253,7 @@
                             <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i> Desenvolvimento Disciplinar</li>
                             <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i> Sem fidelidade</li>
                         </ul>
+                        <p class="text-xs text-gray-400 mt-4 pt-4 border-t border-gray-100 font-medium">Idade: 4 a 11 anos</p>
                     </div>
                     <div class="p-6 pt-0"><button onclick="selectPlan('infantil-mensal', 179)" class="w-full py-2 border-2 border-brand-dark text-brand-dark font-bold rounded hover:bg-brand-dark hover:text-white transition">Selecionar</button></div>
                 </div>
@@ -290,13 +273,14 @@
                             <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i> Camiseta Grátis</li>
                             <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i> Fidelidade 6 Meses</li>
                         </ul>
+                        <p class="text-xs text-gray-400 mt-4 pt-4 border-t border-gray-100 font-medium">Idade: 4 a 11 anos</p>
                     </div>
                     <div class="p-6 pt-0"><button onclick="selectPlan('infantil-semestral', 159)" class="w-full py-2 bg-brand-red text-white font-bold rounded hover:bg-red-700 transition shadow-lg">Selecionar</button></div>
                 </div>
                 <!-- Plan 3 -->
                 <div class="bg-white rounded-2xl shadow-lg overflow-hidden border-t-4 border-gray-400 hover:shadow-xl transition duration-300 flex flex-col">
                     <div class="p-6 text-center flex-grow">
-                        <h3 class="font-display text-xl font-bold text-gray-800 mb-1">ADULTO</h3>
+                        <h3 class="font-display text-xl font-bold text-gray-800 mb-1">JOVEM/ADULTO</h3>
                         <p class="text-gray-500 text-xs font-bold uppercase mb-4 tracking-wide">Plano Mensal</p>
                         <div class="text-3xl font-bold text-brand-dark mb-4">R$ 139<span class="text-sm text-gray-400 font-normal">/mês</span></div>
                         <ul class="text-left space-y-2 mb-6 text-gray-600 text-xs">
@@ -304,6 +288,7 @@
                             <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i> Todos os Horários</li>
                             <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i> Sem fidelidade</li>
                         </ul>
+                        <p class="text-xs text-gray-400 mt-4 pt-4 border-t border-gray-100 font-medium">Idade: 12 anos ou mais</p>
                     </div>
                     <div class="p-6 pt-0"><button onclick="selectPlan('adulto-mensal', 139)" class="w-full py-2 border-2 border-brand-dark text-brand-dark font-bold rounded hover:bg-brand-dark hover:text-white transition">Selecionar</button></div>
                 </div>
@@ -311,7 +296,7 @@
                 <div class="bg-white rounded-2xl shadow-xl overflow-hidden border-t-4 border-brand-red transform md:-translate-y-2 relative flex flex-col">
                     <div class="absolute top-0 right-0 bg-brand-red text-white text-[10px] font-bold px-2 py-1 rounded-bl">OFERTA</div>
                     <div class="p-6 text-center flex-grow">
-                        <h3 class="font-display text-xl font-bold text-brand-red mb-1">ADULTO</h3>
+                        <h3 class="font-display text-xl font-bold text-brand-red mb-1">JOVEM/ADULTO</h3>
                         <p class="text-gray-500 text-xs font-bold uppercase mb-4 tracking-wide">Plano Semestral</p>
                         <div class="text-3xl font-bold text-brand-dark mb-2">R$ 9,90<span class="text-sm text-gray-400 font-normal"> (1º mês)</span></div>
                         <div class="mb-4 bg-green-50 py-2 px-1 rounded border border-green-200">
@@ -323,6 +308,7 @@
                             <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i> Fidelidade 6 Meses</li>
                             <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i> Camiseta Grátis</li>
                         </ul>
+                        <p class="text-xs text-gray-400 mt-4 pt-4 border-t border-gray-100 font-medium">Idade: 12 anos ou mais</p>
                     </div>
                     <div class="p-6 pt-0"><button onclick="selectPlan('adulto-semestral', 119)" class="w-full py-2 bg-brand-red text-white font-bold rounded hover:bg-red-700 transition shadow-lg">Selecionar</button></div>
                 </div>
@@ -362,7 +348,11 @@
                         <h3 class="font-display text-xl font-bold mb-4 border-b pb-2">1. Dados do Aluno</h3>
                         <div class="grid md:grid-cols-2 gap-4 mb-4">
                             <div><label class="block text-sm font-bold mb-1 text-gray-600">Nome do Aluno</label><input type="text" id="studentName" required class="w-full bg-gray-100 border border-gray-300 rounded p-3 focus:outline-none focus:border-brand-red" placeholder="Nome completo do aluno"></div>
-                            <div><label class="block text-sm font-bold mb-1 text-gray-600">Data de Nascimento</label><input type="date" id="studentDob" required class="w-full bg-gray-100 border border-gray-300 rounded p-3 focus:outline-none focus:border-brand-red text-gray-600"></div>
+                            <div>
+                                <label class="block text-sm font-bold mb-1 text-gray-600">Data de Nascimento</label>
+                                <input type="date" id="studentDob" required onchange="validateAge()" class="w-full bg-gray-100 border border-gray-300 rounded p-3 focus:outline-none focus:border-brand-red text-gray-600">
+                                <p id="age-validation-msg" class="text-red-600 text-xs mt-1 font-bold hidden"></p>
+                            </div>
                         </div>
                         <div class="md:col-span-2 mb-4">
                             <label class="inline-flex items-center cursor-pointer">
@@ -398,7 +388,7 @@
                             </div>
                         </div>
                         <div id="guardianContainer" class="hidden mb-4 p-4 bg-gray-50 border border-gray-200 rounded">
-                            <h4 class="text-sm font-bold text-brand-red mb-3 border-b border-gray-200 pb-1 uppercase">Responsável Legal</h4>
+                            <h4 class="text-sm font-bold text-brand-red mb-3 border-b border-gray-200 pb-1 uppercase">Responsável Legal (Obrigatório para menores de 18)</h4>
                             <div class="mb-2"><label class="block text-sm font-bold mb-1 text-gray-600">Nome do Responsável</label><input type="text" id="guardianName" class="w-full bg-white border border-gray-300 rounded p-3 focus:outline-none focus:border-brand-red" placeholder="Nome do pai, mãe ou responsável"></div>
                         </div>
                         <h3 class="font-display text-xl font-bold mb-4 border-b pb-2 mt-6">2. Dados Financeiros/Contato</h3>
@@ -440,7 +430,7 @@
                 <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-brand-red transition"><i class="fa-brands fa-facebook-f"></i></a>
                 <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-brand-red transition"><i class="fa-brands fa-youtube"></i></a>
             </div>
-            <p class="text-gray-600 text-sm mb-4">&copy; 2024 Tanque Team BJJ Academy. Todos os direitos reservados. Oss.</p>
+            <p class="text-gray-600 text-sm mb-4">&copy; 2026 Tanque Team BJJ Academy. Todos os direitos reservados. Oss.</p>
             <button onclick="openAdminLogin()" class="text-gray-700 hover:text-gray-500 text-xs">Área Administrativa</button>
         </div>
     </footer>
@@ -484,9 +474,8 @@
                                 <p id="email-status-msg" class="text-sm text-green-600 mt-2 font-semibold"><i class="fa-solid fa-envelope-circle-check"></i> Cópias do contrato foram enviadas para o seu e-mail e para a administração.</p>
                                 <div class="mt-4 bg-gray-50 p-3 rounded border border-dashed border-gray-300">
                                     <p class="text-xs text-gray-400 uppercase">Próximo Passo:</p>
-                                    <p class="text-sm font-semibold text-brand-red mb-2">Compareça à recepção para retirar seu patch e agendar a primeira aula.</p>
-                                    <div id="payment-btn-container" class="mb-3"></div>
-                                    <a href="https://wa.me/5591998192610" target="_blank" class="block w-full text-center bg-green-100 hover:bg-green-200 text-green-800 text-sm font-bold py-2 rounded transition duration-300 border border-green-300"><i class="fa-brands fa-whatsapp mr-1"></i> Mais informações no WhatsApp</a>
+                                    <p class="text-sm font-semibold text-red-600 mb-2 uppercase">REALIZAR O PAGAMENTO NA UNIDADE OU VIA WHATSAPP NO BOTÃO ABAIXO, EM HORÁRIO COMERCIAL</p>
+                                    <a href="https://wa.me/5591998192610" target="_blank" class="block w-full text-center bg-green-100 hover:bg-green-200 text-green-800 text-sm font-bold py-2 rounded transition duration-300 border border-green-300"><i class="fa-brands fa-whatsapp mr-1"></i> Mais Informações / Pagamento</a>
                                 </div>
                             </div>
                         </div>
@@ -654,12 +643,79 @@
             else { container.classList.add("hidden"); container.classList.remove("grid"); beltColor.removeAttribute("required"); beltColor.value = ""; document.getElementById("beltDegree").value = "0"; }
         }
 
+        // Logic for Guardian and Plan Validation
+        function validateAge() {
+            const dobInput = document.getElementById('studentDob');
+            const planInput = document.getElementById('selectedPlanInput');
+            const msgElement = document.getElementById('age-validation-msg');
+
+            if (!dobInput.value) return null;
+            
+            // Age Calculation
+            const [year, month, day] = dobInput.value.split('-').map(Number);
+            const dob = new Date(year, month - 1, day);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const m = today.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+
+            // Guardian Logic
+            const guardianContainer = document.getElementById('guardianContainer');
+            const guardianInput = document.getElementById('guardianName');
+            
+            if (age < 18) {
+                guardianContainer.classList.remove('hidden');
+                guardianInput.setAttribute('required', 'required');
+                document.getElementById('lblCpf').innerText = "CPF do Responsável";
+                document.getElementById('lblEmail').innerText = "E-mail do Responsável";
+                document.getElementById('lblPhone').innerText = "Telefone do Responsável";
+            } else {
+                guardianContainer.classList.add('hidden');
+                guardianInput.removeAttribute('required');
+                guardianInput.value = "";
+                document.getElementById('lblCpf').innerText = "CPF";
+                document.getElementById('lblEmail').innerText = "E-mail";
+                document.getElementById('lblPhone').innerText = "Telefone";
+            }
+
+            // Plan vs Age Validation
+            if (planInput.value) {
+                let plan = planInput.value;
+                let hasConflict = false;
+                let errorMsg = "";
+
+                if (plan.includes('infantil')) {
+                    if (age < 4 || age > 11) {
+                        hasConflict = true;
+                        errorMsg = `⚠️ A idade (${age} anos) não corresponde ao plano INFANTIL (4 a 11 anos).`;
+                    }
+                } else if (plan.includes('adulto')) {
+                    if (age < 12) {
+                        hasConflict = true;
+                        errorMsg = `⚠️ A idade (${age} anos) não corresponde ao plano JOVEM/ADULTO (12+ anos).`;
+                    }
+                }
+
+                if (hasConflict) {
+                    msgElement.innerText = errorMsg;
+                    msgElement.classList.remove('hidden');
+                    dobInput.classList.add('border-red-500', 'ring-2', 'ring-red-500');
+                } else {
+                    msgElement.classList.add('hidden');
+                    dobInput.classList.remove('border-red-500', 'ring-2', 'ring-red-500');
+                }
+            }
+
+            return age;
+        }
+
         function selectPlan(planName, price) {
             const summaryName = document.getElementById('summary-name');
             const summaryPrice = document.getElementById('summary-price');
             const hiddenInput = document.getElementById('selectedPlanInput');
             const promoMsg = document.getElementById('promo-msg');
-            const guardianContainer = document.getElementById('guardianContainer');
             
             document.getElementById('plan-summary').classList.remove('hidden');
             let displayName = planName.replace('-', ' ').toUpperCase();
@@ -668,21 +724,8 @@
             hiddenInput.value = planName;
 
             if(planName.includes('semestral')) promoMsg.classList.remove('hidden'); else promoMsg.classList.add('hidden');
-
-            if(planName.includes('infantil')) {
-                guardianContainer.classList.remove('hidden');
-                document.getElementById('guardianName').setAttribute('required', 'required');
-                document.getElementById('lblCpf').innerText = "CPF do Responsável";
-                document.getElementById('lblEmail').innerText = "E-mail do Responsável";
-                document.getElementById('lblPhone').innerText = "Telefone do Responsável";
-            } else {
-                guardianContainer.classList.add('hidden');
-                document.getElementById('guardianName').removeAttribute('required');
-                document.getElementById('guardianName').value = "";
-                document.getElementById('lblCpf').innerText = "CPF";
-                document.getElementById('lblEmail').innerText = "E-mail";
-                document.getElementById('lblPhone').innerText = "Telefone";
-            }
+            
+            validateAge(); // Re-validate if plan changes
             document.getElementById('register').scrollIntoView({ behavior: 'smooth' });
         }
 
@@ -693,10 +736,26 @@
             const plan = document.getElementById('selectedPlanInput').value;
             if(!plan) { alert("Por favor, selecione um plano."); return; }
 
+            // --- AGE VALIDATION CHECK ---
+            const msgElement = document.getElementById('age-validation-msg');
+            if (!msgElement.classList.contains('hidden')) {
+                alert("Por favor, corrija o conflito entre a Idade do aluno e o Plano selecionado antes de continuar.");
+                document.getElementById('studentDob').focus();
+                return;
+            }
+            
+            // Re-run validation just in case
+            const age = validateAge();
+            if (age === null) {
+                 alert("Por favor, preencha a Data de Nascimento.");
+                 return;
+            }
+
             const studentName = document.getElementById('studentName').value;
             const studentDob = document.getElementById('studentDob').value;
-            const isInfantil = plan.includes('infantil');
-            const guardianName = isInfantil ? document.getElementById('guardianName').value : null;
+            const guardianName = document.getElementById('guardianName').value;
+            const needsGuardian = age < 18;
+            
             const cpf = document.getElementById('cpfInput').value;
             const email = document.getElementById('emailInput').value;
             const phone = document.getElementById('phoneInput').value;
@@ -719,7 +778,7 @@
                 <p><strong>Aluno:</strong> ${studentName}</p>
                 <p><strong>Nascimento:</strong> ${studentDob.split('-').reverse().join('/')}</p>
                 <p><strong>Graduação:</strong> ${graduationText}</p>
-                ${isInfantil ? `<p><strong>Responsável:</strong> ${guardianName}</p>` : ''}
+                ${needsGuardian ? `<p><strong>Responsável:</strong> ${guardianName}</p>` : ''}
                 <p><strong>CPF:</strong> ${cpf}</p>
                 <p><strong>E-mail:</strong> ${email}</p>
                 <p><strong>Telefone:</strong> ${phone}</p>
@@ -744,14 +803,16 @@
             const plan = document.getElementById('selectedPlanInput').value;
             const studentName = document.getElementById('studentName').value;
             const studentDob = document.getElementById('studentDob').value;
-            const isInfantil = plan.includes('infantil');
-            const guardianName = isInfantil ? document.getElementById('guardianName').value : "";
+            const age = validateAge();
+            const needsGuardian = age < 18;
+            const guardianName = needsGuardian ? document.getElementById('guardianName').value : "";
+            
             const cpf = document.getElementById('cpfInput').value;
             const email = document.getElementById('emailInput').value;
             const phone = document.getElementById('phoneInput').value;
             const address = document.getElementById('addressInput').value;
             const signature = document.getElementById('signatureInput').value;
-            const contratanteName = isInfantil ? guardianName : studentName;
+            const contratanteName = needsGuardian ? guardianName : studentName;
 
             let price = "R$ 0,00";
             let displayName = plan.toUpperCase().replace('-', ' ');
@@ -784,7 +845,7 @@
                 cpf: cpf,
                 belt: graduationText,
                 plan: plan,
-                category: isInfantil ? 'Infantil' : 'Adulto',
+                category: plan.includes('infantil') ? 'Infantil' : 'Adulto',
                 registrationDate: regDate.toISOString(),
                 contractEndDate: endDate.toISOString(),
                 email: email,
@@ -806,15 +867,6 @@
             // Populate Modal & Printable Contract
             document.getElementById('modalClientName').innerText = studentName; 
             document.getElementById('modalPlanName').innerText = displayName;
-
-            const paymentBtnContainer = document.getElementById('payment-btn-container');
-            if(paymentLinks[plan]) {
-                paymentBtnContainer.innerHTML = `<a href="${paymentLinks[plan]}" target="_blank" class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-3 rounded transition duration-300 shadow-md transform hover:-translate-y-0.5 mb-2"><i class="fa-solid fa-credit-card mr-2"></i> Pagar Agora (Mercado Pago)</a>`;
-                paymentBtnContainer.classList.remove('hidden');
-            } else {
-                paymentBtnContainer.innerHTML = '';
-                paymentBtnContainer.classList.add('hidden');
-            }
 
             document.getElementById('printContratante').innerText = contratanteName;
             document.getElementById('printStudent').innerText = studentName;
@@ -845,9 +897,9 @@
             document.getElementById('printDate').innerText = today.toLocaleDateString('pt-BR', options);
 
             // --- EMAIL SENDING ---
-            const messageStudent = `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;"><div style="text-align: center; margin-bottom: 20px; background-color: #000; padding: 20px; border-radius: 8px 8px 0 0;"><img src="https://i.ibb.co/mC2zPJbm/1771300330359.png" alt="Tanque Team BJJ" style="width: 100px; height: auto;"><h2 style="color: #fff; margin: 10px 0 0 0;">TANQUE TEAM BJJ</h2></div><h2 style="color: #D90429;">Olá, ${studentName}!</h2><p>É com grande satisfação que confirmamos a sua matrícula na <strong>Tanque Team BJJ</strong>! 👊</p><p>Você acaba de dar o primeiro passo na sua jornada no Jiu-Jitsu. Mais do que técnica, aqui você encontrará disciplina, família e um tatame preparado para o seu desenvolvimento.</p><div style="background-color: #f8f9fa; border-left: 5px solid #D90429; padding: 15px; margin: 20px 0; border-radius: 4px;"><h3 style="margin-top: 0; color: #D90429; border-bottom: 1px solid #ddd; padding-bottom: 10px;">✅ Resumo da sua Matrícula</h3><p style="margin: 5px 0;"><strong>Aluno:</strong> ${studentName}</p><p style="margin: 5px 0;"><strong>Plano:</strong> ${displayName}</p><p style="margin: 5px 0;"><strong>Valor:</strong> ${price} <span style="color: #D90429; font-weight: bold;">${promoNote}</span></p><p style="margin: 5px 0;"><strong>Nascimento:</strong> ${formattedDob}</p><p style="margin: 5px 0;"><strong>Graduação:</strong> ${graduationText}</p><hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">${isInfantil ? `<p style="margin: 5px 0;"><strong>Responsável:</strong> ${guardianName}</p>` : ''}<p style="margin: 5px 0;"><strong>CPF:</strong> ${cpf}</p><p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p><p style="margin: 5px 0;"><strong>Telefone:</strong> ${phone}</p><p style="margin: 5px 0;"><strong>Endereço:</strong> ${address}</p></div><h3 style="color: #D90429;">📋 Próximos Passos:</h3><ul><li style="margin-bottom: 8px;"><strong>Uniforme:</strong> Caso ainda não tenha, nossa equipe está pronta para ajudar com o seu kimono.</li><li style="margin-bottom: 8px;"><strong>Primeiro Treino:</strong> Chegue 15 minutos antes para se ambientar e conhecer o professor.</li><li style="margin-bottom: 8px;"><strong>Higiene:</strong> Lembre-se de trazer chinelos para circular fora do tatame.</li></ul><div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 20px;"><p style="margin: 0;"><strong>📍 Localização:</strong> <a href="https://maps.app.goo.gl/Qr4yLUTsVaZPiery9" style="color: #2e7d32; text-decoration: none;">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</a></p></div><p style="margin-top: 20px;">Se tiver dúvidas, responda a este e-mail ou entre em contato pelo WhatsApp: <a href="https://wa.me/5591998192610" style="color: #25D366; font-weight: bold; text-decoration: none;">(91) 99819-2610</a>.</p><p style="font-size: 1.2em;">Estamos ansiosos para te ver no tatame!<br><strong>OSS!</strong></p><hr style="border: 0; border-top: 1px solid #ccc; margin: 30px 0;"><p style="font-size: 12px; color: #777; text-align: center;">Atenciosamente,<br>Equipe Tanque Team BJJ</p></div>`;
+            const messageStudent = `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;"><div style="text-align: center; margin-bottom: 20px; background-color: #000; padding: 20px; border-radius: 8px 8px 0 0;"><img src="https://i.ibb.co/mC2zPJbm/1771300330359.png" alt="Tanque Team BJJ" style="width: 100px; height: auto;"><h2 style="color: #fff; margin: 10px 0 0 0;">TANQUE TEAM BJJ</h2></div><h2 style="color: #D90429;">Olá, ${studentName}!</h2><p>É com grande satisfação que confirmamos a sua matrícula na <strong>Tanque Team BJJ</strong>! 👊</p><p>Você acaba de dar o primeiro passo na sua jornada no Jiu-Jitsu. Mais do que técnica, aqui você encontrará disciplina, família e um tatame preparado para o seu desenvolvimento.</p><div style="background-color: #f8f9fa; border-left: 5px solid #D90429; padding: 15px; margin: 20px 0; border-radius: 4px;"><h3 style="margin-top: 0; color: #D90429; border-bottom: 1px solid #ddd; padding-bottom: 10px;">✅ Resumo da sua Matrícula</h3><p style="margin: 5px 0;"><strong>Aluno:</strong> ${studentName}</p><p style="margin: 5px 0;"><strong>Plano:</strong> ${displayName}</p><p style="margin: 5px 0;"><strong>Valor:</strong> ${price} <span style="color: #D90429; font-weight: bold;">${promoNote}</span></p><p style="margin: 5px 0;"><strong>Nascimento:</strong> ${formattedDob}</p><p style="margin: 5px 0;"><strong>Graduação:</strong> ${graduationText}</p><hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">${needsGuardian ? `<p style="margin: 5px 0;"><strong>Responsável:</strong> ${guardianName}</p>` : ''}<p style="margin: 5px 0;"><strong>CPF:</strong> ${cpf}</p><p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p><p style="margin: 5px 0;"><strong>Telefone:</strong> ${phone}</p><p style="margin: 5px 0;"><strong>Endereço:</strong> ${address}</p></div><h3 style="color: #D90429;">📋 Próximos Passos:</h3><ul><li style="margin-bottom: 8px;"><strong>Uniforme:</strong> Caso ainda não tenha, nossa equipe está pronta para ajudar com o seu kimono.</li><li style="margin-bottom: 8px;"><strong>Primeiro Treino:</strong> Chegue 15 minutos antes para se ambientar e conhecer o professor.</li><li style="margin-bottom: 8px;"><strong>Higiene:</strong> Lembre-se de trazer chinelos para circular fora do tatame.</li></ul><div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 20px;"><p style="margin: 0;"><strong>📍 Localização:</strong> <a href="https://maps.app.goo.gl/Qr4yLUTsVaZPiery9" style="color: #2e7d32; text-decoration: none;">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</a></p></div><p style="margin-top: 20px;">Se tiver dúvidas, responda a este e-mail ou entre em contato pelo WhatsApp: <a href="https://wa.me/5591998192610" style="color: #25D366; font-weight: bold; text-decoration: none;">(91) 99819-2610</a>.</p><p style="font-size: 1.2em;">Estamos ansiosos para te ver no tatame!<br><strong>OSS!</strong></p><hr style="border: 0; border-top: 1px solid #ccc; margin: 30px 0;"><p style="font-size: 12px; color: #777; text-align: center;">Atenciosamente,<br>Equipe Tanque Team BJJ</p></div>`;
 
-            const messageAdmin = `NOVA MATRÍCULA REALIZADA (Cópia Admin):\n-----------------------------------\nAluno: ${studentName}\nNascimento: ${formattedDob}\nGraduação: ${graduationText}\n${isInfantil ? `Responsável: ${guardianName}` : ''}\nCPF: ${cpf}\nEmail: ${email}\nTelefone: ${phone}\nEndereço: ${address}\n\nDETALHES DO PLANO:\n-----------------------------------\nPlano: ${displayName}\nValor: ${price} ${promoNote}\nData: ${today.toLocaleDateString('pt-BR')}\n\nStatus: Contrato Assinado Digitalmente.`;
+            const messageAdmin = `NOVA MATRÍCULA REALIZADA (Cópia Admin):\n-----------------------------------\nAluno: ${studentName}\nNascimento: ${formattedDob}\nGraduação: ${graduationText}\n${needsGuardian ? `Responsável: ${guardianName}` : ''}\nCPF: ${cpf}\nEmail: ${email}\nTelefone: ${phone}\nEndereço: ${address}\n\nDETALHES DO PLANO:\n-----------------------------------\nPlano: ${displayName}\nValor: ${price} ${promoNote}\nData: ${today.toLocaleDateString('pt-BR')}\n\nStatus: Contrato Assinado Digitalmente.`;
 
             const paramsStudent = { to_name: contratanteName, to_email: email, plan_name: displayName, reply_to: 'contato@tanqueteambjj.com', subject: `🥋 Bem-vindo à Família! Confirmação de Matrícula - ${studentName}`, message: messageStudent };
             
@@ -883,6 +935,8 @@
             document.getElementById('plan-summary').classList.add('hidden');
             document.getElementById('signaturePreview').innerText = '';
             document.getElementById('guardianContainer').classList.add('hidden');
+            document.getElementById('age-validation-msg').classList.add('hidden'); // Hide validation msg
+            document.getElementById('studentDob').classList.remove('border-red-500', 'ring-2', 'ring-red-500'); // Reset validation style
             toggleGraduationFields();
         }
 
