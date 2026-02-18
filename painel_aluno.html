@@ -43,6 +43,41 @@
             0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
             100% { transform: translateY(300px) rotate(360deg); opacity: 0; }
         }
+
+        /* Calendar Styles */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #4b5563;
+            border: 1px solid transparent;
+        }
+        .calendar-day.present {
+            background-color: #dcfce7; /* green-100 */
+            color: #166534; /* green-800 */
+            font-weight: bold;
+            border-color: #86efac;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .calendar-day.empty {
+            background: transparent;
+        }
+        .calendar-header-day {
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #9ca3af;
+            text-align: center;
+            padding-bottom: 4px;
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans antialiased">
@@ -128,91 +163,105 @@
                     </div>
                 </div>
 
-                <!-- Status Cards Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                     
-                    <!-- Card 1: Belt Status -->
-                    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-brand-red relative overflow-hidden">
-                        
-                        <!-- Celebration Banner (Dynamic) -->
-                        <div id="celebration-banner" class="hidden absolute top-0 left-0 w-full bg-yellow-400 text-yellow-900 text-center text-xs font-bold py-1 z-10 animate-pulse">
-                            🎉 PARABÉNS PELA NOVA GRADUAÇÃO! 🎉
-                        </div>
-
-                        <div class="flex justify-between items-start mb-4 mt-2">
-                            <div>
-                                <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest">Graduação Atual</h3>
-                                <p class="text-xl font-bold text-brand-dark mt-1" id="belt-text">--</p>
-                            </div>
-                            <div class="p-2 bg-gray-50 rounded-lg text-brand-dark">
-                                <i class="fa-solid fa-medal text-xl"></i>
-                            </div>
-                        </div>
-                        <div id="belt-visual-container" class="w-full h-12 flex items-center justify-center bg-gray-100 rounded border border-gray-200 shadow-inner">
-                            <span class="text-xs text-gray-400">Carregando faixa...</span>
-                        </div>
-                    </div>
-
-                    <!-- Card 2: Financial Status -->
-                    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-gray-800">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest">Status da Matrícula</h3>
-                                <div id="payment-status-badge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-gray-200 text-gray-600">
-                                    Verificando...
+                    <!-- Left Column (Status & Finance) -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Card 1: Belt Status -->
+                            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-brand-red relative overflow-hidden">
+                                <div id="celebration-banner" class="hidden absolute top-0 left-0 w-full bg-yellow-400 text-yellow-900 text-center text-xs font-bold py-1 z-10 animate-pulse">
+                                    🎉 PARABÉNS PELA NOVA GRADUAÇÃO! 🎉
+                                </div>
+                                <div class="flex justify-between items-start mb-4 mt-2">
+                                    <div>
+                                        <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest">Graduação Atual</h3>
+                                        <p class="text-xl font-bold text-brand-dark mt-1" id="belt-text">--</p>
+                                    </div>
+                                    <div class="p-2 bg-gray-50 rounded-lg text-brand-dark">
+                                        <i class="fa-solid fa-medal text-xl"></i>
+                                    </div>
+                                </div>
+                                <div id="belt-visual-container" class="w-full h-12 flex items-center justify-center bg-gray-100 rounded border border-gray-200 shadow-inner">
+                                    <span class="text-xs text-gray-400">Carregando faixa...</span>
                                 </div>
                             </div>
-                            <div class="p-2 bg-gray-50 rounded-lg text-green-600">
-                                <i class="fa-solid fa-check-circle text-xl"></i>
+
+                            <!-- Card 2: Financial Status -->
+                            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-gray-800">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest">Financeiro</h3>
+                                        <div id="payment-status-badge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-gray-200 text-gray-600">Verificando...</div>
+                                    </div>
+                                    <div class="p-2 bg-gray-50 rounded-lg text-green-600">
+                                        <i class="fa-solid fa-check-circle text-xl"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <p class="text-sm text-gray-600">Plano: <span class="font-bold text-brand-dark" id="plan-display">--</span></p>
+                                    <p class="text-xs text-gray-400 mt-1">Vence em: <span id="contract-end">--/--/----</span></p>
+                                    <button onclick="viewPaymentHistory()" class="mt-3 text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center">
+                                        <i class="fa-solid fa-clock-rotate-left mr-1"></i> Ver Histórico
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <div class="mt-4">
-                            <p class="text-sm text-gray-600">Plano: <span class="font-bold text-brand-dark" id="plan-display">--</span></p>
-                            <p class="text-xs text-gray-400 mt-1">Vencimento do contrato: <span id="contract-end">--/--/----</span></p>
-                            
-                            <!-- History Button -->
-                            <button onclick="viewPaymentHistory()" class="mt-3 text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center">
-                                <i class="fa-solid fa-clock-rotate-left mr-1"></i> Ver Histórico Financeiro
-                            </button>
+
+                        <!-- Personal Data Section -->
+                        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                            <div class="bg-brand-dark px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+                                <h3 class="text-white font-display font-bold tracking-wide">DADOS CADASTRAIS</h3>
+                                <button onclick="openProfileEditModal()" class="text-xs text-gray-400 hover:text-white transition"><i class="fa-solid fa-pen-to-square mr-1"></i> Alterar Dados</button>
+                            </div>
+                            <div class="p-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome Completo</label><div class="p-3 bg-gray-50 rounded border border-gray-200 text-gray-800 font-medium" id="data-name">--</div></div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">E-mail</label><div class="p-3 bg-gray-50 rounded border border-gray-200 text-gray-800 font-medium" id="data-email">--</div></div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">CPF</label><div class="p-3 bg-gray-50 rounded border border-gray-200 text-gray-800 font-medium" id="data-cpf">--</div></div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Telefone</label><div class="p-3 bg-gray-50 rounded border border-gray-200 text-gray-800 font-medium" id="data-phone">--</div></div>
+                                    <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Endereço</label><div class="p-3 bg-gray-50 rounded border border-gray-200 text-gray-800 font-medium" id="data-address">--</div></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Card 3: Quick Stats (FIXED ATTENDANCE) -->
-                    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest">Frequência Total</h3>
-                                <p class="text-3xl font-bold text-brand-dark mt-1">
-                                    <span id="frequency-count">0</span> <span class="text-sm font-normal text-gray-400">aulas</span>
-                                </p>
-                            </div>
-                            <div class="p-2 bg-gray-50 rounded-lg text-blue-600">
-                                <i class="fa-solid fa-fire text-xl"></i>
+                    <!-- Right Column (CALENDAR) -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-blue-500 flex flex-col">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                                <i class="fa-solid fa-calendar-days text-brand-red"></i> Calendário de Treinos
+                            </h3>
+                            <div class="flex items-center gap-2 bg-gray-100 rounded-full px-2 py-1">
+                                <button onclick="changeMonth(-1)" class="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-white hover:text-brand-red rounded-full transition"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                                <span id="calendar-month-year" class="text-xs font-bold text-brand-dark min-w-[80px] text-center">--</span>
+                                <button onclick="changeMonth(1)" class="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-white hover:text-brand-red rounded-full transition"><i class="fa-solid fa-chevron-right text-xs"></i></button>
                             </div>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-200 mt-2">
-                            <!-- Progress bar -->
-                            <div id="frequency-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                        
+                        <!-- Calendar Grid -->
+                        <div class="mb-4">
+                            <div class="grid grid-cols-7 mb-2">
+                                <div class="calendar-header-day">Dom</div><div class="calendar-header-day">Seg</div><div class="calendar-header-day">Ter</div><div class="calendar-header-day">Qua</div><div class="calendar-header-day">Qui</div><div class="calendar-header-day">Sex</div><div class="calendar-header-day">Sáb</div>
+                            </div>
+                            <div id="calendar-days" class="calendar-grid">
+                                <!-- JS Injection -->
+                            </div>
                         </div>
-                        <p class="text-xs text-gray-400 mt-2">Mantenha o foco nos treinos!</p>
-                    </div>
-                </div>
 
-                <!-- Personal Data Section -->
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                    <div class="bg-brand-dark px-6 py-4 border-b border-gray-700 flex justify-between items-center">
-                        <h3 class="text-white font-display font-bold tracking-wide">DADOS CADASTRAIS</h3>
-                        <button onclick="openProfileEditModal()" class="text-xs text-gray-400 hover:text-white transition"><i class="fa-solid fa-pen-to-square mr-1"></i> Alterar Dados</button>
-                    </div>
-                    <div class="p-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome Completo</label><div class="p-3 bg-gray-50 rounded border border-gray-200 text-gray-800 font-medium" id="data-name">--</div></div>
-                            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">E-mail</label><div class="p-3 bg-gray-50 rounded border border-gray-200 text-gray-800 font-medium" id="data-email">--</div></div>
-                            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">CPF</label><div class="p-3 bg-gray-50 rounded border border-gray-200 text-gray-800 font-medium" id="data-cpf">--</div></div>
-                            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Telefone</label><div class="p-3 bg-gray-50 rounded border border-gray-200 text-gray-800 font-medium" id="data-phone">--</div></div>
-                            <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Endereço</label><div class="p-3 bg-gray-50 rounded border border-gray-200 text-gray-800 font-medium" id="data-address">--</div></div>
+                        <!-- Summary -->
+                        <div class="mt-auto pt-4 border-t border-gray-100">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-bold text-gray-600">Total de Treinos</span>
+                                <span class="text-xl font-bold text-brand-red" id="total-attendance-count">0</span>
+                            </div>
+                            <div class="text-xs text-gray-400 flex items-center gap-2">
+                                <div class="w-3 h-3 bg-green-100 border border-green-300 rounded"></div>
+                                <span>Presença Confirmada</span>
+                            </div>
                         </div>
                     </div>
+
                 </div>
 
                 <div class="mt-8 text-center text-xs text-gray-400">
@@ -304,6 +353,9 @@
 
         window.db = db;
         window.currentStudentData = null; // Store loaded data globally for modals
+        
+        // Calendar State
+        window.currentCalendarDate = new Date(); // To track viewed month
 
         // --- AUTH & LOAD ---
         window.handleLogout = () => {
@@ -377,10 +429,9 @@
                 statusBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> PENDENTE';
             }
 
+            // Attendance Count logic
             const attendanceCount = data.attendance ? data.attendance.length : 0;
-            document.getElementById('frequency-count').innerText = attendanceCount;
-            const percentage = Math.min((attendanceCount / 12) * 100, 100);
-            document.getElementById('frequency-bar').style.width = `${percentage}%`;
+            document.getElementById('total-attendance-count').innerText = attendanceCount;
 
             const beltStr = data.belt || "Faixa Branca - 0º Grau";
             document.getElementById('belt-text').innerText = beltStr;
@@ -397,6 +448,9 @@
                     document.getElementById('celebration-banner').classList.remove('hidden');
                 }
             }
+            
+            // --- RENDER CALENDAR ---
+            renderCalendar(data.attendance);
 
             setTimeout(() => {
                 document.getElementById('loading-screen').classList.add('opacity-0');
@@ -404,6 +458,69 @@
                     document.getElementById('loading-screen').classList.add('hidden');
                 }, 500);
             }, 800);
+        }
+
+        // --- CALENDAR LOGIC ---
+        window.changeMonth = (delta) => {
+            window.currentCalendarDate.setMonth(window.currentCalendarDate.getMonth() + delta);
+            if (window.currentStudentData) {
+                renderCalendar(window.currentStudentData.attendance);
+            }
+        };
+
+        function renderCalendar(attendanceList) {
+            const date = window.currentCalendarDate;
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            
+            // Set Header
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDay = firstDay.getDay(); // 0 (Sun) to 6 (Sat)
+
+            const calendarGrid = document.getElementById('calendar-days');
+            calendarGrid.innerHTML = '';
+
+            // Empty slots for previous month
+            for (let i = 0; i < startingDay; i++) {
+                const div = document.createElement('div');
+                div.className = 'calendar-day empty';
+                calendarGrid.appendChild(div);
+            }
+
+            // Days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day hover:bg-gray-50 transition cursor-default';
+                dayDiv.innerText = day;
+
+                // Format: YYYY-MM-DD (local time match)
+                const m = (month + 1).toString().padStart(2, '0');
+                const d = day.toString().padStart(2, '0');
+                const dateString = `${year}-${m}-${d}`;
+
+                // Check attendance
+                if (attendanceList && attendanceList.includes(dateString)) {
+                    dayDiv.classList.add('present');
+                    dayDiv.title = "Presença Confirmada";
+                    dayDiv.innerHTML = `${day} <i class="fa-solid fa-check text-[8px] absolute bottom-1 right-1"></i>`;
+                    dayDiv.style.position = 'relative';
+                }
+                
+                // Highlight today if in current month
+                const today = new Date();
+                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                     dayDiv.style.border = '1px solid #D90429';
+                     dayDiv.style.fontWeight = 'bold';
+                     dayDiv.style.color = '#D90429';
+                }
+
+                calendarGrid.appendChild(dayDiv);
+            }
         }
 
         // --- HISTORY MODAL ---
