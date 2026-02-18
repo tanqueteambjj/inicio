@@ -646,6 +646,19 @@
             }
         }
 
+        // --- UNIFIED CATEGORY LOGIC ---
+        function isStudentKid(s) {
+            const cat = s.category ? String(s.category).toLowerCase() : '';
+            const plan = s.plan ? String(s.plan).toLowerCase() : '';
+            
+            if (cat.includes('infantil')) return true;
+            if (cat.includes('adulto')) return false;
+            
+            // Fallback to Plan Name
+            if (plan.includes('infantil')) return true;
+            return false; // Default Adulto
+        }
+
         function updateStats() {
             const total = window.students.length;
             const active = window.students.filter(s => s.paymentStatus === 'Em dia').length;
@@ -655,28 +668,7 @@
             let adultsCount = 0;
 
             window.students.forEach(s => {
-                // ROBUST CATEGORY DETECTION
-                const cat = s.category ? String(s.category).toLowerCase() : '';
-                const plan = s.plan ? String(s.plan).toLowerCase() : '';
-                
-                let isKid = false;
-                
-                // Priority 1: Category field
-                if (cat.includes('infantil')) {
-                    isKid = true;
-                } else if (cat.includes('adulto')) {
-                    isKid = false;
-                } else {
-                    // Priority 2: Plan name fallback
-                    if (plan.includes('infantil')) {
-                        isKid = true;
-                    } else {
-                        // Default to Adult if vague
-                        isKid = false;
-                    }
-                }
-                
-                if (isKid) kidsCount++;
+                if (isStudentKid(s)) kidsCount++;
                 else adultsCount++;
             });
 
@@ -794,21 +786,10 @@
             tbody.innerHTML = '';
 
             const filtered = window.students.filter(s => {
-                // ROBUST CATEGORY DETECTION FOR FILTERING
-                const cat = s.category ? String(s.category).toLowerCase() : '';
-                const plan = s.plan ? String(s.plan).toLowerCase() : '';
+                // Determine category dynamically for filtering using the SAME LOGIC
+                let isKid = isStudentKid(s);
                 
-                let isKid = false;
-                
-                if (cat.includes('infantil')) {
-                    isKid = true;
-                } else if (cat.includes('adulto')) {
-                    isKid = false;
-                } else {
-                    if (plan.includes('infantil')) isKid = true;
-                    else isKid = false;
-                }
-                
+                // window.currentTab is 'adults' or 'kids'
                 const matchesTab = (window.currentTab === 'kids' && isKid) || (window.currentTab === 'adults' && !isKid);
                 const matchesSearch = s.name.toLowerCase().includes(search);
                 
