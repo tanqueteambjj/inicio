@@ -133,8 +133,8 @@
                             <span id="list-title">Lista de Alunos</span>
                             <span class="bg-gray-200 text-gray-600 py-0.5 px-2 rounded-full text-xs" id="list-count">0</span>
                         </h3>
-                        <button onclick="loadData()" id="btn-refresh" class="text-brand-red hover:text-red-800 text-sm flex items-center gap-1">
-                            <i class="fa-solid fa-rotate" id="icon-refresh"></i> Atualizar
+                        <button onclick="loadData()" class="text-brand-red hover:text-red-800 text-sm flex items-center gap-1">
+                            <i class="fa-solid fa-rotate"></i> Atualizar
                         </button>
                     </div>
                     <div class="overflow-x-auto">
@@ -615,14 +615,6 @@
         }
 
         async function loadData() {
-            // Show Feedback
-            const btnRefresh = document.getElementById('btn-refresh');
-            const iconRefresh = document.getElementById('icon-refresh');
-            if(btnRefresh) {
-                btnRefresh.classList.add('text-gray-400', 'cursor-not-allowed');
-                iconRefresh.classList.add('fa-spin');
-            }
-
             try {
                 if(!db) throw new Error("Database not initialized");
                 const querySnapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'students'));
@@ -635,11 +627,6 @@
                 else renderFinancialTable();
             } catch (error) {
                 console.error("Erro ao carregar:", error);
-            } finally {
-                if(btnRefresh) {
-                    btnRefresh.classList.remove('text-gray-400', 'cursor-not-allowed');
-                    iconRefresh.classList.remove('fa-spin');
-                }
             }
         }
 
@@ -969,19 +956,12 @@
 
         window.deleteStudent = async (id) => {
             if(!confirm("Excluir aluno permanentemente?")) return;
-            try { 
-                // Instant UI update
-                window.students = window.students.filter(s => s.id !== id);
-                updateStats();
-                if(window.currentView === 'students') renderTable();
-                else renderFinancialTable();
-
-                // Backend update
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id)); 
-            } catch(e) { 
-                console.error("Erro ao excluir:", e);
-                alert("Erro ao excluir: " + e.message); 
-                loadData(); 
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id));
+                loadData();
+                alert("Aluno excluído.");
+            } catch(e) {
+                alert("Erro ao excluir: " + e.message);
             }
         };
 
