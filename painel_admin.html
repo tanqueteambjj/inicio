@@ -507,8 +507,8 @@
 
     <!-- DETAILS MODAL (READ ONLY) -->
     <div id="details-modal" class="fixed inset-0 z-[60] hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all relative">
-            <button onclick="closeDetailsModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"><i class="fa-solid fa-times text-xl"></i></button>
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto transform transition-all relative">
+            <button onclick="closeDetailsModal()" class="absolute top-3 right-3 bg-white/80 hover:bg-white text-gray-600 hover:text-black rounded-full w-8 h-8 flex items-center justify-center z-20 shadow-sm transition"><i class="fa-solid fa-times text-lg"></i></button>
             
             <div id="detail-header-bg" class="h-24 bg-gray-200 w-full relative">
                 <div class="absolute -bottom-10 left-6">
@@ -655,12 +655,25 @@
             let adultsCount = 0;
 
             window.students.forEach(s => {
-                // Determine category based on stored field or fallback to plan
+                // ROBUST CATEGORY DETECTION
+                const cat = s.category ? String(s.category).toLowerCase() : '';
+                const plan = s.plan ? String(s.plan).toLowerCase() : '';
+                
                 let isKid = false;
-                if (s.category) {
-                    isKid = s.category.toLowerCase() === 'infantil';
-                } else if (s.plan) {
-                    isKid = s.plan.toLowerCase().includes('infantil');
+                
+                // Priority 1: Category field
+                if (cat.includes('infantil')) {
+                    isKid = true;
+                } else if (cat.includes('adulto')) {
+                    isKid = false;
+                } else {
+                    // Priority 2: Plan name fallback
+                    if (plan.includes('infantil')) {
+                        isKid = true;
+                    } else {
+                        // Default to Adult if vague
+                        isKid = false;
+                    }
                 }
                 
                 if (isKid) kidsCount++;
@@ -781,15 +794,21 @@
             tbody.innerHTML = '';
 
             const filtered = window.students.filter(s => {
-                // Determine category dynamically for filtering
+                // ROBUST CATEGORY DETECTION FOR FILTERING
+                const cat = s.category ? String(s.category).toLowerCase() : '';
+                const plan = s.plan ? String(s.plan).toLowerCase() : '';
+                
                 let isKid = false;
-                if (s.category) {
-                    isKid = s.category.toLowerCase() === 'infantil';
-                } else if (s.plan) {
-                    isKid = s.plan.toLowerCase().includes('infantil');
+                
+                if (cat.includes('infantil')) {
+                    isKid = true;
+                } else if (cat.includes('adulto')) {
+                    isKid = false;
+                } else {
+                    if (plan.includes('infantil')) isKid = true;
+                    else isKid = false;
                 }
                 
-                // window.currentTab is 'adults' or 'kids'
                 const matchesTab = (window.currentTab === 'kids' && isKid) || (window.currentTab === 'adults' && !isKid);
                 const matchesSearch = s.name.toLowerCase().includes(search);
                 
@@ -976,7 +995,8 @@
                 await updateDoc(docRef, {
                     paymentHistory: arrayUnion(paymentRecord),
                     nextDueDate: nextDueISO,
-                    paymentStatus: 'Em dia'
+                    paymentStatus: 'Em dia',
+                    paymentMethod: method // Update current method too
                 });
                 
                 closePaymentModal();
