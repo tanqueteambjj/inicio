@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tanque Team Jiu-Jitsu | Portal do Aluno</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="https://i.ibb.co/mC2zPJbm/1771300330359.png" type="image/png">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Configuração Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            red: '#D90429',
+                            dark: '#1B1B1B',
+                            gray: '#2B2D42',
+                            light: '#EDF2F4'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Roboto', 'sans-serif'],
+                        display: ['Oswald', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .hero-bg {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1564415315949-7a0c4c73aab4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .fade-in { animation: fadeIn 0.6s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-brand-dark font-sans antialiased h-screen overflow-hidden">
+
+    <!-- Main Container -->
+    <div class="hero-bg w-full h-full flex items-center justify-center px-4 relative">
+        
+        <!-- Decoration Elements -->
+        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-dark via-brand-red to-brand-dark"></div>
+
+        <!-- Login Card -->
+        <div class="glass-effect w-full max-w-md p-8 rounded-2xl shadow-2xl fade-in relative overflow-hidden border-t-4 border-brand-red">
+            
+            <!-- Header / Logo -->
+            <div class="text-center mb-8">
+                <div class="w-24 h-24 bg-brand-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg ring-4 ring-brand-red ring-opacity-20">
+                    <img src="https://i.ibb.co/mC2zPJbm/1771300330359.png" alt="Logo" class="w-16 h-16 object-contain">
+                </div>
+                <h2 class="font-display text-3xl font-bold text-brand-dark">ÁREA DO <span class="text-brand-red">ALUNO</span></h2>
+                <p class="text-gray-500 text-sm mt-1 font-medium tracking-wide">ACESSO RESTRITO TANQUE TEAM</p>
+            </div>
+
+            <!-- Error Message Box (Hidden by default) -->
+            <div id="error-box" class="hidden bg-red-100 border-l-4 border-brand-red text-red-700 p-4 mb-6 rounded text-sm" role="alert">
+                <p class="font-bold">Erro de Acesso</p>
+                <p id="error-msg">Usuário ou senha incorretos.</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="space-y-5">
+                    
+                    <!-- Email Input -->
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1 ml-1">E-mail ou Matrícula</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-envelope"></i>
+                            </div>
+                            <input type="email" id="email" required 
+                                class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-red focus:border-brand-red block pl-10 p-3 transition-colors outline-none" 
+                                placeholder="seu@email.com">
+                        </div>
+                    </div>
+
+                    <!-- Password Input -->
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1 ml-1">Senha</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-lock"></i>
+                            </div>
+                            <input type="password" id="password" required 
+                                class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-red focus:border-brand-red block pl-10 p-3 transition-colors outline-none" 
+                                placeholder="••••••••">
+                            <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-brand-red cursor-pointer">
+                                <i class="fa-solid fa-eye" id="eye-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Remember & Forgot Password -->
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center">
+                            <input id="remember-me" type="checkbox" class="w-4 h-4 text-brand-red bg-gray-100 border-gray-300 rounded focus:ring-brand-red">
+                            <label for="remember-me" class="ml-2 font-medium text-gray-600">Lembrar-me</label>
+                        </div>
+                        <a href="#" onclick="alert('Procure a secretaria para redefinir sua senha.')" class="font-bold text-brand-red hover:text-red-800 transition">Esqueceu a senha?</a>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="btn-login" class="w-full text-white bg-brand-red hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold rounded-lg text-lg px-5 py-3 text-center transition-all duration-300 shadow-lg transform active:scale-95 flex justify-center items-center gap-2">
+                        <span>ENTRAR</span>
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Divider -->
+            <div class="mt-8 mb-6 relative">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div>
+                <div class="relative flex justify-center text-sm"><span class="px-2 bg-white text-gray-500 font-display tracking-wider">TANQUE TEAM BJJ</span></div>
+            </div>
+
+            <!-- Footer Links -->
+            <div class="text-center space-y-2">
+                <p class="text-sm text-gray-600">Ainda não tem acesso?</p>
+                <!-- Link atualizado para o site principal -->
+                <a href="https://tanqueteambjj.github.io/inicio/home.html#register" class="text-brand-dark font-bold hover:text-brand-red transition underline decoration-brand-red decoration-2 underline-offset-4">Fazer Matrícula Online</a>
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <a href="https://tanqueteambjj.github.io/inicio/home.html#home" class="text-xs text-gray-400 hover:text-gray-600 flex items-center justify-center gap-1 transition">
+                        <i class="fa-solid fa-arrow-left"></i> Voltar ao site principal
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Copyright -->
+        <div class="absolute bottom-4 text-white/40 text-xs font-light tracking-wider">
+            &copy; 2026 TANQUE TEAM BJJ SYSTEM
+        </div>
+
+    </div>
+
+    <!-- Firebase Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
+            authDomain: "tanqueteambjj.firebaseapp.com",
+            projectId: "tanqueteambjj",
+            storageBucket: "tanqueteambjj.firebasestorage.app",
+            messagingSenderId: "410605992451",
+            appId: "1:410605992451:web:f0f341f4594fe75f376c36",
+            measurementId: "G-SW8PP8X7WM"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        window.authInstance = auth;
+        window.signInFunc = signInWithEmailAndPassword;
+    </script>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eye-icon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        }
+
+        // --- SAFE REDIRECT HELPER ---
+        // Evita erro de sintaxe no modo preview
+        function safeRedirect(url) {
+            try {
+                const protocol = window.location.protocol;
+                if (protocol.startsWith('http')) {
+                    window.location.href = url;
+                } else {
+                    console.warn("Redirecionamento bloqueado (Preview Mode). URL de destino:", url);
+                    alert("Sucesso! Em um site real, você seria redirecionado para: " + url);
+                }
+            } catch (e) {
+                console.warn("Redirecionamento bloqueado:", e);
+                alert("Sucesso! Em um site real, você seria redirecionado para: " + url);
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('btn-login');
+            const errorBox = document.getElementById('error-box');
+            const errorMsg = document.getElementById('error-msg');
+
+            errorBox.classList.add('hidden');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> VERIFICANDO...';
+            btn.classList.add('opacity-75');
+
+            try {
+                const userCredential = await window.signInFunc(window.authInstance, email, password);
+                
+                // --- SUCESSO ---
+                btn.classList.remove('bg-brand-red', 'hover:bg-red-700');
+                btn.classList.add('bg-green-600', 'hover:bg-green-700');
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> SUCESSO!';
+                
+                // Espera 1 segundo e redireciona para o painel
+                setTimeout(() => {
+                    safeRedirect("painel_aluno.html");
+                }, 1000);
+
+            } catch (error) {
+                // --- ERRO ---
+                btn.disabled = false;
+                btn.innerHTML = '<span>ENTRAR</span><i class="fa-solid fa-arrow-right-to-bracket"></i>';
+                btn.classList.remove('opacity-75');
+                
+                errorBox.classList.remove('hidden');
+                
+                switch(error.code) {
+                    case 'auth/invalid-credential':
+                    case 'auth/user-not-found':
+                    case 'auth/wrong-password':
+                        errorMsg.innerText = "E-mail ou senha incorretos.";
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMsg.innerText = "Muitas tentativas falhas. Tente novamente mais tarde.";
+                        break;
+                    default:
+                        errorMsg.innerText = "Erro ao acessar: " + error.code;
+                }
+                
+                const card = document.querySelector('.glass-effect');
+                card.classList.add('animate-pulse'); 
+                setTimeout(() => card.classList.remove('animate-pulse'), 500);
+            }
+        }
+    </script>
+</body>
+</html>
