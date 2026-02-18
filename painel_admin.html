@@ -584,7 +584,8 @@
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
-            appId = "tanqueteam-bjj";
+            // CORREÇÃO: Usar __app_id do ambiente se disponível para permissões corretas
+            appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj";
             window.db = db;
         } catch(e) {
             console.error("Firebase init error", e);
@@ -977,7 +978,11 @@
 
                 // Backend update
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id)); 
-            } catch(e) { alert("Erro ao excluir."); loadData(); }
+            } catch(e) { 
+                console.error("Erro ao excluir:", e);
+                alert("Erro ao excluir: " + e.message); 
+                loadData(); 
+            }
         };
 
         window.viewStudentDetails = (id) => {
