@@ -245,7 +245,7 @@
                 <!-- Plan 1 -->
                 <div class="bg-white rounded-2xl shadow-lg overflow-hidden border-t-4 border-gray-400 hover:shadow-xl transition duration-300 flex flex-col">
                     <div class="p-6 text-center flex-grow">
-                        <h3 class="font-display text-xl font-bold text-gray-800 mb-1">INFANTIL</h3>
+                        <h3 class="font-display text-xl font-bold text-gray-800 mb-1">INFANTIL (4 a 11 anos)</h3>
                         <p class="text-gray-500 text-xs font-bold uppercase mb-4 tracking-wide">Plano Mensal</p>
                         <div class="text-3xl font-bold text-brand-dark mb-4">R$ 179<span class="text-sm text-gray-400 font-normal">/mês</span></div>
                         <ul class="text-left space-y-2 mb-6 text-gray-600 text-xs">
@@ -261,7 +261,7 @@
                 <div class="bg-white rounded-2xl shadow-xl overflow-hidden border-t-4 border-brand-red transform md:-translate-y-2 relative flex flex-col">
                     <div class="absolute top-0 right-0 bg-brand-red text-white text-[10px] font-bold px-2 py-1 rounded-bl">OFERTA</div>
                     <div class="p-6 text-center flex-grow">
-                        <h3 class="font-display text-xl font-bold text-brand-red mb-1">INFANTIL</h3>
+                        <h3 class="font-display text-xl font-bold text-brand-red mb-1">INFANTIL (4 a 11 anos)</h3>
                         <p class="text-gray-500 text-xs font-bold uppercase mb-4 tracking-wide">Plano Semestral</p>
                         <div class="text-3xl font-bold text-brand-dark mb-2">R$ 9,90<span class="text-sm text-gray-400 font-normal"> (1º mês)</span></div>
                         <div class="mb-4 bg-green-50 py-2 px-1 rounded border border-green-200">
@@ -280,7 +280,7 @@
                 <!-- Plan 3 -->
                 <div class="bg-white rounded-2xl shadow-lg overflow-hidden border-t-4 border-gray-400 hover:shadow-xl transition duration-300 flex flex-col">
                     <div class="p-6 text-center flex-grow">
-                        <h3 class="font-display text-xl font-bold text-gray-800 mb-1">JOVEM/ADULTO</h3>
+                        <h3 class="font-display text-xl font-bold text-gray-800 mb-1">JOVEM/ADULTO 12+</h3>
                         <p class="text-gray-500 text-xs font-bold uppercase mb-4 tracking-wide">Plano Mensal</p>
                         <div class="text-3xl font-bold text-brand-dark mb-4">R$ 139<span class="text-sm text-gray-400 font-normal">/mês</span></div>
                         <ul class="text-left space-y-2 mb-6 text-gray-600 text-xs">
@@ -296,7 +296,7 @@
                 <div class="bg-white rounded-2xl shadow-xl overflow-hidden border-t-4 border-brand-red transform md:-translate-y-2 relative flex flex-col">
                     <div class="absolute top-0 right-0 bg-brand-red text-white text-[10px] font-bold px-2 py-1 rounded-bl">OFERTA</div>
                     <div class="p-6 text-center flex-grow">
-                        <h3 class="font-display text-xl font-bold text-brand-red mb-1">JOVEM/ADULTO</h3>
+                        <h3 class="font-display text-xl font-bold text-brand-red mb-1">JOVEM/ADULTO 12+</h3>
                         <p class="text-gray-500 text-xs font-bold uppercase mb-4 tracking-wide">Plano Semestral</p>
                         <div class="text-3xl font-bold text-brand-dark mb-2">R$ 9,90<span class="text-sm text-gray-400 font-normal"> (1º mês)</span></div>
                         <div class="mb-4 bg-green-50 py-2 px-1 rounded border border-green-200">
@@ -560,6 +560,13 @@
                 <input type="text" id="edit-name" class="w-full border p-2 rounded" placeholder="Nome">
                 <input type="text" id="edit-belt" class="w-full border p-2 rounded" placeholder="Faixa">
                 <input type="date" id="edit-end-date" class="w-full border p-2 rounded" placeholder="Fim Contrato">
+                
+                <!-- Payment Status Edit -->
+                <label class="block text-xs uppercase text-gray-500 font-bold mt-2">Status do Pagamento</label>
+                <select id="edit-payment" class="w-full border p-2 rounded">
+                    <option value="Pendente">Pendente</option>
+                    <option value="Em dia">Em dia</option>
+                </select>
             </div>
             <div class="mt-4 flex justify-end gap-2">
                 <button onclick="closeEditModal()" class="px-4 py-2 border rounded">Cancelar</button>
@@ -609,8 +616,6 @@
         const EMAILJS_TEMPLATE_ID = "template_few5bna"; 
         const EMAILJS_PUBLIC_KEY = "joP6USyQXdqGI3GN5";   
         
-        const paymentLinks = { 'infantil-mensal': 'https://mpago.la/2rgQaL2' };
-
         (function(){ emailjs.init(EMAILJS_PUBLIC_KEY); })();
 
         // UI Helpers
@@ -851,7 +856,8 @@
                 email: email,
                 phone: phone,
                 address: address,
-                guardian: guardianName
+                guardian: guardianName,
+                paymentStatus: 'Pendente' // Default status
             };
 
             try {
@@ -1045,6 +1051,7 @@
                 <th class="p-3 border-b">Idade</th>
                 <th class="p-3 border-b">Matrícula</th>
                 <th class="p-3 border-b">Fim Contrato</th>
+                <th class="p-3 border-b text-center">Pagamento</th> <!-- NOVA COLUNA -->
                 <th class="p-3 border-b text-center no-print-col">Ações</th>
             `;
             theadRow.innerHTML = headerHTML;
@@ -1066,10 +1073,15 @@
                     rowHTML += `<td class="p-3">${s.guardian || '-'}</td>`;
                 }
                 
+                // STATUS PAGAMENTO LOGIC
+                const payStatus = s.paymentStatus || 'Pendente'; // Default
+                const payClass = payStatus === 'Em dia' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+
                 rowHTML += `
                     <td class="p-3">${getAge(s.dob)} anos</td>
                     <td class="p-3">${formatDate(s.registrationDate)}</td>
                     <td class="p-3 font-bold ${new Date(s.contractEndDate) < new Date() ? 'text-red-600' : 'text-green-600'}">${formatDate(s.contractEndDate)}</td>
+                    <td class="p-3 text-center"><span class="px-2 py-1 rounded text-xs font-bold ${payClass}">${payStatus}</span></td>
                     <td class="p-3 text-center no-print-col">
                         <button onclick="editStudent('${s.id}')" class="text-blue-600 hover:text-blue-800 mr-2"><i class="fa-solid fa-pen"></i></button>
                         <button onclick="deleteStudent('${s.id}')" class="text-red-600 hover:text-red-800"><i class="fa-solid fa-trash"></i></button>
@@ -1096,6 +1108,7 @@
             document.getElementById('edit-name').value = s.name;
             document.getElementById('edit-belt').value = s.belt;
             document.getElementById('edit-end-date').value = s.contractEndDate.split('T')[0];
+            document.getElementById('edit-payment').value = s.paymentStatus || 'Pendente'; // Carregar status atual
             
             document.getElementById('edit-modal').classList.remove('hidden');
         }
@@ -1106,12 +1119,18 @@
             const id = document.getElementById('edit-id').value;
             const newName = document.getElementById('edit-name').value;
             const newBelt = document.getElementById('edit-belt').value;
-            const newDate = document.getElementById('edit-end-date').value;
+            const newDateStr = document.getElementById('edit-end-date').value;
+            const newPayment = document.getElementById('edit-payment').value; // Capturar novo status
+
+            // Fix Date Timezone bug
+            const [y, m, d] = newDateStr.split('-').map(Number);
+            const dateObj = new Date(y, m - 1, d, 12, 0, 0); // Noon to avoid timezone shift
 
             await window.updateDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'students', id), {
                 name: newName,
                 belt: newBelt,
-                contractEndDate: new Date(newDate).toISOString()
+                contractEndDate: dateObj.toISOString(),
+                paymentStatus: newPayment // Salvar no banco
             });
             
             closeEditModal();
