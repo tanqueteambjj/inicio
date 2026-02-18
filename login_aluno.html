@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tanque Team Jiu-Jitsu | Portal do Aluno</title>
+    <title>Tanque Team Jiu-Jitsu | Acesso</title>
     
     <!-- Favicon -->
     <link rel="icon" href="https://i.ibb.co/mC2zPJbm/1771300330359.png" type="image/png">
@@ -72,8 +72,8 @@
                 <div class="w-24 h-24 bg-brand-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg ring-4 ring-brand-red ring-opacity-20">
                     <img src="https://i.ibb.co/mC2zPJbm/1771300330359.png" alt="Logo" class="w-16 h-16 object-contain">
                 </div>
-                <h2 class="font-display text-3xl font-bold text-brand-dark">ÁREA DO <span class="text-brand-red">ALUNO</span></h2>
-                <p class="text-gray-500 text-sm mt-1 font-medium tracking-wide">ACESSO RESTRITO TANQUE TEAM</p>
+                <h2 class="font-display text-3xl font-bold text-brand-dark">PORTAL <span class="text-brand-red">TANQUE TEAM</span></h2>
+                <p class="text-gray-500 text-sm mt-1 font-medium tracking-wide">ÁREA RESTRITA (ALUNO / ADMIN)</p>
             </div>
 
             <!-- Error Message Box (Hidden by default) -->
@@ -160,7 +160,7 @@
     <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // Importando funções de consulta do Firestore, sem Auth
+        // Importando funções de consulta do Firestore
         import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -210,18 +210,18 @@
                     window.location.href = url;
                 } else {
                     console.warn("Redirecionamento bloqueado (Preview Mode). URL de destino:", url);
-                    alert("Sucesso! Em um site real, você seria redirecionado para: " + url);
+                    alert("Sucesso! Redirecionando para: " + url);
                 }
             } catch (e) {
                 console.warn("Redirecionamento bloqueado:", e);
-                alert("Sucesso! Em um site real, você seria redirecionado para: " + url);
+                alert("Sucesso! Redirecionando para: " + url);
             }
         }
 
         async function handleLogin(e) {
             e.preventDefault();
             
-            const loginInput = document.getElementById('login').value.trim(); // Pode ser e-mail ou login
+            const loginInput = document.getElementById('login').value.trim(); 
             const passwordInput = document.getElementById('password').value.trim();
             const btn = document.getElementById('btn-login');
             const errorBox = document.getElementById('error-box');
@@ -232,16 +232,30 @@
             btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> VERIFICANDO...';
             btn.classList.add('opacity-75');
 
+            // --- 1. VERIFICAÇÃO DE ADMINISTRAÇÃO ---
+            // Credenciais fixas conforme solicitado
+            if (loginInput === "administracao@tanqueteambjj.com.br" && passwordInput === "32573515") {
+                
+                // Salva sessão de admin
+                localStorage.setItem('tanque_user_session', JSON.stringify({
+                    role: 'admin',
+                    name: 'Administrador',
+                    email: loginInput
+                }));
+
+                btn.classList.remove('bg-brand-red', 'hover:bg-red-700');
+                btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                btn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> PAINEL ADMIN';
+                
+                setTimeout(() => {
+                    safeRedirect("painel_admin.html");
+                }, 1000);
+                return;
+            }
+
+            // --- 2. VERIFICAÇÃO DE ALUNO (Firestore) ---
             try {
-                // Tenta buscar por Login E Senha
-                // Nota: Firestore exige que todos os campos no 'where' tenham índices compostos se forem muitos.
-                // Vamos tentar buscar pelo 'studentLogin' primeiro.
-                
                 const studentsRef = window.dbCollection(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'students');
-                
-                // Estratégia: Buscamos pelo login ou email
-                // O Firebase não suporta "OR" simples em queries básicas sem configurações avançadas.
-                // Vamos tentar fazer duas queries ou buscar pelo campo login e filtrar no JS.
                 
                 // Tentativa 1: Buscar por studentLogin
                 let q = window.dbQuery(studentsRef, window.dbWhere('studentLogin', '==', loginInput), window.dbWhere('studentPassword', '==', passwordInput));
@@ -254,11 +268,11 @@
                 }
 
                 if (!snapshot.empty) {
-                    // --- SUCESSO ---
+                    // --- SUCESSO ALUNO ---
                     const doc = snapshot.docs[0];
-                    const studentData = { id: doc.id, ...doc.data() };
+                    const studentData = { id: doc.id, ...doc.data(), role: 'student' };
 
-                    // Salva sessão "manualmente" no LocalStorage
+                    // Salva sessão no LocalStorage
                     localStorage.setItem('tanque_user_session', JSON.stringify(studentData));
 
                     btn.classList.remove('bg-brand-red', 'hover:bg-red-700');
