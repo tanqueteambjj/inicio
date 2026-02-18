@@ -134,10 +134,17 @@
                                 <span id="list-title">Lista de Alunos</span>
                                 <span class="bg-gray-200 text-gray-600 py-0.5 px-2 rounded-full text-xs" id="list-count">0</span>
                             </h3>
-                            <!-- Botão de Exclusão em Massa (Invisível por padrão) -->
-                            <button onclick="deleteSelectedStudents()" id="btn-bulk-delete" class="hidden flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition animate-fade-in">
-                                <i class="fa-solid fa-trash-can"></i> Excluir Selecionados (<span id="selected-count">0</span>)
-                            </button>
+                            
+                            <!-- ACTIONS BAR FOR SELECTED ITEMS -->
+                            <div id="bulk-actions" class="hidden flex items-center gap-2 animate-fade-in">
+                                <span class="text-xs font-bold text-gray-400 border-l pl-3 ml-1">SELECIONADOS (<span id="selected-count">0</span>):</span>
+                                <button onclick="addPresenceSelectedStudents()" class="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-bold hover:bg-green-200 transition">
+                                    <i class="fa-solid fa-check"></i> Dar Presença
+                                </button>
+                                <button onclick="deleteSelectedStudents()" class="flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition">
+                                    <i class="fa-solid fa-trash-can"></i> Excluir
+                                </button>
+                            </div>
                         </div>
                         <button onclick="loadData()" class="text-brand-red hover:text-red-800 text-sm flex items-center gap-1">
                             <i class="fa-solid fa-rotate" id="icon-refresh"></i> Atualizar
@@ -190,6 +197,35 @@
             </div>
 
         </main>
+    </div>
+
+    <!-- Attendance Management Modal -->
+    <div id="attendance-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]">
+            <div class="bg-blue-600 px-6 py-4 flex justify-between items-center text-white shrink-0">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-calendar-check mr-2"></i> Gerenciar Frequência</h3>
+                <button onclick="closeAttendanceModal()" class="hover:text-gray-200"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-4 bg-gray-50 border-b shrink-0">
+                <h4 class="font-bold text-gray-800" id="att-student-name">--</h4>
+                <input type="hidden" id="att-student-id">
+                
+                <div class="mt-3 flex gap-2">
+                    <input type="date" id="att-date-input" class="border rounded px-2 py-1 text-sm flex-grow">
+                    <button onclick="addManualAttendance()" class="bg-green-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-green-700">Adicionar</button>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-1">Selecione uma data para adicionar presença retroativa.</p>
+            </div>
+            <div class="overflow-y-auto p-0 flex-1">
+                <div id="att-list" class="divide-y divide-gray-100">
+                    <!-- List populated by JS -->
+                </div>
+                <div id="att-empty" class="hidden text-center py-8 text-gray-400 italic text-sm">Nenhuma presença registrada.</div>
+            </div>
+            <div class="p-3 border-t bg-white shrink-0 text-right">
+                <button onclick="closeAttendanceModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded text-sm font-bold hover:bg-gray-300">Fechar</button>
+            </div>
+        </div>
     </div>
 
     <!-- Payment Modal -->
@@ -546,7 +582,7 @@
                         </div>
                     </div>
 
-                    <!-- FINANCIAL INFO (NOVO) -->
+                    <!-- FINANCIAL INFO -->
                     <div class="bg-gray-50 p-3 rounded border border-gray-100">
                         <h4 class="text-xs font-bold text-gray-400 uppercase border-b pb-1 mb-2">Financeiro</h4>
                         <div class="grid grid-cols-2 gap-y-2 text-sm">
@@ -583,7 +619,7 @@
     <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
@@ -661,7 +697,8 @@
 
         function updateStats() {
             const total = window.students.length;
-            // Removed active/pending logic calculation if not displayed, or keep calculation but don't update DOM if elements missing.
+            const active = window.students.filter(s => s.paymentStatus === 'Em dia').length;
+            const pending = total - active;
             
             let kidsCount = 0;
             let adultsCount = 0;
@@ -671,15 +708,11 @@
                 else adultsCount++;
             });
 
-            const statTotal = document.getElementById('stat-total');
-            if(statTotal) statTotal.innerText = total;
-
-            // Fix: Check existence before setting innerText to avoid crash
-            const statInfantil = document.getElementById('stat-infantil');
-            if(statInfantil) statInfantil.innerText = kidsCount;
-
-            const statAdulto = document.getElementById('stat-adulto');
-            if(statAdulto) statAdulto.innerText = adultsCount;
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-active').innerText = active;
+            document.getElementById('stat-pending').innerText = pending;
+            document.getElementById('stat-infantil').innerText = kidsCount;
+            document.getElementById('stat-adulto').innerText = adultsCount;
         }
 
         // --- SELECTION LOGIC ---
@@ -691,14 +724,14 @@
 
         window.updateBulkActions = () => {
             const count = document.querySelectorAll('.student-cb:checked').length;
-            const btn = document.getElementById('btn-bulk-delete');
+            const bulkDiv = document.getElementById('bulk-actions');
             const countSpan = document.getElementById('selected-count');
             
             if(count > 0) {
-                btn.classList.remove('hidden');
+                bulkDiv.classList.remove('hidden');
                 countSpan.innerText = count;
             } else {
-                btn.classList.add('hidden');
+                bulkDiv.classList.add('hidden');
             }
         };
 
@@ -710,16 +743,124 @@
             
             if(confirm(`Tem certeza que deseja excluir ${ids.length} alunos selecionados? Esta ação é irreversível.`)) {
                 try {
-                    // Loop de exclusão
                     const deletePromises = ids.map(id => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id)));
                     await Promise.all(deletePromises);
-                    
                     alert('Alunos excluídos com sucesso!');
-                    window.location.reload(); // Atualiza a página como solicitado
+                    window.location.reload(); 
                 } catch(e) {
                     alert('Erro ao excluir: ' + e.message);
-                    loadData(); // Recarrega dados em caso de erro parcial
+                    loadData();
                 }
+            }
+        };
+
+        // --- BULK PRESENCE LOGIC ---
+        window.addPresenceSelectedStudents = async () => {
+            const checkboxes = document.querySelectorAll('.student-cb:checked');
+            const ids = Array.from(checkboxes).map(cb => cb.value);
+            
+            if(ids.length === 0) return;
+            
+            const todayISO = new Date().toISOString().split('T')[0];
+
+            if(confirm(`Confirmar presença de hoje (${todayISO}) para ${ids.length} alunos?`)) {
+                try {
+                    const promises = ids.map(id => updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id), {
+                        attendance: arrayUnion(todayISO)
+                    }));
+                    await Promise.all(promises);
+                    alert('Presenças registradas com sucesso!');
+                    loadData(); // Reload to reflect changes
+                    // Reset selection ui
+                    document.getElementById('cb-select-all').checked = false;
+                    document.getElementById('bulk-actions').classList.add('hidden');
+                } catch(e) {
+                    alert('Erro ao registrar presenças: ' + e.message);
+                }
+            }
+        };
+
+        // --- ATTENDANCE MANAGEMENT MODAL LOGIC ---
+        window.openAttendanceModal = (id) => {
+            const s = window.students.find(st => st.id === id);
+            if(!s) return;
+            
+            document.getElementById('att-student-name').innerText = s.name;
+            document.getElementById('att-student-id').value = id;
+            document.getElementById('att-date-input').valueAsDate = new Date();
+
+            const list = document.getElementById('att-list');
+            list.innerHTML = '';
+            
+            if(!s.attendance || s.attendance.length === 0) {
+                document.getElementById('att-empty').classList.remove('hidden');
+            } else {
+                document.getElementById('att-empty').classList.add('hidden');
+                // Sort dates desc
+                const sortedDates = [...s.attendance].sort((a,b) => new Date(b) - new Date(a));
+                
+                sortedDates.forEach(dateStr => {
+                    const d = new Date(dateStr + 'T12:00:00'); // Fix TZ issues
+                    const formatted = d.toLocaleDateString('pt-BR');
+                    
+                    const div = document.createElement('div');
+                    div.className = "flex justify-between items-center py-2 px-2 hover:bg-gray-50";
+                    div.innerHTML = `
+                        <span class="text-sm font-medium text-gray-700"><i class="fa-regular fa-calendar-check text-green-600 mr-2"></i> ${formatted}</span>
+                        <button onclick="removeAttendance('${dateStr}')" class="text-red-400 hover:text-red-600 text-xs" title="Remover Presença">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+
+            document.getElementById('attendance-modal').classList.remove('hidden');
+            document.getElementById('attendance-modal').classList.add('flex');
+        };
+
+        window.closeAttendanceModal = () => {
+            document.getElementById('attendance-modal').classList.add('hidden');
+            document.getElementById('attendance-modal').classList.remove('flex');
+        };
+
+        window.addManualAttendance = async () => {
+            const id = document.getElementById('att-student-id').value;
+            const dateVal = document.getElementById('att-date-input').value;
+            if(!dateVal) return;
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', id);
+                await updateDoc(docRef, { attendance: arrayUnion(dateVal) });
+                
+                // Refresh modal list locally
+                const s = window.students.find(st => st.id === id);
+                if(s) {
+                    if(!s.attendance) s.attendance = [];
+                    if(!s.attendance.includes(dateVal)) s.attendance.push(dateVal);
+                }
+                openAttendanceModal(id); // Re-render modal list
+            } catch(e) {
+                alert("Erro: " + e.message);
+            }
+        };
+
+        window.removeAttendance = async (dateStr) => {
+            if(!confirm(`Remover presença do dia ${dateStr}?`)) return;
+            const id = document.getElementById('att-student-id').value;
+            
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', id);
+                await updateDoc(docRef, { attendance: arrayRemove(dateStr) });
+                
+                // Refresh local data
+                const s = window.students.find(st => st.id === id);
+                if(s && s.attendance) {
+                    s.attendance = s.attendance.filter(d => d !== dateStr);
+                }
+                openAttendanceModal(id); // Re-render
+            } catch(e) {
+                alert("Erro: " + e.message);
             }
         };
 
@@ -789,7 +930,7 @@
             tbody.innerHTML = '';
 
             const filtered = window.students.filter(s => {
-                // Determine category dynamically for filtering using the SAME LOGIC
+                // ROBUST CATEGORY DETECTION FOR FILTERING
                 let isKid = isStudentKid(s);
                 
                 // window.currentTab is 'adults' or 'kids'
@@ -872,7 +1013,7 @@
                     <td class="px-6 py-4 align-middle">
                         <div class="flex items-center gap-2">
                             <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded w-16 text-center">${attendanceCount} aulas</span>
-                            <button onclick="addPresence('${s.id}')" class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow" title="Adicionar Presença">
+                            <button onclick="addPresence('${s.id}')" class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow" title="Adicionar Presença Hoje">
                                 <i class="fa-solid fa-plus text-xs"></i>
                             </button>
                         </div>
@@ -880,6 +1021,7 @@
                     <td class="px-6 py-4 align-middle text-center">${statusBadge}</td>
                     <td class="px-6 py-4 align-middle text-center">${hasLogin}</td>
                     <td class="px-6 py-4 align-middle text-center">
+                        <button onclick="openAttendanceModal('${s.id}')" class="text-gray-500 hover:text-black mr-2" title="Gerenciar Frequência"><i class="fa-solid fa-list-check"></i></button>
                         <button onclick="openGraduationModal('${s.id}', '${s.name}')" class="text-yellow-500 hover:text-yellow-700 mr-2" title="Graduar"><i class="fa-solid fa-medal"></i></button>
                         <button onclick="viewStudentDetails('${s.id}')" class="text-gray-500 hover:text-black mr-2" title="Visualizar"><i class="fa-solid fa-eye"></i></button>
                         <button onclick="openEditModal('${s.id}')" class="text-blue-600 hover:text-blue-900 mr-2" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
