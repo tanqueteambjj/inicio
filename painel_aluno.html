@@ -53,7 +53,7 @@
         <div class="text-center">
             <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4 mx-auto"></div>
             <h2 class="text-white font-display text-xl animate-pulse">CARREGANDO DOJO...</h2>
-            <p id="loading-text" class="text-gray-400 text-xs mt-2">Verificando credenciais...</p>
+            <p id="loading-text" class="text-gray-400 text-xs mt-2">Sincronizando dados...</p>
         </div>
     </div>
 
@@ -229,8 +229,8 @@
     <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // Importando doc e getDoc para busca direta pelo ID
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
@@ -243,70 +243,76 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = "tanqueteam-bjj";
 
         // --- SAFE REDIRECT HELPER ---
         function safeRedirect(url) {
             try {
-                // Tenta verificar se o protocolo permite navegação padrão
                 const protocol = window.location.protocol;
                 if (protocol.startsWith('http')) {
                     window.location.href = url;
                 } else {
-                    // Se for data:, about:, ou file: (com restrição), lança erro ou mostra aviso
-                    throw new Error("Navegação direta bloqueada neste ambiente");
+                    console.warn("Redirecionamento bloqueado (Preview Mode):", e);
+                    document.getElementById('loading-screen')?.classList.add('hidden');
+                    document.getElementById('redirect-overlay')?.classList.remove('hidden');
                 }
             } catch (e) {
-                console.warn("Redirecionamento bloqueado (Preview Mode):", e);
-                // Oculta o loading
+                console.warn("Redirecionamento bloqueado:", e);
                 document.getElementById('loading-screen')?.classList.add('hidden');
-                // Mostra overlay de aviso
                 document.getElementById('redirect-overlay')?.classList.remove('hidden');
             }
         }
 
+        // Função de Logout Atualizada (Limpa LocalStorage)
         window.handleLogout = () => {
-            signOut(auth).then(() => {
-                safeRedirect("login_aluno.html");
-            }).catch((error) => {
-                console.error("Erro ao sair", error);
-            });
+            localStorage.removeItem('tanque_user_session');
+            safeRedirect("login_aluno.html");
         };
 
         // Date Display
         const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', dateOptions);
 
-        // Auth Listener
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                console.log("Usuário logado:", user.email);
-                await loadStudentData(user.email);
-            } else {
-                // Se não estiver logado, usa redirecionamento seguro
-                safeRedirect("login_aluno.html");
-            }
-        });
-
-        async function loadStudentData(email) {
+        // --- VERIFICAÇÃO DE SESSÃO ---
+        // Verifica se existe o token "tanque_user_session" no LocalStorage
+        const session = localStorage.getItem('tanque_user_session');
+        
+        if (session) {
             try {
-                const studentsRef = collection(db, 'artifacts', appId, 'public', 'data', 'students');
-                const q = query(studentsRef, where("email", "==", email));
-                const querySnapshot = await getDocs(q);
+                const user = JSON.parse(session);
+                if (user && user.id) {
+                    // Carrega os dados atualizados do banco usando o ID salvo
+                    console.log("Sessão encontrada para:", user.name);
+                    loadStudentData(user.id);
+                } else {
+                    throw new Error("Sessão inválida");
+                }
+            } catch(e) {
+                console.error("Erro na sessão", e);
+                handleLogout();
+            }
+        } else {
+            // Se não estiver logado, redireciona
+            safeRedirect("login_aluno.html");
+        }
 
-                if (!querySnapshot.empty) {
-                    const docData = querySnapshot.docs[0].data();
+        async function loadStudentData(id) {
+            try {
+                // Busca direta pelo ID do documento
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', id);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const docData = docSnap.data();
                     renderDashboard(docData);
                 } else {
-                    alert("Dados do aluno não encontrados. Entre em contato com a secretaria.");
-                    document.getElementById('student-name-display').innerText = "Aluno não vinculado";
+                    alert("Cadastro não encontrado no sistema. Entre em contato com a secretaria.");
+                    document.getElementById('student-name-display').innerText = "Erro no cadastro";
                     document.getElementById('loading-screen').classList.add('hidden');
                 }
             } catch (error) {
                 console.error("Erro ao buscar dados:", error);
-                // alert("Erro de conexão com o banco de dados.");
                 document.getElementById('loading-screen').classList.add('hidden');
             }
         }
