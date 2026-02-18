@@ -86,16 +86,16 @@
             <form id="loginForm" onsubmit="handleLogin(event)">
                 <div class="space-y-5">
                     
-                    <!-- Email Input -->
+                    <!-- Email/Login Input -->
                     <div class="relative">
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1 ml-1">E-mail ou Matrícula</label>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1 ml-1">Usuário ou E-mail</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                                <i class="fa-solid fa-envelope"></i>
+                                <i class="fa-solid fa-user"></i>
                             </div>
-                            <input type="email" id="email" required 
+                            <input type="text" id="login" required 
                                 class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-red focus:border-brand-red block pl-10 p-3 transition-colors outline-none" 
-                                placeholder="seu@email.com">
+                                placeholder="Digite seu login ou e-mail">
                         </div>
                     </div>
 
@@ -141,7 +141,6 @@
             <!-- Footer Links -->
             <div class="text-center space-y-2">
                 <p class="text-sm text-gray-600">Ainda não tem acesso?</p>
-                <!-- Link atualizado para o site principal -->
                 <a href="https://tanqueteambjj.github.io/inicio/home.html#register" class="text-brand-dark font-bold hover:text-brand-red transition underline decoration-brand-red decoration-2 underline-offset-4">Fazer Matrícula Online</a>
                 <div class="mt-4 pt-4 border-t border-gray-100">
                     <a href="https://tanqueteambjj.github.io/inicio/home.html#home" class="text-xs text-gray-400 hover:text-gray-600 flex items-center justify-center gap-1 transition">
@@ -161,7 +160,8 @@
     <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // Importando funções de consulta do Firestore, sem Auth
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
@@ -174,10 +174,16 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = "tanqueteam-bjj";
 
-        window.authInstance = auth;
-        window.signInFunc = signInWithEmailAndPassword;
+        // Expondo DB para funções globais
+        window.dbInstance = db;
+        window.dbCollection = collection;
+        window.dbQuery = query;
+        window.dbWhere = where;
+        window.dbGetDocs = getDocs;
+        window.appIdVar = appId;
     </script>
 
     <script>
@@ -197,7 +203,6 @@
         }
 
         // --- SAFE REDIRECT HELPER ---
-        // Evita erro de sintaxe no modo preview
         function safeRedirect(url) {
             try {
                 const protocol = window.location.protocol;
@@ -216,8 +221,8 @@
         async function handleLogin(e) {
             e.preventDefault();
             
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            const loginInput = document.getElementById('login').value.trim(); // Pode ser e-mail ou login
+            const passwordInput = document.getElementById('password').value.trim();
             const btn = document.getElementById('btn-login');
             const errorBox = document.getElementById('error-box');
             const errorMsg = document.getElementById('error-msg');
@@ -228,17 +233,45 @@
             btn.classList.add('opacity-75');
 
             try {
-                const userCredential = await window.signInFunc(window.authInstance, email, password);
+                // Tenta buscar por Login E Senha
+                // Nota: Firestore exige que todos os campos no 'where' tenham índices compostos se forem muitos.
+                // Vamos tentar buscar pelo 'studentLogin' primeiro.
                 
-                // --- SUCESSO ---
-                btn.classList.remove('bg-brand-red', 'hover:bg-red-700');
-                btn.classList.add('bg-green-600', 'hover:bg-green-700');
-                btn.innerHTML = '<i class="fa-solid fa-check"></i> SUCESSO!';
+                const studentsRef = window.dbCollection(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'students');
                 
-                // Espera 1 segundo e redireciona para o painel
-                setTimeout(() => {
-                    safeRedirect("painel_aluno.html");
-                }, 1000);
+                // Estratégia: Buscamos pelo login ou email
+                // O Firebase não suporta "OR" simples em queries básicas sem configurações avançadas.
+                // Vamos tentar fazer duas queries ou buscar pelo campo login e filtrar no JS.
+                
+                // Tentativa 1: Buscar por studentLogin
+                let q = window.dbQuery(studentsRef, window.dbWhere('studentLogin', '==', loginInput), window.dbWhere('studentPassword', '==', passwordInput));
+                let snapshot = await window.dbGetDocs(q);
+
+                // Se não achou, tenta buscar por email (caso o aluno use email no login)
+                if (snapshot.empty) {
+                    q = window.dbQuery(studentsRef, window.dbWhere('email', '==', loginInput), window.dbWhere('studentPassword', '==', passwordInput));
+                    snapshot = await window.dbGetDocs(q);
+                }
+
+                if (!snapshot.empty) {
+                    // --- SUCESSO ---
+                    const doc = snapshot.docs[0];
+                    const studentData = { id: doc.id, ...doc.data() };
+
+                    // Salva sessão "manualmente" no LocalStorage
+                    localStorage.setItem('tanque_user_session', JSON.stringify(studentData));
+
+                    btn.classList.remove('bg-brand-red', 'hover:bg-red-700');
+                    btn.classList.add('bg-green-600', 'hover:bg-green-700');
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> SUCESSO!';
+                    
+                    setTimeout(() => {
+                        safeRedirect("painel_aluno.html");
+                    }, 1000);
+
+                } else {
+                    throw new Error("Credenciais inválidas");
+                }
 
             } catch (error) {
                 // --- ERRO ---
@@ -247,19 +280,8 @@
                 btn.classList.remove('opacity-75');
                 
                 errorBox.classList.remove('hidden');
-                
-                switch(error.code) {
-                    case 'auth/invalid-credential':
-                    case 'auth/user-not-found':
-                    case 'auth/wrong-password':
-                        errorMsg.innerText = "E-mail ou senha incorretos.";
-                        break;
-                    case 'auth/too-many-requests':
-                        errorMsg.innerText = "Muitas tentativas falhas. Tente novamente mais tarde.";
-                        break;
-                    default:
-                        errorMsg.innerText = "Erro ao acessar: " + error.code;
-                }
+                errorMsg.innerText = "Usuário ou senha incorretos.";
+                console.error("Erro login:", error);
                 
                 const card = document.querySelector('.glass-effect');
                 card.classList.add('animate-pulse'); 
