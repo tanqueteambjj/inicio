@@ -1203,6 +1203,73 @@
             `;
         }
 
+        // New function to print individual student contract
+        function printIndividualContract(id) {
+            const s = allStudents.find(st => st.id === id);
+            if (!s) {
+                 alert("Aluno não encontrado.");
+                 return;
+            }
+
+            // Reconstruct derived data
+            // Price: we infer from plan string if possible, or leave placeholder
+            let price = "R$ 0,00";
+            if(s.plan === 'infantil-mensal') price = "R$ 179,00";
+            else if(s.plan === 'infantil-semestral') price = "R$ 159,00";
+            else if(s.plan === 'adulto-mensal') price = "R$ 139,00";
+            else if(s.plan === 'adulto-semestral') price = "R$ 119,00";
+            
+            let promoNote = "";
+            if (s.plan && s.plan.includes('semestral')) {
+                // Check if registration was in April? 
+                // For simplicity, let's include the promo note if it was part of the original data context or generic.
+                // Or check registrationDate month.
+                const regDate = new Date(s.registrationDate);
+                if (regDate.getMonth() === 3) { // Month 3 is April (0-indexed)
+                     promoNote = "(PROMOÇÃO ABRIL: 1ª Mensalidade R$ 9,90)";
+                }
+            }
+
+            // Format dates
+            const dobDate = new Date(s.dob);
+            const formattedDob = `${dobDate.getDate()}/${dobDate.getMonth()+1}/${dobDate.getFullYear()}`;
+            
+            // Populate hidden contract div
+            document.getElementById('printContratante').innerText = s.guardian || s.name;
+            document.getElementById('printStudent').innerText = s.name;
+            document.getElementById('printDob').innerText = formattedDob;
+            document.getElementById('printCPF').innerText = s.cpf;
+            document.getElementById('printEmail').innerText = s.email;
+            document.getElementById('printPhone').innerText = s.phone;
+            document.getElementById('printAddress').innerText = s.address;
+            
+            const displayName = s.plan ? s.plan.toUpperCase().replace('-', ' ') : 'NÃO INFORMADO';
+            document.getElementById('printPlan').innerText = displayName;
+            document.getElementById('printPrice').innerText = price + " " + promoNote;
+            
+            // If payment method was stored (new records), use it. Old records might not have it.
+            // Using placeholder if undefined.
+            document.getElementById('printPaymentMethod').innerText = s.paymentMethod || "DEFINIDO NO ATO";
+            
+            // Belt
+            const printGraduation = document.getElementById('printGraduation');
+            if(s.belt && !s.belt.includes("Branca - 0º Grau") && !s.belt.includes("Iniciante")) {
+                printGraduation.classList.remove('hidden');
+                document.getElementById('printBeltInfo').innerText = s.belt;
+            } else {
+                 printGraduation.classList.add('hidden');
+            }
+
+            // Contract Date = Registration Date
+            const regDate = new Date(s.registrationDate);
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', options);
+            document.getElementById('printContractSignature').innerText = ""; // Empty signature line for reprint
+
+            // Trigger Print
+            window.print();
+        }
+
         function renderTable() {
             const tbody = document.getElementById('admin-table-body');
             const theadRow = document.getElementById('admin-table-head');
@@ -1252,12 +1319,30 @@
                 const payStatus = s.paymentStatus || 'Pendente';
                 const payClass = payStatus === 'Em dia' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
 
+                // --- CONTRACT EXPIRY CHECK LOGIC ---
+                const endDate = new Date(s.contractEndDate);
+                const today = new Date();
+                // Calculate difference in days
+                const timeDiff = endDate - today;
+                const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                
+                let dateClass = 'text-green-600'; // Default OK
+                
+                if (daysDiff < 0) {
+                    // Expired
+                    dateClass = 'text-red-600 font-bold';
+                } else if (daysDiff <= 5) {
+                    // Warning (5 days or less remaining)
+                    dateClass = 'text-yellow-600 font-extrabold';
+                }
+
                 rowHTML += `
                     <td class="p-3 align-middle">${getAge(s.dob)} anos</td>
                     <td class="p-3 align-middle">${formatDate(s.registrationDate)}</td>
-                    <td class="p-3 font-bold align-middle ${new Date(s.contractEndDate) < new Date() ? 'text-red-600' : 'text-green-600'}">${formatDate(s.contractEndDate)}</td>
+                    <td class="p-3 align-middle ${dateClass}">${formatDate(s.contractEndDate)}</td>
                     <td class="p-3 text-center align-middle"><span class="px-2 py-1 rounded text-xs font-bold ${payClass}">${payStatus}</span></td>
                     <td class="p-3 text-center no-print-col align-middle">
+                        <button onclick="printIndividualContract('${s.id}')" class="text-gray-600 hover:text-black mr-2" title="Imprimir Contrato"><i class="fa-solid fa-file-contract"></i></button>
                         <button onclick="openGraduationModal('${s.id}', '${s.name}')" class="text-yellow-600 hover:text-yellow-800 mr-2" title="Graduar"><i class="fa-solid fa-medal"></i></button>
                         <button onclick="editStudent('${s.id}')" class="text-blue-600 hover:text-blue-800 mr-2" title="Editar"><i class="fa-solid fa-pen"></i></button>
                         <button onclick="deleteStudent('${s.id}')" class="text-red-600 hover:text-red-800" title="Excluir"><i class="fa-solid fa-trash"></i></button>
