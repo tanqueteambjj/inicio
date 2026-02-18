@@ -336,7 +336,7 @@
                     </div>
 
                     <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 bg-blue-50 p-4 rounded-lg">
-                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-3 flex items-center gap-2"><i class="fa-solid fa-key"></i> Acesso ao Portal do Aluno</h4>
+                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-3">Definir Acesso do Aluno</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-blue-600 mb-1">Login (Usuário/Email)</label>
@@ -546,6 +546,16 @@
                         </div>
                     </div>
 
+                    <!-- FINANCIAL INFO (NOVO) -->
+                    <div class="bg-gray-50 p-3 rounded border border-gray-100">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase border-b pb-1 mb-2">Financeiro</h4>
+                        <div class="grid grid-cols-2 gap-y-2 text-sm">
+                            <div class="col-span-2"><span class="text-gray-500 block text-xs">Plano Contratado</span><span class="font-medium font-bold text-brand-dark" id="detail-plan">--</span></div>
+                            <div><span class="text-gray-500 block text-xs">Valor Mensal</span><span class="font-medium" id="detail-value">--</span></div>
+                            <div><span class="text-gray-500 block text-xs">Forma de Pagamento</span><span class="font-medium" id="detail-method">--</span></div>
+                        </div>
+                    </div>
+
                     <!-- GUARDIAN INFO SECTION -->
                     <div id="detail-guardian-box" class="hidden bg-yellow-50 p-3 rounded border border-yellow-100">
                         <h4 class="text-xs font-bold text-yellow-700 uppercase mb-1 flex items-center gap-1"><i class="fa-solid fa-people-roof"></i> Responsável Legal</h4>
@@ -641,9 +651,21 @@
             const active = window.students.filter(s => s.paymentStatus === 'Em dia').length;
             const pending = total - active;
             
-            // Robust check using lower case logic to match existing data
-            const kidsCount = window.students.filter(s => s.category && s.category.toLowerCase() === 'infantil').length;
-            const adultsCount = window.students.filter(s => s.category && s.category.toLowerCase() === 'adulto').length;
+            let kidsCount = 0;
+            let adultsCount = 0;
+
+            window.students.forEach(s => {
+                // Determine category based on stored field or fallback to plan
+                let isKid = false;
+                if (s.category) {
+                    isKid = s.category.toLowerCase() === 'infantil';
+                } else if (s.plan) {
+                    isKid = s.plan.toLowerCase().includes('infantil');
+                }
+                
+                if (isKid) kidsCount++;
+                else adultsCount++;
+            });
 
             document.getElementById('stat-total').innerText = total;
             document.getElementById('stat-active').innerText = active;
@@ -758,11 +780,21 @@
             const search = document.getElementById('searchInput')?.value.toLowerCase() || "";
             tbody.innerHTML = '';
 
-            const categoryFilter = window.currentTab === 'adults' ? 'Adulto' : 'Infantil';
-            const filtered = window.students.filter(s => 
-                (s.category === categoryFilter) && 
-                (s.name.toLowerCase().includes(search))
-            );
+            const filtered = window.students.filter(s => {
+                // Determine category dynamically for filtering
+                let isKid = false;
+                if (s.category) {
+                    isKid = s.category.toLowerCase() === 'infantil';
+                } else if (s.plan) {
+                    isKid = s.plan.toLowerCase().includes('infantil');
+                }
+                
+                // window.currentTab is 'adults' or 'kids'
+                const matchesTab = (window.currentTab === 'kids' && isKid) || (window.currentTab === 'adults' && !isKid);
+                const matchesSearch = s.name.toLowerCase().includes(search);
+                
+                return matchesTab && matchesSearch;
+            });
 
             document.getElementById('list-count').innerText = filtered.length;
             document.getElementById('list-title').innerText = window.currentTab === 'adults' ? "Lista de Jovens e Adultos" : "Lista Infantil";
@@ -1051,6 +1083,21 @@
                 document.getElementById('detail-guardian-name').innerText = s.guardian;
                 guardianBox.classList.remove('hidden');
             } else { guardianBox.classList.add('hidden'); }
+
+            // FINANCIAL DETAILS LOGIC
+            const planMap = {
+                'infantil-mensal': 'R$ 179,00',
+                'infantil-semestral': 'R$ 159,00',
+                'adulto-mensal': 'R$ 139,00',
+                'adulto-semestral': 'R$ 119,00'
+            };
+            const planName = s.plan ? s.plan.replace('-', ' ').toUpperCase() : 'NÃO INFORMADO';
+            const planValue = planMap[s.plan] || 'Sob Consulta';
+            const payMethod = s.paymentMethod || 'Não informado';
+
+            document.getElementById('detail-plan').innerText = planName;
+            document.getElementById('detail-value').innerText = planValue;
+            document.getElementById('detail-method').innerText = payMethod;
 
             document.getElementById('details-modal').classList.remove('hidden');
             document.getElementById('details-modal').classList.add('flex');
