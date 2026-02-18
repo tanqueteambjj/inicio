@@ -133,7 +133,9 @@
                             <span id="list-title">Lista de Alunos</span>
                             <span class="bg-gray-200 text-gray-600 py-0.5 px-2 rounded-full text-xs" id="list-count">0</span>
                         </h3>
-                        <button onclick="loadData()" class="text-brand-red hover:text-red-800 text-sm"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+                        <button onclick="loadData()" id="btn-refresh" class="text-brand-red hover:text-red-800 text-sm flex items-center gap-1">
+                            <i class="fa-solid fa-rotate" id="icon-refresh"></i> Atualizar
+                        </button>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
@@ -170,7 +172,6 @@
                                     <th class="px-6 py-3 border-b text-center">Dia Vencimento</th>
                                     <th class="px-6 py-3 border-b text-center">Prox. Pagamento</th>
                                     <th class="px-6 py-3 border-b">Status</th>
-                                    <th class="px-6 py-3 border-b text-center">Acesso</th>
                                     <th class="px-6 py-3 border-b text-center">Ações</th>
                                 </tr>
                             </thead>
@@ -292,7 +293,6 @@
                                     <option value="adulto-semestral">Adulto Semestral</option>
                                 </select>
                             </div>
-                            <!-- NOVOS CAMPOS PARA EDIÇÃO -->
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1">Email</label>
                                 <input type="email" id="edit-email" class="w-full border rounded p-2">
@@ -302,6 +302,19 @@
                                 <input type="text" id="edit-phone" class="w-full border rounded p-2">
                             </div>
                         </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Cor da Faixa</label>
+                        <select id="edit-belt-color" class="w-full border rounded p-2">
+                            <option>Branca</option><option>Cinza</option><option>Amarela</option><option>Laranja</option><option>Verde</option><option>Azul</option><option>Roxa</option><option>Marrom</option><option>Preta</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Graus</label>
+                        <select id="edit-belt-degree" class="w-full border rounded p-2">
+                            <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+                        </select>
                     </div>
 
                     <div>
@@ -601,6 +614,14 @@
         }
 
         async function loadData() {
+            // Show Feedback
+            const btnRefresh = document.getElementById('btn-refresh');
+            const iconRefresh = document.getElementById('icon-refresh');
+            if(btnRefresh) {
+                btnRefresh.classList.add('text-gray-400', 'cursor-not-allowed');
+                iconRefresh.classList.add('fa-spin');
+            }
+
             try {
                 if(!db) throw new Error("Database not initialized");
                 const querySnapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'students'));
@@ -613,7 +634,11 @@
                 else renderFinancialTable();
             } catch (error) {
                 console.error("Erro ao carregar:", error);
-                // alert("Erro ao carregar dados."); // Removido alerta invasivo
+            } finally {
+                if(btnRefresh) {
+                    btnRefresh.classList.remove('text-gray-400', 'cursor-not-allowed');
+                    iconRefresh.classList.remove('fa-spin');
+                }
             }
         }
 
@@ -731,15 +756,12 @@
                     : '<span class="text-gray-400 text-xs italic">--</span>';
 
                 const today = new Date();
-                // Check nextDueDate OR contractEndDate
                 const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : new Date(s.contractEndDate);
                 const diffTime = targetDate - today;
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
                 let statusBadge = '';
-                if (diffDays < 0 && s.paymentStatus !== 'Em dia') { // Only overdue if not marked paid (simplified logic, usually needs more)
-                     // Actually, if 'Pendente' and date passed -> Vencido. If 'Em dia', maybe show Green but warn about date?
-                     // Let's stick to status:
+                if (diffDays < 0 && s.paymentStatus !== 'Em dia') {
                      if(s.paymentStatus === 'Pendente') statusBadge = '<span class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>';
                      else statusBadge = '<span class="px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-800">Em dia</span>';
                 } else if (diffDays <= 7 && diffDays >= 0) {
@@ -808,17 +830,12 @@
             }
 
             filtered.forEach(s => {
-                // Calculate "Due Day" based on registration date (fallback to 10th)
                 let regDay = 10;
                 if(s.registrationDate) {
                     regDay = new Date(s.registrationDate).getDate();
                 }
 
-                // Next Due Date (Stored or Calc)
                 const nextDue = s.nextDueDate ? formatDate(s.nextDueDate) : `Dia ${regDay}`;
-                const contractEnd = formatDate(s.contractEndDate);
-                
-                // Status Logic (Simple)
                 const payStatus = s.paymentStatus || 'Pendente';
                 const statusColor = payStatus === 'Em dia' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100';
 
@@ -848,7 +865,6 @@
             document.getElementById('pay-student-name').innerText = s.name;
             document.getElementById('pay-date').valueAsDate = new Date();
             
-            // Suggest next month as next due date
             const today = new Date();
             const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
             document.getElementById('pay-next-due').valueAsDate = nextMonth;
@@ -878,7 +894,6 @@
                 timestamp: new Date().toISOString()
             };
 
-            // Update Next Due Date (treat as ISO string start of day)
             let nextDueISO = null;
             if(nextDue) {
                 const [y, m, d] = nextDue.split('-').map(Number);
@@ -915,7 +930,6 @@
                 document.getElementById('history-empty').classList.remove('hidden');
             } else {
                 document.getElementById('history-empty').classList.add('hidden');
-                // Sort by date desc
                 const sorted = [...s.paymentHistory].sort((a,b) => new Date(b.date) - new Date(a.date));
                 
                 sorted.forEach(p => {
@@ -940,7 +954,6 @@
             document.getElementById('history-modal').classList.remove('flex');
         };
 
-        // ... existing code (addPresence, deleteStudent, viewStudentDetails, closeDetailsModal, openEditModal, closeEditModal, saveStudentChanges, renderBeltSVG) ...
         window.addPresence = async (id) => {
             const todayISO = new Date().toISOString().split('T')[0];
             try {
@@ -955,7 +968,16 @@
 
         window.deleteStudent = async (id) => {
             if(!confirm("Excluir aluno permanentemente?")) return;
-            try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id)); loadData(); } catch(e) { alert("Erro ao excluir."); }
+            try { 
+                // Instant UI update
+                window.students = window.students.filter(s => s.id !== id);
+                updateStats();
+                if(window.currentView === 'students') renderTable();
+                else renderFinancialTable();
+
+                // Backend update
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id)); 
+            } catch(e) { alert("Erro ao excluir."); loadData(); }
         };
 
         window.viewStudentDetails = (id) => {
@@ -1005,7 +1027,6 @@
             document.getElementById('edit-name').value = s.name;
             document.getElementById('edit-plan').value = s.plan || 'infantil-mensal';
             document.getElementById('edit-payment').value = s.paymentStatus || 'Pendente';
-            // Pre-fill email and phone
             document.getElementById('edit-email').value = s.email || '';
             document.getElementById('edit-phone').value = s.phone || '';
 
