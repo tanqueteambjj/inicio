@@ -340,13 +340,20 @@
                     <div class="space-y-6">
                         <a href="https://maps.app.goo.gl/Qr4yLUTsVaZPiery9" target="_blank" class="flex items-center group hover:bg-gray-800 p-3 -ml-3 rounded-lg transition duration-300 cursor-pointer">
                             <div class="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center text-brand-red mr-4 group-hover:bg-brand-red group-hover:text-white transition duration-300"><i class="fa-solid fa-location-dot"></i></div>
-                            <div><h4 class="font-bold group-hover:text-brand-red transition duration-300">Localização <i class="fa-solid fa-arrow-up-right-from-square text-xs ml-1 opacity-50"></i></h4><p class="text-gray-400 text-sm group-hover:text-gray-200 transition duration-300">Rua José Custodio de Almeida, Nº 9 <br>Parque Verde - Belém-PA</p></div>
+                            <div><h4 class="font-bold group-hover:text-brand-red transition duration-300">Localização <i class="fa-solid fa-arrow-up-right-from-square text-xs ml-1 opacity-50"></i></h4><p class="text-gray-400 text-sm group-hover:text-gray-200 transition duration-300">Rua José Custodio de Almeida, Nº 9 <br>Parque Verde - <strong class="text-white">Belém, Pará (PA)</strong></p></div>
                         </a>
                         <a href="https://wa.me/5591998192610" target="_blank" class="flex items-center group hover:bg-gray-800 p-3 -ml-3 rounded-lg transition duration-300 cursor-pointer">
                             <div class="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center text-brand-red mr-4 group-hover:bg-brand-red group-hover:text-white transition duration-300"><i class="fa-brands fa-whatsapp"></i></div>
                             <div><h4 class="font-bold group-hover:text-brand-red transition duration-300">WhatsApp <i class="fa-solid fa-arrow-up-right-from-square text-xs ml-1 opacity-50"></i></h4><p class="text-gray-400 text-sm group-hover:text-gray-200 transition duration-300">(91) 99819-2610</p></div>
                         </a>
                     </div>
+                    
+                    <!-- NOVO: Mapa embutido (Google Maps) -->
+                    <div class="mt-8 bg-gray-800 p-4 rounded-lg border border-gray-700 shadow-inner hidden md:block">
+                        <h4 class="text-white font-bold uppercase tracking-wider mb-3 text-sm flex items-center"><i class="fa-solid fa-map-location-dot text-brand-red mr-2 text-lg"></i> Nossa Unidade em <span class="text-brand-red ml-1">Belém-PA</span></h4>
+                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.6214531818274!2d-48.4533036!3d-1.373678!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x92a48ac11a76dc11%3A0x86bd615f1f7e0fc2!2sR.%20Jos%C3%A9%20Cust%C3%B3dio%20de%20Almeida%2C%209%20-%20Parque%20Verde%2C%20Bel%C3%A9m%20-%20PA%2C%2066635-110!5e0!3m2!1spt-BR!2sbr!4v1708260000000!5m2!1spt-BR!2sbr" width="100%" height="200" style="border:0; border-radius: 0.5rem;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
+
                     <div id="plan-summary" class="mt-8 p-6 bg-gray-800 rounded-lg border border-gray-700 hidden">
                         <h4 class="text-gray-400 text-xs uppercase tracking-widest mb-2">Plano Selecionado</h4>
                         <div class="flex justify-between items-end">
@@ -1071,15 +1078,19 @@
 
         async function loadAdminData() {
             try {
-                // console.log("Tentando carregar dados do caminho:", `artifacts/${window.appId}/public/data/students`);
-                const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'students'), window.orderBy("registrationDate", "desc"));
+                // Modificado para evitar bloqueios de índice (Index Error) no Firebase
+                const q = window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'students');
                 const snapshot = await window.getDocs(q);
                 allStudents = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                
+                // Ordenação na memória
+                allStudents.sort((a, b) => new Date(b.registrationDate) - new Date(a.registrationDate));
+                
                 renderTable();
                 updateStats();
             } catch(e) {
                 console.error("Erro ao carregar dados:", e);
-                alert(`Erro ao carregar lista de alunos: ${e.message}\n\nVerifique se as Regras de Segurança do Firestore (Firestore Rules) permitem leitura/escrita.`);
+                alert(`Erro ao carregar lista de alunos: ${e.message}`);
             }
         }
 
@@ -1570,15 +1581,19 @@
              if (!user || !pass) { alert("Preencha usuário e senha."); return; }
 
              try {
-                 const q = window.query(
-                     window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'students'), 
-                     window.where('studentLogin', '==', user),
-                     window.where('studentPassword', '==', pass)
-                 );
+                 // Modificado para buscar todos os alunos e filtrar na memória, garantindo funcionamento sem erros de índices
+                 const q = window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'students');
                  const snapshot = await window.getDocs(q);
 
-                 if (!snapshot.empty) {
-                     const studentData = snapshot.docs[0].data();
+                 let studentData = null;
+                 snapshot.forEach(doc => {
+                     const data = doc.data();
+                     if (data.studentLogin === user && data.studentPassword === pass) {
+                         studentData = data;
+                     }
+                 });
+
+                 if (studentData) {
                      // Store global for printing
                      window.currentUserData = studentData;
                      renderStudentDashboard(studentData);
@@ -1589,7 +1604,7 @@
                  }
              } catch(e) {
                  console.error(e);
-                 alert("Erro ao conectar.");
+                 alert("Erro ao conectar: " + e.message);
              }
         }
 
