@@ -7,6 +7,9 @@
     
     <link rel="icon" href="https://i.ibb.co/mC2zPJbm/1771300330359.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -398,7 +401,7 @@
                         </div>
                         <div class="mt-3">
                              <button onclick="sendAccessEmail()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded flex items-center justify-center gap-2 shadow-sm transition">
-                                <i class="fa-solid fa-envelope"></i> Enviar Acesso por E-mail
+                                <i class="fa-solid fa-envelope"></i> Enviar Acesso por E-mail (EmailJS)
                             </button>
                         </div>
                     </div>
@@ -654,12 +657,14 @@
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
-            // CORREÇÃO: Usar __app_id do ambiente se disponível para permissões corretas
             appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj";
             window.db = db;
         } catch(e) {
             console.error("Firebase init error", e);
         }
+
+        // EmailJS Initialization
+        (function(){ emailjs.init("joP6USyQXdqGI3GN5"); })();
 
         window.students = []; 
         window.currentTab = 'adults';
@@ -761,13 +766,15 @@
             
             if(confirm(`Tem certeza que deseja excluir ${ids.length} alunos selecionados? Esta ação é irreversível.`)) {
                 try {
+                    // Loop de exclusão
                     const deletePromises = ids.map(id => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id)));
                     await Promise.all(deletePromises);
+                    
                     alert('Alunos excluídos com sucesso!');
-                    window.location.reload(); 
+                    window.location.reload(); // Atualiza a página como solicitado
                 } catch(e) {
                     alert('Erro ao excluir: ' + e.message);
-                    loadData();
+                    loadData(); // Recarrega dados em caso de erro parcial
                 }
             }
         };
@@ -1439,7 +1446,7 @@
             }
         }
         
-        window.sendAccessEmail = () => {
+        window.sendAccessEmail = async () => {
             const name = document.getElementById('edit-name').value;
             const email = document.getElementById('edit-email').value;
             const login = document.getElementById('edit-login').value;
@@ -1448,11 +1455,43 @@
             if(!email) { alert("O aluno precisa ter um email cadastrado."); return; }
             if(!login || !pass) { alert("Defina login e senha antes de enviar."); return; }
 
-            const subject = encodeURIComponent("Acesso ao Portal do Aluno - Tanque Team BJJ");
-            const body = encodeURIComponent(`Olá ${name},\n\nSegue abaixo suas credenciais de acesso ao nosso Portal do Aluno:\n\nLogin: ${login}\nSenha Provisória: ${pass}\n\nPor favor, acesse o portal e altere sua senha no primeiro acesso.\n\nAtenciosamente,\nEquipe Tanque Team`);
+            const btn = event.currentTarget; // Captura o botão clicado
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
 
-            const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
-            window.location.href = mailtoLink;
+            const messageContent = `
+                <div style="font-family: Arial, sans-serif; color: #333;">
+                    <h2>Olá, ${name}!</h2>
+                    <p>Segue abaixo suas credenciais de acesso ao <strong>Portal do Aluno - Tanque Team BJJ</strong>:</p>
+                    <div style="background: #f4f4f4; padding: 15px; border-radius: 5px; border-left: 4px solid #D90429;">
+                        <p><strong>Login:</strong> ${login}</p>
+                        <p><strong>Senha:</strong> ${pass}</p>
+                    </div>
+                    <p>Por favor, acesse o portal e altere sua senha no primeiro acesso se desejar.</p>
+                    <p>Atenciosamente,<br>Equipe Tanque Team</p>
+                </div>
+            `;
+
+            // Usando os mesmos IDs do index.html para garantir compatibilidade
+            const params = {
+                to_name: name,
+                to_email: email,
+                subject: "Acesso ao Portal do Aluno - Tanque Team BJJ",
+                message: messageContent,
+                reply_to: "contato@tanqueteambjj.com"
+            };
+
+            try {
+                await emailjs.send("service_yq744mr", "template_few5bna", params);
+                alert("E-mail com credenciais enviado com sucesso!");
+            } catch (error) {
+                console.error("Erro ao enviar email:", error);
+                alert("Erro ao enviar e-mail. Verifique o console ou a configuração do EmailJS.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
         };
 
         function renderBeltSVG(beltStr) {
