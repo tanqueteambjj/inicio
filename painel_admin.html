@@ -137,7 +137,7 @@
                                 <span id="list-title">Lista de Alunos</span>
                                 <span class="bg-gray-200 text-gray-600 py-0.5 px-2 rounded-full text-xs" id="list-count">0</span>
                             </h3>
-                            <!-- Botão de Exclusão em Massa -->
+                            <!-- Botão de Exclusão em Massa (Invisível por padrão) -->
                             <button onclick="deleteSelectedStudents()" id="btn-bulk-delete" class="hidden flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition animate-fade-in">
                                 <i class="fa-solid fa-trash-can"></i> Excluir Selecionados (<span id="selected-count">0</span>)
                             </button>
@@ -363,7 +363,21 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="md:col-span-2 pb-2 border-b border-gray-200 mb-2">
-                        <h4 class="text-xs font-bold text-brand-red uppercase mb-3">Dados Pessoais</h4>
+                        <!-- PHOTO UPLOAD SECTION -->
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="relative w-20 h-20 group cursor-pointer" onclick="document.getElementById('edit-photo').click()">
+                                <img id="edit-photo-preview" src="https://ui-avatars.com/api/?name=User&background=random" class="w-full h-full rounded-full object-cover border-2 border-gray-200 shadow-md">
+                                <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                                    <i class="fa-solid fa-camera text-white"></i>
+                                </div>
+                                <input type="file" id="edit-photo" accept="image/*" class="hidden" onchange="previewPhoto(event)">
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-brand-red uppercase">Dados Pessoais</h4>
+                                <p class="text-[10px] text-gray-400">Clique na imagem para alterar a foto.</p>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1">Nome Completo</label>
@@ -415,7 +429,7 @@
                     </div>
 
                     <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 bg-blue-50 p-4 rounded-lg">
-                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-3">Definir Acesso do Aluno</h4>
+                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-3 flex items-center gap-2"><i class="fa-solid fa-key"></i> Acesso ao Portal do Aluno</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-blue-600 mb-1">Login (Usuário/Email)</label>
@@ -478,6 +492,83 @@
             <div class="mt-6 flex justify-end gap-2">
                 <button onclick="closeGraduationModal()" class="px-4 py-2 border rounded">Cancelar</button>
                 <button onclick="saveGraduation()" class="px-4 py-2 bg-yellow-500 text-white font-bold rounded hover:bg-yellow-600">Confirmar Graduação</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DETAILS MODAL (READ ONLY) -->
+    <div id="details-modal" class="fixed inset-0 z-[60] hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto transform transition-all relative">
+            <button onclick="closeDetailsModal()" class="absolute top-3 right-3 bg-white/80 hover:bg-white text-gray-600 hover:text-black rounded-full w-8 h-8 flex items-center justify-center z-20 shadow-sm transition"><i class="fa-solid fa-times text-lg"></i></button>
+            
+            <div id="detail-header-bg" class="h-24 bg-gray-200 w-full relative">
+                <!-- User Photo Placeholder -->
+                <div class="absolute -bottom-10 left-6">
+                    <div class="w-20 h-20 bg-white rounded-full p-1 shadow-lg">
+                        <div class="w-full h-full bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-3xl overflow-hidden">
+                            <img id="detail-photo" src="" class="w-full h-full object-cover hidden">
+                            <i id="detail-icon" class="fa-solid fa-user"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-12 px-6 pb-6">
+                <h2 class="text-2xl font-bold text-gray-800 leading-tight" id="detail-name">Nome do Aluno</h2>
+                <p class="text-sm text-gray-500 font-bold uppercase tracking-wide mb-4" id="detail-belt">Faixa Branca</p>
+
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-gray-50 p-3 rounded border border-gray-100 text-center">
+                            <p class="text-xs text-gray-400 uppercase font-bold">Frequência</p>
+                            <p class="text-xl font-bold text-brand-dark" id="detail-attendance">0</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded border border-gray-100 text-center">
+                            <p class="text-xs text-gray-400 uppercase font-bold">Status</p>
+                            <p class="text-sm font-bold mt-1" id="detail-status">--</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-400 uppercase border-b pb-1 mb-2">Informações Pessoais</h4>
+                        <div class="grid grid-cols-2 gap-y-2 text-sm">
+                            <div><span class="text-gray-500 block text-xs">CPF</span><span class="font-medium" id="detail-cpf">--</span></div>
+                            <div><span class="text-gray-500 block text-xs">Telefone</span><span class="font-medium" id="detail-phone">--</span></div>
+                            <div class="col-span-2"><span class="text-gray-500 block text-xs">Email</span><span class="font-medium" id="detail-email">--</span></div>
+                            <div class="col-span-2"><span class="text-gray-500 block text-xs">Endereço</span><span class="font-medium" id="detail-address">--</span></div>
+                        </div>
+                    </div>
+
+                    <!-- FINANCIAL INFO -->
+                    <div class="bg-gray-50 p-3 rounded border border-gray-100">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase border-b pb-1 mb-2">Financeiro</h4>
+                        <div class="grid grid-cols-2 gap-y-2 text-sm">
+                            <div class="col-span-2"><span class="text-gray-500 block text-xs">Plano Contratado</span><span class="font-medium font-bold text-brand-dark" id="detail-plan">--</span></div>
+                            <div><span class="text-gray-500 block text-xs">Valor Mensal</span><span class="font-medium" id="detail-value">--</span></div>
+                            <div><span class="text-gray-500 block text-xs">Forma de Pagamento</span><span class="font-medium" id="detail-method">--</span></div>
+                        </div>
+                    </div>
+
+                    <!-- GUARDIAN INFO SECTION -->
+                    <div id="detail-guardian-box" class="hidden bg-yellow-50 p-3 rounded border border-yellow-100">
+                        <h4 class="text-xs font-bold text-yellow-700 uppercase mb-1 flex items-center gap-1"><i class="fa-solid fa-people-roof"></i> Responsável Legal</h4>
+                        <p class="text-sm font-bold text-yellow-900" id="detail-guardian-name">--</p>
+                        <p class="text-xs text-yellow-800 mt-1">Contato principal para este aluno menor de idade.</p>
+                    </div>
+
+                    <div class="bg-blue-50 p-3 rounded border border-blue-100">
+                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-1">Acesso ao Portal</h4>
+                        <p class="text-sm text-blue-900">
+                            <span class="font-bold">Login:</span> <span id="detail-login">--</span>
+                            <span class="mx-2 text-blue-200">|</span>
+                            <span class="font-bold">Senha:</span> <span id="detail-pass">--</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 px-6 py-3 flex justify-end">
+                <button onclick="closeDetailsModal()" class="text-sm font-bold text-gray-600 hover:text-gray-800">Fechar</button>
             </div>
         </div>
     </div>
@@ -585,81 +676,6 @@
             <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3">
                 <button onclick="closeAdminRegisterModal()" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100 font-bold text-sm">Cancelar</button>
                 <button onclick="saveAdminNewStudent()" class="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-bold text-sm shadow-md">Cadastrar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- DETAILS MODAL (READ ONLY) -->
-    <div id="details-modal" class="fixed inset-0 z-[60] hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto transform transition-all relative">
-            <button onclick="closeDetailsModal()" class="absolute top-3 right-3 bg-white/80 hover:bg-white text-gray-600 hover:text-black rounded-full w-8 h-8 flex items-center justify-center z-20 shadow-sm transition"><i class="fa-solid fa-times text-lg"></i></button>
-            
-            <div id="detail-header-bg" class="h-24 bg-gray-200 w-full relative">
-                <div class="absolute -bottom-10 left-6">
-                    <div class="w-20 h-20 bg-white rounded-full p-1 shadow-lg">
-                        <div class="w-full h-full bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-3xl overflow-hidden">
-                            <i class="fa-solid fa-user"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="pt-12 px-6 pb-6">
-                <h2 class="text-2xl font-bold text-gray-800 leading-tight" id="detail-name">Nome do Aluno</h2>
-                <p class="text-sm text-gray-500 font-bold uppercase tracking-wide mb-4" id="detail-belt">Faixa Branca</p>
-
-                <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-gray-50 p-3 rounded border border-gray-100 text-center">
-                            <p class="text-xs text-gray-400 uppercase font-bold">Frequência</p>
-                            <p class="text-xl font-bold text-brand-dark" id="detail-attendance">0</p>
-                        </div>
-                        <div class="bg-gray-50 p-3 rounded border border-gray-100 text-center">
-                            <p class="text-xs text-gray-400 uppercase font-bold">Status</p>
-                            <p class="text-sm font-bold mt-1" id="detail-status">--</p>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h4 class="text-xs font-bold text-gray-400 uppercase border-b pb-1 mb-2">Informações Pessoais</h4>
-                        <div class="grid grid-cols-2 gap-y-2 text-sm">
-                            <div><span class="text-gray-500 block text-xs">CPF</span><span class="font-medium" id="detail-cpf">--</span></div>
-                            <div><span class="text-gray-500 block text-xs">Telefone</span><span class="font-medium" id="detail-phone">--</span></div>
-                            <div class="col-span-2"><span class="text-gray-500 block text-xs">Email</span><span class="font-medium" id="detail-email">--</span></div>
-                            <div class="col-span-2"><span class="text-gray-500 block text-xs">Endereço</span><span class="font-medium" id="detail-address">--</span></div>
-                        </div>
-                    </div>
-
-                    <!-- FINANCIAL INFO -->
-                    <div class="bg-gray-50 p-3 rounded border border-gray-100">
-                        <h4 class="text-xs font-bold text-gray-400 uppercase border-b pb-1 mb-2">Financeiro</h4>
-                        <div class="grid grid-cols-2 gap-y-2 text-sm">
-                            <div class="col-span-2"><span class="text-gray-500 block text-xs">Plano Contratado</span><span class="font-medium font-bold text-brand-dark" id="detail-plan">--</span></div>
-                            <div><span class="text-gray-500 block text-xs">Valor Mensal</span><span class="font-medium" id="detail-value">--</span></div>
-                            <div><span class="text-gray-500 block text-xs">Forma de Pagamento</span><span class="font-medium" id="detail-method">--</span></div>
-                        </div>
-                    </div>
-
-                    <!-- GUARDIAN INFO SECTION -->
-                    <div id="detail-guardian-box" class="hidden bg-yellow-50 p-3 rounded border border-yellow-100">
-                        <h4 class="text-xs font-bold text-yellow-700 uppercase mb-1 flex items-center gap-1"><i class="fa-solid fa-people-roof"></i> Responsável Legal</h4>
-                        <p class="text-sm font-bold text-yellow-900" id="detail-guardian-name">--</p>
-                        <p class="text-xs text-yellow-800 mt-1">Contato principal para este aluno menor de idade.</p>
-                    </div>
-
-                    <div class="bg-blue-50 p-3 rounded border border-blue-100">
-                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-1">Acesso ao Portal</h4>
-                        <p class="text-sm text-blue-900">
-                            <span class="font-bold">Login:</span> <span id="detail-login">--</span>
-                            <span class="mx-2 text-blue-200">|</span>
-                            <span class="font-bold">Senha:</span> <span id="detail-pass">--</span>
-                        </p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-gray-50 px-6 py-3 flex justify-end">
-                <button onclick="closeDetailsModal()" class="text-sm font-bold text-gray-600 hover:text-gray-800">Fechar</button>
             </div>
         </div>
     </div>
@@ -1077,6 +1093,14 @@
                     statusBadge = `<span class="px-2 py-1 rounded text-xs font-bold ${payClass}">${s.paymentStatus || 'Pendente'}</span>`;
                 }
 
+                // Check for photo
+                let avatarHtml = '';
+                if(s.photoBase64) {
+                     avatarHtml = `<img src="${s.photoBase64}" class="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200">`;
+                } else {
+                     avatarHtml = `<div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 mr-3 font-bold text-xs">${s.name.charAt(0)}</div>`;
+                }
+
                 const beltSVG = renderBeltSVG(s.belt || 'Faixa Branca - 0º Grau');
                 const guardianCell = window.currentTab === 'kids' 
                     ? `<td class="px-6 py-4 align-middle text-sm text-gray-700"><i class="fa-solid fa-user-shield text-gray-400 mr-1"></i> ${s.guardian || '-'}</td>` 
@@ -1090,9 +1114,7 @@
                     </td>
                     <td class="px-6 py-4 align-middle">
                         <div class="flex items-center">
-                            <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 mr-3 font-bold text-xs">
-                                ${s.name.charAt(0)}
-                            </div>
+                            ${avatarHtml}
                             <div>
                                 <div class="font-medium text-gray-900">${s.name}</div>
                                 <div class="text-xs text-gray-500">${s.plan ? s.plan.replace('-', ' ').toUpperCase() : '-'}</div>
@@ -1354,6 +1376,19 @@
             document.getElementById('detail-name').innerText = s.name;
             document.getElementById('detail-belt').innerText = s.belt || "Faixa Branca";
             
+            // Photo display
+            const photoImg = document.getElementById('detail-photo');
+            const photoIcon = document.getElementById('detail-icon');
+            
+            if(s.photoBase64) {
+                photoImg.src = s.photoBase64;
+                photoImg.classList.remove('hidden');
+                photoIcon.classList.add('hidden');
+            } else {
+                photoImg.classList.add('hidden');
+                photoIcon.classList.remove('hidden');
+            }
+
             const belt = (s.belt || "").toLowerCase();
             let headerColor = "bg-gray-200"; 
             if(belt.includes("azul")) headerColor = "bg-blue-600";
@@ -1412,6 +1447,14 @@
             document.getElementById('edit-payment').value = s.paymentStatus || 'Pendente';
             document.getElementById('edit-email').value = s.email || '';
             document.getElementById('edit-phone').value = s.phone || '';
+            
+            // Photo Preview in Edit Modal
+            const preview = document.getElementById('edit-photo-preview');
+            if(s.photoBase64) {
+                 preview.src = s.photoBase64;
+            } else {
+                 preview.src = `https://ui-avatars.com/api/?name=${s.name}&background=random`;
+            }
 
             let color = 'Branca'; let degree = '0';
             if(s.belt) { const parts = s.belt.split(' - '); if(parts.length > 0) color = parts[0].replace('Faixa ', ''); if(parts.length > 1) degree = parts[1].replace('º Grau', ''); }
@@ -1425,6 +1468,17 @@
             document.getElementById('edit-modal').classList.add('flex');
         };
         window.closeEditModal = () => { document.getElementById('edit-modal').classList.add('hidden'); document.getElementById('edit-modal').classList.remove('flex'); };
+        
+        window.previewPhoto = (event) => {
+            const file = event.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('edit-photo-preview').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        };
 
         window.saveStudentChanges = async () => {
             const id = document.getElementById('edit-id').value;
@@ -1442,8 +1496,46 @@
             let dateObj = new Date().toISOString();
             if(dateStr) { const [y, m, d] = dateStr.split('-').map(Number); dateObj = new Date(y, m - 1, d, 12, 0, 0).toISOString(); }
             const newCategory = plan.includes('infantil') ? 'Infantil' : 'Adulto';
+            
+            // Handle Photo
+            const photoInput = document.getElementById('edit-photo');
+            let photoBase64 = null;
+            
+            if(photoInput.files && photoInput.files[0]) {
+                 const file = photoInput.files[0];
+                 // Basic validation
+                 if(file.size > 800 * 1024) { // 800KB Limit
+                      alert("A foto é muito grande. Por favor, use uma imagem menor que 800KB.");
+                      return;
+                 }
+                 
+                 // Promise wrapper for FileReader
+                 photoBase64 = await new Promise((resolve) => {
+                      const reader = new FileReader();
+                      reader.onloadend = () => resolve(reader.result);
+                      reader.readAsDataURL(file);
+                 });
+            }
+
             try {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id), { name: name, plan: plan, category: newCategory, paymentStatus: payment, belt: beltStr, contractEndDate: dateObj, studentLogin: login, studentPassword: pass, email: email, phone: phone });
+                const updateData = { 
+                     name: name, 
+                     plan: plan, 
+                     category: newCategory, 
+                     paymentStatus: payment, 
+                     belt: beltStr, 
+                     contractEndDate: dateObj, 
+                     studentLogin: login, 
+                     studentPassword: pass, 
+                     email: email, 
+                     phone: phone 
+                };
+                
+                if(photoBase64) {
+                     updateData.photoBase64 = photoBase64;
+                }
+
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id), updateData);
                 closeEditModal(); loadData(); alert("Dados atualizados!");
             } catch(e) { console.error(e); alert("Erro ao salvar."); }
         };
