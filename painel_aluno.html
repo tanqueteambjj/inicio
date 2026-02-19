@@ -147,9 +147,15 @@
                 
                 <!-- Welcome Section -->
                 <div class="mb-8 flex justify-between items-end">
-                    <div>
-                        <p class="text-gray-500 text-sm uppercase font-bold tracking-wider mb-1">Bem-vindo de volta,</p>
-                        <h1 class="text-3xl md:text-4xl font-display font-bold text-brand-dark" id="student-name-display">Carregando...</h1>
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-full bg-gray-200 border-2 border-white shadow-md overflow-hidden flex-shrink-0">
+                            <img id="welcome-photo" src="" class="w-full h-full object-cover hidden">
+                            <div id="welcome-initials" class="w-full h-full flex items-center justify-center text-gray-500 text-2xl font-bold font-display">TT</div>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm uppercase font-bold tracking-wider mb-1">Bem-vindo de volta,</p>
+                            <h1 class="text-3xl md:text-4xl font-display font-bold text-brand-dark" id="student-name-display">Carregando...</h1>
+                        </div>
                     </div>
                     <div class="hidden md:block">
                         <span class="bg-white px-4 py-2 rounded-full shadow-sm text-sm font-bold text-gray-600 border border-gray-200">
@@ -275,15 +281,36 @@
             </div>
             
             <div class="p-6">
-                <p class="text-xs text-gray-500 mb-4">Atualize suas informações de contato e acesso.</p>
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">E-mail</label>
-                        <input type="email" id="profile-email" class="w-full border rounded p-2 text-sm">
+                <!-- PHOTO UPLOAD SECTION -->
+                <div class="flex items-center gap-4 mb-6 border-b pb-4 border-gray-100">
+                    <div class="relative w-20 h-20 group cursor-pointer flex-shrink-0" onclick="document.getElementById('profile-photo-input').click()">
+                        <img id="profile-photo-preview" src="" class="w-full h-full rounded-full object-cover border-2 border-gray-200 shadow-md hidden">
+                        <div id="profile-photo-placeholder" class="w-full h-full bg-gray-200 rounded-full flex items-center justify-center text-2xl font-bold text-gray-400">TT</div>
+                        <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            <i class="fa-solid fa-camera text-white"></i>
+                        </div>
+                        <input type="file" id="profile-photo-input" accept="image/*" class="hidden" onchange="previewProfilePhoto(event)">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Telefone</label>
-                        <input type="text" id="profile-phone" class="w-full border rounded p-2 text-sm">
+                        <h4 class="text-xs font-bold text-brand-red uppercase">Foto de Perfil</h4>
+                        <p class="text-[10px] text-gray-400">Clique na imagem para enviar uma nova foto.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Endereço</label>
+                        <input type="text" id="profile-address" class="w-full border rounded p-2 text-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">E-mail</label>
+                            <input type="email" id="profile-email" class="w-full border rounded p-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Telefone</label>
+                            <input type="text" id="profile-phone" class="w-full border rounded p-2 text-sm">
+                        </div>
                     </div>
                     <div class="pt-2 border-t border-gray-100">
                         <label class="block text-xs font-bold text-blue-600 mb-1">Nova Senha (Opcional)</label>
@@ -407,6 +434,20 @@
             document.getElementById('data-address').innerText = data.address || '-';
             document.getElementById('plan-display').innerText = (data.plan || 'Não informado').replace('-', ' ').toUpperCase();
             
+            // Photo Display
+            const photoImg = document.getElementById('welcome-photo');
+            const photoInitials = document.getElementById('welcome-initials');
+            
+            if(data.photoBase64) {
+                photoImg.src = data.photoBase64;
+                photoImg.classList.remove('hidden');
+                photoInitials.classList.add('hidden');
+            } else {
+                photoImg.classList.add('hidden');
+                photoInitials.classList.remove('hidden');
+                photoInitials.innerText = data.name.charAt(0);
+            }
+
             if(data.contractEndDate) {
                 const d = new Date(data.contractEndDate);
                 document.getElementById('contract-end').innerText = d.toLocaleDateString('pt-BR');
@@ -419,6 +460,9 @@
             if(status === 'Em dia') {
                 statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-green-100 text-green-800 border border-green-200";
                 statusBadge.innerHTML = '<i class="fa-solid fa-check mr-1"></i> EM DIA';
+            } else if(status === 'Isento') {
+                statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-blue-100 text-blue-800 border border-blue-200";
+                statusBadge.innerHTML = '<i class="fa-solid fa-gift mr-1"></i> ISENTO';
             } else {
                 statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-red-100 text-red-800 border border-red-200 animate-pulse";
                 statusBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> PENDENTE';
@@ -557,7 +601,21 @@
             if(!data) return;
             document.getElementById('profile-email').value = data.email || '';
             document.getElementById('profile-phone').value = data.phone || '';
-            document.getElementById('profile-password').value = ''; // Don't show current password for security/simplicity UI
+            document.getElementById('profile-address').value = data.address || '';
+            document.getElementById('profile-password').value = ''; 
+            
+            // Photo Preview
+            const preview = document.getElementById('profile-photo-preview');
+            const placeholder = document.getElementById('profile-photo-placeholder');
+            if(data.photoBase64) {
+                 preview.src = data.photoBase64;
+                 preview.classList.remove('hidden');
+                 placeholder.classList.add('hidden');
+            } else {
+                 preview.classList.add('hidden');
+                 placeholder.classList.remove('hidden');
+                 placeholder.innerText = data.name.charAt(0);
+            }
             
             document.getElementById('profile-edit-modal').classList.remove('hidden');
             document.getElementById('profile-edit-modal').classList.add('flex');
@@ -567,6 +625,21 @@
             document.getElementById('profile-edit-modal').classList.add('hidden');
             document.getElementById('profile-edit-modal').classList.remove('flex');
         }
+        
+        window.previewProfilePhoto = (event) => {
+            const file = event.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('profile-photo-preview');
+                    const placeholder = document.getElementById('profile-photo-placeholder');
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        };
 
         window.saveProfileChanges = async () => {
             const data = window.currentStudentData;
@@ -574,16 +647,35 @@
 
             const newEmail = document.getElementById('profile-email').value;
             const newPhone = document.getElementById('profile-phone').value;
+            const newAddress = document.getElementById('profile-address').value;
             const newPass = document.getElementById('profile-password').value;
 
             const updateData = {
                 email: newEmail,
-                phone: newPhone
+                phone: newPhone,
+                address: newAddress
             };
 
-            // Only update password if user typed something
             if(newPass && newPass.trim() !== "") {
                 updateData.studentPassword = newPass;
+            }
+            
+            // Handle Photo
+            const photoInput = document.getElementById('profile-photo-input');
+            let photoBase64 = null;
+            
+            if(photoInput.files && photoInput.files[0]) {
+                 const file = photoInput.files[0];
+                 if(file.size > 800 * 1024) { 
+                      alert("A foto é muito grande. Por favor, use uma imagem menor que 800KB.");
+                      return;
+                 }
+                 photoBase64 = await new Promise((resolve) => {
+                      const reader = new FileReader();
+                      reader.onloadend = () => resolve(reader.result);
+                      reader.readAsDataURL(file);
+                 });
+                 updateData.photoBase64 = photoBase64;
             }
 
             try {
@@ -591,7 +683,7 @@
                 await updateDoc(docRef, updateData);
                 alert("Dados atualizados com sucesso!");
                 closeProfileEditModal();
-                loadStudentData(data.id); // Reload
+                loadStudentData(data.id); 
             } catch(e) {
                 console.error(e);
                 alert("Erro ao atualizar dados.");
