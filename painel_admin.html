@@ -86,7 +86,7 @@
                     <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500">
                         <div class="flex justify-between">
                             <div>
-                                <p class="text-gray-400 text-xs font-bold uppercase">Total Alunos</p>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Total Ativos</p>
                                 <p class="text-2xl font-bold text-gray-800" id="stat-total">0</p>
                             </div>
                             <div class="text-blue-500 text-2xl"><i class="fa-solid fa-users"></i></div>
@@ -95,7 +95,7 @@
                     <div class="bg-white rounded-xl shadow p-5 border-l-4 border-brand-red">
                         <div class="flex justify-between">
                             <div>
-                                <p class="text-gray-400 text-xs font-bold uppercase">Infantil</p>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Infantil (Ativos)</p>
                                 <p class="text-2xl font-bold text-gray-800" id="stat-infantil">0</p>
                             </div>
                             <div class="text-brand-red text-2xl"><i class="fa-solid fa-child"></i></div>
@@ -104,17 +104,19 @@
                     <div class="bg-white rounded-xl shadow p-5 border-l-4 border-green-500">
                         <div class="flex justify-between">
                             <div>
-                                <p class="text-gray-400 text-xs font-bold uppercase">Adulto</p>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Adulto (Ativos)</p>
                                 <p class="text-2xl font-bold text-gray-800" id="stat-adulto">0</p>
                             </div>
                             <div class="text-green-500 text-2xl"><i class="fa-solid fa-user"></i></div>
                         </div>
                     </div>
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-purple-500 cursor-pointer hover:bg-purple-50 transition" onclick="openAdminRegisterModal()">
-                        <div class="flex justify-between items-center h-full">
-                            <div class="font-bold text-purple-700 flex items-center gap-2">
-                                <i class="fa-solid fa-plus-circle"></i> Nova Matrícula
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-gray-400 cursor-pointer hover:bg-gray-50 transition" onclick="switchTab('inactive')">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Inativos</p>
+                                <p class="text-2xl font-bold text-gray-800" id="stat-inactive">0</p>
                             </div>
+                            <div class="text-gray-400 text-2xl"><i class="fa-solid fa-user-slash"></i></div>
                         </div>
                     </div>
                 </div>
@@ -122,10 +124,13 @@
                 <!-- Tabs Container -->
                 <div class="flex mb-0">
                     <button onclick="switchTab('adults')" id="tab-adults" class="px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative">
-                        <i class="fa-solid fa-user mr-2"></i> ADULTOS / JOVENS
+                        <i class="fa-solid fa-user mr-2"></i> ADULTOS
                     </button>
                     <button onclick="switchTab('kids')" id="tab-kids" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
                         <i class="fa-solid fa-child mr-2"></i> INFANTIL
+                    </button>
+                    <button onclick="switchTab('inactive')" id="tab-inactive" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        <i class="fa-solid fa-user-slash mr-2"></i> INATIVOS
                     </button>
                 </div>
 
@@ -137,7 +142,7 @@
                                 <span id="list-title">Lista de Alunos</span>
                                 <span class="bg-gray-200 text-gray-600 py-0.5 px-2 rounded-full text-xs" id="list-count">0</span>
                             </h3>
-                            <!-- Botão de Exclusão em Massa (Invisível por padrão) -->
+                            <!-- Botão de Exclusão em Massa -->
                             <button onclick="deleteSelectedStudents()" id="btn-bulk-delete" class="hidden flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition animate-fade-in">
                                 <i class="fa-solid fa-trash-can"></i> Excluir Selecionados (<span id="selected-count">0</span>)
                             </button>
@@ -148,9 +153,10 @@
                                 </button>
                             </div>
                         </div>
-                        <button onclick="loadData()" class="text-brand-red hover:text-red-800 text-sm flex items-center gap-1">
-                            <i class="fa-solid fa-rotate" id="icon-refresh"></i> Atualizar
-                        </button>
+                        <div class="flex gap-2">
+                             <button onclick="openAdminRegisterModal()" class="bg-brand-red text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-red-700"><i class="fa-solid fa-plus mr-1"></i> NOVO ALUNO</button>
+                             <button onclick="loadData()" class="text-gray-500 hover:text-black text-sm flex items-center gap-1"><i class="fa-solid fa-rotate" id="icon-refresh"></i></button>
+                        </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
@@ -174,7 +180,7 @@
                     <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500">
                         <div class="flex justify-between">
                             <div>
-                                <p class="text-gray-400 text-xs font-bold uppercase">Total</p>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Total (Ativos)</p>
                                 <p class="text-2xl font-bold text-gray-800" id="fin-stat-total">0</p>
                             </div>
                             <div class="text-blue-500 text-2xl"><i class="fa-solid fa-users"></i></div>
@@ -222,6 +228,9 @@
                     </button>
                     <button onclick="switchFinancialTab('expiring')" id="fin-tab-expiring" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
                         EXPIRANDO
+                    </button>
+                    <button onclick="switchFinancialTab('inactive')" id="fin-tab-inactive" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        INATIVOS
                     </button>
                 </div>
 
@@ -447,6 +456,13 @@
                     </div>
 
                     <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Status Matrícula</label>
+                        <select id="edit-enrollment-status" class="w-full border rounded p-2 font-bold text-gray-700">
+                            <option value="Ativo" class="text-green-600">Ativo</option>
+                            <option value="Inativo" class="text-red-600">Inativo</option>
+                        </select>
+                    </div>
+                    <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Status Pagamento</label>
                         <select id="edit-payment" class="w-full border rounded p-2">
                             <option value="Pendente">Pendente</option>
@@ -454,7 +470,7 @@
                             <option value="Isento">Isento</option>
                         </select>
                     </div>
-                    <div>
+                    <div class="col-span-1 md:col-span-2">
                         <label class="block text-xs font-bold text-gray-500 mb-1">Vencimento Contrato</label>
                         <input type="date" id="edit-end-date" class="w-full border rounded p-2">
                     </div>
@@ -523,83 +539,6 @@
             <div class="mt-6 flex justify-end gap-2">
                 <button onclick="closeGraduationModal()" class="px-4 py-2 border rounded">Cancelar</button>
                 <button onclick="saveGraduation()" class="px-4 py-2 bg-yellow-500 text-white font-bold rounded hover:bg-yellow-600">Confirmar Graduação</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- DETAILS MODAL (READ ONLY) -->
-    <div id="details-modal" class="fixed inset-0 z-[60] hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto transform transition-all relative">
-            <button onclick="closeDetailsModal()" class="absolute top-3 right-3 bg-white/80 hover:bg-white text-gray-600 hover:text-black rounded-full w-8 h-8 flex items-center justify-center z-20 shadow-sm transition"><i class="fa-solid fa-times text-lg"></i></button>
-            
-            <div id="detail-header-bg" class="h-24 bg-gray-200 w-full relative">
-                <!-- User Photo Placeholder -->
-                <div class="absolute -bottom-10 left-6">
-                    <div class="w-20 h-20 bg-white rounded-full p-1 shadow-lg">
-                        <div class="w-full h-full bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-3xl overflow-hidden">
-                            <img id="detail-photo" src="" class="w-full h-full object-cover hidden">
-                            <i id="detail-icon" class="fa-solid fa-user"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="pt-12 px-6 pb-6">
-                <h2 class="text-2xl font-bold text-gray-800 leading-tight" id="detail-name">Nome do Aluno</h2>
-                <p class="text-sm text-gray-500 font-bold uppercase tracking-wide mb-4" id="detail-belt">Faixa Branca</p>
-
-                <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-gray-50 p-3 rounded border border-gray-100 text-center">
-                            <p class="text-xs text-gray-400 uppercase font-bold">Frequência</p>
-                            <p class="text-xl font-bold text-brand-dark" id="detail-attendance">0</p>
-                        </div>
-                        <div class="bg-gray-50 p-3 rounded border border-gray-100 text-center">
-                            <p class="text-xs text-gray-400 uppercase font-bold">Status</p>
-                            <p class="text-sm font-bold mt-1" id="detail-status">--</p>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h4 class="text-xs font-bold text-gray-400 uppercase border-b pb-1 mb-2">Informações Pessoais</h4>
-                        <div class="grid grid-cols-2 gap-y-2 text-sm">
-                            <div><span class="text-gray-500 block text-xs">CPF</span><span class="font-medium" id="detail-cpf">--</span></div>
-                            <div><span class="text-gray-500 block text-xs">Telefone</span><span class="font-medium" id="detail-phone">--</span></div>
-                            <div class="col-span-2"><span class="text-gray-500 block text-xs">Email</span><span class="font-medium" id="detail-email">--</span></div>
-                            <div class="col-span-2"><span class="text-gray-500 block text-xs">Endereço</span><span class="font-medium" id="detail-address">--</span></div>
-                        </div>
-                    </div>
-
-                    <!-- FINANCIAL INFO -->
-                    <div class="bg-gray-50 p-3 rounded border border-gray-100">
-                        <h4 class="text-xs font-bold text-gray-400 uppercase border-b pb-1 mb-2">Financeiro</h4>
-                        <div class="grid grid-cols-2 gap-y-2 text-sm">
-                            <div class="col-span-2"><span class="text-gray-500 block text-xs">Plano Contratado</span><span class="font-medium font-bold text-brand-dark" id="detail-plan">--</span></div>
-                            <div><span class="text-gray-500 block text-xs">Valor Mensal</span><span class="font-medium" id="detail-value">--</span></div>
-                            <div><span class="text-gray-500 block text-xs">Forma de Pagamento</span><span class="font-medium" id="detail-method">--</span></div>
-                        </div>
-                    </div>
-
-                    <!-- GUARDIAN INFO SECTION -->
-                    <div id="detail-guardian-box" class="hidden bg-yellow-50 p-3 rounded border border-yellow-100">
-                        <h4 class="text-xs font-bold text-yellow-700 uppercase mb-1 flex items-center gap-1"><i class="fa-solid fa-people-roof"></i> Responsável Legal</h4>
-                        <p class="text-sm font-bold text-yellow-900" id="detail-guardian-name">--</p>
-                        <p class="text-xs text-yellow-800 mt-1">Contato principal para este aluno menor de idade.</p>
-                    </div>
-
-                    <div class="bg-blue-50 p-3 rounded border border-blue-100">
-                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-1">Acesso ao Portal</h4>
-                        <p class="text-sm text-blue-900">
-                            <span class="font-bold">Login:</span> <span id="detail-login">--</span>
-                            <span class="mx-2 text-blue-200">|</span>
-                            <span class="font-bold">Senha:</span> <span id="detail-pass">--</span>
-                        </p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-gray-50 px-6 py-3 flex justify-end">
-                <button onclick="closeDetailsModal()" class="text-sm font-bold text-gray-600 hover:text-gray-800">Fechar</button>
             </div>
         </div>
     </div>
@@ -712,6 +651,83 @@
         </div>
     </div>
 
+    <!-- DETAILS MODAL (READ ONLY) -->
+    <div id="details-modal" class="fixed inset-0 z-[60] hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto transform transition-all relative">
+            <button onclick="closeDetailsModal()" class="absolute top-3 right-3 bg-white/80 hover:bg-white text-gray-600 hover:text-black rounded-full w-8 h-8 flex items-center justify-center z-20 shadow-sm transition"><i class="fa-solid fa-times text-lg"></i></button>
+            
+            <div id="detail-header-bg" class="h-24 bg-gray-200 w-full relative">
+                <!-- User Photo Placeholder -->
+                <div class="absolute -bottom-10 left-6">
+                    <div class="w-20 h-20 bg-white rounded-full p-1 shadow-lg">
+                        <div class="w-full h-full bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-3xl overflow-hidden">
+                            <img id="detail-photo" src="" class="w-full h-full object-cover hidden">
+                            <i id="detail-icon" class="fa-solid fa-user"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-12 px-6 pb-6">
+                <h2 class="text-2xl font-bold text-gray-800 leading-tight" id="detail-name">Nome do Aluno</h2>
+                <p class="text-sm text-gray-500 font-bold uppercase tracking-wide mb-4" id="detail-belt">Faixa Branca</p>
+
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-gray-50 p-3 rounded border border-gray-100 text-center">
+                            <p class="text-xs text-gray-400 uppercase font-bold">Frequência</p>
+                            <p class="text-xl font-bold text-brand-dark" id="detail-attendance">0</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded border border-gray-100 text-center">
+                            <p class="text-xs text-gray-400 uppercase font-bold">Status</p>
+                            <p class="text-sm font-bold mt-1" id="detail-status">--</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-400 uppercase border-b pb-1 mb-2">Informações Pessoais</h4>
+                        <div class="grid grid-cols-2 gap-y-2 text-sm">
+                            <div><span class="text-gray-500 block text-xs">CPF</span><span class="font-medium" id="detail-cpf">--</span></div>
+                            <div><span class="text-gray-500 block text-xs">Telefone</span><span class="font-medium" id="detail-phone">--</span></div>
+                            <div class="col-span-2"><span class="text-gray-500 block text-xs">Email</span><span class="font-medium" id="detail-email">--</span></div>
+                            <div class="col-span-2"><span class="text-gray-500 block text-xs">Endereço</span><span class="font-medium" id="detail-address">--</span></div>
+                        </div>
+                    </div>
+
+                    <!-- FINANCIAL INFO -->
+                    <div class="bg-gray-50 p-3 rounded border border-gray-100">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase border-b pb-1 mb-2">Financeiro</h4>
+                        <div class="grid grid-cols-2 gap-y-2 text-sm">
+                            <div class="col-span-2"><span class="text-gray-500 block text-xs">Plano Contratado</span><span class="font-medium font-bold text-brand-dark" id="detail-plan">--</span></div>
+                            <div><span class="text-gray-500 block text-xs">Valor Mensal</span><span class="font-medium" id="detail-value">--</span></div>
+                            <div><span class="text-gray-500 block text-xs">Forma de Pagamento</span><span class="font-medium" id="detail-method">--</span></div>
+                        </div>
+                    </div>
+
+                    <!-- GUARDIAN INFO SECTION -->
+                    <div id="detail-guardian-box" class="hidden bg-yellow-50 p-3 rounded border border-yellow-100">
+                        <h4 class="text-xs font-bold text-yellow-700 uppercase mb-1 flex items-center gap-1"><i class="fa-solid fa-people-roof"></i> Responsável Legal</h4>
+                        <p class="text-sm font-bold text-yellow-900" id="detail-guardian-name">--</p>
+                        <p class="text-xs text-yellow-800 mt-1">Contato principal para este aluno menor de idade.</p>
+                    </div>
+
+                    <div class="bg-blue-50 p-3 rounded border border-blue-100">
+                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-1">Acesso ao Portal</h4>
+                        <p class="text-sm text-blue-900">
+                            <span class="font-bold">Login:</span> <span id="detail-login">--</span>
+                            <span class="mx-2 text-blue-200">|</span>
+                            <span class="font-bold">Senha:</span> <span id="detail-pass">--</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 px-6 py-3 flex justify-end">
+                <button onclick="closeDetailsModal()" class="text-sm font-bold text-gray-600 hover:text-gray-800">Fechar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -766,6 +782,15 @@
             window.location.href = "login_aluno.html";
         }
 
+        // --- UTILS ---
+        function getAge(dobStr) {
+            if (!dobStr) return null;
+            const dob = new Date(dobStr);
+            const diff_ms = Date.now() - dob.getTime();
+            const age_dt = new Date(diff_ms);
+            return Math.abs(age_dt.getUTCFullYear() - 1970);
+        }
+
         async function loadData() {
             try {
                 if(!db) throw new Error("Database not initialized");
@@ -796,15 +821,17 @@
         }
 
         function updateStats() {
-            const total = window.students.length;
-            // Inclui 'Isento' na contagem de ativos
-            const active = window.students.filter(s => s.paymentStatus === 'Em dia' || s.paymentStatus === 'Isento').length;
+            // Count total active students (not 'Inativo')
+            const total = window.students.filter(s => s.enrollmentStatus !== 'Inativo').length;
+            
+            const active = window.students.filter(s => s.enrollmentStatus !== 'Inativo' && (s.paymentStatus === 'Em dia' || s.paymentStatus === 'Isento')).length;
             const pending = total - active;
             
             // Calc expiring (next 7 days)
             const today = new Date();
             let expiringCount = 0;
             window.students.forEach(s => {
+                if(s.enrollmentStatus === 'Inativo') return;
                 const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : new Date(s.contractEndDate);
                 const diffTime = targetDate - today;
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -813,10 +840,15 @@
             
             let kidsCount = 0;
             let adultsCount = 0;
+            let inactiveCount = 0;
 
             window.students.forEach(s => {
-                if (isStudentKid(s)) kidsCount++;
-                else adultsCount++;
+                if (s.enrollmentStatus === 'Inativo') {
+                    inactiveCount++;
+                } else {
+                    if (isStudentKid(s)) kidsCount++;
+                    else adultsCount++;
+                }
             });
 
             // Update stats if elements exist
@@ -828,6 +860,9 @@
 
             const elAdulto = document.getElementById('stat-adulto');
             if (elAdulto) elAdulto.innerText = adultsCount;
+            
+            const elInactive = document.getElementById('stat-inactive');
+            if (elInactive) elInactive.innerText = inactiveCount;
             
             // Finance stats
             const elFinTotal = document.getElementById('fin-stat-total');
@@ -992,6 +1027,27 @@
                 alert("Erro: " + e.message);
             }
         };
+        
+        // --- INACTIVATE / ACTIVATE LOGIC ---
+        window.toggleStudentStatus = async (id, currentStatus) => {
+            const newStatus = (currentStatus === 'Inativo') ? 'Ativo' : 'Inativo';
+            const confirmMsg = (newStatus === 'Inativo') 
+                ? "Deseja inativar este aluno? Ele não aparecerá nas listas principais."
+                : "Deseja reativar este aluno?";
+            
+            if(!confirm(confirmMsg)) return;
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', id);
+                await updateDoc(docRef, { enrollmentStatus: newStatus });
+                
+                loadData(); // Reload to refresh lists
+                alert(`Aluno agora está ${newStatus}!`);
+            } catch(e) {
+                alert("Erro ao alterar status: " + e.message);
+            }
+        };
+
 
         // --- NAVIGATION ---
         window.switchMainView = (viewName) => {
@@ -1028,20 +1084,26 @@
             window.currentTab = tab;
             const btnAdult = document.getElementById('tab-adults');
             const btnKid = document.getElementById('tab-kids');
+            const btnInactive = document.getElementById('tab-inactive');
 
-            if (tab === 'adults') {
-                btnAdult.className = "px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative";
-                btnKid.className = "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1";
-            } else {
-                btnKid.className = "px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative ml-1";
-                btnAdult.className = "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100";
-            }
+            // Reset classes
+            const activeClass = "px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative";
+            const inactiveClass = "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100";
+
+            btnAdult.className = inactiveClass;
+            btnKid.className = inactiveClass + " ml-1";
+            btnInactive.className = inactiveClass + " ml-1";
+
+            if (tab === 'adults') btnAdult.className = activeClass;
+            else if (tab === 'kids') btnKid.className = activeClass + " ml-1";
+            else if (tab === 'inactive') btnInactive.className = activeClass + " ml-1";
+
             renderTable();
         };
         
         window.switchFinancialTab = (tab) => {
             window.currentFinancialTab = tab;
-            const tabs = ['all', 'active', 'pending', 'expiring'];
+            const tabs = ['all', 'active', 'pending', 'expiring', 'inactive'];
             
             tabs.forEach(t => {
                 const btn = document.getElementById(`fin-tab-${t}`);
@@ -1074,18 +1136,30 @@
             tbody.innerHTML = '';
 
             const filtered = window.students.filter(s => {
-                // ROBUST CATEGORY DETECTION FOR FILTERING
-                let isKid = isStudentKid(s);
-                
-                // window.currentTab is 'adults' or 'kids'
-                const matchesTab = (window.currentTab === 'kids' && isKid) || (window.currentTab === 'adults' && !isKid);
                 const matchesSearch = s.name.toLowerCase().includes(search);
+                const currentEnrollment = s.enrollmentStatus || 'Ativo';
                 
-                return matchesTab && matchesSearch;
+                // Tab Logic
+                if (window.currentTab === 'inactive') {
+                    // Show ONLY Inactive students
+                    return matchesSearch && currentEnrollment === 'Inativo';
+                } else {
+                    // Show ONLY Active students
+                    if (currentEnrollment === 'Inativo') return false;
+                    
+                    let isKid = isStudentKid(s);
+                    const matchesTab = (window.currentTab === 'kids' && isKid) || (window.currentTab === 'adults' && !isKid);
+                    return matchesTab && matchesSearch;
+                }
             });
 
             document.getElementById('list-count').innerText = filtered.length;
-            document.getElementById('list-title').innerText = window.currentTab === 'adults' ? "Lista de Jovens e Adultos" : "Lista Infantil";
+            
+            let listTitle = "Lista de Alunos";
+            if (window.currentTab === 'adults') listTitle = "Adultos (Ativos)";
+            else if (window.currentTab === 'kids') listTitle = "Infantil (Ativos)";
+            else listTitle = "Alunos Inativos";
+            document.getElementById('list-title').innerText = listTitle;
 
             let headers = `
                 <th class="px-6 py-3 border-b w-10 text-center"><input type="checkbox" id="cb-select-all" onclick="toggleSelectAll(this)" class="rounded text-brand-red focus:ring-brand-red cursor-pointer"></th>
@@ -1136,11 +1210,32 @@
                 } else {
                      avatarHtml = `<div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 mr-3 font-bold text-xs">${s.name.charAt(0)}</div>`;
                 }
+                
+                // AGE BADGE FOR ADULT PLANS
+                const age = getAge(s.dob);
+                let nameDisplay = `<div class="font-medium text-gray-900 flex items-center">${s.name}`;
+                if (window.currentTab === 'adults' && age !== null && age < 18) {
+                    nameDisplay += `<span class="ml-2 text-[10px] text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200 font-bold" title="Menor de idade em turma adulta">Menor (${age})</span>`;
+                }
+                nameDisplay += `</div>`;
+                
+                // Inactive Badge for name
+                if (s.enrollmentStatus === 'Inativo') {
+                    nameDisplay += `<span class="ml-2 text-[10px] text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded border border-gray-300 font-bold">INATIVO</span>`;
+                }
 
                 const beltSVG = renderBeltSVG(s.belt || 'Faixa Branca - 0º Grau');
                 const guardianCell = window.currentTab === 'kids' 
                     ? `<td class="px-6 py-4 align-middle text-sm text-gray-700"><i class="fa-solid fa-user-shield text-gray-400 mr-1"></i> ${s.guardian || '-'}</td>` 
                     : '';
+
+                // TOGGLE BUTTON (Active/Inactive)
+                let toggleBtn = '';
+                if (s.enrollmentStatus === 'Inativo') {
+                    toggleBtn = `<button onclick="toggleStudentStatus('${s.id}', 'Inativo')" class="text-green-600 hover:text-green-900 mr-2" title="Reativar Aluno"><i class="fa-solid fa-power-off"></i></button>`;
+                } else {
+                    toggleBtn = `<button onclick="toggleStudentStatus('${s.id}', 'Ativo')" class="text-gray-400 hover:text-red-600 mr-2" title="Inativar Aluno"><i class="fa-solid fa-power-off"></i></button>`;
+                }
 
                 const tr = document.createElement('tr');
                 tr.className = "border-b hover:bg-gray-50 transition";
@@ -1152,7 +1247,7 @@
                         <div class="flex items-center">
                             ${avatarHtml}
                             <div>
-                                <div class="font-medium text-gray-900">${s.name}</div>
+                                ${nameDisplay}
                                 <div class="text-xs text-gray-500">${s.plan ? s.plan.replace('-', ' ').toUpperCase() : '-'}</div>
                             </div>
                         </div>
@@ -1173,11 +1268,12 @@
                     <td class="px-6 py-4 align-middle text-center">${statusBadge}</td>
                     <td class="px-6 py-4 align-middle text-center">${hasLogin}</td>
                     <td class="px-6 py-4 align-middle text-center">
+                        ${toggleBtn}
                         <button onclick="openAttendanceModal('${s.id}')" class="text-gray-500 hover:text-black mr-2" title="Gerenciar Frequência"><i class="fa-solid fa-list-check"></i></button>
                         <button onclick="openGraduationModal('${s.id}', '${s.name}')" class="text-yellow-500 hover:text-yellow-700 mr-2" title="Graduar"><i class="fa-solid fa-medal"></i></button>
                         <button onclick="viewStudentDetails('${s.id}')" class="text-gray-500 hover:text-black mr-2" title="Visualizar"><i class="fa-solid fa-eye"></i></button>
                         <button onclick="openEditModal('${s.id}')" class="text-blue-600 hover:text-blue-900 mr-2" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <button onclick="deleteStudent('${s.id}')" class="text-red-600 hover:text-red-900" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="deleteStudent('${s.id}')" class="text-red-600 hover:text-red-900" title="Excluir Definitivamente"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -1193,6 +1289,7 @@
             // FILTER LOGIC
             const filtered = window.students.filter(s => {
                 const matchesSearch = s.name.toLowerCase().includes(search);
+                const currentEnrollment = s.enrollmentStatus || 'Ativo';
                 
                 // Determine Status for Filter
                 let status = 'pending'; // Default
@@ -1201,8 +1298,16 @@
                 const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
                 
                 if (diffDays >= 0 && diffDays <= 7) status = 'expiring';
-                else if (s.paymentStatus === 'Em dia' || s.paymentStatus === 'Isento') status = 'active'; // Includes 'Isento' in active tab
-                else status = 'pending'; // Includes 'Vencido'
+                else if (s.paymentStatus === 'Em dia' || s.paymentStatus === 'Isento') status = 'active'; 
+                else status = 'pending'; 
+
+                // INACTIVE TAB LOGIC FOR FINANCIAL
+                if (window.currentFinancialTab === 'inactive') {
+                    return matchesSearch && currentEnrollment === 'Inativo';
+                }
+
+                // If not viewing inactive tab, hide inactive students
+                if (currentEnrollment === 'Inativo') return false;
                 
                 const matchesTab = (window.currentFinancialTab === 'all') || (window.currentFinancialTab === status);
                 return matchesSearch && matchesTab;
@@ -1503,6 +1608,10 @@
             if(s.contractEndDate) document.getElementById('edit-end-date').value = s.contractEndDate.split('T')[0];
             document.getElementById('edit-login').value = s.studentLogin || '';
             document.getElementById('edit-password').value = s.studentPassword || '';
+            
+            // Set Enrollment Status
+            document.getElementById('edit-enrollment-status').value = s.enrollmentStatus || 'Ativo';
+
             document.getElementById('edit-modal').classList.remove('hidden');
             document.getElementById('edit-modal').classList.add('flex');
         };
@@ -1532,6 +1641,8 @@
             const dateStr = document.getElementById('edit-end-date').value;
             const login = document.getElementById('edit-login').value;
             const pass = document.getElementById('edit-password').value;
+            const status = document.getElementById('edit-enrollment-status').value;
+
             let dateObj = new Date().toISOString();
             if(dateStr) { const [y, m, d] = dateStr.split('-').map(Number); dateObj = new Date(y, m - 1, d, 12, 0, 0).toISOString(); }
             const newCategory = plan.includes('infantil') ? 'Infantil' : 'Adulto';
@@ -1562,6 +1673,7 @@
                      plan: plan, 
                      category: newCategory, 
                      paymentStatus: payment, 
+                     enrollmentStatus: status, // New Field
                      belt: beltStr, 
                      contractEndDate: dateObj, 
                      studentLogin: login, 
@@ -1625,6 +1737,7 @@
                     guardian: guardian,
                     plan: plan,
                     paymentStatus: payment,
+                    enrollmentStatus: 'Ativo', // Default Active
                     belt: beltStr,
                     category: category,
                     registrationDate: regDate.toISOString(),
