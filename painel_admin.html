@@ -134,15 +134,14 @@
                                 <span id="list-title">Lista de Alunos</span>
                                 <span class="bg-gray-200 text-gray-600 py-0.5 px-2 rounded-full text-xs" id="list-count">0</span>
                             </h3>
-                            
-                            <!-- ACTIONS BAR FOR SELECTED ITEMS -->
+                            <!-- Botão de Exclusão em Massa -->
+                            <button onclick="deleteSelectedStudents()" id="btn-bulk-delete" class="hidden flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition animate-fade-in">
+                                <i class="fa-solid fa-trash-can"></i> Excluir Selecionados (<span id="selected-count">0</span>)
+                            </button>
+                            <!-- Botão de Presença em Massa -->
                             <div id="bulk-actions" class="hidden flex items-center gap-2 animate-fade-in">
-                                <span class="text-xs font-bold text-gray-400 border-l pl-3 ml-1">SELECIONADOS (<span id="selected-count">0</span>):</span>
                                 <button onclick="addPresenceSelectedStudents()" class="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-bold hover:bg-green-200 transition">
-                                    <i class="fa-solid fa-check"></i> Dar Presença
-                                </button>
-                                <button onclick="deleteSelectedStudents()" class="flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition">
-                                    <i class="fa-solid fa-trash-can"></i> Excluir
+                                    <i class="fa-solid fa-check"></i> Dar Presença Hoje
                                 </button>
                             </div>
                         </div>
@@ -241,21 +240,35 @@
                 
                 <div class="space-y-3">
                     <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Referente ao Plano</label>
+                        <select id="pay-plan-select" onchange="updatePayAmount()" class="w-full border rounded p-2 text-sm bg-gray-50">
+                            <option value="" disabled selected>Selecione...</option>
+                            <option value="infantil-mensal">Infantil Mensal (R$ 179,00)</option>
+                            <option value="infantil-semestral">Infantil Semestral (R$ 159,00)</option>
+                            <option value="adulto-mensal">Adulto Mensal (R$ 139,00)</option>
+                            <option value="adulto-semestral">Adulto Semestral (R$ 119,00)</option>
+                            <option value="outros">Outros / Avulso</option>
+                        </select>
+                    </div>
+
+                    <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Data do Pagamento</label>
                         <input type="date" id="pay-date" class="w-full border rounded p-2 text-sm">
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-bold text-gray-500 mb-1">Valor (R$)</label>
-                            <input type="number" id="pay-amount" class="w-full border rounded p-2 text-sm" placeholder="0,00">
+                            <input type="number" id="pay-amount" class="w-full border rounded p-2 text-sm font-bold text-gray-700" placeholder="0,00">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 mb-1">Forma</label>
                             <select id="pay-method" class="w-full border rounded p-2 text-sm">
                                 <option value="Pix">Pix</option>
                                 <option value="Dinheiro">Dinheiro</option>
-                                <option value="Cartão Crédito">Cartão Crédito</option>
-                                <option value="Cartão Débito">Cartão Débito</option>
+                                <option value="Débito">Débito</option>
+                                <option value="Crédito à vista">Crédito à vista</option>
+                                <option value="Crédito 2x">Crédito 2x</option>
+                                <option value="Crédito 3x">Crédito 3x</option>
                             </select>
                         </div>
                     </div>
@@ -372,7 +385,7 @@
                     </div>
 
                     <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 bg-blue-50 p-4 rounded-lg">
-                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-3">Definir Acesso do Aluno</h4>
+                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-3 flex items-center gap-2"><i class="fa-solid fa-key"></i> Acesso ao Portal do Aluno</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-blue-600 mb-1">Login (Usuário/Email)</label>
@@ -382,6 +395,11 @@
                                 <label class="block text-xs font-bold text-blue-600 mb-1">Senha de Acesso</label>
                                 <input type="text" id="edit-password" class="w-full border border-blue-200 rounded p-2" placeholder="Senha do aluno">
                             </div>
+                        </div>
+                        <div class="mt-3">
+                             <button onclick="sendAccessEmail()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded flex items-center justify-center gap-2 shadow-sm transition">
+                                <i class="fa-solid fa-envelope"></i> Enviar Acesso por E-mail
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1081,12 +1099,40 @@
             document.getElementById('pay-student-name').innerText = s.name;
             document.getElementById('pay-date').valueAsDate = new Date();
             
+            // Try to set the plan select based on student data
+            const planSelect = document.getElementById('pay-plan-select');
+            if (s.plan) {
+                // Try to find a matching option
+                const option = Array.from(planSelect.options).find(opt => opt.value === s.plan);
+                if (option) {
+                    planSelect.value = s.plan;
+                    window.updatePayAmount(); // Trigger update
+                } else {
+                     planSelect.value = ""; // Default if not found
+                }
+            } else {
+                 planSelect.value = "";
+            }
+
             const today = new Date();
             const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
             document.getElementById('pay-next-due').valueAsDate = nextMonth;
 
             document.getElementById('payment-modal').classList.remove('hidden');
             document.getElementById('payment-modal').classList.add('flex');
+        };
+
+        window.updatePayAmount = () => {
+            const plan = document.getElementById('pay-plan-select').value;
+            const amountInput = document.getElementById('pay-amount');
+            
+            let price = "";
+            if (plan === 'infantil-mensal') price = 179;
+            else if (plan === 'infantil-semestral') price = 159;
+            else if (plan === 'adulto-mensal') price = 139;
+            else if (plan === 'adulto-semestral') price = 119;
+            
+            if (price) amountInput.value = price;
         };
 
         window.closePaymentModal = () => {
@@ -1392,6 +1438,22 @@
                 alert("Erro ao graduar: " + e.message);
             }
         }
+        
+        window.sendAccessEmail = () => {
+            const name = document.getElementById('edit-name').value;
+            const email = document.getElementById('edit-email').value;
+            const login = document.getElementById('edit-login').value;
+            const pass = document.getElementById('edit-password').value;
+
+            if(!email) { alert("O aluno precisa ter um email cadastrado."); return; }
+            if(!login || !pass) { alert("Defina login e senha antes de enviar."); return; }
+
+            const subject = encodeURIComponent("Acesso ao Portal do Aluno - Tanque Team BJJ");
+            const body = encodeURIComponent(`Olá ${name},\n\nSegue abaixo suas credenciais de acesso ao nosso Portal do Aluno:\n\nLogin: ${login}\nSenha Provisória: ${pass}\n\nPor favor, acesse o portal e altere sua senha no primeiro acesso.\n\nAtenciosamente,\nEquipe Tanque Team`);
+
+            const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
+            window.location.href = mailtoLink;
+        };
 
         function renderBeltSVG(beltStr) {
             if (!beltStr) return '';
