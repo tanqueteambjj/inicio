@@ -6,7 +6,7 @@
     <title>Tanque Team Jiu-Jitsu | Matrícula Online</title>
     
     <!-- Favicon -->
-    <link rel="icon" href="https://i.ibb.co/mC2zPJbm/1771300330359.png" type="image/png">
+    <link rel="icon" href="https://i.ibb.co/spgfD2Nd/1771300330359.png" type="image/png">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -174,7 +174,8 @@
     <nav class="bg-brand-dark text-white sticky top-0 z-50 shadow-lg">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <img src="https://i.ibb.co/mC2zPJbm/1771300330359.png" alt="Tanque Team Logo" class="w-12 h-12 object-contain filter drop-shadow-md">
+                <!-- Imagem Logo Atualizada -->
+                <img src="https://i.ibb.co/spgfD2Nd/1771300330359.png" alt="Tanque Team Logo" class="w-12 h-12 object-contain filter drop-shadow-md">
                 <span class="font-display text-2xl font-bold tracking-wider">TANQUE TEAM <span class="text-brand-red">BJJ</span></span>
             </div>
             
@@ -531,7 +532,7 @@
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                     <button type="button" onclick="closeModal()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-brand-red text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">Entendido, Oss!</button>
-                    <button type="button" onclick="window.print()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"><i class="fa-solid fa-print mr-2"></i> Imprimir Contrato Oficial</button>
+                    <!-- <button type="button" onclick="window.print()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"><i class="fa-solid fa-print mr-2"></i> Imprimir Contrato Oficial</button> -->
                 </div>
             </div>
         </div>
@@ -731,7 +732,6 @@
             <p class="mb-2"><strong>CONTRATADA:</strong> <span class="uppercase">Tanque Team Academia de Artes Marciais LTDA</span>, inscrita no CNPJ sob o nº 00.000.000/0001-00, doravante denominada <strong>ACADEMIA</strong>.</p>
             <p><strong>CONTRATANTE:</strong> <span id="printContratante" class="font-bold uppercase"></span>, inscrito(a) no CPF sob o nº <span id="printCPF" class="font-mono"></span>, residente e domiciliado(a) em <span id="printAddress" class="uppercase"></span>, Telefone <span id="printPhone"></span>, E-mail <span id="printEmail"></span>.</p>
             <p><strong>ALUNO(A):</strong> <span id="printStudent" class="font-bold uppercase"></span>, nascido(a) em <span id="printDob" class="font-mono"></span>.</p>
-            <p id="printGuardianBlock" class="hidden"><strong>RESPONSÁVEL LEGAL:</strong> <span id="printGuardianName"></span>, CPF: <span id="printGuardianCPF"></span></p>
             <p id="printGraduation" class="hidden"><strong>GRADUAÇÃO:</strong> <span id="printBeltInfo" class="uppercase"></span></p>
         </div>
         <div class="clauses-section text-xs text-justify mb-6 space-y-2 leading-tight">
@@ -1015,150 +1015,52 @@
             confirmBtn.classList.add('opacity-75', 'cursor-not-allowed');
 
             try {
+                // Initialize today inside the function
                 const today = new Date();
-                
-                // Data gathering...
-                const plan = document.getElementById('selectedPlanInput').value;
-                const studentName = document.getElementById('studentName').value;
-                const studentDob = document.getElementById('studentDob').value;
-                const age = validateAge();
-                const needsGuardian = age < 18;
-                const guardianName = needsGuardian ? document.getElementById('guardianName').value : "";
-                const cpf = document.getElementById('cpfInput').value;
-                const email = document.getElementById('emailInput').value;
-                const phone = document.getElementById('phoneInput').value;
-                const address = document.getElementById('addressInput').value;
-                const signature = document.getElementById('signatureInput').value;
-                const paymentMethod = document.getElementById('paymentMethod').value;
-                const contratanteName = needsGuardian ? guardianName : studentName;
-
-                let price = "R$ 0,00";
-                let displayName = plan.toUpperCase().replace('-', ' ');
-                if(plan === 'infantil-mensal') price = "R$ 179,00";
-                if(plan === 'infantil-semestral') price = "R$ 159,00";
-                if(plan === 'adulto-mensal') price = "R$ 139,00";
-                if(plan === 'adulto-semestral') price = "R$ 119,00";
-
-                let promoNote = "";
-                const isPromo = plan.includes('semestral');
-                if (isPromo) promoNote = "(PROMOÇÃO ABRIL: 1ª Mensalidade R$ 9,90)";
-
-                const hasGraduation = document.getElementById("hasGraduationCheck").checked;
-                const beltColor = hasGraduation ? document.getElementById("beltColor").value : "Branca";
-                const beltDegree = hasGraduation ? document.getElementById("beltDegree").value : "0";
-                const graduationText = `Faixa ${beltColor} - ${beltDegree}º Grau`;
-                const dobParts = studentDob.split('-');
-                const formattedDob = `${dobParts[2]}/${dobParts[1]}/${dobParts[0]}`;
-
-                // --- FIREBASE SAVE ---
-                const regDate = new Date();
-                let endDate = new Date(regDate);
-                if(plan.includes('mensal')) endDate.setMonth(endDate.getMonth() + 1);
-                else endDate.setMonth(endDate.getMonth() + 6);
-
-                const studentData = {
-                    name: studentName,
-                    dob: studentDob,
-                    cpf: cpf,
-                    belt: graduationText,
-                    plan: plan,
-                    category: plan.includes('infantil') ? 'Infantil' : 'Adulto',
-                    registrationDate: regDate.toISOString(),
-                    contractEndDate: endDate.toISOString(),
-                    email: email,
-                    phone: phone,
-                    address: address,
-                    guardian: guardianName,
-                    paymentStatus: 'Pendente',
-                    paymentMethod: paymentMethod
-                };
-
-                try {
-                    if (window.firebaseInitialized && window.addDoc) {
-                        await window.addDoc(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'students'), studentData);
-                    }
-                } catch(err) {
-                    console.error("Erro ao salvar no banco (continuando fluxo):", err);
-                }
-
-                // Populate UI (Modal/Contract)
-                document.getElementById('modalClientName').innerText = studentName; 
-                document.getElementById('modalPlanName').innerText = displayName;
-
-                populateContractDOM(studentData);
-                document.getElementById('printContractSignature').innerText = signature;
-                document.getElementById('printContractValue').innerText = `${price} ${promoNote}`;
+                const options = { day: 'numeric', month: 'long', year: 'numeric' };
+                document.getElementById('printDate').innerText = today.toLocaleDateString('pt-BR', options);
 
                 // --- EMAIL SENDING ---
-                const messageStudent = `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;"><div style="text-align: center; margin-bottom: 20px; background-color: #000; padding: 20px; border-radius: 8px 8px 0 0;"><img src="https://i.ibb.co/mC2zPJbm/1771300330359.png" alt="Tanque Team BJJ" style="width: 100px; height: auto;"><h2 style="color: #fff; margin: 10px 0 0 0;">TANQUE TEAM BJJ</h2></div><h2 style="color: #D90429;">Olá, ${studentName}!</h2><p>É com grande satisfação que confirmamos a sua matrícula na <strong>Tanque Team BJJ</strong>! 👊</p><p>Você acaba de dar o primeiro passo na sua jornada no Jiu-Jitsu. Mais do que técnica, aqui você encontrará disciplina, família e um tatame preparado para o seu desenvolvimento.</p><div style="background-color: #f8f9fa; border-left: 5px solid #D90429; padding: 15px; margin: 20px 0; border-radius: 4px;"><h3 style="margin-top: 0; color: #D90429; border-bottom: 1px solid #ddd; padding-bottom: 10px;">✅ Resumo da sua Matrícula</h3><p style="margin: 5px 0;"><strong>Aluno:</strong> ${studentName}</p><p style="margin: 5px 0;"><strong>Plano:</strong> ${displayName}</p><p style="margin: 5px 0;"><strong>Valor:</strong> ${price} <span style="color: #D90429; font-weight: bold;">${promoNote}</span></p><p style="margin: 5px 0;"><strong>Pagamento:</strong> ${paymentMethod}</p><p style="margin: 5px 0;"><strong>Nascimento:</strong> ${formattedDob}</p><p style="margin: 5px 0;"><strong>Graduação:</strong> ${graduationText}</p><hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">${needsGuardian ? `<p style="margin: 5px 0;"><strong>Responsável:</strong> ${guardianName}</p>` : ''}<p style="margin: 5px 0;"><strong>CPF:</strong> ${cpf}</p><p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p><p style="margin: 5px 0;"><strong>Telefone:</strong> ${phone}</p><p style="margin: 5px 0;"><strong>Endereço:</strong> ${address}</p></div><div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #ffeeba;"><h3 style="margin-top: 0;">💰 Informação de Pagamento</h3><p style="margin: 0;">Para concluir a ativação do seu plano e retirar seu patch, por favor realize o pagamento <strong>presencialmente na unidade</strong> ou entre em contato através do nosso <strong>WhatsApp</strong>.</p></div><h3 style="color: #D90429;">📋 Próximos Passos:</h3><ul><li style="margin-bottom: 8px;"><strong>Uniforme:</strong> Caso ainda não tenha, nossa equipe está pronta para ajudar com o seu kimono.</li><li style="margin-bottom: 8px;"><strong>Primeiro Treino:</strong> Chegue 15 minutos antes para se ambientar e conhecer o professor.</li><li style="margin-bottom: 8px;"><strong>Higiene:</strong> Lembre-se de trazer chinelos para circular fora do tatame.</li></ul><div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 20px;"><p style="margin: 0;"><strong>📍 Localização:</strong> <a href="https://maps.app.goo.gl/Qr4yLUTsVaZPiery9" style="color: #2e7d32; text-decoration: none;">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</a></p></div><p style="margin-top: 20px;">Se tiver dúvidas, responda a este e-mail ou entre em contato pelo WhatsApp: <a href="https://wa.me/5591998192610" style="color: #25D366; font-weight: bold; text-decoration: none;">(91) 99819-2610</a>.</p><p style="font-size: 1.2em;">Estamos ansiosos para te ver no tatame!<br><strong>OSS!</strong></p><hr style="border: 0; border-top: 1px solid #ccc; margin: 30px 0;"><p style="font-size: 12px; color: #777; text-align: center;">Atenciosamente,<br>Equipe Tanque Team BJJ</p></div>`;
+                const messageStudent = `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;"><div style="text-align: center; margin-bottom: 20px; background-color: #000; padding: 20px; border-radius: 8px 8px 0 0;"><img src="https://i.ibb.co/spgfD2Nd/1771300330359.png" alt="Tanque Team BJJ" style="width: 100px; height: auto;"><h2 style="color: #fff; margin: 10px 0 0 0;">TANQUE TEAM BJJ</h2></div><h2 style="color: #D90429;">Olá, ${studentName}!</h2><p>É com grande satisfação que confirmamos a sua matrícula na <strong>Tanque Team BJJ</strong>! 👊</p><p>Você acaba de dar o primeiro passo na sua jornada no Jiu-Jitsu. Mais do que técnica, aqui você encontrará disciplina, família e um tatame preparado para o seu desenvolvimento.</p><div style="background-color: #f8f9fa; border-left: 5px solid #D90429; padding: 15px; margin: 20px 0; border-radius: 4px;"><h3 style="margin-top: 0; color: #D90429; border-bottom: 1px solid #ddd; padding-bottom: 10px;">✅ Resumo da sua Matrícula</h3><p style="margin: 5px 0;"><strong>Aluno:</strong> ${studentName}</p><p style="margin: 5px 0;"><strong>Plano:</strong> ${displayName}</p><p style="margin: 5px 0;"><strong>Valor:</strong> ${price} <span style="color: #D90429; font-weight: bold;">${promoNote}</span></p><p style="margin: 5px 0;"><strong>Pagamento:</strong> ${paymentMethod}</p><p style="margin: 5px 0;"><strong>Nascimento:</strong> ${formattedDob}</p><p style="margin: 5px 0;"><strong>Graduação:</strong> ${graduationText}</p><hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">${needsGuardian ? `<p style="margin: 5px 0;"><strong>Responsável:</strong> ${guardianName}</p>` : ''}<p style="margin: 5px 0;"><strong>CPF:</strong> ${cpf}</p><p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p><p style="margin: 5px 0;"><strong>Telefone:</strong> ${phone}</p><p style="margin: 5px 0;"><strong>Endereço:</strong> ${address}</p></div><div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #ffeeba;"><h3 style="margin-top: 0;">💰 Informação de Pagamento</h3><p style="margin: 0;">Para concluir a ativação do seu plano e retirar seu patch, por favor realize o pagamento <strong>presencialmente na unidade</strong> ou entre em contato através do nosso <strong>WhatsApp</strong>.</p></div><h3 style="color: #D90429;">📋 Próximos Passos:</h3><ul><li style="margin-bottom: 8px;"><strong>Uniforme:</strong> Caso ainda não tenha, nossa equipe está pronta para ajudar com o seu kimono.</li><li style="margin-bottom: 8px;"><strong>Primeiro Treino:</strong> Chegue 15 minutos antes para se ambientar e conhecer o professor.</li><li style="margin-bottom: 8px;"><strong>Higiene:</strong> Lembre-se de trazer chinelos para circular fora do tatame.</li></ul><div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 20px;"><p style="margin: 0;"><strong>📍 Localização:</strong> <a href="https://maps.app.goo.gl/Qr4yLUTsVaZPiery9" style="color: #2e7d32; text-decoration: none;">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</a></p></div><p style="margin-top: 20px;">Se tiver dúvidas, responda a este e-mail ou entre em contato pelo WhatsApp: <a href="https://wa.me/5591998192610" style="color: #25D366; font-weight: bold; text-decoration: none;">(91) 99819-2610</a>.</p><p style="font-size: 1.2em;">Estamos ansiosos para te ver no tatame!<br><strong>OSS!</strong></p><hr style="border: 0; border-top: 1px solid #ccc; margin: 30px 0;"><p style="font-size: 12px; color: #777; text-align: center;">Atenciosamente,<br>Equipe Tanque Team BJJ</p></div>`;
 
-            const messageAdmin = `NOVA MATRÍCULA REALIZADA (Cópia Admin):\n-----------------------------------\nAluno: ${studentName}\nNascimento: ${formattedDob}\nGraduação: ${graduationText}\n${needsGuardian ? `Responsável: ${guardianName}` : ''}\nCPF: ${cpf}\nEmail: ${email}\nTelefone: ${phone}\nEndereço: ${address}\n\nDETALHES DO PLANO:\n-----------------------------------\nPlano: ${displayName}\nValor: ${price} ${promoNote}\nPagamento: ${paymentMethod}\nData: ${today.toLocaleDateString('pt-BR')}\n\nStatus: Contrato Assinado Digitalmente.`;
+                const messageAdmin = `NOVA MATRÍCULA REALIZADA (Cópia Admin):\n-----------------------------------\nAluno: ${studentName}\nNascimento: ${formattedDob}\nGraduação: ${graduationText}\n${needsGuardian ? `Responsável: ${guardianName}` : ''}\nCPF: ${cpf}\nEmail: ${email}\nTelefone: ${phone}\nEndereço: ${address}\n\nDETALHES DO PLANO:\n-----------------------------------\nPlano: ${displayName}\nValor: ${price} ${promoNote}\nPagamento: ${paymentMethod}\nData: ${today.toLocaleDateString('pt-BR')}\n\nStatus: Contrato Assinado Digitalmente.`;
 
-            const paramsStudent = { to_name: contratanteName, to_email: email, plan_name: displayName, reply_to: 'contato@tanqueteambjj.com', subject: `🥋 Bem-vindo à Família! Confirmação de Matrícula - ${studentName}`, message: messageStudent };
-            const paramsAdmin = { to_name: "Administração", to_email: 'cledson.sales@gmail.com', plan_name: displayName, reply_to: email, subject: `Nova Matrícula: ${studentName} - ${displayName}`, message: messageAdmin };
+                const paramsStudent = { to_name: contratanteName, to_email: email, plan_name: displayName, reply_to: 'contato@tanqueteambjj.com', subject: `🥋 Bem-vindo à Família! Confirmação de Matrícula - ${studentName}`, message: messageStudent };
+                
+                // CORREÇÃO DO EMAIL DE ADMINISTRAÇÃO
+                const paramsAdmin = { to_name: "Administração", to_email: 'cledson.sales@gmail.com', plan_name: displayName, reply_to: email, subject: `Nova Matrícula: ${studentName} - ${displayName}`, message: messageAdmin };
 
-            // Timeout Promise (7 seconds)
-            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 7000));
-            
-            // Email Promise
-            const emailPromise = Promise.all([
-                emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, paramsStudent, EMAILJS_PUBLIC_KEY),
-                emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, paramsAdmin, EMAILJS_PUBLIC_KEY)
-            ]);
+                // Timeout Promise (7 seconds)
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 7000));
+                
+                // Email Promise
+                const emailPromise = Promise.all([
+                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, paramsStudent, EMAILJS_PUBLIC_KEY),
+                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, paramsAdmin, EMAILJS_PUBLIC_KEY)
+                ]);
 
-            try {
-                 await Promise.race([emailPromise, timeoutPromise]);
-                 // Success Msg
-                 const emailMsg = document.getElementById('email-status-msg');
-                 if(emailMsg) { emailMsg.className = "text-sm text-green-600 mt-2 font-semibold"; emailMsg.innerHTML = `<i class="fa-solid fa-envelope-circle-check"></i> Matrícula confirmada! E-mail enviado para ${email}.`; }
-            } catch (e) {
-                 console.log("Email status:", e.message); // Log but don't stop
-                 // Warning Msg
-                 const emailMsg = document.getElementById('email-status-msg');
-                 if(emailMsg) { emailMsg.className = "text-sm text-red-600 mt-2 font-semibold bg-red-100 p-2 rounded border border-red-200"; emailMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> <strong>Aviso:</strong> O contrato foi gerado, mas houve um erro/demora no envio do e-mail. Por favor, salve o PDF abaixo.'; }
-            }
-
-            // Open Success Modal (ALWAYS)
-            closeConfirmation();
-            document.getElementById('successModal').classList.remove('hidden');
-
-        } catch (e) {
-            alert("Erro inesperado: " + e.message);
-        } finally {
-            confirmBtn.innerText = originalBtnText;
-            confirmBtn.disabled = false;
-            confirmBtn.classList.remove('opacity-75', 'cursor-not-allowed');
-        }
-    }
-
-        function closeModal() {
-            document.getElementById('successModal').classList.add('hidden');
-            document.getElementById('registrationForm').reset();
-            document.getElementById('plan-summary').classList.add('hidden');
-            document.getElementById('signaturePreview').innerText = '';
-            document.getElementById('guardianContainer').classList.add('hidden');
-            toggleGraduationFields();
-        }
-
-        // --- ADMIN AREA LOGIC ---
-        function openAdminLogin() { document.getElementById('admin-login-modal').classList.remove('hidden'); }
-        function closeAdminLogin() { document.getElementById('admin-login-modal').classList.add('hidden'); }
-        
-        async function checkAdminLogin() {
-            const email = document.getElementById('adminEmail').value;
-            const pass = document.getElementById('adminPass').value;
-            
-            // CORREÇÃO DO EMAIL DE ADMINISTRAÇÃO
-            if(email === "administracao@tanqueteambjj.com.br" && pass === "32573515") {
-                closeAdminLogin();
-                document.getElementById('admin-dashboard').classList.remove('hidden');
-                if(window.firebaseInitialized) {
-                    await loadAdminData();
-                } else {
-                    alert("Banco de dados não disponível. Verifique a conexão.");
+                try {
+                     await Promise.race([emailPromise, timeoutPromise]);
+                     // Success Msg
+                     const emailMsg = document.getElementById('email-status-msg');
+                     if(emailMsg) { emailMsg.className = "text-sm text-green-600 mt-2 font-semibold"; emailMsg.innerHTML = `<i class="fa-solid fa-envelope-circle-check"></i> Matrícula confirmada! E-mail enviado para ${email}.`; }
+                } catch (e) {
+                     console.log("Email status:", e.message); // Log but don't stop
+                     // Warning Msg
+                     const emailMsg = document.getElementById('email-status-msg');
+                     if(emailMsg) { emailMsg.className = "text-sm text-red-600 mt-2 font-semibold bg-red-100 p-2 rounded border border-red-200"; emailMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> <strong>Aviso:</strong> O contrato foi gerado, mas houve um erro/demora no envio do e-mail. Por favor, salve o PDF abaixo.'; }
                 }
-            } else {
-                alert("Credenciais inválidas");
+
+                // Open Success Modal (ALWAYS)
+                closeConfirmation();
+                document.getElementById('successModal').classList.remove('hidden');
+
+            } catch (e) {
+                alert("Erro inesperado: " + e.message);
+            } finally {
+                confirmBtn.innerText = originalBtnText;
+                confirmBtn.disabled = false;
+                confirmBtn.classList.remove('opacity-75', 'cursor-not-allowed');
             }
         }
 
