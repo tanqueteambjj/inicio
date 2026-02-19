@@ -169,7 +169,63 @@
 
             <!-- VIEW: FINANCEIRO -->
             <div id="view-financial" class="hidden">
-                <div class="bg-white rounded-xl shadow overflow-hidden border border-gray-200">
+                 <!-- Stats Row Financeiro -->
+                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Total</p>
+                                <p class="text-2xl font-bold text-gray-800" id="fin-stat-total">0</p>
+                            </div>
+                            <div class="text-blue-500 text-2xl"><i class="fa-solid fa-users"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-green-500">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Em Dia</p>
+                                <p class="text-2xl font-bold text-gray-800" id="fin-stat-active">0</p>
+                            </div>
+                            <div class="text-green-500 text-2xl"><i class="fa-solid fa-check-circle"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-red-500">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Pendente</p>
+                                <p class="text-2xl font-bold text-gray-800" id="fin-stat-pending">0</p>
+                            </div>
+                            <div class="text-red-500 text-2xl"><i class="fa-solid fa-circle-exclamation"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-yellow-500">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Vencendo (7d)</p>
+                                <p class="text-2xl font-bold text-gray-800" id="fin-stat-expiring">0</p>
+                            </div>
+                            <div class="text-yellow-500 text-2xl"><i class="fa-solid fa-hourglass-half"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs Financeiro -->
+                <div class="flex mb-0">
+                    <button onclick="switchFinancialTab('all')" id="fin-tab-all" class="px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative">
+                        TODOS
+                    </button>
+                    <button onclick="switchFinancialTab('active')" id="fin-tab-active" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        EM DIA
+                    </button>
+                    <button onclick="switchFinancialTab('pending')" id="fin-tab-pending" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        PENDENTE
+                    </button>
+                    <button onclick="switchFinancialTab('expiring')" id="fin-tab-expiring" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        VENCENDO
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-b-xl rounded-tr-xl shadow overflow-hidden border border-gray-200 relative top-[-1px]">
                     <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
                         <div>
                             <h3 class="font-bold text-gray-800 uppercase text-lg"><i class="fa-solid fa-coins text-brand-red mr-2"></i> Gestão Financeira</h3>
@@ -199,35 +255,6 @@
             </div>
 
         </main>
-    </div>
-
-    <!-- Attendance Management Modal -->
-    <div id="attendance-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]">
-            <div class="bg-blue-600 px-6 py-4 flex justify-between items-center text-white shrink-0">
-                <h3 class="font-bold text-lg"><i class="fa-solid fa-calendar-check mr-2"></i> Gerenciar Frequência</h3>
-                <button onclick="closeAttendanceModal()" class="hover:text-gray-200"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <div class="p-4 bg-gray-50 border-b shrink-0">
-                <h4 class="font-bold text-gray-800" id="att-student-name">--</h4>
-                <input type="hidden" id="att-student-id">
-                
-                <div class="mt-3 flex gap-2">
-                    <input type="date" id="att-date-input" class="border rounded px-2 py-1 text-sm flex-grow">
-                    <button onclick="addManualAttendance()" class="bg-green-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-green-700">Adicionar</button>
-                </div>
-                <p class="text-[10px] text-gray-500 mt-1">Selecione uma data para adicionar presença retroativa.</p>
-            </div>
-            <div class="overflow-y-auto p-0 flex-1">
-                <div id="att-list" class="divide-y divide-gray-100">
-                    <!-- List populated by JS -->
-                </div>
-                <div id="att-empty" class="hidden text-center py-8 text-gray-400 italic text-sm">Nenhuma presença registrada.</div>
-            </div>
-            <div class="p-3 border-t bg-white shrink-0 text-right">
-                <button onclick="closeAttendanceModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded text-sm font-bold hover:bg-gray-300">Fechar</button>
-            </div>
-        </div>
     </div>
 
     <!-- Payment Modal -->
@@ -657,6 +684,7 @@
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
+            // CORREÇÃO: Usar __app_id do ambiente se disponível para permissões corretas
             appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj";
             window.db = db;
         } catch(e) {
@@ -669,6 +697,7 @@
         window.students = []; 
         window.currentTab = 'adults';
         window.currentView = 'students'; // 'students' or 'financial'
+        window.currentFinancialTab = 'all';
 
         // Auth Check
         const session = localStorage.getItem('tanque_user_session');
@@ -723,6 +752,16 @@
             const active = window.students.filter(s => s.paymentStatus === 'Em dia').length;
             const pending = total - active;
             
+            // Calc expiring (next 7 days)
+            const today = new Date();
+            let expiringCount = 0;
+            window.students.forEach(s => {
+                const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : new Date(s.contractEndDate);
+                const diffTime = targetDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                if (diffDays >= 0 && diffDays <= 7) expiringCount++;
+            });
+            
             let kidsCount = 0;
             let adultsCount = 0;
 
@@ -731,11 +770,28 @@
                 else adultsCount++;
             });
 
-            document.getElementById('stat-total').innerText = total;
-            document.getElementById('stat-active').innerText = active;
-            document.getElementById('stat-pending').innerText = pending;
-            document.getElementById('stat-infantil').innerText = kidsCount;
-            document.getElementById('stat-adulto').innerText = adultsCount;
+            // Update stats if elements exist
+            const elTotal = document.getElementById('stat-total');
+            if (elTotal) elTotal.innerText = total;
+
+            const elInfantil = document.getElementById('stat-infantil');
+            if (elInfantil) elInfantil.innerText = kidsCount;
+
+            const elAdulto = document.getElementById('stat-adulto');
+            if (elAdulto) elAdulto.innerText = adultsCount;
+            
+            // Finance stats
+            const elFinTotal = document.getElementById('fin-stat-total');
+            if (elFinTotal) elFinTotal.innerText = total;
+            
+            const elFinActive = document.getElementById('fin-stat-active');
+            if (elFinActive) elFinActive.innerText = active;
+            
+            const elFinPending = document.getElementById('fin-stat-pending');
+            if (elFinPending) elFinPending.innerText = pending;
+            
+            const elFinExpiring = document.getElementById('fin-stat-expiring');
+            if (elFinExpiring) elFinExpiring.innerText = expiringCount;
         }
 
         // --- SELECTION LOGIC ---
@@ -766,15 +822,13 @@
             
             if(confirm(`Tem certeza que deseja excluir ${ids.length} alunos selecionados? Esta ação é irreversível.`)) {
                 try {
-                    // Loop de exclusão
                     const deletePromises = ids.map(id => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id)));
                     await Promise.all(deletePromises);
-                    
                     alert('Alunos excluídos com sucesso!');
-                    window.location.reload(); // Atualiza a página como solicitado
+                    window.location.reload(); 
                 } catch(e) {
                     alert('Erro ao excluir: ' + e.message);
-                    loadData(); // Recarrega dados em caso de erro parcial
+                    loadData();
                 }
             }
         };
@@ -934,6 +988,21 @@
             }
             renderTable();
         };
+        
+        window.switchFinancialTab = (tab) => {
+            window.currentFinancialTab = tab;
+            const tabs = ['all', 'active', 'pending', 'expiring'];
+            
+            tabs.forEach(t => {
+                const btn = document.getElementById(`fin-tab-${t}`);
+                if (t === tab) {
+                    btn.className = "px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative ml-1";
+                } else {
+                    btn.className = "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1";
+                }
+            });
+            renderFinancialTable();
+        };
 
         window.renderStudentTable = function() { renderTable(); }
         window.filterTable = () => {
@@ -1063,7 +1132,23 @@
             const search = document.getElementById('searchInput')?.value.toLowerCase() || "";
             tbody.innerHTML = '';
 
-            const filtered = window.students.filter(s => s.name.toLowerCase().includes(search));
+            // FILTER LOGIC
+            const filtered = window.students.filter(s => {
+                const matchesSearch = s.name.toLowerCase().includes(search);
+                
+                // Determine Status for Filter
+                let status = 'pending'; // Default
+                const today = new Date();
+                const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : new Date(s.contractEndDate);
+                const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+                
+                if (diffDays >= 0 && diffDays <= 7) status = 'expiring';
+                else if (s.paymentStatus === 'Em dia') status = 'active';
+                else status = 'pending'; // Includes 'Vencido'
+                
+                const matchesTab = (window.currentFinancialTab === 'all') || (window.currentFinancialTab === status);
+                return matchesSearch && matchesTab;
+            });
 
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-gray-400">Nenhum registro encontrado.</td></tr>`;
