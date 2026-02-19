@@ -201,7 +201,7 @@
                     <div class="bg-white rounded-xl shadow p-5 border-l-4 border-yellow-500">
                         <div class="flex justify-between">
                             <div>
-                                <p class="text-gray-400 text-xs font-bold uppercase">Vencendo (7d)</p>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Expirando (7d)</p>
                                 <p class="text-2xl font-bold text-gray-800" id="fin-stat-expiring">0</p>
                             </div>
                             <div class="text-yellow-500 text-2xl"><i class="fa-solid fa-hourglass-half"></i></div>
@@ -221,7 +221,7 @@
                         PENDENTE
                     </button>
                     <button onclick="switchFinancialTab('expiring')" id="fin-tab-expiring" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
-                        VENCENDO
+                        EXPIRANDO
                     </button>
                 </div>
 
@@ -415,7 +415,7 @@
                     </div>
 
                     <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 bg-blue-50 p-4 rounded-lg">
-                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-3 flex items-center gap-2"><i class="fa-solid fa-key"></i> Acesso ao Portal do Aluno</h4>
+                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-3">Definir Acesso do Aluno</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-blue-600 mb-1">Login (Usuário/Email)</label>
@@ -1140,7 +1140,8 @@
                 let status = 'pending'; // Default
                 const today = new Date();
                 const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : new Date(s.contractEndDate);
-                const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+                const diffTime = targetDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 
                 if (diffDays >= 0 && diffDays <= 7) status = 'expiring';
                 else if (s.paymentStatus === 'Em dia') status = 'active';
@@ -1161,9 +1162,23 @@
                     regDay = new Date(s.registrationDate).getDate();
                 }
 
+                const today = new Date();
+                const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : new Date(s.contractEndDate);
+                const diffTime = targetDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
                 const nextDue = s.nextDueDate ? formatDate(s.nextDueDate) : `Dia ${regDay}`;
-                const payStatus = s.paymentStatus || 'Pendente';
-                const statusColor = payStatus === 'Em dia' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100';
+
+                let statusHtml = '';
+                if (diffDays < 0 && s.paymentStatus !== 'Em dia') {
+                     statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>`;
+                } else if (diffDays >= 0 && diffDays <= 7) {
+                     statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800">Expirando</span>`;
+                } else {
+                     const payStatus = s.paymentStatus || 'Pendente';
+                     const statusColor = payStatus === 'Em dia' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100';
+                     statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold ${statusColor}">${payStatus}</span>`;
+                }
 
                 const tr = document.createElement('tr');
                 tr.className = "border-b hover:bg-gray-50 transition";
@@ -1173,7 +1188,7 @@
                     <td class="px-6 py-4 align-middle text-sm">${formatDate(s.registrationDate)}</td>
                     <td class="px-6 py-4 align-middle text-center font-bold text-gray-700">Dia ${regDay}</td>
                     <td class="px-6 py-4 align-middle text-center text-sm font-mono text-blue-700">${nextDue}</td>
-                    <td class="px-6 py-4 align-middle"><span class="px-2 py-1 rounded text-xs font-bold ${statusColor}">${payStatus}</span></td>
+                    <td class="px-6 py-4 align-middle">${statusHtml}</td>
                     <td class="px-6 py-4 align-middle text-center">
                         <button onclick="openPaymentModal('${s.id}')" class="bg-green-600 text-white w-8 h-8 rounded-full hover:bg-green-700 mr-2 shadow" title="Informar Pagamento"><i class="fa-solid fa-dollar-sign"></i></button>
                         <button onclick="viewHistory('${s.id}')" class="bg-gray-200 text-gray-600 w-8 h-8 rounded-full hover:bg-gray-300 shadow" title="Histórico de Pagamentos"><i class="fa-solid fa-clock-rotate-left"></i></button>
