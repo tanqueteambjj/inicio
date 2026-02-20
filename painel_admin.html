@@ -319,6 +319,7 @@
                             <option value="combo-casal">Combo Casal (R$ 220,00)</option>
                             <option value="combo-dupla">Combo Dupla (R$ 250,00)</option>
                             <option value="combo-familia">Combo Família (R$ 340,00)</option>
+                            <option value="dependente">Dependente (Isento R$ 0,00)</option>
                             <option value="administracao">Administração (R$ 0,00)</option>
                             <option value="isento">Isento / Bolsista (R$ 0,00)</option>
                             <option value="outros">Outros / Avulso</option>
@@ -440,8 +441,14 @@
                                     <option value="combo-casal">Combo Casal (2 Adultos)</option>
                                     <option value="combo-dupla">Combo Dupla (1 Ad + 1 Inf)</option>
                                     <option value="combo-familia">Combo Família (3 Pessoas)</option>
+                                    <option value="dependente">Dependente (Isento)</option>
                                     <option value="administracao">Administração (Isento)</option>
                                 </select>
+                            </div>
+                            <!-- CAMPO TITULAR (VINCULAÇÃO) -->
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-purple-600 mb-1">Titular do Plano (Preencher caso seja Dependente)</label>
+                                <input type="text" id="edit-titular" class="w-full border border-purple-200 rounded p-2 bg-purple-50 focus:ring-purple-500" placeholder="Nome do Responsável Financeiro pelo Combo">
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1">Email</label>
@@ -560,12 +567,15 @@
                     </div>
 
                     <!-- FINANCIAL INFO -->
-                    <div class="bg-gray-50 p-3 rounded border border-gray-100">
+                    <div class="bg-gray-50 p-3 rounded border border-gray-100 relative">
                         <h4 class="text-xs font-bold text-gray-400 uppercase border-b pb-1 mb-2">Financeiro</h4>
                         <div class="grid grid-cols-2 gap-y-2 text-sm">
                             <div class="col-span-2"><span class="text-gray-500 block text-xs">Plano Contratado</span><span class="font-medium font-bold text-brand-dark" id="detail-plan">--</span></div>
                             <div><span class="text-gray-500 block text-xs">Valor Mensal</span><span class="font-medium" id="detail-value">--</span></div>
                             <div><span class="text-gray-500 block text-xs">Forma de Pagamento</span><span class="font-medium" id="detail-method">--</span></div>
+                        </div>
+                        <div id="detail-titular-box" class="hidden mt-3 p-2 bg-purple-100 text-purple-800 rounded border border-purple-200 text-xs">
+                            <span class="font-bold">Titular/Pagante:</span> <span id="detail-titular-name">--</span>
                         </div>
                     </div>
 
@@ -652,8 +662,14 @@
                             <option value="combo-casal">Combo Casal (2 Adultos)</option>
                             <option value="combo-dupla">Combo Dupla (1 Ad + 1 Inf)</option>
                             <option value="combo-familia">Combo Família (3 Pessoas)</option>
+                            <option value="dependente">Dependente (Isento)</option>
                             <option value="administracao">Administração (Isento)</option>
                         </select>
+                    </div>
+                    <!-- CAMPO TITULAR (VINCULAÇÃO) -->
+                    <div class="col-span-1">
+                        <label class="block text-xs font-bold text-purple-600 mb-1">Titular do Plano (Se Dependente)</label>
+                        <input type="text" id="reg-titular" class="w-full border border-purple-200 rounded p-2 bg-purple-50 focus:ring-purple-500" placeholder="Nome de quem paga o Combo">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Status Pagamento</label>
@@ -734,8 +750,20 @@
         <div class="signatures-section mt-8 page-break-inside-avoid">
             <p class="mb-12 text-right text-xs">Belém-PA, <span id="printContractDate"></span> <span id="printDate" class="hidden"></span>.</p>
             <div class="flex justify-between gap-8">
-                <div class="w-1/2 text-center"><div class="border-t border-black pt-2 mx-4"><p class="font-bold text-base signature-font mb-1">Tanque Team</p><p class="font-bold uppercase text-[10px] tracking-wider">Tanque Team BJJ</p><p class="text-[8px] text-gray-500">CONTRATADA</p></div></div>
-                <div class="w-1/2 text-center"><div class="border-t border-black pt-2 mx-4"><p id="printContractSignature" class="signature-font text-xl mb-1"></p><p id="printSignature" class="hidden"></p><p class="font-bold uppercase text-[10px] tracking-wider">Assinatura do Responsável/Aluno</p><p class="text-[8px] text-gray-500">CONTRATANTE (Aceite Digital)</p></div></div>
+                <div class="w-1/2 text-center">
+                    <div class="border-t border-black pt-2 mx-4">
+                        <p class="font-bold text-base signature-font mb-1">Tanque Team</p>
+                        <p class="font-bold uppercase text-[10px] tracking-wider">Tanque Team BJJ</p>
+                        <p class="text-[8px] text-gray-500">CONTRATADA</p>
+                    </div>
+                </div>
+                <div class="w-1/2 text-center">
+                    <div class="border-t border-black pt-2 mx-4">
+                        <p class="font-bold text-sm mb-1 text-green-700"><i class="fa-solid fa-check"></i> Aceite Eletrônico Registrado</p>
+                        <p class="font-bold uppercase text-[10px] tracking-wider">Assinatura do Responsável/Aluno</p>
+                        <p class="text-[8px] text-gray-500">CONTRATANTE</p>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="mt-8 text-center text-[8px] text-gray-400 border-t pt-2">Documento gerado digitalmente em tanque-team.com.br. Validade jurídica assegurada pela MP nº 2.200-2/2001.</div>
@@ -850,7 +878,7 @@
             
             if (cat === 'administração' || plan === 'administracao') return false; // Trata admin como adulto na listagem
             if (cat.includes('infantil')) return true;
-            if (cat.includes('adulto') || cat.includes('combo')) return false;
+            if (cat.includes('adulto') || cat.includes('combo') || cat.includes('dependente')) return false;
             
             // Fallback to Plan Name
             if (plan.includes('infantil')) return true;
@@ -1277,7 +1305,7 @@
                     const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
                     
                     let statusBadge = '';
-                    if (s.paymentStatus === 'Isento' || s.plan === 'administracao') {
+                    if (s.paymentStatus === 'Isento' || s.plan === 'administracao' || s.plan === 'dependente') {
                         statusBadge = '<span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">Isento</span>';
                     } else {
                         const diffTime = targetDate - today;
@@ -1318,6 +1346,9 @@
                     if (safePlan === 'administracao') {
                         nameDisplay += `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-bold uppercase">Admin</span>`;
                     }
+                    if (safePlan === 'dependente') {
+                        nameDisplay += `<span class="ml-2 text-[10px] text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded border border-indigo-200 font-bold uppercase">Dependente</span>`;
+                    }
                     
                     nameDisplay += `</div>`;
                     
@@ -1345,6 +1376,7 @@
                         else if(safePlan === 'combo-casal') displayPlanName = 'Combo Casal';
                         else if(safePlan === 'combo-familia') displayPlanName = 'Combo Família';
                         else if(safePlan === 'administracao') displayPlanName = 'Administração';
+                        else if(safePlan === 'dependente') displayPlanName = 'Dependente (Combo)';
                         else displayPlanName = safePlan.replace('-', ' ').toUpperCase();
                     }
 
@@ -1441,7 +1473,7 @@
                     const nextDue = s.nextDueDate ? formatDate(s.nextDueDate) : `Dia ${regDay}`;
 
                     let statusHtml = '';
-                    if (s.paymentStatus === 'Isento' || s.plan === 'administracao') {
+                    if (s.paymentStatus === 'Isento' || s.plan === 'administracao' || s.plan === 'dependente') {
                         statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">Isento</span>`;
                     } else {
                          const today = new Date();
@@ -1466,6 +1498,7 @@
                         else if(safePlan === 'combo-casal') displayPlanName = 'Combo Casal';
                         else if(safePlan === 'combo-familia') displayPlanName = 'Combo Família';
                         else if(safePlan === 'administracao') displayPlanName = 'Administração';
+                        else if(safePlan === 'dependente') displayPlanName = 'Dependente (Combo)';
                         else displayPlanName = safePlan.replace('-', ' ').toUpperCase();
                     }
 
@@ -1534,7 +1567,7 @@
             else if (plan === 'combo-casal') price = 220.00;
             else if (plan === 'combo-dupla') price = 250.00;
             else if (plan === 'combo-familia') price = 340.00;
-            else if (plan === 'isento' || plan === 'administracao') price = 0;
+            else if (plan === 'isento' || plan === 'administracao' || plan === 'dependente') price = 0;
             
             if (price !== "") amountInput.value = price;
         };
@@ -1551,7 +1584,7 @@
             const method = document.getElementById('pay-method').value;
             const nextDue = document.getElementById('pay-next-due').value;
 
-            if(!amount) { alert("Informe o valor."); return; }
+            if(!amount && amount !== "0") { alert("Informe o valor."); return; }
 
             const paymentRecord = {
                 date: date,
@@ -1665,6 +1698,7 @@
                 else if(s.plan === 'combo-casal') displayName = 'COMBO CASAL (2 ADULTOS) SEMESTRAL';
                 else if(s.plan === 'combo-familia') displayName = 'COMBO FAMÍLIA (3 PESSOAS) SEMESTRAL';
                 else if(s.plan === 'administracao') displayName = 'ADMINISTRAÇÃO (ISENTO)';
+                else if(s.plan === 'dependente') displayName = 'DEPENDENTE - COMBO FAMÍLIA';
                 else displayName = s.plan.replace('infantil-', 'Infantil ').replace('adulto-', 'Jovem/Adulto ').replace('mensal', 'Mensal').replace('trimestral', 'Trimestral').replace('semestral', 'Semestral').toUpperCase();
             }
             
@@ -1684,14 +1718,13 @@
             const regDate = s.registrationDate ? new Date(s.registrationDate) : new Date();
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
             document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', options);
-            document.getElementById('printContractSignature').innerText = s.signature || ""; 
             
             document.getElementById('printPaymentDay').innerText = regDate.getDate();
             let planCheckboxes = '( ) MENSAL ( ) TRIMESTRAL ( ) SEMESTRAL';
             if (s.plan && s.plan.includes('mensal')) planCheckboxes = '(X) MENSAL ( ) TRIMESTRAL ( ) SEMESTRAL';
             else if (s.plan && s.plan.includes('trimestral')) planCheckboxes = '( ) MENSAL (X) TRIMESTRAL ( ) SEMESTRAL';
             else if (s.plan && s.plan.includes('semestral')) planCheckboxes = '( ) MENSAL ( ) TRIMESTRAL (X) SEMESTRAL';
-            else if (s.plan && s.plan.includes('combo')) planCheckboxes = '( ) MENSAL ( ) TRIMESTRAL (X) SEMESTRAL [COMBO]';
+            else if (s.plan && (s.plan.includes('combo') || s.plan === 'dependente')) planCheckboxes = '( ) MENSAL ( ) TRIMESTRAL (X) SEMESTRAL [COMBO]';
             
             document.getElementById('printPlanCheckboxes').innerText = planCheckboxes;
             document.getElementById('printContractValue').innerText = price; 
@@ -1767,7 +1800,8 @@
                 'combo-dupla': 'R$ 250,00',
                 'combo-casal': 'R$ 220,00',
                 'combo-familia': 'R$ 340,00',
-                'administracao': 'Isento (R$ 0,00)'
+                'administracao': 'Isento (R$ 0,00)',
+                'dependente': 'Isento (R$ 0,00)'
             };
             
             let displayName = 'NÃO INFORMADO';
@@ -1776,6 +1810,7 @@
                 else if(s.plan === 'combo-casal') displayName = 'COMBO CASAL (2 ADULTOS) SEMESTRAL';
                 else if(s.plan === 'combo-familia') displayName = 'COMBO FAMÍLIA (3 PESSOAS) SEMESTRAL';
                 else if(s.plan === 'administracao') displayName = 'ADMINISTRAÇÃO (ISENTO)';
+                else if(s.plan === 'dependente') displayName = 'DEPENDENTE (COMBO)';
                 else displayName = s.plan.replace('infantil-', 'Infantil ').replace('adulto-', 'Jovem/Adulto ').replace('mensal', 'Mensal').replace('trimestral', 'Trimestral').replace('semestral', 'Semestral').toUpperCase();
             }
             
@@ -1785,6 +1820,15 @@
             document.getElementById('detail-plan').innerText = displayName;
             document.getElementById('detail-value').innerText = planValue;
             document.getElementById('detail-method').innerText = payMethod;
+            
+            // Exibir Titular se houver
+            const titularBox = document.getElementById('detail-titular-box');
+            if (s.titularName && s.titularName.trim() !== "") {
+                document.getElementById('detail-titular-name').innerText = s.titularName;
+                titularBox.classList.remove('hidden');
+            } else {
+                titularBox.classList.add('hidden');
+            }
 
             document.getElementById('details-modal').classList.remove('hidden');
             document.getElementById('details-modal').classList.add('flex');
@@ -1797,6 +1841,7 @@
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-name').value = s.name;
             document.getElementById('edit-plan').value = s.plan || 'infantil-mensal';
+            document.getElementById('edit-titular').value = s.titularName || ''; // Novo campo de Titular
             document.getElementById('edit-payment').value = s.paymentStatus || 'Pendente';
             document.getElementById('edit-email').value = s.email || '';
             document.getElementById('edit-phone').value = s.phone || '';
@@ -1838,6 +1883,7 @@
             const id = document.getElementById('edit-id').value;
             const name = document.getElementById('edit-name').value;
             const plan = document.getElementById('edit-plan').value;
+            const titular = document.getElementById('edit-titular').value; // Titular
             const payment = document.getElementById('edit-payment').value;
             const email = document.getElementById('edit-email').value;
             const phone = document.getElementById('edit-phone').value;
@@ -1856,6 +1902,7 @@
             if (plan.includes('infantil')) newCategory = 'Infantil';
             if (plan.includes('combo')) newCategory = 'Combo Família';
             if (plan === 'administracao') newCategory = 'Administração';
+            if (plan === 'dependente') newCategory = 'Dependente (Combo)';
             
             const photoInput = document.getElementById('edit-photo');
             let photoBase64 = null;
@@ -1877,6 +1924,7 @@
                 const updateData = { 
                      name: name, 
                      plan: plan, 
+                     titularName: titular, // Titular
                      category: newCategory, 
                      paymentStatus: payment, 
                      enrollmentStatus: status,
@@ -1912,6 +1960,7 @@
             const address = document.getElementById('reg-address').value;
             const guardian = document.getElementById('reg-guardian').value;
             const plan = document.getElementById('reg-plan').value;
+            const titular = document.getElementById('reg-titular').value; // Titular
             const payment = document.getElementById('reg-payment').value;
             const beltColor = document.getElementById('reg-belt-color').value;
             const beltDegree = document.getElementById('reg-belt-degree').value;
@@ -1926,14 +1975,15 @@
             
             if(plan.includes('mensal')) endDate.setMonth(endDate.getMonth() + 1);
             else if(plan.includes('trimestral')) endDate.setMonth(endDate.getMonth() + 3);
-            else if(plan.includes('semestral') || plan.includes('combo')) endDate.setMonth(endDate.getMonth() + 6);
-            else if(plan === 'administracao') endDate.setFullYear(endDate.getFullYear() + 1); // Dá 1 ano automático
+            else if(plan.includes('semestral') || plan.includes('combo') || plan === 'dependente') endDate.setMonth(endDate.getMonth() + 6);
+            else if(plan === 'administracao') endDate.setFullYear(endDate.getFullYear() + 1);
             else endDate.setMonth(endDate.getMonth() + 1);
 
             let category = 'Adulto';
             if (plan.includes('infantil')) category = 'Infantil';
             if (plan.includes('combo')) category = 'Combo Família';
             if (plan === 'administracao') category = 'Administração';
+            if (plan === 'dependente') category = 'Dependente (Combo)';
 
             try {
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'students'), {
@@ -1945,6 +1995,7 @@
                     address: address,
                     guardian: guardian,
                     plan: plan,
+                    titularName: titular, // Titular Guardado
                     paymentStatus: payment,
                     enrollmentStatus: 'Ativo',
                     belt: beltStr,
