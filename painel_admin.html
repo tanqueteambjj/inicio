@@ -161,13 +161,13 @@
                     <div class="px-6 py-3 border-b border-gray-200 bg-white flex flex-wrap gap-4 items-center text-sm no-print">
                         <span class="font-bold text-gray-500"><i class="fa-solid fa-filter"></i> Filtros:</span>
                         
-                        <select id="sort-order" onchange="renderTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
+                        <select id="sort-order" onchange="filterTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
                             <option value="recent">⏱️ Mais Recentes</option>
                             <option value="az">🔤 Ordem Alfabética (A-Z)</option>
                             <option value="za">🔤 Ordem Alfabética (Z-A)</option>
                         </select>
                         
-                        <select id="filter-belt" onchange="renderTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
+                        <select id="filter-belt" onchange="filterTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
                             <option value="">🥋 Todas as Faixas</option>
                             <option value="branca">Branca</option>
                             <option value="cinza">Cinza</option>
@@ -180,7 +180,7 @@
                             <option value="preta">Preta</option>
                         </select>
 
-                        <select id="filter-payment-status" onchange="renderTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
+                        <select id="filter-payment-status" onchange="filterTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
                             <option value="">💲 Pagamento (Todos)</option>
                             <option value="Em dia">Em dia</option>
                             <option value="Pendente">Pendente</option>
@@ -1209,7 +1209,7 @@
                 navFinancial.classList.add('text-gray-400', 'hover:bg-gray-800');
                 navFinancial.classList.remove('bg-brand-red', 'text-white');
                 
-                renderTable();
+                if(typeof renderTable === 'function') renderTable();
             } else {
                 viewStudents.classList.add('hidden');
                 viewFinancial.classList.remove('hidden');
@@ -1219,7 +1219,7 @@
                 navStudents.classList.add('text-gray-400', 'hover:bg-gray-800');
                 navStudents.classList.remove('bg-brand-red', 'text-white');
 
-                renderFinancialTable();
+                if(typeof renderFinancialTable === 'function') renderFinancialTable();
             }
         };
 
@@ -1241,7 +1241,7 @@
             else if (tab === 'kids') btnKid.className = activeClass + " ml-1";
             else if (tab === 'inactive') btnInactive.className = activeClass + " ml-1";
 
-            renderTable();
+            if(typeof renderTable === 'function') renderTable();
         };
         
         window.switchFinancialTab = (tab) => {
@@ -1256,13 +1256,16 @@
                     btn.className = "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1";
                 }
             });
-            renderFinancialTable();
+            if(typeof renderFinancialTable === 'function') renderFinancialTable();
         };
 
-        window.renderStudentTable = function() { renderTable(); }
+        // EXPOSED FILTER FUNCTION FOR THE HTML <SELECT> ONCHANGES
         window.filterTable = () => {
-            if(window.currentView === 'students') renderTable();
-            else renderFinancialTable();
+            if(window.currentView === 'students') {
+                if(typeof renderTable === 'function') renderTable();
+            } else {
+                if(typeof renderFinancialTable === 'function') renderFinancialTable();
+            }
         };
 
         function formatDate(isoStr) {
@@ -1340,7 +1343,8 @@
                 const currentEnrollment = s.enrollmentStatus || 'Ativo';
                 
                 const matchesBelt = beltFilter === "" || (s.belt && s.belt.toLowerCase().includes(beltFilter));
-                const matchesPayment = statusFilter === "" || s.paymentStatus === statusFilter;
+                const payStatus = s.paymentStatus || 'Pendente';
+                const matchesPayment = statusFilter === "" || payStatus === statusFilter;
 
                 if (window.currentTab === 'inactive') {
                     return matchesSearch && matchesBelt && matchesPayment && currentEnrollment === 'Inativo';
