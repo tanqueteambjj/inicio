@@ -191,6 +191,90 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
+                                <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider" id="table-headers">
+                                    <!-- Headers injetados via JS -->
+                                </tr>
+                            </thead>
+                            <tbody id="students-table-body" class="text-sm text-gray-700 divide-y divide-gray-200">
+                                <tr><td colspan="8" class="px-6 py-4 text-center">Carregando dados...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: FINANCEIRO -->
+            <div id="view-financial" class="hidden">
+                 <!-- Stats Row Financeiro -->
+                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Total (Ativos)</p>
+                                <p class="text-2xl font-bold text-gray-800" id="fin-stat-total">0</p>
+                            </div>
+                            <div class="text-blue-500 text-2xl"><i class="fa-solid fa-users"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-green-500">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Em Dia / Isento</p>
+                                <p class="text-2xl font-bold text-gray-800" id="fin-stat-active">0</p>
+                            </div>
+                            <div class="text-green-500 text-2xl"><i class="fa-solid fa-check-circle"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-red-500">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Pendente</p>
+                                <p class="text-2xl font-bold text-gray-800" id="fin-stat-pending">0</p>
+                            </div>
+                            <div class="text-red-500 text-2xl"><i class="fa-solid fa-circle-exclamation"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-yellow-500">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Expirando (7d)</p>
+                                <p class="text-2xl font-bold text-gray-800" id="fin-stat-expiring">0</p>
+                            </div>
+                            <div class="text-yellow-500 text-2xl"><i class="fa-solid fa-hourglass-half"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs Financeiro -->
+                <div class="flex mb-0">
+                    <button onclick="switchFinancialTab('all')" id="fin-tab-all" class="px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative">
+                        TODOS
+                    </button>
+                    <button onclick="switchFinancialTab('active')" id="fin-tab-active" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        EM DIA
+                    </button>
+                    <button onclick="switchFinancialTab('pending')" id="fin-tab-pending" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        PENDENTE
+                    </button>
+                    <button onclick="switchFinancialTab('expiring')" id="fin-tab-expiring" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        EXPIRANDO
+                    </button>
+                    <button onclick="switchFinancialTab('inactive')" id="fin-tab-inactive" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        INATIVOS
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-b-xl rounded-tr-xl shadow overflow-hidden border border-gray-200 relative top-[-1px]">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold text-gray-800 uppercase text-lg"><i class="fa-solid fa-coins text-brand-red mr-2"></i> Gestão Financeira</h3>
+                            <p class="text-xs text-gray-500">Controle de pagamentos e vencimentos</p>
+                        </div>
+                        <button onclick="loadData()" class="text-gray-500 hover:text-black text-sm"><i class="fa-solid fa-rotate"></i></button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
                                 <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
                                     <th class="px-6 py-3 border-b">Aluno</th>
                                     <th class="px-6 py-3 border-b">Plano / Valor</th>
@@ -723,6 +807,7 @@
     <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -735,19 +820,7 @@
             measurementId: "G-SW8PP8X7WM"
         };
 
-        let app, db, appId;
-
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj";
-            window.db = db;
-        } catch(e) {
-            console.error("Firebase init error", e);
-        }
-
-        // EmailJS Initialization
-        (function(){ emailjs.init("joP6USyQXdqGI3GN5"); })();
+        let app, db, auth, appId;
 
         window.students = []; 
         window.currentTab = 'adults';
@@ -774,18 +847,46 @@
             }
         });
 
-        // Auth Check
+        // Auth Check FIRST (Before anything else)
         const session = localStorage.getItem('tanque_user_session');
-        if (!session) window.location.href = "login_aluno.html";
-        else {
+        if (!session) {
+            window.location.href = "login_aluno.html";
+        } else {
             const user = JSON.parse(session);
             if(user.role !== 'admin') {
                 alert("Acesso negado.");
                 window.location.href = "login_aluno.html";
             } else {
-                if(db) loadData();
+                try {
+                    app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+                    appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj";
+                    window.db = db;
+                    
+                    const initAuth = async () => {
+                        try {
+                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                await signInWithCustomToken(auth, __initial_auth_token);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                            // Call loadData only after authentication is complete
+                            loadData();
+                        } catch (e) {
+                            console.error("Erro na autenticação Firebase:", e);
+                            alert("Não foi possível conectar ao banco de dados. Verifique as permissões.");
+                        }
+                    };
+                    initAuth();
+                } catch(e) {
+                    console.error("Firebase init error", e);
+                }
             }
         }
+
+        // EmailJS Initialization
+        (function(){ emailjs.init("joP6USyQXdqGI3GN5"); })();
 
         window.handleLogout = () => {
             localStorage.removeItem('tanque_user_session');
@@ -834,7 +935,7 @@
                     window.students.push({ id: doc.id, ...doc.data() });
                 });
                 
-                // Ordenar por data de registro
+                // Ordenar por data de registro (padrão inicial invisível para a engine, substituido pelos filtros)
                 window.students.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
                 
                 // Preenche os selects de titular baseados nos dados carregados
@@ -844,7 +945,7 @@
                 if(window.currentView === 'students') renderTable();
                 else renderFinancialTable();
             } catch (error) {
-                console.error("Erro ao carregar:", error);
+                console.error("Erro ao carregar dados do Firebase:", error);
             }
         }
 
@@ -1227,11 +1328,10 @@
             const thead = document.getElementById('table-headers');
             const search = (document.getElementById('searchInput')?.value || "").toLowerCase();
             
-            // Lendo os novos filtros
             const beltFilter = (document.getElementById('filter-belt')?.value || "").toLowerCase();
             const statusFilter = document.getElementById('filter-payment-status')?.value || "";
             const sortOrder = document.getElementById('sort-order')?.value || "recent";
-            
+
             tbody.innerHTML = '';
 
             let filtered = window.students.filter(s => {
@@ -1239,11 +1339,9 @@
                 const matchesSearch = studentName.includes(search);
                 const currentEnrollment = s.enrollmentStatus || 'Ativo';
                 
-                // Aplicando os filtros de faixa e status
                 const matchesBelt = beltFilter === "" || (s.belt && s.belt.toLowerCase().includes(beltFilter));
                 const matchesPayment = statusFilter === "" || s.paymentStatus === statusFilter;
-                
-                // Tab Logic (com filtros anexados)
+
                 if (window.currentTab === 'inactive') {
                     return matchesSearch && matchesBelt && matchesPayment && currentEnrollment === 'Inativo';
                 } else {
@@ -1254,14 +1352,12 @@
                     return matchesTab && matchesSearch && matchesBelt && matchesPayment;
                 }
             });
-            
-            // Aplicando a ordenação
+
             if (sortOrder === 'az') {
                 filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
             } else if (sortOrder === 'za') {
                 filtered.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
             } else {
-                // Default: Recentes
                 filtered.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
             }
 
