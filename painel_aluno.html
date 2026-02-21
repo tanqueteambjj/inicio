@@ -90,7 +90,7 @@
         <div class="text-center">
             <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4 mx-auto"></div>
             <h2 class="text-white font-display text-xl animate-pulse">CARREGANDO DOJO...</h2>
-            <p id="loading-text" class="text-gray-400 text-xs mt-2">Sincronizando dados...</p>
+            <p id="loading-text" class="text-gray-400 text-xs mt-2">Sincronizando dados com o sistema...</p>
         </div>
     </div>
 
@@ -98,8 +98,8 @@
     <div id="redirect-overlay" class="fixed inset-0 z-[60] hidden flex flex-col items-center justify-center bg-black/90 text-white p-4 text-center">
         <i class="fa-solid fa-lock text-4xl mb-4 text-brand-red"></i>
         <h2 class="text-xl font-bold mb-2">Acesso Restrito</h2>
-        <p class="text-gray-300 mb-6">Você não está logado. Em um site real, você seria redirecionado.</p>
-        <a href="login_aluno.html" class="px-6 py-2 bg-brand-red rounded hover:bg-red-700 transition">Ir para Login (Manual)</a>
+        <p class="text-gray-300 mb-6">Você não está logado. Por favor, faça o login novamente.</p>
+        <a href="login_aluno.html" class="px-6 py-2 bg-brand-red rounded hover:bg-red-700 transition font-bold">Ir para Login</a>
     </div>
 
     <div class="flex h-screen overflow-hidden">
@@ -142,6 +142,17 @@
                 </button>
             </header>
 
+            <!-- DEPENDENT VIEW BANNER (Se estiver vendo a conta do filho) -->
+            <div id="viewing-dependent-banner" class="hidden bg-purple-600 text-white px-4 py-3 flex justify-between items-center shadow-md z-20">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-users text-purple-200"></i>
+                    <span class="text-sm">Gerenciando dependente: <strong id="viewing-dependent-name">Nome</strong></span>
+                </div>
+                <button onclick="switchToTitular()" class="bg-white text-purple-700 hover:bg-gray-100 px-3 py-1.5 rounded text-xs font-bold transition shadow-sm">
+                    <i class="fa-solid fa-arrow-left mr-1 hidden sm:inline"></i> Voltar<span class="hidden sm:inline"> ao Titular</span>
+                </button>
+            </div>
+
             <!-- Scrollable Content -->
             <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-8">
                 
@@ -153,7 +164,7 @@
                             <div id="welcome-initials" class="w-full h-full flex items-center justify-center text-gray-500 text-2xl font-bold font-display">TT</div>
                         </div>
                         <div>
-                            <p class="text-gray-500 text-sm uppercase font-bold tracking-wider mb-1">Bem-vindo de volta,</p>
+                            <p class="text-gray-500 text-sm uppercase font-bold tracking-wider mb-1">Bem-vindo(a) de volta,</p>
                             <div class="flex items-center gap-3">
                                 <h1 class="text-3xl md:text-4xl font-display font-bold text-brand-dark" id="student-name-display">Carregando...</h1>
                                 <!-- STATUS BADGE -->
@@ -275,6 +286,15 @@
 
                 </div>
 
+                <!-- Dependentes Vinculados -->
+                <div id="dash-dependents-container" class="hidden mt-6 bg-white rounded-xl shadow-lg p-6 text-left border-l-4 border-purple-500 mb-8">
+                    <h3 class="font-display text-xl font-bold text-gray-700 mb-3 flex items-center gap-2"><i class="fa-solid fa-users text-purple-600"></i> Meus Dependentes (Combo Família)</h3>
+                    <p class="text-xs text-gray-500 mb-4">Gerencie as informações e acompanhe a frequência de quem treina junto com você no plano Combo.</p>
+                    <div id="dash-dependents-list" class="space-y-3">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
                 <div class="mt-8 text-center text-xs text-gray-400">
                     &copy; 2026 Tanque Team BJJ. Todos os direitos reservados. Oss.
                 </div>
@@ -286,7 +306,7 @@
     <div id="profile-edit-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
             <div class="bg-brand-dark px-6 py-4 flex justify-between items-center">
-                <h3 class="text-white font-display font-bold text-lg">Alterar Meus Dados</h3>
+                <h3 class="text-white font-display font-bold text-lg">Alterar Dados</h3>
                 <button onclick="closeProfileEditModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-times"></i></button>
             </div>
             
@@ -308,7 +328,7 @@
                 </div>
 
                 <div class="space-y-3">
-                    <div>
+                    <div id="profile-login-container">
                         <label class="block text-xs font-bold text-gray-500 mb-1">Usuário (Login)</label>
                         <input type="text" id="profile-login" class="w-full border rounded p-2 text-sm bg-gray-100 text-gray-500" disabled>
                         <p class="text-[10px] text-gray-400">Este é seu login único. Não pode ser alterado.</p>
@@ -327,7 +347,7 @@
                             <input type="text" id="profile-phone" class="w-full border rounded p-2 text-sm">
                         </div>
                     </div>
-                    <div class="pt-2 border-t border-gray-100">
+                    <div class="pt-2 border-t border-gray-100" id="profile-password-container">
                         <label class="block text-xs font-bold text-blue-600 mb-1">Nova Senha (Opcional)</label>
                         <input type="text" id="profile-password" class="w-full border border-blue-200 rounded p-2 text-sm" placeholder="Digite para alterar...">
                     </div>
@@ -372,7 +392,8 @@
     <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, getDocs, collection, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
@@ -385,16 +406,15 @@
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = "tanqueteam-bjj";
 
         window.db = db;
-        window.currentStudentData = null; 
-        
-        // Calendar State
+        window.titularData = null; // Armazena a conta principal autenticada
+        window.currentStudentData = null; // Armazena quem está sendo visto no momento
         window.currentCalendarDate = new Date(); 
 
-        // --- AUTH & LOAD ---
         window.handleLogout = () => {
             localStorage.removeItem('tanque_user_session');
             window.location.href = "login_aluno.html";
@@ -404,23 +424,40 @@
         document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', dateOptions);
 
         const session = localStorage.getItem('tanque_user_session');
-        if (session) {
+        if (!session) {
+            window.location.href = "login_aluno.html";
+        } else {
             try {
                 const user = JSON.parse(session);
                 if (user && user.id) {
-                    loadStudentData(user.id);
+                    // AUTHENTICATE FIRST
+                    const initAuth = async () => {
+                        try {
+                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                await signInWithCustomToken(auth, __initial_auth_token);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                            // Only load data after Auth resolves
+                            window.loadStudentData(user.id);
+                        } catch (e) {
+                            console.error("Erro na autenticação Firebase:", e);
+                            document.getElementById('loading-screen').classList.add('hidden');
+                            document.getElementById('redirect-overlay').classList.remove('hidden');
+                        }
+                    };
+                    initAuth();
+
                 } else {
                     throw new Error("Sessão inválida");
                 }
             } catch(e) {
                 console.error("Erro na sessão", e);
-                handleLogout();
+                window.handleLogout();
             }
-        } else {
-            window.location.href = "login_aluno.html";
         }
 
-        async function loadStudentData(id) {
+        window.loadStudentData = async function(id) {
             try {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', id);
                 const docSnap = await getDoc(docRef);
@@ -428,11 +465,26 @@
                 if (docSnap.exists()) {
                     const docData = docSnap.data();
                     docData.id = id; 
+                    
+                    // Buscar dependentes vinculados
+                    const qDeps = query(
+                        collection(db, 'artifacts', appId, 'public', 'data', 'students'),
+                        where('titularId', '==', docData.id)
+                    );
+                    const depSnap = await getDocs(qDeps);
+                    docData.dependentsList = [];
+                    depSnap.forEach(d => {
+                        let dep = d.data();
+                        dep.id = d.id;
+                        docData.dependentsList.push(dep);
+                    });
+
+                    window.titularData = docData;
                     window.currentStudentData = docData;
-                    renderDashboard(docData);
+                    renderDashboard(docData, false);
                 } else {
-                    alert("Cadastro não encontrado.");
                     document.getElementById('loading-screen').classList.add('hidden');
+                    document.getElementById('redirect-overlay').classList.remove('hidden');
                 }
             } catch (error) {
                 console.error("Erro ao buscar dados:", error);
@@ -440,104 +492,155 @@
             }
         }
 
-        function renderDashboard(data) {
-            document.getElementById('student-name-display').innerText = data.name.split(' ')[0];
-            
-            // Enrollment Status
-            const enrollmentStatus = data.enrollmentStatus || 'Ativo';
-            const badge = document.getElementById('enrollment-status-badge');
-            badge.innerText = enrollmentStatus;
-            badge.classList.remove('hidden');
-            if (enrollmentStatus === 'Ativo') {
-                badge.classList.add('bg-green-500');
-                badge.classList.remove('bg-red-500');
-            } else {
-                badge.classList.add('bg-red-500');
-                badge.classList.remove('bg-green-500');
-            }
-
-            document.getElementById('data-name').innerText = data.name;
-            document.getElementById('data-login').innerText = data.studentLogin || 'Não definido';
-            document.getElementById('data-email').innerText = data.email;
-            document.getElementById('data-cpf').innerText = data.cpf || '-';
-            document.getElementById('data-phone').innerText = data.phone || '-';
-            document.getElementById('data-address').innerText = data.address || '-';
-
-            // ATUALIZADO: Tratamento de nomes dos planos (incluindo Administração)
-            let displayName = 'NÃO INFORMADO';
-            if(data.plan) {
-                if(data.plan === 'combo-dupla') displayName = 'COMBO DUPLA';
-                else if(data.plan === 'combo-casal') displayName = 'COMBO CASAL';
-                else if(data.plan === 'combo-familia') displayName = 'COMBO FAMÍLIA';
-                else if(data.plan === 'administracao') displayName = 'ADMINISTRAÇÃO';
-                else displayName = data.plan.replace('infantil-', 'Infantil ').replace('adulto-', 'Jovem/Adulto ').replace('mensal', 'Mensal').replace('trimestral', 'Trimestral').replace('semestral', 'Semestral').toUpperCase();
-            }
-            document.getElementById('plan-display').innerText = displayName;
-            
-            // Photo Display
-            const photoImg = document.getElementById('welcome-photo');
-            const photoInitials = document.getElementById('welcome-initials');
-            
-            if(data.photoBase64) {
-                photoImg.src = data.photoBase64;
-                photoImg.classList.remove('hidden');
-                photoInitials.classList.add('hidden');
-            } else {
-                photoImg.classList.add('hidden');
-                photoInitials.classList.remove('hidden');
-                photoInitials.innerText = data.name.charAt(0);
-            }
-
-            if(data.contractEndDate) {
-                const d = new Date(data.contractEndDate);
-                document.getElementById('contract-end').innerText = d.toLocaleDateString('pt-BR');
-            }
-
-            const statusBadge = document.getElementById('payment-status-badge');
-            const status = data.paymentStatus || 'Pendente';
-            statusBadge.innerText = status.toUpperCase();
-            
-            if(status === 'Em dia') {
-                statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-green-100 text-green-800 border border-green-200";
-                statusBadge.innerHTML = '<i class="fa-solid fa-check mr-1"></i> EM DIA';
-            } else if(status === 'Isento') {
-                statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-blue-100 text-blue-800 border border-blue-200";
-                statusBadge.innerHTML = '<i class="fa-solid fa-gift mr-1"></i> ISENTO';
-            } else {
-                statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-red-100 text-red-800 border border-red-200 animate-pulse";
-                statusBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> PENDENTE';
-            }
-
-            // Attendance Count logic
-            const attendanceCount = data.attendance ? data.attendance.length : 0;
-            document.getElementById('total-attendance-count').innerText = attendanceCount;
-
-            const beltStr = data.belt || "Faixa Branca - 0º Grau";
-            document.getElementById('belt-text').innerText = beltStr;
-            document.getElementById('belt-visual-container').innerHTML = renderBeltSVG(beltStr);
-
-            // --- GRADUATION CELEBRATION LOGIC ---
-            if(data.lastGraduationDate) {
-                const gradDate = new Date(data.lastGraduationDate);
-                const today = new Date();
-                const diffTime = Math.abs(today - gradDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        function renderDashboard(data, isDependent = false) {
+            try {
+                const safeName = data.name || "Aluno";
+                document.getElementById('student-name-display').innerText = safeName.split(' ')[0];
                 
-                if(diffDays <= 15) {
-                    document.getElementById('celebration-banner').classList.remove('hidden');
+                const enrollmentStatus = data.enrollmentStatus || 'Ativo';
+                const badge = document.getElementById('enrollment-status-badge');
+                badge.innerText = enrollmentStatus;
+                badge.classList.remove('hidden');
+                if (enrollmentStatus === 'Ativo') {
+                    badge.classList.add('bg-green-500');
+                    badge.classList.remove('bg-red-500');
+                } else {
+                    badge.classList.add('bg-red-500');
+                    badge.classList.remove('bg-green-500');
+                }
+
+                document.getElementById('data-name').innerText = safeName;
+                document.getElementById('data-login').innerText = data.studentLogin || (isDependent ? 'Acesso via Titular' : 'Não definido');
+                document.getElementById('data-email').innerText = data.email || 'Não informado';
+                document.getElementById('data-cpf').innerText = data.cpf || '-';
+                document.getElementById('data-phone').innerText = data.phone || '-';
+                document.getElementById('data-address').innerText = data.address || '-';
+
+                let displayName = 'NÃO INFORMADO';
+                if(data.plan) {
+                    if(data.plan === 'combo-dupla') displayName = 'COMBO DUPLA';
+                    else if(data.plan === 'combo-casal') displayName = 'COMBO CASAL';
+                    else if(data.plan === 'combo-familia') displayName = 'COMBO FAMÍLIA';
+                    else if(data.plan === 'dependente') displayName = 'DEPENDENTE - COMBO FAMÍLIA';
+                    else displayName = data.plan.replace('infantil-', 'Infantil ').replace('adulto-', 'Jovem/Adulto ').replace('mensal', 'Mensal').replace('trimestral', 'Trimestral').replace('semestral', 'Semestral').toUpperCase();
+                }
+                document.getElementById('plan-display').innerText = displayName;
+                
+                const photoImg = document.getElementById('welcome-photo');
+                const photoInitials = document.getElementById('welcome-initials');
+                
+                if(data.photoBase64) {
+                    photoImg.src = data.photoBase64;
+                    photoImg.classList.remove('hidden');
+                    photoInitials.classList.add('hidden');
+                } else {
+                    photoImg.classList.add('hidden');
+                    photoInitials.classList.remove('hidden');
+                    photoInitials.innerText = safeName.charAt(0).toUpperCase();
+                }
+
+                if(data.contractEndDate) {
+                    const d = new Date(data.contractEndDate);
+                    if(!isNaN(d)) {
+                        document.getElementById('contract-end').innerText = d.toLocaleDateString('pt-BR');
+                    }
+                }
+
+                const statusBadge = document.getElementById('payment-status-badge');
+                const status = data.paymentStatus || 'Pendente';
+                statusBadge.innerText = status.toUpperCase();
+                
+                if(status === 'Em dia') {
+                    statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-green-100 text-green-800 border border-green-200";
+                    statusBadge.innerHTML = '<i class="fa-solid fa-check mr-1"></i> EM DIA';
+                } else if(status === 'Isento') {
+                    statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-blue-100 text-blue-800 border border-blue-200";
+                    statusBadge.innerHTML = '<i class="fa-solid fa-gift mr-1"></i> ISENTO';
+                } else {
+                    statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-red-100 text-red-800 border border-red-200 animate-pulse";
+                    statusBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> PENDENTE';
+                }
+
+                const attendanceCount = data.attendance ? data.attendance.length : 0;
+                document.getElementById('total-attendance-count').innerText = attendanceCount;
+
+                const beltStr = data.belt || "Faixa Branca - 0º Grau";
+                document.getElementById('belt-text').innerText = beltStr;
+                document.getElementById('belt-visual-container').innerHTML = renderBeltSVG(beltStr);
+
+                // Graduation celebration logic
+                const celBanner = document.getElementById('celebration-banner');
+                if(data.lastGraduationDate) {
+                    const gradDate = new Date(data.lastGraduationDate);
+                    const today = new Date();
+                    const diffTime = Math.abs(today - gradDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    if(diffDays <= 15) celBanner.classList.remove('hidden');
+                    else celBanner.classList.add('hidden');
+                } else {
+                    celBanner.classList.add('hidden');
+                }
+                
+                // Calendar
+                renderCalendar(data.attendance);
+
+                // DUAL PROFILE LOGIC (Titular vs Dependent)
+                const depBanner = document.getElementById('viewing-dependent-banner');
+                if (isDependent) {
+                    depBanner.classList.remove('hidden');
+                    document.getElementById('viewing-dependent-name').innerText = safeName;
+                } else {
+                    depBanner.classList.add('hidden');
+                }
+
+                const depContainer = document.getElementById('dash-dependents-container');
+                if (!isDependent && window.titularData && window.titularData.dependentsList && window.titularData.dependentsList.length > 0) {
+                    depContainer.classList.remove('hidden');
+                    let depHtml = '';
+                    window.titularData.dependentsList.forEach(dep => {
+                        depHtml += `
+                        <div class="bg-purple-50 border border-purple-200 rounded p-4 flex justify-between items-center shadow-sm">
+                            <div>
+                                <p class="font-bold text-sm text-purple-900">${dep.name}</p>
+                                <p class="text-xs text-purple-700">${dep.parentesco || 'Dependente'} • ${dep.belt || 'Faixa Branca'}</p>
+                            </div>
+                            <button onclick="switchToDependent('${dep.id}')" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-xs font-bold transition shadow">
+                                <i class="fa-solid fa-user-gear mr-1"></i> Gerenciar Aluno
+                            </button>
+                        </div>`;
+                    });
+                    document.getElementById('dash-dependents-list').innerHTML = depHtml;
+                } else {
+                    if(depContainer) depContainer.classList.add('hidden');
+                }
+            } catch (err) {
+                console.error("Erro interno ao renderizar Dashboard:", err);
+            } finally {
+                // FORCE LOADER TO HIDE NO MATTER WHAT
+                const loader = document.getElementById('loading-screen');
+                if (loader) {
+                    loader.classList.add('opacity-0');
+                    setTimeout(() => {
+                        loader.classList.add('hidden');
+                    }, 500);
                 }
             }
-            
-            // --- RENDER CALENDAR ---
-            renderCalendar(data.attendance);
-
-            setTimeout(() => {
-                document.getElementById('loading-screen').classList.add('opacity-0');
-                setTimeout(() => {
-                    document.getElementById('loading-screen').classList.add('hidden');
-                }, 500);
-            }, 800);
         }
+
+        window.switchToDependent = (depId) => {
+            const dep = window.titularData.dependentsList.find(d => d.id === depId);
+            if (dep) {
+                window.currentStudentData = dep;
+                renderDashboard(dep, true);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        };
+
+        window.switchToTitular = () => {
+            window.currentStudentData = window.titularData;
+            renderDashboard(window.titularData, false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
 
         // --- CALENDAR LOGIC ---
         window.changeMonth = (delta) => {
@@ -552,37 +655,32 @@
             const year = date.getFullYear();
             const month = date.getMonth();
             
-            // Set Header
             const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
             document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
 
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             const daysInMonth = lastDay.getDate();
-            const startingDay = firstDay.getDay(); // 0 (Sun) to 6 (Sat)
+            const startingDay = firstDay.getDay(); 
 
             const calendarGrid = document.getElementById('calendar-days');
             calendarGrid.innerHTML = '';
 
-            // Empty slots for previous month
             for (let i = 0; i < startingDay; i++) {
                 const div = document.createElement('div');
                 div.className = 'calendar-day empty';
                 calendarGrid.appendChild(div);
             }
 
-            // Days
             for (let day = 1; day <= daysInMonth; day++) {
                 const dayDiv = document.createElement('div');
                 dayDiv.className = 'calendar-day hover:bg-gray-50 transition cursor-default';
                 dayDiv.innerText = day;
 
-                // Format: YYYY-MM-DD (local time match)
                 const m = (month + 1).toString().padStart(2, '0');
                 const d = day.toString().padStart(2, '0');
                 const dateString = `${year}-${m}-${d}`;
 
-                // Check attendance
                 if (attendanceList && attendanceList.includes(dateString)) {
                     dayDiv.classList.add('present');
                     dayDiv.title = "Presença Confirmada";
@@ -590,7 +688,6 @@
                     dayDiv.style.position = 'relative';
                 }
                 
-                // Highlight today if in current month
                 const today = new Date();
                 if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
                      dayDiv.style.border = '1px solid #D90429';
@@ -602,7 +699,6 @@
             }
         }
 
-        // --- HISTORY MODAL ---
         window.viewPaymentHistory = () => {
             const data = window.currentStudentData;
             if(!data) return;
@@ -635,17 +731,21 @@
             document.getElementById('student-history-modal').classList.remove('flex');
         }
 
-        // --- EDIT PROFILE MODAL ---
         window.openProfileEditModal = () => {
             const data = window.currentStudentData;
             if(!data) return;
+            
+            // Oculta campos de senha e login para dependentes (apenas titular tem acesso direto)
+            const isDep = data.plan === 'dependente';
+            document.getElementById('profile-login-container').classList.toggle('hidden', isDep);
+            document.getElementById('profile-password-container').classList.toggle('hidden', isDep);
+
             document.getElementById('profile-email').value = data.email || '';
             document.getElementById('profile-phone').value = data.phone || '';
             document.getElementById('profile-address').value = data.address || '';
-            document.getElementById('profile-login').value = data.studentLogin || 'Não definido'; // Show Login
+            document.getElementById('profile-login').value = data.studentLogin || 'Não definido'; 
             document.getElementById('profile-password').value = ''; 
             
-            // Photo Preview
             const preview = document.getElementById('profile-photo-preview');
             const placeholder = document.getElementById('profile-photo-placeholder');
             if(data.photoBase64) {
@@ -655,7 +755,7 @@
             } else {
                  preview.classList.add('hidden');
                  placeholder.classList.remove('hidden');
-                 placeholder.innerText = data.name.charAt(0);
+                 placeholder.innerText = (data.name || '?').charAt(0).toUpperCase();
             }
             
             document.getElementById('profile-edit-modal').classList.remove('hidden');
@@ -697,11 +797,10 @@
                 address: newAddress
             };
 
-            if(newPass && newPass.trim() !== "") {
+            if(!document.getElementById('profile-password-container').classList.contains('hidden') && newPass && newPass.trim() !== "") {
                 updateData.studentPassword = newPass;
             }
             
-            // Handle Photo
             const photoInput = document.getElementById('profile-photo-input');
             let photoBase64 = null;
             
@@ -724,7 +823,7 @@
                 await updateDoc(docRef, updateData);
                 alert("Dados atualizados com sucesso!");
                 closeProfileEditModal();
-                loadStudentData(data.id); 
+                window.loadStudentData(window.titularData.id); 
             } catch(e) {
                 console.error(e);
                 alert("Erro ao atualizar dados.");
@@ -733,10 +832,11 @@
 
         function renderBeltSVG(beltStr) {
             if (!beltStr) return '';
+            const safeBeltStr = String(beltStr);
             const colors = { 'Branca': '#ffffff', 'Cinza': '#9ca3af', 'Amarela': '#fbbf24', 'Laranja': '#f97316', 'Verde': '#10b981', 'Azul': '#3b82f6', 'Roxa': '#8b5cf6', 'Marrom': '#78350f', 'Preta': '#000000' };
             let color = '#ffffff'; let degree = 0; let colorName = 'Branca';
-            for (const [name, hex] of Object.entries(colors)) { if (beltStr.includes(name)) { color = hex; colorName = name; break; } }
-            const degreeMatch = beltStr.match(/(\d)º/); if (degreeMatch) degree = parseInt(degreeMatch[1]);
+            for (const [name, hex] of Object.entries(colors)) { if (safeBeltStr.includes(name)) { color = hex; colorName = name; break; } }
+            const degreeMatch = safeBeltStr.match(/(\d)º/); if (degreeMatch) degree = parseInt(degreeMatch[1]);
             const width = 300; const height = 40; const tipWidth = 60; const stripeWidth = 8; const stripeGap = 6;
             let stripesSVG = ''; const barColor = (colorName === 'Preta') ? '#dc2626' : '#000000'; const stripeColor = '#ffffff';
             for (let i = 0; i < degree; i++) { const x = width - 10 - (i * (stripeWidth + stripeGap)) - stripeWidth; stripesSVG += `<rect x="${x}" y="0" width="${stripeWidth}" height="${height}" fill="${stripeColor}" />`; }
