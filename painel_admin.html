@@ -185,6 +185,7 @@
                             <option value="Em dia">Em dia</option>
                             <option value="Pendente">Pendente</option>
                             <option value="Isento">Isento</option>
+                            <option value="Expirando">Expirando</option>
                         </select>
                     </div>
 
@@ -469,9 +470,8 @@
                                     <option value="adulto-mensal">Adulto Mensal</option>
                                     <option value="adulto-trimestral">Adulto Trimestral</option>
                                     <option value="adulto-semestral">Adulto Semestral</option>
-                                    <option value="combo-casal">Combo Casal (2 Adultos)</option>
                                     <option value="combo-dupla">Combo Dupla (1 Ad + 1 Inf)</option>
-                                    <option value="combo-familia">Combo Família (3 Pessoas)</option>
+                                    <option value="combo-familia">Combo Família (2 Ad + 1 Inf)</option>
                                     <option value="dependente">Dependente (Isento)</option>
                                     <option value="administracao">Administração (Isento)</option>
                                 </select>
@@ -692,9 +692,8 @@
                             <option value="adulto-mensal">Adulto Mensal</option>
                             <option value="adulto-trimestral">Adulto Trimestral</option>
                             <option value="adulto-semestral">Adulto Semestral</option>
-                            <option value="combo-casal">Combo Casal (2 Adultos)</option>
                             <option value="combo-dupla">Combo Dupla (1 Ad + 1 Inf)</option>
-                            <option value="combo-familia">Combo Família (3 Pessoas)</option>
+                            <option value="combo-familia">Combo Família (2 Ad + 1 Inf)</option>
                             <option value="dependente">Dependente (Isento)</option>
                             <option value="administracao">Administração (Isento)</option>
                         </select>
@@ -1033,12 +1032,15 @@
             const count = document.querySelectorAll('.student-cb:checked').length;
             const bulkDiv = document.getElementById('bulk-actions');
             const countSpan = document.getElementById('selected-count');
+            const btnBulkDelete = document.getElementById('btn-bulk-delete');
             
             if(count > 0) {
                 bulkDiv.classList.remove('hidden');
+                if(btnBulkDelete) btnBulkDelete.classList.remove('hidden');
                 countSpan.innerText = count;
             } else {
                 bulkDiv.classList.add('hidden');
+                if(btnBulkDelete) btnBulkDelete.classList.add('hidden');
             }
         };
 
@@ -1050,10 +1052,12 @@
             
             if(confirm(`Tem certeza que deseja excluir ${ids.length} alunos selecionados? Esta ação é irreversível.`)) {
                 try {
-                    const deletePromises = ids.map(id => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id)));
+                    const deletePromises = ids.map(id => deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id)));
                     await Promise.all(deletePromises);
                     alert('Alunos excluídos com sucesso!');
-                    window.location.reload(); 
+                    loadData();
+                    document.getElementById('cb-select-all').checked = false;
+                    updateBulkActions();
                 } catch(e) {
                     alert('Erro ao excluir: ' + e.message);
                     loadData();
@@ -1343,8 +1347,22 @@
                 const currentEnrollment = s.enrollmentStatus || 'Ativo';
                 
                 const matchesBelt = beltFilter === "" || (s.belt && s.belt.toLowerCase().includes(beltFilter));
-                const payStatus = s.paymentStatus || 'Pendente';
-                const matchesPayment = statusFilter === "" || payStatus === statusFilter;
+                
+                let virtualStatus = s.paymentStatus || 'Pendente';
+                const today = new Date();
+                const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
+                
+                if (s.paymentStatus !== 'Isento' && s.plan !== 'administracao' && s.plan !== 'dependente') {
+                    const diffTime = targetDate - today;
+                    const diffDays = isNaN(diffTime) ? 0 : Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (diffDays < 0 && s.paymentStatus !== 'Em dia') {
+                        virtualStatus = 'Pendente';
+                    } else if (diffDays <= 7 && diffDays >= 0) {
+                        virtualStatus = 'Expirando';
+                    }
+                }
+                
+                const matchesPayment = statusFilter === "" || virtualStatus === statusFilter || s.paymentStatus === statusFilter;
 
                 if (window.currentTab === 'inactive') {
                     return matchesSearch && matchesBelt && matchesPayment && currentEnrollment === 'Inativo';
@@ -1444,7 +1462,7 @@
                         nameDisplay += `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-bold uppercase">Admin</span>`;
                     }
                     if (safePlan === 'dependente') {
-                        nameDisplay += `<span class="ml-2 text-[10px] text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded border border-indigo-200 font-bold uppercase">Dependente</span>`;
+                        nameDisplay += `<span class="ml-2 text-[10px] text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded border border-indigo-200 font-bold uppercase">Dependente de: ${s.titularName || 'Não Informado'}</span>`;
                     }
                     
                     nameDisplay += `</div>`;
@@ -1470,7 +1488,6 @@
                     let displayPlanName = '-';
                     if(s.plan) {
                         if(safePlan === 'combo-dupla') displayPlanName = 'Combo Dupla';
-                        else if(safePlan === 'combo-casal') displayPlanName = 'Combo Casal';
                         else if(safePlan === 'combo-familia') displayPlanName = 'Combo Família';
                         else if(safePlan === 'administracao') displayPlanName = 'Administração';
                         else if(safePlan === 'dependente') displayPlanName = 'Dependente (Combo)';
@@ -1826,16 +1843,16 @@
             
             document.getElementById('printPlanCheckboxes').innerText = planCheckboxes;
             document.getElementById('printContractValue').innerText = price; 
-            
-            const guardianBlock = document.getElementById('printGuardianBlock');
-            if (s.guardian) {
-                guardianBlock.classList.remove('hidden');
-                document.getElementById('printGuardianName').innerText = s.guardian;
-                document.getElementById('printGuardianCPF').innerText = s.cpf; 
-            } else {
-                guardianBlock.classList.add('hidden');
+        window.deleteStudent = async (id) => {
+            if(!confirm("Excluir aluno permanentemente?")) return;
+            try {
+                await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id));
+                loadData();
+                alert("Aluno excluído.");
+            } catch(e) {
+                alert("Erro ao excluir: " + e.message);
             }
-        }
+        };
 
         window.viewStudentDetails = (id) => {
             const s = window.students.find(st => st.id === id);
@@ -1896,8 +1913,7 @@
                 'adulto-trimestral': 'R$ 147,90',
                 'adulto-semestral': 'R$ 126,90',
                 'combo-dupla': 'R$ 250,00',
-                'combo-casal': 'R$ 220,00',
-                'combo-familia': 'R$ 340,00',
+                'combo-familia': 'R$ 362,02',
                 'administracao': 'Isento (R$ 0,00)',
                 'dependente': 'Isento (R$ 0,00)'
             };
@@ -1905,8 +1921,7 @@
             let displayName = 'NÃO INFORMADO';
             if(s.plan) {
                 if(s.plan === 'combo-dupla') displayName = 'COMBO DUPLA (1 ADULTO + 1 INFANTIL) SEMESTRAL';
-                else if(s.plan === 'combo-casal') displayName = 'COMBO CASAL (2 ADULTOS) SEMESTRAL';
-                else if(s.plan === 'combo-familia') displayName = 'COMBO FAMÍLIA (3 PESSOAS) SEMESTRAL';
+                else if(s.plan === 'combo-familia') displayName = 'COMBO FAMÍLIA (2 AD + 1 INF) SEMESTRAL';
                 else if(s.plan === 'administracao') displayName = 'ADMINISTRAÇÃO (ISENTO)';
                 else if(s.plan === 'dependente') displayName = 'DEPENDENTE (COMBO)';
                 else displayName = s.plan.replace('infantil-', 'Infantil ').replace('adulto-', 'Jovem/Adulto ').replace('mensal', 'Mensal').replace('trimestral', 'Trimestral').replace('semestral', 'Semestral').toUpperCase();
@@ -1914,22 +1929,22 @@
             
             const planValue = planMap[s.plan] || 'Sob Consulta';
             const payMethod = s.paymentMethod || 'Não informado';
-
-            document.getElementById('detail-plan').innerText = displayName;
-            document.getElementById('detail-value').innerText = planValue;
-            document.getElementById('detail-method').innerText = payMethod;
+        window.updatePayAmount = () => {
+            const plan = document.getElementById('pay-plan-select').value;
+            const amountInput = document.getElementById('pay-amount');
             
-            // Exibir Titular se houver
-            const titularBox = document.getElementById('detail-titular-box');
-            if (s.titularName && s.titularName.trim() !== "") {
-                document.getElementById('detail-titular-name').innerText = s.titularName;
-                titularBox.classList.remove('hidden');
-            } else {
-                titularBox.classList.add('hidden');
-            }
-
-            document.getElementById('details-modal').classList.remove('hidden');
-            document.getElementById('details-modal').classList.add('flex');
+            let price = "";
+            if (plan === 'infantil-mensal') price = 189.90;
+            else if (plan === 'infantil-trimestral') price = 168.90;
+            else if (plan === 'infantil-semestral') price = 157.90;
+            else if (plan === 'adulto-mensal') price = 168.90;
+            else if (plan === 'adulto-trimestral') price = 147.90;
+            else if (plan === 'adulto-semestral') price = 126.90;
+            else if (plan === 'combo-dupla') price = 250.00;
+            else if (plan === 'combo-familia') price = 362.02;
+            else if (plan === 'isento' || plan === 'administracao' || plan === 'dependente') price = 0;
+            
+            if (price !== "") amountInput.value = price;
         };
         window.closeDetailsModal = () => { document.getElementById('details-modal').classList.add('hidden'); document.getElementById('details-modal').classList.remove('flex'); };
 
@@ -2136,7 +2151,9 @@
                         <p><strong>Login:</strong> ${login}</p>
                         <p><strong>Senha:</strong> ${pass}</p>
                     </div>
-                    <p>Por favor, acesse o portal e altere sua senha no primeiro acesso se desejar.</p>
+                    <p>Para acessar o painel e acompanhar sua evolução, clique no link abaixo:</p>
+                    <p><a href="https://tanqueteambjj.github.io/inicio/login_aluno.html" style="color: #D90429; font-weight: bold; text-decoration: underline;">https://tanqueteambjj.github.io/inicio/login_aluno.html</a></p>
+                    <p>Por favor, altere sua senha no primeiro acesso se desejar.</p>
                     <p>Atenciosamente,<br>Equipe Tanque Team</p>
                 </div>
             `;
@@ -2183,7 +2200,9 @@
                         <p><strong>Login:</strong> ${login}</p>
                         <p><strong>Senha:</strong> ${pass}</p>
                     </div>
-                    <p>Por favor, acesse o portal e altere sua senha no primeiro acesso se desejar.</p>
+                    <p>Para acessar o painel e acompanhar sua evolução, clique no link abaixo:</p>
+                    <p><a href="https://tanqueteambjj.github.io/inicio/login_aluno.html" style="color: #D90429; font-weight: bold; text-decoration: underline;">https://tanqueteambjj.github.io/inicio/login_aluno.html</a></p>
+                    <p>Por favor, altere sua senha no primeiro acesso se desejar.</p>
                     <p>Atenciosamente,<br>Equipe Tanque Team</p>
                 </div>
             `;
