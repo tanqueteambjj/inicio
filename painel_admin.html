@@ -28,6 +28,41 @@
             }
         }
     </script>
+
+    <style>
+        @media print {
+            body:not(.printing-report) #printable-contract {
+                position: absolute; left: 0; top: 0; width: 100%; display: block !important; visibility: visible;
+                background: white; color: black; padding: 0; margin: 0; font-size: 10pt; line-height: 1.3;
+            }
+            body:not(.printing-report) #printable-contract * { visibility: visible; }
+            
+            /* Report Mode CSS */
+            body.printing-report #printable-contract { display: none !important; }
+            body.printing-report #admin-dashboard { display: block !important; position: static; height: auto; overflow: visible; background: white; visibility: visible; width: 100%; }
+            body.printing-report #admin-dashboard * { visibility: visible; }
+            
+            body.printing-report #admin-controls, 
+            body.printing-report button,
+            body.printing-report .no-print-col,
+            body.printing-report .stats-container, 
+            body.printing-report .tabs-container,
+            body.printing-report #view-students,
+            body.printing-report #view-financial,
+            body.printing-report #view-reports,
+            body.printing-report aside,
+            body.printing-report header,
+            body.printing-report .no-print { display: none !important; }
+            
+            body.printing-report #report-container { display: block !important; padding: 0; margin: 0; }
+            body.printing-report #report-container * { visibility: visible; }
+            
+            body.printing-report table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 15px; }
+            body.printing-report th, body.printing-report td { border: 1px solid #ddd; padding: 8px; text-align: left; color: black; }
+            body.printing-report th { background-color: #f3f3f3; font-weight: bold; border-bottom: 2px solid #000; }
+            body.printing-report tfoot th { background-color: #eee; border-top: 2px solid #000; }
+        }
+    </style>
 </head>
 <body class="bg-gray-100 font-sans antialiased h-screen flex overflow-hidden">
 
@@ -44,8 +79,8 @@
             <a href="#" onclick="switchMainView('financial')" id="nav-financial" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
                 <i class="fa-solid fa-file-invoice-dollar w-6"></i> <span class="font-bold">Financeiro</span>
             </a>
-            <a href="#" onclick="printReport()" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 rounded-lg transition">
-                <i class="fa-solid fa-chart-pie w-6"></i> <span>Relatórios</span>
+            <a href="#" onclick="switchMainView('reports')" id="nav-reports" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
+                <i class="fa-solid fa-chart-pie w-6"></i> <span class="font-bold">Relatórios</span>
             </a>
         </nav>
         <div class="p-4 border-t border-gray-800">
@@ -56,7 +91,7 @@
     </aside>
 
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col h-full overflow-hidden relative">
+    <div id="admin-dashboard" class="flex-1 flex flex-col h-full overflow-hidden relative">
         
         <!-- Topbar -->
         <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6 z-10">
@@ -77,12 +112,17 @@
         </header>
 
         <!-- Content Area -->
-        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6 relative">
             
+            <!-- PRINTABLE REPORT CONTAINER -->
+            <div id="report-container" class="hidden bg-white text-black p-4 font-sans absolute inset-0 z-50">
+                <!-- Preenchido via JS -->
+            </div>
+
             <!-- VIEW: ALUNOS (DEFAULT) -->
             <div id="view-students">
                 <!-- Stats Row -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 stats-container">
                     <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500">
                         <div class="flex justify-between">
                             <div>
@@ -122,7 +162,7 @@
                 </div>
 
                 <!-- Tabs Container -->
-                <div class="flex flex-wrap mb-0">
+                <div class="flex flex-wrap mb-0 tabs-container">
                     <button onclick="switchTab('all')" id="tab-all" class="px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative">
                         <i class="fa-solid fa-users mr-2"></i> TODOS
                     </button>
@@ -139,7 +179,7 @@
 
                 <!-- Student Table -->
                 <div class="bg-white rounded-b-xl rounded-tr-xl shadow overflow-hidden relative top-[-1px] border border-gray-200">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center no-print">
                         <div class="flex items-center gap-4">
                             <h3 class="font-bold text-gray-700 uppercase text-sm flex items-center gap-2">
                                 <span id="list-title">Lista de Alunos</span>
@@ -159,7 +199,7 @@
                              <button onclick="loadData()" class="text-gray-500 hover:text-black text-sm flex items-center gap-1"><i class="fa-solid fa-rotate" id="icon-refresh"></i></button>
                         </div>
                     </div>
-
+                    
                     <!-- Barra de Filtros Inteligentes -->
                     <div class="px-6 py-3 border-b border-gray-200 bg-white flex flex-wrap gap-4 items-center text-sm no-print">
                         <span class="font-bold text-gray-500"><i class="fa-solid fa-filter"></i> Filtros:</span>
@@ -210,7 +250,7 @@
             <!-- VIEW: FINANCEIRO -->
             <div id="view-financial" class="hidden">
                  <!-- Stats Row Financeiro -->
-                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 stats-container">
                     <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500">
                         <div class="flex justify-between">
                             <div>
@@ -250,7 +290,7 @@
                 </div>
 
                 <!-- Tabs Financeiro -->
-                <div class="flex mb-0">
+                <div class="flex mb-0 tabs-container">
                     <button onclick="switchFinancialTab('all')" id="fin-tab-all" class="px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative">
                         TODOS
                     </button>
@@ -269,7 +309,7 @@
                 </div>
 
                 <div class="bg-white rounded-b-xl rounded-tr-xl shadow overflow-hidden border border-gray-200 relative top-[-1px]">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center no-print">
                         <div>
                             <h3 class="font-bold text-gray-800 uppercase text-lg"><i class="fa-solid fa-coins text-brand-red mr-2"></i> Gestão Financeira</h3>
                             <p class="text-xs text-gray-500">Controle de pagamentos e vencimentos</p>
@@ -286,13 +326,55 @@
                                     <th class="px-6 py-3 border-b text-center">Dia Vencimento</th>
                                     <th class="px-6 py-3 border-b text-center">Prox. Pagamento</th>
                                     <th class="px-6 py-3 border-b">Status</th>
-                                    <th class="px-6 py-3 border-b text-center">Ações</th>
+                                    <th class="px-6 py-3 border-b text-center no-print-col">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="financial-table-body" class="text-sm text-gray-700 divide-y divide-gray-200">
                                 <!-- Preenchido via JS -->
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: RELATÓRIOS -->
+            <div id="view-reports" class="hidden">
+                <div class="bg-white rounded-xl shadow p-6 border-t-4 border-gray-800 max-w-4xl mx-auto">
+                    <h3 class="font-display text-xl font-bold text-gray-800 mb-2"><i class="fa-solid fa-print mr-2 text-brand-red"></i> Central de Relatórios</h3>
+                    <p class="text-sm text-gray-500 mb-6">Gere e imprima relatórios gerenciais da academia rapidamente.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="generateReport('ativos')">
+                            <div>
+                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-users text-blue-500 mr-1"></i> Alunos Ativos</h4>
+                                <p class="text-xs text-gray-500 mt-1">Lista completa de alunos com contrato ativo, separada por plano e faixa.</p>
+                            </div>
+                            <button class="mt-4 bg-gray-800 hover:bg-black text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
+                        </div>
+                        
+                        <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="generateReport('inadimplentes')">
+                            <div>
+                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-circle-exclamation text-red-500 mr-1"></i> Inadimplentes e Próximos</h4>
+                                <p class="text-xs text-gray-500 mt-1">Alunos com pagamentos vencidos ou expirando nos próximos 7 dias.</p>
+                            </div>
+                            <button class="mt-4 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
+                        </div>
+                        
+                        <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="generateReport('financeiro')">
+                            <div>
+                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-chart-line text-green-500 mr-1"></i> Resumo Financeiro Estimado</h4>
+                                <p class="text-xs text-gray-500 mt-1">Projeção de recebimentos baseada na quantidade de planos ativos cobráveis.</p>
+                            </div>
+                            <button class="mt-4 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
+                        </div>
+                        
+                        <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="generateReport('frequencia')">
+                            <div>
+                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-calendar-check text-purple-500 mr-1"></i> Frequência (Top 15)</h4>
+                                <p class="text-xs text-gray-500 mt-1">Os 15 alunos mais frequentes e dedicados da academia nos últimos 30 dias.</p>
+                            </div>
+                            <button class="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -471,13 +553,13 @@
                                     <option value="adulto-mensal">Adulto Mensal</option>
                                     <option value="adulto-trimestral">Adulto Trimestral</option>
                                     <option value="adulto-semestral">Adulto Semestral</option>
+                                    <option value="combo-casal">Combo Casal (2 Adultos)</option>
                                     <option value="combo-dupla">Combo Dupla (1 Ad + 1 Inf)</option>
-                                    <option value="combo-familia">Combo Família (2 Ad + 1 Inf)</option>
+                                    <option value="combo-familia">Combo Família (3 Pessoas)</option>
                                     <option value="dependente">Dependente (Isento)</option>
                                     <option value="administracao">Administração (Isento)</option>
                                 </select>
                             </div>
-                            <!-- CAMPO TITULAR (VINCULAÇÃO) -->
                             <div class="md:col-span-2">
                                 <label class="block text-xs font-bold text-purple-600 mb-1">Titular do Plano (Preencher caso seja Dependente)</label>
                                 <select id="edit-titular" class="w-full border border-purple-200 rounded p-2 bg-purple-50 focus:ring-purple-500">
@@ -1026,15 +1108,6 @@
                 }
             }
         };
-        
-        window.deleteStudent = async (id) => {
-            if(!confirm("Excluir aluno permanentemente? Esta ação é irreversível.")) return;
-            try {
-                await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id));
-                alert("Aluno excluído.");
-                window.loadData();
-            } catch(e) { alert("Erro ao excluir: " + e.message); }
-        };
 
         window.addPresenceSelectedStudents = async () => {
             const checkboxes = document.querySelectorAll('.student-cb:checked');
@@ -1140,20 +1213,21 @@
             window.currentView = viewName;
             document.getElementById('view-students').classList.toggle('hidden', viewName !== 'students');
             document.getElementById('view-financial').classList.toggle('hidden', viewName !== 'financial');
+            document.getElementById('view-reports').classList.toggle('hidden', viewName !== 'reports');
             
-            if(viewName === 'students') {
-                document.getElementById('nav-students').classList.add('bg-brand-red', 'text-white');
-                document.getElementById('nav-students').classList.remove('text-gray-400', 'hover:bg-gray-800');
-                document.getElementById('nav-financial').classList.add('text-gray-400', 'hover:bg-gray-800');
-                document.getElementById('nav-financial').classList.remove('bg-brand-red', 'text-white');
-                window.renderTable();
-            } else {
-                document.getElementById('nav-financial').classList.add('bg-brand-red', 'text-white');
-                document.getElementById('nav-financial').classList.remove('text-gray-400', 'hover:bg-gray-800');
-                document.getElementById('nav-students').classList.add('text-gray-400', 'hover:bg-gray-800');
-                document.getElementById('nav-students').classList.remove('bg-brand-red', 'text-white');
-                window.renderFinancialTable();
-            }
+            ['students', 'financial', 'reports'].forEach(v => {
+                const nav = document.getElementById('nav-' + v);
+                if (v === viewName) {
+                    nav.classList.add('bg-brand-red', 'text-white');
+                    nav.classList.remove('text-gray-400', 'hover:bg-gray-800');
+                } else {
+                    nav.classList.remove('bg-brand-red', 'text-white');
+                    nav.classList.add('text-gray-400', 'hover:bg-gray-800');
+                }
+            });
+
+            if(viewName === 'students') window.renderTable();
+            else if(viewName === 'financial') window.renderFinancialTable();
         };
 
         window.switchTab = (tab) => {
@@ -1294,9 +1368,12 @@
                 const hasLogin = (s.studentLogin && s.studentPassword) ? '<span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-lock"></i> OK</span>' : '<span class="text-gray-400 text-xs italic">--</span>';
                 const today = new Date();
                 const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
+                const safePlan = String(s.plan || '').toLowerCase();
                 
                 let statusBadge = '';
-                if (s.paymentStatus === 'Isento' || s.plan === 'administracao' || s.plan === 'dependente') {
+                if (safePlan === 'dependente') {
+                    statusBadge = '<span class="px-2 py-1 rounded text-xs font-bold bg-purple-100 text-purple-800">DEPENDENTE</span>';
+                } else if (s.paymentStatus === 'Isento' || safePlan === 'administracao') {
                     statusBadge = '<span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">Isento</span>';
                 } else {
                     const diffTime = targetDate - today;
@@ -1316,17 +1393,15 @@
                 let nameDisplay = `<div class="font-medium text-gray-900 flex items-center">${s.name || 'Sem Nome'}`;
                 if ((window.currentTab === 'adults' || window.currentTab === 'all') && age !== null && age < 18 && !isStudentKid(s)) nameDisplay += `<span class="ml-2 text-[10px] text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200 font-bold" title="Menor de idade em turma adulta">Menor (${age})</span>`;
                 
-                const safePlan = String(s.plan || '').toLowerCase();
                 if (safePlan.includes('combo')) nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase">Combo</span>`;
                 if (safePlan === 'administracao') nameDisplay += `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-bold uppercase">Admin</span>`;
-                if (safePlan === 'dependente') nameDisplay += `<span class="ml-2 text-[10px] text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded border border-indigo-200 font-bold uppercase">Dependente de: ${s.titularName || 'Não Informado'}</span>`;
+                
                 nameDisplay += `</div>`;
                 
                 if (s.enrollmentStatus === 'Inativo') nameDisplay += `<span class="ml-2 text-[10px] text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded border border-gray-300 font-bold">INATIVO</span>`;
 
                 const beltSVG = renderBeltSVG(s.belt || 'Faixa Branca - 0º Grau');
                 
-                // Exibe Responsavel Legal ou Titular do Combo
                 let relName = s.guardian || s.titularName || '-';
                 const guardianCell = (window.currentTab === 'kids' || window.currentTab === 'all') ? `<td class="px-6 py-4 align-middle text-sm text-gray-700"><i class="fa-solid fa-user-shield text-gray-400 mr-1"></i> ${relName}</td>` : '';
 
@@ -1401,25 +1476,31 @@
                     if (!isNaN(rDate)) regDay = rDate.getDate();
                 }
                 const nextDue = s.nextDueDate ? formatDate(s.nextDueDate) : `Dia ${regDay}`;
+                const safePlan = String(s.plan || '').toLowerCase();
 
                 let statusHtml = '';
-                if (s.paymentStatus === 'Isento' || s.plan === 'administracao' || s.plan === 'dependente') {
+                if (safePlan === 'dependente') {
+                    statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-purple-100 text-purple-800">DEPENDENTE</span>`;
+                } else if (s.paymentStatus === 'Isento' || safePlan === 'administracao') {
                     statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">Isento</span>`;
                 } else {
                      const today = new Date();
                      const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
                      const diffDays = isNaN(targetDate) ? 0 : Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
-                     if (diffDays < 0 && s.paymentStatus !== 'Em dia') statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>`;
-                     else if (diffDays >= 0 && diffDays <= 7) statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800">Expirando</span>`;
-                     else {
-                          const statusColor = s.paymentStatus === 'Em dia' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100';
-                          statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold ${statusColor}">${s.paymentStatus || 'Pendente'}</span>`;
+
+                     if (diffDays < 0 && s.paymentStatus !== 'Em dia') {
+                          statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>`;
+                     } else if (diffDays >= 0 && diffDays <= 7) {
+                          statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800">Expirando</span>`;
+                     } else {
+                          const payStatus = s.paymentStatus || 'Pendente';
+                          const statusColor = payStatus === 'Em dia' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100';
+                          statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold ${statusColor}">${payStatus}</span>`;
                      }
                 }
                 
-                const safePlan = String(s.plan || '');
                 let displayPlanName = '-';
-                if(safePlan) {
+                if(s.plan) {
                     if(safePlan === 'combo-dupla') displayPlanName = 'Combo Dupla';
                     else if(safePlan === 'combo-casal') displayPlanName = 'Combo Casal';
                     else if(safePlan === 'combo-familia') displayPlanName = 'Combo Família';
@@ -1714,9 +1795,11 @@
             }
             
             const planValue = planMap[s.plan] || 'Sob Consulta';
+            const payMethod = s.paymentMethod || 'Não informado';
+
             document.getElementById('detail-plan').innerText = displayName;
             document.getElementById('detail-value').innerText = planValue;
-            document.getElementById('detail-method').innerText = s.paymentMethod || 'Não informado';
+            document.getElementById('detail-method').innerText = payMethod;
             
             const titularBox = document.getElementById('detail-titular-box');
             if (s.titularName && s.titularName.trim() !== "") {
@@ -1967,6 +2050,114 @@
                 window.loadData();
             } catch(e) { alert("Erro ao graduar: " + e.message); }
         }
+        
+        window.generateReport = (type) => {
+            const container = document.getElementById('report-container');
+            let html = `<div class="text-center mb-6 border-b pb-4">
+                <h2 class="text-2xl font-bold uppercase tracking-wider">TANQUE TEAM BJJ</h2>
+                <h3 class="text-lg text-gray-600 uppercase mt-1">Relatório Gerencial</h3>
+                <p class="text-xs text-gray-500 mt-2">Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
+            </div>`;
+
+            let tableRows = '';
+            
+            if (type === 'ativos') {
+                html += `<h3 class="font-bold text-lg mb-4">ALUNOS ATIVOS</h3>`;
+                html += `<table><thead><tr><th>Nome</th><th>Plano</th><th>Faixa</th><th>Status Pagto</th></tr></thead><tbody>`;
+                const ativos = window.students.filter(s => s.enrollmentStatus !== 'Inativo');
+                ativos.sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(s => {
+                    tableRows += `<tr><td>${s.name}</td><td class="uppercase">${(s.plan||'-').replace('-',' ')}</td><td>${s.belt||'Branca'}</td><td>${s.paymentStatus||'-'}</td></tr>`;
+                });
+                html += tableRows + `</tbody></table>`;
+            } 
+            else if (type === 'inadimplentes') {
+                html += `<h3 class="font-bold text-lg mb-4 text-red-600">INADIMPLENTES E VENCIMENTOS PRÓXIMOS</h3>`;
+                html += `<table><thead><tr><th>Nome</th><th>Plano</th><th>Telefone</th><th>Status Virtual</th><th>Vencimento</th></tr></thead><tbody>`;
+                
+                const today = new Date();
+                const problematics = window.students.filter(s => {
+                    if (s.enrollmentStatus === 'Inativo' || s.paymentStatus === 'Isento' || s.plan === 'administracao' || s.plan === 'dependente') return false;
+                    const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
+                    const diffDays = isNaN(targetDate) ? 0 : Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+                    return diffDays <= 7 || s.paymentStatus === 'Pendente';
+                });
+
+                problematics.sort((a,b) => {
+                    const d1 = a.nextDueDate ? new Date(a.nextDueDate) : new Date(0);
+                    const d2 = b.nextDueDate ? new Date(b.nextDueDate) : new Date(0);
+                    return d1 - d2;
+                }).forEach(s => {
+                    const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
+                    const diffDays = isNaN(targetDate) ? 0 : Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+                    let status = diffDays < 0 || s.paymentStatus === 'Pendente' ? 'VENCIDO' : 'EXPIRANDO';
+                    
+                    tableRows += `<tr><td>${s.name}</td><td class="uppercase">${(s.plan||'-').replace('-',' ')}</td><td>${s.phone||'-'}</td><td class="font-bold ${status==='VENCIDO'?'text-red-600':''}">${status}</td><td>${formatDate(targetDate)}</td></tr>`;
+                });
+                html += tableRows + `</tbody></table>`;
+            }
+            else if (type === 'financeiro') {
+                html += `<h3 class="font-bold text-lg mb-4 text-green-600">RESUMO FINANCEIRO (MENSALIDADE ESPERADA BASEADA EM PLANOS ATIVOS)</h3>`;
+                html += `<table><thead><tr><th>Plano</th><th>Qtd Alunos (Titulares)</th><th>Valor Unit. Estimado</th><th>Subtotal Mensal</th></tr></thead><tbody>`;
+                
+                const planMap = {
+                    'infantil-mensal': 189.90, 'infantil-trimestral': 168.90, 'infantil-semestral': 157.90,
+                    'adulto-mensal': 168.90, 'adulto-trimestral': 147.90, 'adulto-semestral': 126.90,
+                    'combo-dupla': 250.00, 'combo-casal': 220.00, 'combo-familia': 362.02
+                };
+
+                let sumMap = {};
+                let totalExpected = 0;
+                
+                window.students.forEach(s => {
+                    if (s.enrollmentStatus === 'Inativo' || s.plan === 'administracao' || s.plan === 'dependente') return;
+                    if (!sumMap[s.plan]) sumMap[s.plan] = 0;
+                    sumMap[s.plan]++;
+                });
+
+                for (const [pName, count] of Object.entries(sumMap)) {
+                    let price = planMap[pName] || 0;
+                    let subtotal = price * count;
+                    totalExpected += subtotal;
+                    tableRows += `<tr><td class="uppercase">${pName.replace('-',' ')}</td><td>${count}</td><td>R$ ${price.toFixed(2)}</td><td>R$ ${subtotal.toFixed(2)}</td></tr>`;
+                }
+                
+                html += tableRows + `</tbody><tfoot><tr><th colspan="3" class="text-right">TOTAL ESTIMADO MENSAL:</th><th>R$ ${totalExpected.toFixed(2)}</th></tr></tfoot></table>`;
+                html += `<p class="text-xs text-gray-500 mt-2">* Obs: Valores calculados assumindo mensalidades normais (desconsidera 1º mês promocional ou descontos negociados isoladamente).</p>`;
+            }
+            else if (type === 'frequencia') {
+                html += `<h3 class="font-bold text-lg mb-4 text-purple-600">FREQUÊNCIA - TOP 15 ALUNOS (Últimos 30 dias)</h3>`;
+                html += `<table><thead><tr><th>Posição</th><th>Nome</th><th>Aulas nos últimos 30 dias</th><th>Faixa</th></tr></thead><tbody>`;
+                
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                
+                let freqData = window.students.filter(s => s.enrollmentStatus !== 'Inativo').map(s => {
+                    let recentClasses = 0;
+                    if (s.attendance) {
+                        recentClasses = s.attendance.filter(d => new Date(d) >= thirtyDaysAgo).length;
+                    }
+                    return { name: s.name, belt: s.belt, classes: recentClasses };
+                });
+
+                freqData.sort((a,b) => b.classes - a.classes);
+                freqData.slice(0, 15).forEach((d, i) => {
+                    tableRows += `<tr><td>#${i+1}</td><td class="font-bold">${d.name}</td><td class="text-center">${d.classes}</td><td>${d.belt||'-'}</td></tr>`;
+                });
+                
+                html += tableRows + `</tbody></table>`;
+            }
+
+            container.innerHTML = html;
+            container.classList.remove('hidden');
+            
+            document.body.classList.add('printing-report');
+            window.print();
+            
+            setTimeout(() => {
+                document.body.classList.remove('printing-report');
+                container.classList.add('hidden');
+            }, 500);
+        };
     </script>
 </body>
 </html>
