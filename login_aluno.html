@@ -3,22 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tanque Team | Dashboard Aluno</title>
+    <title>Tanque Team Jiu-Jitsu | Acesso</title>
     
-    <!-- Updated Favicon -->
+    <!-- Favicon -->
     <link rel="icon" href="https://i.ibb.co/spgfD2Nd/1771300330359.png" type="image/png">
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- EmailJS SDK -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <!-- Configuração Tailwind -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        brand: { red: '#D90429', dark: '#1B1B1B', gray: '#2B2D42', light: '#EDF2F4' }
+                        brand: {
+                            red: '#D90429',
+                            dark: '#1B1B1B',
+                            gray: '#2B2D42',
+                            light: '#EDF2F4'
+                        }
                     },
                     fontFamily: {
                         sans: ['Roboto', 'sans-serif'],
@@ -28,371 +38,130 @@
             }
         }
     </script>
+
     <style>
-        .loader {
-            border-top-color: #D90429;
-            -webkit-animation: spinner 1.5s linear infinite;
-            animation: spinner 1.5s linear infinite;
+        .hero-bg {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1564415315949-7a0c4c73aab4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
         }
-        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        .confetti {
-            position: absolute;
-            width: 10px; height: 10px;
-            background-color: #f00;
-            animation: confetti-fall 3s linear infinite;
-        }
-        @keyframes confetti-fall {
-            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(300px) rotate(360deg); opacity: 0; }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
         }
 
-        /* Calendar Styles */
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-        }
-        .calendar-day {
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            color: #4b5563;
-            border: 1px solid transparent;
-        }
-        .calendar-day.present {
-            background-color: #dcfce7; /* green-100 */
-            color: #166534; /* green-800 */
-            font-weight: bold;
-            border-color: #86efac;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-        .calendar-day.empty {
-            background: transparent;
-        }
-        .calendar-header-day {
-            font-size: 0.7rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: #9ca3af;
-            text-align: center;
-            padding-bottom: 4px;
-        }
+        .fade-in { animation: fadeIn 0.6s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="bg-gray-100 font-sans antialiased">
+<body class="bg-brand-dark font-sans antialiased h-screen overflow-hidden">
 
-    <!-- Loading Screen -->
-    <div id="loading-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-brand-dark transition-opacity duration-500">
-        <div class="text-center">
-            <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4 mx-auto"></div>
-            <h2 class="text-white font-display text-xl animate-pulse">CARREGANDO DOJO...</h2>
-            <p id="loading-text" class="text-gray-400 text-xs mt-2">Sincronizando dados...</p>
-        </div>
-    </div>
-
-    <!-- Redirect Message Overlay (Hidden by default) -->
-    <div id="redirect-overlay" class="fixed inset-0 z-[60] hidden flex flex-col items-center justify-center bg-black/90 text-white p-4 text-center">
-        <i class="fa-solid fa-lock text-4xl mb-4 text-brand-red"></i>
-        <h2 class="text-xl font-bold mb-2">Acesso Restrito</h2>
-        <p class="text-gray-300 mb-6">Você não está logado. Em um site real, você seria redirecionado.</p>
-        <a href="login_aluno.html" class="px-6 py-2 bg-brand-red rounded hover:bg-red-700 transition">Ir para Login (Manual)</a>
-    </div>
-
-    <div class="flex h-screen overflow-hidden">
+    <!-- Main Container -->
+    <div class="hero-bg w-full h-full flex items-center justify-center px-4 relative">
         
-        <!-- Sidebar (Desktop) -->
-        <aside class="hidden md:flex flex-col w-64 bg-brand-dark text-white shadow-xl z-10">
-            <div class="p-6 flex items-center justify-center border-b border-gray-800">
-                <img src="https://i.ibb.co/spgfD2Nd/1771300330359.png" alt="Logo" class="h-12 w-auto">
-                <span class="ml-3 font-display font-bold text-xl tracking-wider">TANQUE TEAM</span>
-            </div>
-            <nav class="flex-1 px-4 py-6 space-y-2">
-                <a href="#" class="flex items-center px-4 py-3 bg-brand-red text-white rounded-lg shadow-md transition-transform transform hover:translate-x-1">
-                    <i class="fa-solid fa-chart-line w-6"></i>
-                    <span class="font-bold">Dashboard</span>
-                </a>
-                 <a href="#" onclick="openProfileEditModal()" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
-                    <i class="fa-solid fa-user-gear w-6"></i>
-                    <span>Meus Dados</span>
-                </a>
-            </nav>
-            <div class="p-4 border-t border-gray-800">
-                <button onclick="handleLogout()" class="flex items-center w-full px-4 py-2 text-red-400 hover:text-red-300 transition-colors">
-                    <i class="fa-solid fa-right-from-bracket w-6"></i>
-                    <span>Sair do Sistema</span>
-                </button>
-            </div>
-        </aside>
+        <!-- Decoration Elements -->
+        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-dark via-brand-red to-brand-dark"></div>
 
-        <!-- Main Content -->
-        <div class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <!-- Login Card -->
+        <div class="glass-effect w-full max-w-md p-8 rounded-2xl shadow-2xl fade-in relative overflow-hidden border-t-4 border-brand-red">
             
-            <!-- Mobile Header -->
-            <header class="md:hidden bg-brand-dark text-white p-4 flex justify-between items-center shadow-md z-20">
-                <div class="flex items-center">
-                    <img src="https://i.ibb.co/spgfD2Nd/1771300330359.png" alt="Logo" class="h-8 w-auto mr-2">
-                    <span class="font-display font-bold text-lg">TANQUE TEAM</span>
+            <!-- Header / Logo -->
+            <div class="text-center mb-8">
+                <div class="w-24 h-24 bg-brand-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg ring-4 ring-brand-red ring-opacity-20">
+                    <img src="https://i.ibb.co/spgfD2Nd/1771300330359.png" alt="Logo" class="w-16 h-16 object-contain">
                 </div>
-                <button onclick="handleLogout()" class="text-white focus:outline-none">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
-            </header>
-
-            <!-- DEPENDENT VIEW BANNER (Se estiver vendo a conta do filho) -->
-            <div id="viewing-dependent-banner" class="hidden bg-purple-600 text-white px-4 py-3 flex justify-between items-center shadow-md z-20">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-users text-purple-200"></i>
-                    <span class="text-sm">Gerenciando dependente: <strong id="viewing-dependent-name">Nome</strong></span>
-                </div>
-                <button onclick="switchToTitular()" class="bg-white text-purple-700 hover:bg-gray-100 px-3 py-1.5 rounded text-xs font-bold transition shadow-sm">
-                    <i class="fa-solid fa-arrow-left mr-1 hidden sm:inline"></i> Voltar<span class="hidden sm:inline"> ao Titular</span>
-                </button>
+                <h2 class="font-display text-3xl font-bold text-brand-dark">PORTAL <span class="text-brand-red">TANQUE TEAM</span></h2>
+                <p class="text-gray-500 text-sm mt-1 font-medium tracking-wide">ÁREA RESTRITA (ALUNO / ADMIN)</p>
             </div>
 
-            <!-- Scrollable Content -->
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-8">
-                
-                <!-- Welcome Section -->
-                <div class="mb-8 flex justify-between items-end">
-                    <div class="flex items-center gap-4">
-                        <div class="w-16 h-16 rounded-full bg-gray-200 border-2 border-white shadow-md overflow-hidden flex-shrink-0">
-                            <img id="welcome-photo" src="" class="w-full h-full object-cover hidden">
-                            <div id="welcome-initials" class="w-full h-full flex items-center justify-center text-gray-500 text-2xl font-bold font-display">TT</div>
-                        </div>
-                        <div>
-                            <p class="text-gray-500 text-sm uppercase font-bold tracking-wider mb-1">Bem-vindo(a) de volta,</p>
-                            <div class="flex items-center gap-3">
-                                <h1 class="text-3xl md:text-4xl font-display font-bold text-brand-dark" id="student-name-display">Carregando...</h1>
-                                <!-- STATUS BADGE -->
-                                <span id="enrollment-status-badge" class="hidden px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider text-white shadow-sm transform -translate-y-1"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="hidden md:block">
-                        <span class="bg-white px-4 py-2 rounded-full shadow-sm text-sm font-bold text-gray-600 border border-gray-200">
-                            <i class="fa-regular fa-calendar mr-2 text-brand-red"></i> <span id="current-date">--/--/----</span>
-                        </span>
-                    </div>
-                </div>
+            <!-- Error Message Box (Hidden by default) -->
+            <div id="error-box" class="hidden bg-red-100 border-l-4 border-brand-red text-red-700 p-4 mb-6 rounded text-sm" role="alert">
+                <p class="font-bold">Erro de Acesso</p>
+                <p id="error-msg">Usuário ou senha incorretos.</p>
+            </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Login Form -->
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="space-y-5">
                     
-                    <!-- Left Column (Status & Finance) -->
-                    <div class="lg:col-span-2 space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Card 1: Belt Status -->
-                            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-brand-red relative overflow-hidden">
-                                <div id="celebration-banner" class="hidden absolute top-0 left-0 w-full bg-yellow-400 text-yellow-900 text-center text-xs font-bold py-1 z-10 animate-pulse">
-                                    🎉 PARABÉNS PELA NOVA GRADUAÇÃO! 🎉
-                                </div>
-                                <div class="flex justify-between items-start mb-4 mt-2">
-                                    <div>
-                                        <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest">Graduação Atual</h3>
-                                        <p class="text-xl font-bold text-brand-dark mt-1" id="belt-text">--</p>
-                                    </div>
-                                    <div class="p-2 bg-gray-50 rounded-lg text-brand-dark">
-                                        <i class="fa-solid fa-medal text-xl"></i>
-                                    </div>
-                                </div>
-                                <div id="belt-visual-container" class="w-full h-12 flex items-center justify-center bg-gray-100 rounded border border-gray-200 shadow-inner">
-                                    <span class="text-xs text-gray-400">Carregando faixa...</span>
-                                </div>
+                    <!-- Email/Login Input -->
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1 ml-1">Usuário ou E-mail</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-user"></i>
                             </div>
-
-                            <!-- Card 2: Financial Status -->
-                            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-gray-800">
-                                <div class="flex justify-between items-start mb-4">
-                                    <div>
-                                        <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest">Financeiro</h3>
-                                        <div id="payment-status-badge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-gray-200 text-gray-600">Verificando...</div>
-                                    </div>
-                                    <div class="p-2 bg-gray-50 rounded-lg text-green-600">
-                                        <i class="fa-solid fa-check-circle text-xl"></i>
-                                    </div>
-                                </div>
-                                <div class="mt-4">
-                                    <p class="text-sm text-gray-600">Plano: <span class="font-bold text-brand-dark" id="plan-display">--</span></p>
-                                    <p class="text-xs text-gray-400 mt-1">Vence em: <span id="contract-end">--/--/----</span></p>
-                                    <button onclick="viewPaymentHistory()" class="mt-3 text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center">
-                                        <i class="fa-solid fa-clock-rotate-left mr-1"></i> Ver Histórico Financeiro
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Personal Data Section -->
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                            <div class="bg-brand-dark px-6 py-4 border-b border-gray-700 flex justify-between items-center">
-                                <h3 class="text-white font-display font-bold tracking-wide">DADOS CADASTRAIS</h3>
-                                <button onclick="openProfileEditModal()" class="text-xs text-gray-400 hover:text-white transition"><i class="fa-solid fa-pen-to-square mr-1"></i> Alterar Dados</button>
-                            </div>
-                            <div class="p-6">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome Completo</label><div class="p-3 bg-gray-50 rounded border border-gray-200 text-gray-800 font-medium" id="data-name">--</div></div>
-                                    
-                                    <div>
-                                        <label class="block text-xs font-bold text-blue-600 uppercase mb-1">Usuário de Acesso (Login)</label>
-                                        <div class="p-3 bg-blue-50 rounded border border-blue-100 text-blue-900 font-bold" id="data-login">--</div>
-                                    </div>
-
-                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">E-mail</label><div class="p-3 bg-gray-50 rounded border border-gray-200 text-gray-800 font-medium" id="data-email">--</div></div>
-                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">CPF</label><div class="p-3 bg-gray-50 rounded border border-gray-200 text-gray-800 font-medium" id="data-cpf">--</div></div>
-                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Telefone</label><div class="p-3 bg-gray-50 rounded border border-gray-200 text-gray-800 font-medium" id="data-phone">--</div></div>
-                                    <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Endereço</label><div class="p-3 bg-gray-50 rounded border border-gray-200 text-gray-800 font-medium" id="data-address">--</div></div>
-                                </div>
-                            </div>
+                            <input type="text" id="login" required 
+                                class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-red focus:border-brand-red block pl-10 p-3 transition-colors outline-none" 
+                                placeholder="Digite seu login ou e-mail">
                         </div>
                     </div>
 
-                    <!-- Right Column (CALENDAR) -->
-                    <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-blue-500 flex flex-col">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                                <i class="fa-solid fa-calendar-days text-brand-red"></i> Calendário de Treinos
-                            </h3>
-                            <div class="flex items-center gap-2 bg-gray-100 rounded-full px-2 py-1">
-                                <button onclick="changeMonth(-1)" class="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-white hover:text-brand-red rounded-full transition"><i class="fa-solid fa-chevron-left text-xs"></i></button>
-                                <span id="calendar-month-year" class="text-xs font-bold text-brand-dark min-w-[80px] text-center">--</span>
-                                <button onclick="changeMonth(1)" class="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-white hover:text-brand-red rounded-full transition"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                    <!-- Password Input -->
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1 ml-1">Senha</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-lock"></i>
                             </div>
-                        </div>
-                        
-                        <!-- Calendar Grid -->
-                        <div class="mb-4">
-                            <div class="grid grid-cols-7 mb-2">
-                                <div class="calendar-header-day">Dom</div><div class="calendar-header-day">Seg</div><div class="calendar-header-day">Ter</div><div class="calendar-header-day">Qua</div><div class="calendar-header-day">Qui</div><div class="calendar-header-day">Sex</div><div class="calendar-header-day">Sáb</div>
-                            </div>
-                            <div id="calendar-days" class="calendar-grid">
-                                <!-- JS Injection -->
-                            </div>
-                        </div>
-
-                        <!-- Summary -->
-                        <div class="mt-auto pt-4 border-t border-gray-100">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-sm font-bold text-gray-600">Total de Treinos</span>
-                                <span class="text-xl font-bold text-brand-red" id="total-attendance-count">0</span>
-                            </div>
-                            <div class="text-xs text-gray-400 flex items-center gap-2">
-                                <div class="w-3 h-3 bg-green-100 border border-green-300 rounded"></div>
-                                <span>Presença Confirmada</span>
-                            </div>
+                            <input type="password" id="password" required 
+                                class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-red focus:border-brand-red block pl-10 p-3 transition-colors outline-none" 
+                                placeholder="••••••••">
+                            <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-brand-red cursor-pointer">
+                                <i class="fa-solid fa-eye" id="eye-icon"></i>
+                            </button>
                         </div>
                     </div>
 
-                </div>
-
-                <!-- Dependentes Vinculados -->
-                <div id="dash-dependents-container" class="hidden mt-6 bg-white rounded-xl shadow-lg p-6 text-left border-l-4 border-purple-500 mb-8">
-                    <h3 class="font-display text-xl font-bold text-gray-700 mb-3 flex items-center gap-2"><i class="fa-solid fa-users text-purple-600"></i> Meus Dependentes (Combo Família)</h3>
-                    <p class="text-xs text-gray-500 mb-4">Gerencie as informações e acompanhe a frequência de quem treina junto com você no plano Combo.</p>
-                    <div id="dash-dependents-list" class="space-y-3">
-                        <!-- Filled by JS -->
+                    <!-- Remember & Forgot Password -->
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center">
+                            <input id="remember-me" type="checkbox" class="w-4 h-4 text-brand-red bg-gray-100 border-gray-300 rounded focus:ring-brand-red">
+                            <label for="remember-me" class="ml-2 font-medium text-gray-600">Lembrar-me</label>
+                        </div>
+                        <a href="#" onclick="alert('Procure a secretaria para redefinir sua senha.')" class="font-bold text-brand-red hover:text-red-800 transition">Esqueceu a senha?</a>
                     </div>
-                </div>
 
-                <div class="mt-8 text-center text-xs text-gray-400">
-                    &copy; 2026 Tanque Team BJJ. Todos os direitos reservados. Oss.
+                    <!-- Submit Button -->
+                    <button type="submit" id="btn-login" class="w-full text-white bg-brand-red hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold rounded-lg text-lg px-5 py-3 text-center transition-all duration-300 shadow-lg transform active:scale-95 flex justify-center items-center gap-2">
+                        <span>ENTRAR</span>
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    </button>
                 </div>
-            </main>
-        </div>
-    </div>
+            </form>
 
-    <!-- Student Edit Profile Modal -->
-    <div id="profile-edit-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
-            <div class="bg-brand-dark px-6 py-4 flex justify-between items-center">
-                <h3 class="text-white font-display font-bold text-lg">Alterar Dados</h3>
-                <button onclick="closeProfileEditModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-times"></i></button>
+            <!-- Divider -->
+            <div class="mt-8 mb-6 relative">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div>
+                <div class="relative flex justify-center text-sm"><span class="px-2 bg-white text-gray-500 font-display tracking-wider">TANQUE TEAM BJJ</span></div>
             </div>
-            
-            <div class="p-6">
-                <!-- PHOTO UPLOAD SECTION -->
-                <div class="flex items-center gap-4 mb-6 border-b pb-4 border-gray-100">
-                    <div class="relative w-20 h-20 group cursor-pointer flex-shrink-0" onclick="document.getElementById('profile-photo-input').click()">
-                        <img id="profile-photo-preview" src="" class="w-full h-full rounded-full object-cover border-2 border-gray-200 shadow-md hidden">
-                        <div id="profile-photo-placeholder" class="w-full h-full bg-gray-200 rounded-full flex items-center justify-center text-2xl font-bold text-gray-400">TT</div>
-                        <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                            <i class="fa-solid fa-camera text-white"></i>
-                        </div>
-                        <input type="file" id="profile-photo-input" accept="image/*" class="hidden" onchange="previewProfilePhoto(event)">
-                    </div>
-                    <div>
-                        <h4 class="text-xs font-bold text-brand-red uppercase">Foto de Perfil</h4>
-                        <p class="text-[10px] text-gray-400">Clique na imagem para enviar uma nova foto.</p>
-                    </div>
-                </div>
 
-                <div class="space-y-3">
-                    <div id="profile-login-container">
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Usuário (Login)</label>
-                        <input type="text" id="profile-login" class="w-full border rounded p-2 text-sm bg-gray-100 text-gray-500" disabled>
-                        <p class="text-[10px] text-gray-400">Este é seu login único. Não pode ser alterado.</p>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Endereço</label>
-                        <input type="text" id="profile-address" class="w-full border rounded p-2 text-sm">
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 mb-1">E-mail</label>
-                            <input type="email" id="profile-email" class="w-full border rounded p-2 text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 mb-1">Telefone</label>
-                            <input type="text" id="profile-phone" class="w-full border rounded p-2 text-sm">
-                        </div>
-                    </div>
-                    <div class="pt-2 border-t border-gray-100" id="profile-password-container">
-                        <label class="block text-xs font-bold text-blue-600 mb-1">Nova Senha (Opcional)</label>
-                        <input type="text" id="profile-password" class="w-full border border-blue-200 rounded p-2 text-sm" placeholder="Digite para alterar...">
-                    </div>
-                </div>
-                
-                <div class="mt-6 flex justify-end gap-2">
-                    <button onclick="closeProfileEditModal()" class="px-4 py-2 border rounded text-sm hover:bg-gray-100">Cancelar</button>
-                    <button onclick="saveProfileChanges()" class="px-4 py-2 bg-brand-red text-white rounded text-sm hover:bg-red-700 font-bold">Salvar</button>
+            <!-- Footer Links -->
+            <div class="text-center space-y-2">
+                <p class="text-sm text-gray-600">Ainda não tem acesso?</p>
+                <a href="index.html#register" class="text-brand-dark font-bold hover:text-brand-red transition underline decoration-brand-red decoration-2 underline-offset-4">Fazer Matrícula Online</a>
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <a href="index.html" class="text-xs text-gray-400 hover:text-gray-600 flex items-center justify-center gap-1 transition">
+                        <i class="fa-solid fa-arrow-left"></i> Voltar ao site principal
+                    </a>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Student History Modal -->
-    <div id="student-history-modal" class="fixed inset-0 z-[70] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden h-[70vh] flex flex-col">
-            <div class="bg-gray-800 px-6 py-4 flex justify-between items-center text-white shrink-0">
-                <h3 class="font-bold text-lg"><i class="fa-solid fa-clock-rotate-left mr-2"></i> Meu Histórico</h3>
-                <button onclick="closeStudentHistoryModal()" class="hover:text-gray-300"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <div class="overflow-y-auto p-4 flex-1">
-                <table class="w-full text-sm text-left">
-                    <thead class="text-xs text-gray-500 uppercase bg-gray-100 border-b">
-                        <tr>
-                            <th class="px-3 py-2">Data</th>
-                            <th class="px-3 py-2">Valor</th>
-                            <th class="px-3 py-2">Forma</th>
-                        </tr>
-                    </thead>
-                    <tbody id="student-history-body" class="divide-y divide-gray-100">
-                        <!-- Filled by JS -->
-                    </tbody>
-                </table>
-                <div id="student-history-empty" class="hidden text-center py-8 text-gray-400 italic text-sm">Nenhum pagamento registrado.</div>
-            </div>
-            <div class="p-4 border-t bg-white shrink-0 text-right">
-                <button onclick="closeStudentHistoryModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded text-sm font-bold hover:bg-gray-300">Fechar</button>
-            </div>
+        
+        <!-- Copyright -->
+        <div class="absolute bottom-4 text-white/40 text-xs font-light tracking-wider">
+            &copy; 2026 TANQUE TEAM BJJ SYSTEM
         </div>
+
     </div>
 
     <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, getDocs, collection, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
@@ -405,416 +174,142 @@
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = "tanqueteam-bjj";
+        const appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj";
 
-        window.db = db;
-        window.titularData = null; // Armazena a conta principal autenticada
-        window.currentStudentData = null; // Armazena quem está sendo visto no momento
-        window.currentCalendarDate = new Date(); 
-
-        window.handleLogout = () => {
-            localStorage.removeItem('tanque_user_session');
-            window.location.href = "login_aluno.html";
-        };
-
-        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', dateOptions);
-
-        const session = localStorage.getItem('tanque_user_session');
-        if (session) {
-            try {
-                const user = JSON.parse(session);
-                if (user && user.id) {
-                    loadStudentData(user.id);
-                } else {
-                    throw new Error("Sessão inválida");
-                }
-            } catch(e) {
-                console.error("Erro na sessão", e);
-                handleLogout();
-            }
-        } else {
-            window.location.href = "login_aluno.html";
-        }
-
-        async function loadStudentData(id) {
-            try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', id);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    const docData = docSnap.data();
-                    docData.id = id; 
-                    
-                    // Buscar dependentes vinculados
-                    const qDeps = query(
-                        collection(db, 'artifacts', appId, 'public', 'data', 'students'),
-                        where('titularId', '==', docData.id)
-                    );
-                    const depSnap = await getDocs(qDeps);
-                    docData.dependentsList = [];
-                    depSnap.forEach(d => {
-                        let dep = d.data();
-                        dep.id = d.id;
-                        docData.dependentsList.push(dep);
-                    });
-
-                    window.titularData = docData;
-                    window.currentStudentData = docData;
-                    renderDashboard(docData, false);
-                } else {
-                    alert("Cadastro não encontrado.");
-                    document.getElementById('loading-screen').classList.add('hidden');
-                }
-            } catch (error) {
-                console.error("Erro ao buscar dados:", error);
-                document.getElementById('loading-screen').classList.add('hidden');
-            }
-        }
-
-        function renderDashboard(data, isDependent = false) {
-            document.getElementById('student-name-display').innerText = data.name.split(' ')[0];
-            
-            // Enrollment Status
-            const enrollmentStatus = data.enrollmentStatus || 'Ativo';
-            const badge = document.getElementById('enrollment-status-badge');
-            badge.innerText = enrollmentStatus;
-            badge.classList.remove('hidden');
-            if (enrollmentStatus === 'Ativo') {
-                badge.classList.add('bg-green-500');
-                badge.classList.remove('bg-red-500');
-            } else {
-                badge.classList.add('bg-red-500');
-                badge.classList.remove('bg-green-500');
-            }
-
-            document.getElementById('data-name').innerText = data.name;
-            document.getElementById('data-login').innerText = data.studentLogin || (isDependent ? 'Acesso via Titular' : 'Não definido');
-            document.getElementById('data-email').innerText = data.email || 'Não informado';
-            document.getElementById('data-cpf').innerText = data.cpf || '-';
-            document.getElementById('data-phone').innerText = data.phone || '-';
-            document.getElementById('data-address').innerText = data.address || '-';
-
-            let displayName = 'NÃO INFORMADO';
-            if(data.plan) {
-                if(data.plan === 'combo-dupla') displayName = 'COMBO DUPLA';
-                else if(data.plan === 'combo-casal') displayName = 'COMBO CASAL';
-                else if(data.plan === 'combo-familia') displayName = 'COMBO FAMÍLIA';
-                else if(data.plan === 'dependente') displayName = 'DEPENDENTE - COMBO FAMÍLIA';
-                else displayName = data.plan.replace('infantil-', 'Infantil ').replace('adulto-', 'Jovem/Adulto ').replace('mensal', 'Mensal').replace('trimestral', 'Trimestral').replace('semestral', 'Semestral').toUpperCase();
-            }
-            document.getElementById('plan-display').innerText = displayName;
-            
-            // Photo Display
-            const photoImg = document.getElementById('welcome-photo');
-            const photoInitials = document.getElementById('welcome-initials');
-            
-            if(data.photoBase64) {
-                photoImg.src = data.photoBase64;
-                photoImg.classList.remove('hidden');
-                photoInitials.classList.add('hidden');
-            } else {
-                photoImg.classList.add('hidden');
-                photoInitials.classList.remove('hidden');
-                photoInitials.innerText = data.name.charAt(0);
-            }
-
-            if(data.contractEndDate) {
-                const d = new Date(data.contractEndDate);
-                document.getElementById('contract-end').innerText = d.toLocaleDateString('pt-BR');
-            }
-
-            const statusBadge = document.getElementById('payment-status-badge');
-            const status = data.paymentStatus || 'Pendente';
-            statusBadge.innerText = status.toUpperCase();
-            
-            if(status === 'Em dia') {
-                statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-green-100 text-green-800 border border-green-200";
-                statusBadge.innerHTML = '<i class="fa-solid fa-check mr-1"></i> EM DIA';
-            } else if(status === 'Isento') {
-                statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-blue-100 text-blue-800 border border-blue-200";
-                statusBadge.innerHTML = '<i class="fa-solid fa-gift mr-1"></i> ISENTO';
-            } else {
-                statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-red-100 text-red-800 border border-red-200 animate-pulse";
-                statusBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> PENDENTE';
-            }
-
-            const attendanceCount = data.attendance ? data.attendance.length : 0;
-            document.getElementById('total-attendance-count').innerText = attendanceCount;
-
-            const beltStr = data.belt || "Faixa Branca - 0º Grau";
-            document.getElementById('belt-text').innerText = beltStr;
-            document.getElementById('belt-visual-container').innerHTML = renderBeltSVG(beltStr);
-
-            // Graduation celebration logic
-            if(data.lastGraduationDate) {
-                const gradDate = new Date(data.lastGraduationDate);
-                const today = new Date();
-                const diffTime = Math.abs(today - gradDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                
-                if(diffDays <= 15) document.getElementById('celebration-banner').classList.remove('hidden');
-            } else {
-                document.getElementById('celebration-banner').classList.add('hidden');
-            }
-            
-            // Calendar
-            renderCalendar(data.attendance);
-
-            // DUAL PROFILE LOGIC (Titular vs Dependent)
-            const depBanner = document.getElementById('viewing-dependent-banner');
-            if (isDependent) {
-                depBanner.classList.remove('hidden');
-                document.getElementById('viewing-dependent-name').innerText = data.name;
-            } else {
-                depBanner.classList.add('hidden');
-            }
-
-            const depContainer = document.getElementById('dash-dependents-container');
-            if (!isDependent && window.titularData.dependentsList && window.titularData.dependentsList.length > 0) {
-                depContainer.classList.remove('hidden');
-                let depHtml = '';
-                window.titularData.dependentsList.forEach(dep => {
-                    depHtml += `
-                    <div class="bg-purple-50 border border-purple-200 rounded p-4 flex justify-between items-center shadow-sm">
-                        <div>
-                            <p class="font-bold text-sm text-purple-900">${dep.name}</p>
-                            <p class="text-xs text-purple-700">${dep.parentesco || 'Dependente'} • ${dep.belt || 'Faixa Branca'}</p>
-                        </div>
-                        <button onclick="switchToDependent('${dep.id}')" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-xs font-bold transition shadow">
-                            <i class="fa-solid fa-user-gear mr-1"></i> Gerenciar Aluno
-                        </button>
-                    </div>`;
-                });
-                document.getElementById('dash-dependents-list').innerHTML = depHtml;
-            } else {
-                depContainer.classList.add('hidden');
-            }
-
-            setTimeout(() => {
-                document.getElementById('loading-screen').classList.add('opacity-0');
-                setTimeout(() => {
-                    document.getElementById('loading-screen').classList.add('hidden');
-                }, 500);
-            }, 500);
-        }
-
-        window.switchToDependent = (depId) => {
-            const dep = window.titularData.dependentsList.find(d => d.id === depId);
-            if (dep) {
-                window.currentStudentData = dep;
-                renderDashboard(dep, true);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        };
-
-        window.switchToTitular = () => {
-            window.currentStudentData = window.titularData;
-            renderDashboard(window.titularData, false);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-
-        // --- CALENDAR LOGIC ---
-        window.changeMonth = (delta) => {
-            window.currentCalendarDate.setMonth(window.currentCalendarDate.getMonth() + delta);
-            if (window.currentStudentData) {
-                renderCalendar(window.currentStudentData.attendance);
-            }
-        };
-
-        function renderCalendar(attendanceList) {
-            const date = window.currentCalendarDate;
-            const year = date.getFullYear();
-            const month = date.getMonth();
-            
-            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
-
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const daysInMonth = lastDay.getDate();
-            const startingDay = firstDay.getDay(); 
-
-            const calendarGrid = document.getElementById('calendar-days');
-            calendarGrid.innerHTML = '';
-
-            for (let i = 0; i < startingDay; i++) {
-                const div = document.createElement('div');
-                div.className = 'calendar-day empty';
-                calendarGrid.appendChild(div);
-            }
-
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dayDiv = document.createElement('div');
-                dayDiv.className = 'calendar-day hover:bg-gray-50 transition cursor-default';
-                dayDiv.innerText = day;
-
-                const m = (month + 1).toString().padStart(2, '0');
-                const d = day.toString().padStart(2, '0');
-                const dateString = `${year}-${m}-${d}`;
-
-                if (attendanceList && attendanceList.includes(dateString)) {
-                    dayDiv.classList.add('present');
-                    dayDiv.title = "Presença Confirmada";
-                    dayDiv.innerHTML = `${day} <i class="fa-solid fa-check text-[8px] absolute bottom-1 right-1"></i>`;
-                    dayDiv.style.position = 'relative';
-                }
-                
-                const today = new Date();
-                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
-                     dayDiv.style.border = '1px solid #D90429';
-                     dayDiv.style.fontWeight = 'bold';
-                     dayDiv.style.color = '#D90429';
-                }
-
-                calendarGrid.appendChild(dayDiv);
-            }
-        }
-
-        window.viewPaymentHistory = () => {
-            const data = window.currentStudentData;
-            if(!data) return;
-
-            const tbody = document.getElementById('student-history-body');
-            tbody.innerHTML = '';
-
-            if(!data.paymentHistory || data.paymentHistory.length === 0) {
-                document.getElementById('student-history-empty').classList.remove('hidden');
-            } else {
-                document.getElementById('student-history-empty').classList.add('hidden');
-                const sorted = [...data.paymentHistory].sort((a,b) => new Date(b.date) - new Date(a.date));
-                sorted.forEach(p => {
-                    const row = document.createElement('tr');
-                    const d = p.date ? new Date(p.date + 'T12:00:00').toLocaleDateString('pt-BR') : '-';
-                    row.innerHTML = `
-                        <td class="px-3 py-2 font-medium">${d}</td>
-                        <td class="px-3 py-2 text-green-700 font-bold">R$ ${p.amount}</td>
-                        <td class="px-3 py-2">${p.method}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            }
-            document.getElementById('student-history-modal').classList.remove('hidden');
-            document.getElementById('student-history-modal').classList.add('flex');
-        }
-
-        window.closeStudentHistoryModal = () => {
-            document.getElementById('student-history-modal').classList.add('hidden');
-            document.getElementById('student-history-modal').classList.remove('flex');
-        }
-
-        window.openProfileEditModal = () => {
-            const data = window.currentStudentData;
-            if(!data) return;
-            
-            // Oculta campos de senha e login para dependentes (apenas titular tem acesso direto)
-            const isDep = data.plan === 'dependente';
-            document.getElementById('profile-login-container').classList.toggle('hidden', isDep);
-            document.getElementById('profile-password-container').classList.toggle('hidden', isDep);
-
-            document.getElementById('profile-email').value = data.email || '';
-            document.getElementById('profile-phone').value = data.phone || '';
-            document.getElementById('profile-address').value = data.address || '';
-            document.getElementById('profile-login').value = data.studentLogin || 'Não definido'; 
-            document.getElementById('profile-password').value = ''; 
-            
-            const preview = document.getElementById('profile-photo-preview');
-            const placeholder = document.getElementById('profile-photo-placeholder');
-            if(data.photoBase64) {
-                 preview.src = data.photoBase64;
-                 preview.classList.remove('hidden');
-                 placeholder.classList.add('hidden');
-            } else {
-                 preview.classList.add('hidden');
-                 placeholder.classList.remove('hidden');
-                 placeholder.innerText = data.name.charAt(0);
-            }
-            
-            document.getElementById('profile-edit-modal').classList.remove('hidden');
-            document.getElementById('profile-edit-modal').classList.add('flex');
-        }
-
-        window.closeProfileEditModal = () => {
-            document.getElementById('profile-edit-modal').classList.add('hidden');
-            document.getElementById('profile-edit-modal').classList.remove('flex');
-        }
+        window.dbInstance = db;
+        window.dbCollection = collection;
+        window.dbQuery = query;
+        window.dbWhere = where;
+        window.dbGetDocs = getDocs;
+        window.appIdVar = appId;
         
-        window.previewProfilePhoto = (event) => {
-            const file = event.target.files[0];
-            if(file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const preview = document.getElementById('profile-photo-preview');
-                    const placeholder = document.getElementById('profile-photo-placeholder');
-                    preview.src = e.target.result;
-                    preview.classList.remove('hidden');
-                    placeholder.classList.add('hidden');
+        // Auto-authenticate safely so when the user logs in, the DB accepts the request
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
                 }
-                reader.readAsDataURL(file);
+            } catch (e) {
+                console.error("Auth erro:", e);
             }
         };
+        initAuth();
+    </script>
 
-        window.saveProfileChanges = async () => {
-            const data = window.currentStudentData;
-            if(!data) return;
-
-            const newEmail = document.getElementById('profile-email').value;
-            const newPhone = document.getElementById('profile-phone').value;
-            const newAddress = document.getElementById('profile-address').value;
-            const newPass = document.getElementById('profile-password').value;
-
-            const updateData = {
-                email: newEmail,
-                phone: newPhone,
-                address: newAddress
-            };
-
-            if(!document.getElementById('profile-password-container').classList.contains('hidden') && newPass && newPass.trim() !== "") {
-                updateData.studentPassword = newPass;
-            }
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eye-icon');
             
-            const photoInput = document.getElementById('profile-photo-input');
-            let photoBase64 = null;
-            
-            if(photoInput.files && photoInput.files[0]) {
-                 const file = photoInput.files[0];
-                 if(file.size > 800 * 1024) { 
-                      alert("A foto é muito grande. Por favor, use uma imagem menor que 800KB.");
-                      return;
-                 }
-                 photoBase64 = await new Promise((resolve) => {
-                      const reader = new FileReader();
-                      reader.onloadend = () => resolve(reader.result);
-                      reader.readAsDataURL(file);
-                 });
-                 updateData.photoBase64 = photoBase64;
-            }
-
-            try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', data.id);
-                await updateDoc(docRef, updateData);
-                alert("Dados atualizados com sucesso!");
-                closeProfileEditModal();
-                // Reloads full data to maintain logic
-                loadStudentData(window.titularData.id); 
-            } catch(e) {
-                console.error(e);
-                alert("Erro ao atualizar dados.");
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
             }
         }
 
-        function renderBeltSVG(beltStr) {
-            if (!beltStr) return '';
-            const colors = { 'Branca': '#ffffff', 'Cinza': '#9ca3af', 'Amarela': '#fbbf24', 'Laranja': '#f97316', 'Verde': '#10b981', 'Azul': '#3b82f6', 'Roxa': '#8b5cf6', 'Marrom': '#78350f', 'Preta': '#000000' };
-            let color = '#ffffff'; let degree = 0; let colorName = 'Branca';
-            for (const [name, hex] of Object.entries(colors)) { if (beltStr.includes(name)) { color = hex; colorName = name; break; } }
-            const degreeMatch = beltStr.match(/(\d)º/); if (degreeMatch) degree = parseInt(degreeMatch[1]);
-            const width = 300; const height = 40; const tipWidth = 60; const stripeWidth = 8; const stripeGap = 6;
-            let stripesSVG = ''; const barColor = (colorName === 'Preta') ? '#dc2626' : '#000000'; const stripeColor = '#ffffff';
-            for (let i = 0; i < degree; i++) { const x = width - 10 - (i * (stripeWidth + stripeGap)) - stripeWidth; stripesSVG += `<rect x="${x}" y="0" width="${stripeWidth}" height="${height}" fill="${stripeColor}" />`; }
-            const borderStyle = colorName === 'Branca' ? 'stroke="#e5e7eb" stroke-width="2"' : '';
-            return `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"><rect x="0" y="0" width="${width}" height="${height}" fill="${color}" ${borderStyle} /><rect x="${width - tipWidth}" y="0" width="${tipWidth}" height="${height}" fill="${barColor}" />${stripesSVG}</svg>`;
+        // --- SAFE REDIRECT HELPER ---
+        function safeRedirect(url) {
+            try {
+                const protocol = window.location.protocol;
+                if (protocol.startsWith('http')) {
+                    window.location.href = url;
+                } else {
+                    console.warn("Redirecionamento bloqueado (Preview Mode). URL de destino:", url);
+                    alert("Sucesso! Redirecionando para: " + url);
+                }
+            } catch (e) {
+                console.warn("Redirecionamento bloqueado:", e);
+                alert("Sucesso! Redirecionando para: " + url);
+            }
+        }
+
+        window.handleLogin = async function(e) {
+            e.preventDefault();
+            
+            const loginInput = document.getElementById('login').value.trim(); 
+            const passwordInput = document.getElementById('password').value.trim();
+            const btn = document.getElementById('btn-login');
+            const errorBox = document.getElementById('error-box');
+            const errorMsg = document.getElementById('error-msg');
+
+            errorBox.classList.add('hidden');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> VERIFICANDO...';
+            btn.classList.add('opacity-75');
+
+            // --- 1. VERIFICAÇÃO DE ADMINISTRAÇÃO ---
+            if (loginInput === "administracao@tanqueteambjj.com.br" && passwordInput === "32573515") {
+                localStorage.setItem('tanque_user_session', JSON.stringify({
+                    role: 'admin',
+                    name: 'Administrador',
+                    email: loginInput
+                }));
+
+                btn.classList.remove('bg-brand-red', 'hover:bg-red-700');
+                btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                btn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> PAINEL ADMIN';
+                
+                setTimeout(() => {
+                    safeRedirect("painel_admin.html");
+                }, 1000);
+                return;
+            }
+
+            // --- 2. VERIFICAÇÃO DE ALUNO (Firestore) ---
+            try {
+                const studentsRef = window.dbCollection(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'students');
+                
+                // Buscar por studentLogin
+                let q = window.dbQuery(studentsRef, window.dbWhere('studentLogin', '==', loginInput), window.dbWhere('studentPassword', '==', passwordInput));
+                let snapshot = await window.dbGetDocs(q);
+
+                // Buscar por email se a primeira falhar
+                if (snapshot.empty) {
+                    q = window.dbQuery(studentsRef, window.dbWhere('email', '==', loginInput), window.dbWhere('studentPassword', '==', passwordInput));
+                    snapshot = await window.dbGetDocs(q);
+                }
+
+                if (!snapshot.empty) {
+                    const doc = snapshot.docs[0];
+                    const studentData = { id: doc.id, ...doc.data(), role: 'student' };
+
+                    localStorage.setItem('tanque_user_session', JSON.stringify(studentData));
+
+                    btn.classList.remove('bg-brand-red', 'hover:bg-red-700');
+                    btn.classList.add('bg-green-600', 'hover:bg-green-700');
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> SUCESSO!';
+                    
+                    setTimeout(() => {
+                        safeRedirect("painel_aluno.html");
+                    }, 1000);
+
+                } else {
+                    throw new Error("Credenciais inválidas");
+                }
+
+            } catch (error) {
+                // --- ERRO ---
+                btn.disabled = false;
+                btn.innerHTML = '<span>ENTRAR</span><i class="fa-solid fa-arrow-right-to-bracket"></i>';
+                btn.classList.remove('opacity-75');
+                
+                errorBox.classList.remove('hidden');
+                errorMsg.innerText = "Usuário ou senha incorretos.";
+                console.error("Erro login:", error);
+                
+                const card = document.querySelector('.glass-effect');
+                card.classList.add('animate-pulse'); 
+                setTimeout(() => card.classList.remove('animate-pulse'), 500);
+            }
         }
     </script>
 </body>
