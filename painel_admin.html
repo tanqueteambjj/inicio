@@ -122,9 +122,12 @@
                 </div>
 
                 <!-- Tabs Container -->
-                <div class="flex mb-0">
-                    <button onclick="switchTab('adults')" id="tab-adults" class="px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative">
-                        <i class="fa-solid fa-user mr-2"></i> ADULTOS E FAMÍLIA
+                <div class="flex flex-wrap mb-0">
+                    <button onclick="switchTab('all')" id="tab-all" class="px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative">
+                        <i class="fa-solid fa-users mr-2"></i> TODOS
+                    </button>
+                    <button onclick="switchTab('adults')" id="tab-adults" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        <i class="fa-solid fa-user mr-2"></i> ADULTOS / FAMÍLIA
                     </button>
                     <button onclick="switchTab('kids')" id="tab-kids" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
                         <i class="fa-solid fa-child mr-2"></i> INFANTIL
@@ -821,7 +824,7 @@
         let app, db, auth, appId;
 
         window.students = []; 
-        window.currentTab = 'adults';
+        window.currentTab = 'all'; // DEFAULT TAB IS NOW ALL
         window.currentView = 'students'; 
         window.currentFinancialTab = 'all';
 
@@ -1023,6 +1026,15 @@
                 }
             }
         };
+        
+        window.deleteStudent = async (id) => {
+            if(!confirm("Excluir aluno permanentemente? Esta ação é irreversível.")) return;
+            try {
+                await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id));
+                alert("Aluno excluído.");
+                window.loadData();
+            } catch(e) { alert("Erro ao excluir: " + e.message); }
+        };
 
         window.addPresenceSelectedStudents = async () => {
             const checkboxes = document.querySelectorAll('.student-cb:checked');
@@ -1149,7 +1161,8 @@
             const activeClass = "px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative";
             const inactiveClass = "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100";
 
-            document.getElementById('tab-adults').className = (tab === 'adults') ? activeClass : inactiveClass;
+            document.getElementById('tab-all').className = (tab === 'all') ? activeClass : inactiveClass + " ml-1";
+            document.getElementById('tab-adults').className = (tab === 'adults') ? activeClass + " ml-1" : inactiveClass + " ml-1";
             document.getElementById('tab-kids').className = (tab === 'kids') ? activeClass + " ml-1" : inactiveClass + " ml-1";
             document.getElementById('tab-inactive').className = (tab === 'inactive') ? activeClass + " ml-1" : inactiveClass + " ml-1";
 
@@ -1236,8 +1249,13 @@
                     return matchesSearch && matchesBelt && matchesPayment && currentEnrollment === 'Inativo';
                 } else {
                     if (currentEnrollment === 'Inativo') return false;
-                    let isKid = isStudentKid(s);
-                    const matchesTab = (window.currentTab === 'kids' && isKid) || (window.currentTab === 'adults' && !isKid);
+                    let matchesTab = false;
+                    if(window.currentTab === 'all') {
+                        matchesTab = true;
+                    } else {
+                        let isKid = isStudentKid(s);
+                        matchesTab = (window.currentTab === 'kids' && isKid) || (window.currentTab === 'adults' && !isKid);
+                    }
                     return matchesTab && matchesSearch && matchesBelt && matchesPayment;
                 }
             });
@@ -1247,12 +1265,18 @@
             else filtered.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
 
             document.getElementById('list-count').innerText = filtered.length;
-            document.getElementById('list-title').innerText = (window.currentTab === 'adults') ? "Adultos e Família" : (window.currentTab === 'kids' ? "Infantil (Ativos)" : "Alunos Inativos");
+            
+            let listTitle = "Lista de Alunos";
+            if (window.currentTab === 'all') listTitle = "Todos (Ativos)";
+            else if (window.currentTab === 'adults') listTitle = "Adultos e Família";
+            else if (window.currentTab === 'kids') listTitle = "Infantil (Ativos)";
+            else listTitle = "Alunos Inativos";
+            document.getElementById('list-title').innerText = listTitle;
 
             thead.innerHTML = `
                 <th class="px-6 py-3 border-b w-10 text-center"><input type="checkbox" id="cb-select-all" onclick="toggleSelectAll(this)" class="rounded text-brand-red focus:ring-brand-red cursor-pointer"></th>
                 <th class="px-6 py-3 border-b">Aluno</th>
-                ${window.currentTab === 'kids' ? '<th class="px-6 py-3 border-b">Responsável</th>' : ''}
+                ${window.currentTab === 'kids' || window.currentTab === 'all' ? '<th class="px-6 py-3 border-b">Responsável/Titular</th>' : ''}
                 <th class="px-6 py-3 border-b">Faixa</th>
                 <th class="px-6 py-3 border-b">Frequência</th>
                 <th class="px-6 py-3 border-b text-center">Status</th>
@@ -1261,7 +1285,7 @@
             `;
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${window.currentTab === 'kids' ? 8 : 7}" class="px-6 py-8 text-center text-gray-400 italic">Nenhum aluno encontrado.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${window.currentTab === 'kids' || window.currentTab === 'all' ? 8 : 7}" class="px-6 py-8 text-center text-gray-400 italic">Nenhum aluno encontrado.</td></tr>`;
                 return;
             }
 
@@ -1290,7 +1314,7 @@
                 
                 const age = getAge(s.dob);
                 let nameDisplay = `<div class="font-medium text-gray-900 flex items-center">${s.name || 'Sem Nome'}`;
-                if (window.currentTab === 'adults' && age !== null && age < 18) nameDisplay += `<span class="ml-2 text-[10px] text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200 font-bold" title="Menor de idade em turma adulta">Menor (${age})</span>`;
+                if ((window.currentTab === 'adults' || window.currentTab === 'all') && age !== null && age < 18 && !isStudentKid(s)) nameDisplay += `<span class="ml-2 text-[10px] text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200 font-bold" title="Menor de idade em turma adulta">Menor (${age})</span>`;
                 
                 const safePlan = String(s.plan || '').toLowerCase();
                 if (safePlan.includes('combo')) nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase">Combo</span>`;
@@ -1301,7 +1325,10 @@
                 if (s.enrollmentStatus === 'Inativo') nameDisplay += `<span class="ml-2 text-[10px] text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded border border-gray-300 font-bold">INATIVO</span>`;
 
                 const beltSVG = renderBeltSVG(s.belt || 'Faixa Branca - 0º Grau');
-                const guardianCell = window.currentTab === 'kids' ? `<td class="px-6 py-4 align-middle text-sm text-gray-700"><i class="fa-solid fa-user-shield text-gray-400 mr-1"></i> ${s.guardian || '-'}</td>` : '';
+                
+                // Exibe Responsavel Legal ou Titular do Combo
+                let relName = s.guardian || s.titularName || '-';
+                const guardianCell = (window.currentTab === 'kids' || window.currentTab === 'all') ? `<td class="px-6 py-4 align-middle text-sm text-gray-700"><i class="fa-solid fa-user-shield text-gray-400 mr-1"></i> ${relName}</td>` : '';
 
                 let toggleBtn = s.enrollmentStatus === 'Inativo' ? `<button onclick="toggleStudentStatus('${s.id}', 'Inativo')" class="text-green-600 hover:text-green-900 mr-2" title="Reativar Aluno"><i class="fa-solid fa-power-off"></i></button>` : `<button onclick="toggleStudentStatus('${s.id}', 'Ativo')" class="text-gray-400 hover:text-red-600 mr-2" title="Inativar Aluno"><i class="fa-solid fa-power-off"></i></button>`;
                 
