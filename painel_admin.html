@@ -44,7 +44,7 @@
             <a href="#" onclick="switchMainView('financial')" id="nav-financial" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
                 <i class="fa-solid fa-file-invoice-dollar w-6"></i> <span class="font-bold">Financeiro</span>
             </a>
-            <a href="#" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 rounded-lg transition">
+            <a href="#" onclick="printReport()" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 rounded-lg transition">
                 <i class="fa-solid fa-chart-pie w-6"></i> <span>Relatórios</span>
             </a>
         </nav>
@@ -156,8 +156,8 @@
                              <button onclick="loadData()" class="text-gray-500 hover:text-black text-sm flex items-center gap-1"><i class="fa-solid fa-rotate" id="icon-refresh"></i></button>
                         </div>
                     </div>
-                    
-                    <!-- NOVO: Barra de Filtros -->
+
+                    <!-- Barra de Filtros Inteligentes -->
                     <div class="px-6 py-3 border-b border-gray-200 bg-white flex flex-wrap gap-4 items-center text-sm no-print">
                         <span class="font-bold text-gray-500"><i class="fa-solid fa-filter"></i> Filtros:</span>
                         
@@ -340,7 +340,6 @@
                 <div class="space-y-3">
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Referente ao Plano</label>
-                        <!-- ADDED NEW PLANS & ADMIN PLAN -->
                         <select id="pay-plan-select" onchange="updatePayAmount()" class="w-full border rounded p-2 text-sm bg-gray-50">
                             <option value="" disabled selected>Selecione...</option>
                             <option value="infantil-mensal">Infantil Mensal (R$ 189,90)</option>
@@ -349,9 +348,8 @@
                             <option value="adulto-mensal">Adulto Mensal (R$ 168,90)</option>
                             <option value="adulto-trimestral">Adulto Trimestral (R$ 147,90)</option>
                             <option value="adulto-semestral">Adulto Semestral (R$ 126,90)</option>
-                            <option value="combo-casal">Combo Casal (R$ 220,00)</option>
                             <option value="combo-dupla">Combo Dupla (R$ 250,00)</option>
-                            <option value="combo-familia">Combo Família (R$ 340,00)</option>
+                            <option value="combo-familia">Combo Família (R$ 362,02)</option>
                             <option value="dependente">Dependente (Isento R$ 0,00)</option>
                             <option value="administracao">Administração (R$ 0,00)</option>
                             <option value="isento">Isento / Bolsista (R$ 0,00)</option>
@@ -692,8 +690,9 @@
                             <option value="adulto-mensal">Adulto Mensal</option>
                             <option value="adulto-trimestral">Adulto Trimestral</option>
                             <option value="adulto-semestral">Adulto Semestral</option>
+                            <option value="combo-casal">Combo Casal (2 Adultos)</option>
                             <option value="combo-dupla">Combo Dupla (1 Ad + 1 Inf)</option>
-                            <option value="combo-familia">Combo Família (2 Ad + 1 Inf)</option>
+                            <option value="combo-familia">Combo Família (3 Pessoas)</option>
                             <option value="dependente">Dependente (Isento)</option>
                             <option value="administracao">Administração (Isento)</option>
                         </select>
@@ -768,7 +767,7 @@
             <p class="mb-2"><strong>CONTRATADA:</strong> <span class="uppercase">Tanque Team Academia de Artes Marciais LTDA</span>, inscrita no CNPJ sob o nº 00.000.000/0001-00, doravante denominada <strong>ACADEMIA</strong>.</p>
             <p><strong>CONTRATANTE:</strong> <span id="printContratante" class="font-bold uppercase"></span>, inscrito(a) no CPF sob o nº <span id="printCPF" class="font-mono"></span>, residente e domiciliado(a) em <span id="printAddress" class="uppercase"></span>, Telefone <span id="printPhone"></span>, E-mail <span id="printEmail"></span>.</p>
             <p><strong>ALUNO(A):</strong> <span id="printStudent" class="font-bold uppercase"></span>, nascido(a) em <span id="printDob" class="font-mono"></span>.</p>
-            <p id="printGuardianBlock" class="hidden"><strong>RESPONSÁVEL LEGAL:</strong> <span id="printGuardianName"></span>, CPF: <span id="printGuardianCPF"></span></p>
+            <p id="printGuardianBlock" class="hidden"><strong>RESPONSÁVEL LEGAL:</strong> <span id="printGuardianName"></span> <span id="printGuardianKinship" class="font-bold"></span>, CPF: <span id="printGuardianCPF"></span></p>
             <p id="printGraduation" class="hidden"><strong>GRADUAÇÃO:</strong> <span id="printBeltInfo" class="uppercase"></span></p>
         </div>
         <div class="clauses-section text-xs text-justify mb-6 space-y-2 leading-tight">
@@ -823,12 +822,10 @@
 
         window.students = []; 
         window.currentTab = 'adults';
-        window.currentView = 'students'; // 'students' or 'financial'
+        window.currentView = 'students'; 
         window.currentFinancialTab = 'all';
 
-        // Apply Input Masks
         document.addEventListener('DOMContentLoaded', function() {
-            // New Student Modal Masks
             const cpfInput = document.getElementById('reg-cpf');
             const phoneInput = document.getElementById('reg-phone');
             
@@ -846,7 +843,7 @@
             }
         });
 
-        // Auth Check FIRST (Before anything else)
+        // Auth Check FIRST
         const session = localStorage.getItem('tanque_user_session');
         if (!session) {
             window.location.href = "login_aluno.html";
@@ -870,8 +867,7 @@
                             } else {
                                 await signInAnonymously(auth);
                             }
-                            // Call loadData only after authentication is complete
-                            loadData();
+                            window.loadData();
                         } catch (e) {
                             console.error("Erro na autenticação Firebase:", e);
                             alert("Não foi possível conectar ao banco de dados. Verifique as permissões.");
@@ -892,7 +888,6 @@
             window.location.href = "login_aluno.html";
         }
 
-        // --- UTILS ---
         function getAge(dobStr) {
             if (!dobStr) return null;
             const dob = new Date(dobStr);
@@ -902,9 +897,7 @@
             return Math.abs(age_dt.getUTCFullYear() - 1970);
         }
 
-        // --- PREENCHIMENTO AUTOMATICO TITULARES (COMBOS) ---
-        function populateTitularSelects() {
-            // Pega apenas alunos com "combo" no nome do plano e que estejam Ativos
+        window.populateTitularSelects = function() {
             const comboStudents = window.students.filter(s => 
                 s.plan && s.plan.includes('combo') && s.enrollmentStatus !== 'Inativo'
             );
@@ -913,8 +906,6 @@
             const editTitularSelect = document.getElementById('edit-titular');
 
             let optionsHtml = '<option value="">-- Selecione o Titular --</option>';
-            
-            // Ordena alfabeticamente para ficar mais bonito
             comboStudents.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
             comboStudents.forEach(s => {
@@ -925,51 +916,41 @@
             if (editTitularSelect) editTitularSelect.innerHTML = optionsHtml;
         }
 
-        async function loadData() {
+        window.loadData = async function() {
             try {
-                if(!db) throw new Error("Database not initialized");
-                const querySnapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'students'));
+                if(!window.db) throw new Error("Database not initialized");
+                const querySnapshot = await getDocs(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'));
                 window.students = [];
                 querySnapshot.forEach((doc) => {
                     window.students.push({ id: doc.id, ...doc.data() });
                 });
                 
-                // Ordenar por data de registro (padrão inicial invisível para a engine, substituido pelos filtros)
                 window.students.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
-                
-                // Preenche os selects de titular baseados nos dados carregados
-                populateTitularSelects();
-
+                window.populateTitularSelects();
                 updateStats();
-                if(window.currentView === 'students') renderTable();
-                else renderFinancialTable();
+                
+                if(window.currentView === 'students') window.renderTable();
+                else window.renderFinancialTable();
             } catch (error) {
                 console.error("Erro ao carregar dados do Firebase:", error);
             }
         }
 
-        // --- UNIFIED CATEGORY LOGIC ---
         function isStudentKid(s) {
             const cat = s.category ? String(s.category).toLowerCase() : '';
             const plan = s.plan ? String(s.plan).toLowerCase() : '';
-            
-            if (cat === 'administração' || plan === 'administracao') return false; // Trata admin como adulto na listagem
+            if (cat === 'administração' || plan === 'administracao') return false; 
             if (cat.includes('infantil')) return true;
             if (cat.includes('adulto') || cat.includes('combo') || cat.includes('dependente')) return false;
-            
-            // Fallback to Plan Name
             if (plan.includes('infantil')) return true;
-            return false; // Default Adulto
+            return false; 
         }
 
         function updateStats() {
-            // Count total active students (not 'Inativo')
             const total = window.students.filter(s => s.enrollmentStatus !== 'Inativo').length;
-            
             const active = window.students.filter(s => s.enrollmentStatus !== 'Inativo' && (s.paymentStatus === 'Em dia' || s.paymentStatus === 'Isento')).length;
             const pending = total - active;
             
-            // Calc expiring (next 7 days)
             const today = new Date();
             let expiringCount = 0;
             window.students.forEach(s => {
@@ -981,51 +962,31 @@
                 if (diffDays >= 0 && diffDays <= 7) expiringCount++;
             });
             
-            let kidsCount = 0;
-            let adultsCount = 0;
-            let inactiveCount = 0;
+            let kidsCount = 0; let adultsCount = 0; let inactiveCount = 0;
 
             window.students.forEach(s => {
-                if (s.enrollmentStatus === 'Inativo') {
-                    inactiveCount++;
-                } else {
+                if (s.enrollmentStatus === 'Inativo') inactiveCount++;
+                else {
                     if (isStudentKid(s)) kidsCount++;
                     else adultsCount++;
                 }
             });
 
-            // Update stats if elements exist
-            const elTotal = document.getElementById('stat-total');
-            if (elTotal) elTotal.innerText = total;
-
-            const elInfantil = document.getElementById('stat-infantil');
-            if (elInfantil) elInfantil.innerText = kidsCount;
-
-            const elAdulto = document.getElementById('stat-adulto');
-            if (elAdulto) elAdulto.innerText = adultsCount;
+            if (document.getElementById('stat-total')) document.getElementById('stat-total').innerText = total;
+            if (document.getElementById('stat-infantil')) document.getElementById('stat-infantil').innerText = kidsCount;
+            if (document.getElementById('stat-adulto')) document.getElementById('stat-adulto').innerText = adultsCount;
+            if (document.getElementById('stat-inactive')) document.getElementById('stat-inactive').innerText = inactiveCount;
             
-            const elInactive = document.getElementById('stat-inactive');
-            if (elInactive) elInactive.innerText = inactiveCount;
-            
-            // Finance stats
-            const elFinTotal = document.getElementById('fin-stat-total');
-            if (elFinTotal) elFinTotal.innerText = total;
-            
-            const elFinActive = document.getElementById('fin-stat-active');
-            if (elFinActive) elFinActive.innerText = active;
-            
-            const elFinPending = document.getElementById('fin-stat-pending');
-            if (elFinPending) elFinPending.innerText = pending;
-            
-            const elFinExpiring = document.getElementById('fin-stat-expiring');
-            if (elFinExpiring) elFinExpiring.innerText = expiringCount;
+            if (document.getElementById('fin-stat-total')) document.getElementById('fin-stat-total').innerText = total;
+            if (document.getElementById('fin-stat-active')) document.getElementById('fin-stat-active').innerText = active;
+            if (document.getElementById('fin-stat-pending')) document.getElementById('fin-stat-pending').innerText = pending;
+            if (document.getElementById('fin-stat-expiring')) document.getElementById('fin-stat-expiring').innerText = expiringCount;
         }
 
-        // --- SELECTION LOGIC ---
         window.toggleSelectAll = (source) => {
             const checkboxes = document.querySelectorAll('.student-cb');
             checkboxes.forEach(cb => cb.checked = source.checked);
-            updateBulkActions();
+            window.updateBulkActions();
         };
 
         window.updateBulkActions = () => {
@@ -1047,59 +1008,50 @@
         window.deleteSelectedStudents = async () => {
             const checkboxes = document.querySelectorAll('.student-cb:checked');
             const ids = Array.from(checkboxes).map(cb => cb.value);
-            
             if(ids.length === 0) return;
-            
             if(confirm(`Tem certeza que deseja excluir ${ids.length} alunos selecionados? Esta ação é irreversível.`)) {
                 try {
                     const deletePromises = ids.map(id => deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id)));
                     await Promise.all(deletePromises);
                     alert('Alunos excluídos com sucesso!');
-                    loadData();
+                    window.loadData();
                     document.getElementById('cb-select-all').checked = false;
-                    updateBulkActions();
+                    window.updateBulkActions();
                 } catch(e) {
                     alert('Erro ao excluir: ' + e.message);
-                    loadData();
+                    window.loadData();
                 }
             }
         };
 
-        // --- BULK PRESENCE LOGIC ---
         window.addPresenceSelectedStudents = async () => {
             const checkboxes = document.querySelectorAll('.student-cb:checked');
             const ids = Array.from(checkboxes).map(cb => cb.value);
-            
             if(ids.length === 0) return;
-            
             const todayISO = new Date().toISOString().split('T')[0];
 
             if(confirm(`Confirmar presença de hoje (${todayISO}) para ${ids.length} alunos?`)) {
                 try {
-                    const promises = ids.map(id => updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id), {
+                    const promises = ids.map(id => updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), {
                         attendance: arrayUnion(todayISO)
                     }));
                     await Promise.all(promises);
                     alert('Presenças registradas com sucesso!');
-                    loadData(); // Reload to reflect changes
-                    // Reset selection ui
+                    window.loadData();
                     document.getElementById('cb-select-all').checked = false;
-                    document.getElementById('bulk-actions').classList.add('hidden');
+                    window.updateBulkActions();
                 } catch(e) {
                     alert('Erro ao registrar presenças: ' + e.message);
                 }
             }
         };
 
-        // --- ATTENDANCE MANAGEMENT MODAL LOGIC ---
         window.openAttendanceModal = (id) => {
             const s = window.students.find(st => st.id === id);
             if(!s) return;
-            
             document.getElementById('att-student-name').innerText = s.name || 'Aluno';
             document.getElementById('att-student-id').value = id;
             document.getElementById('att-date-input').valueAsDate = new Date();
-
             const list = document.getElementById('att-list');
             list.innerHTML = '';
             
@@ -1107,25 +1059,19 @@
                 document.getElementById('att-empty').classList.remove('hidden');
             } else {
                 document.getElementById('att-empty').classList.add('hidden');
-                // Sort dates desc
                 const sortedDates = [...s.attendance].sort((a,b) => new Date(b) - new Date(a));
-                
                 sortedDates.forEach(dateStr => {
-                    const d = new Date(dateStr + 'T12:00:00'); // Fix TZ issues
+                    const d = new Date(dateStr + 'T12:00:00');
                     const formatted = !isNaN(d) ? d.toLocaleDateString('pt-BR') : dateStr;
-                    
                     const div = document.createElement('div');
                     div.className = "flex justify-between items-center py-2 px-2 hover:bg-gray-50";
                     div.innerHTML = `
                         <span class="text-sm font-medium text-gray-700"><i class="fa-regular fa-calendar-check text-green-600 mr-2"></i> ${formatted}</span>
-                        <button onclick="removeAttendance('${dateStr}')" class="text-red-400 hover:text-red-600 text-xs" title="Remover Presença">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
+                        <button onclick="removeAttendance('${dateStr}')" class="text-red-400 hover:text-red-600 text-xs" title="Remover Presença"><i class="fa-solid fa-trash"></i></button>
                     `;
                     list.appendChild(div);
                 });
             }
-
             document.getElementById('attendance-modal').classList.remove('hidden');
             document.getElementById('attendance-modal').classList.add('flex');
         };
@@ -1139,137 +1085,90 @@
             const id = document.getElementById('att-student-id').value;
             const dateVal = document.getElementById('att-date-input').value;
             if(!dateVal) return;
-
             try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', id);
+                const docRef = doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id);
                 await updateDoc(docRef, { attendance: arrayUnion(dateVal) });
-                
-                // Refresh modal list locally
                 const s = window.students.find(st => st.id === id);
                 if(s) {
                     if(!s.attendance) s.attendance = [];
                     if(!s.attendance.includes(dateVal)) s.attendance.push(dateVal);
                 }
-                openAttendanceModal(id); // Re-render modal list
-            } catch(e) {
-                alert("Erro: " + e.message);
-            }
+                window.openAttendanceModal(id);
+            } catch(e) { alert("Erro: " + e.message); }
         };
 
         window.removeAttendance = async (dateStr) => {
             if(!confirm(`Remover presença do dia ${dateStr}?`)) return;
             const id = document.getElementById('att-student-id').value;
-            
             try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', id);
+                const docRef = doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id);
                 await updateDoc(docRef, { attendance: arrayRemove(dateStr) });
-                
-                // Refresh local data
                 const s = window.students.find(st => st.id === id);
                 if(s && s.attendance) {
                     s.attendance = s.attendance.filter(d => d !== dateStr);
                 }
-                openAttendanceModal(id); // Re-render
-            } catch(e) {
-                alert("Erro: " + e.message);
-            }
+                window.openAttendanceModal(id);
+            } catch(e) { alert("Erro: " + e.message); }
         };
         
-        // --- INACTIVATE / ACTIVATE LOGIC ---
         window.toggleStudentStatus = async (id, currentStatus) => {
             const newStatus = (currentStatus === 'Inativo') ? 'Ativo' : 'Inativo';
             const confirmMsg = (newStatus === 'Inativo') 
-                ? "Deseja inativar este aluno? Ele não aparecerá nas listas principais."
-                : "Deseja reativar este aluno?";
-            
+                ? "Deseja inativar este aluno?" : "Deseja reativar este aluno?";
             if(!confirm(confirmMsg)) return;
-
             try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', id);
+                const docRef = doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id);
                 await updateDoc(docRef, { enrollmentStatus: newStatus });
-                
-                loadData(); // Reload to refresh lists
+                window.loadData();
                 alert(`Aluno agora está ${newStatus}!`);
-            } catch(e) {
-                alert("Erro ao alterar status: " + e.message);
-            }
+            } catch(e) { alert("Erro ao alterar status: " + e.message); }
         };
 
-
-        // --- NAVIGATION ---
         window.switchMainView = (viewName) => {
             window.currentView = viewName;
-            const viewStudents = document.getElementById('view-students');
-            const viewFinancial = document.getElementById('view-financial');
-            const navStudents = document.getElementById('nav-students');
-            const navFinancial = document.getElementById('nav-financial');
-
+            document.getElementById('view-students').classList.toggle('hidden', viewName !== 'students');
+            document.getElementById('view-financial').classList.toggle('hidden', viewName !== 'financial');
+            
             if(viewName === 'students') {
-                viewStudents.classList.remove('hidden');
-                viewFinancial.classList.add('hidden');
-                
-                navStudents.classList.remove('text-gray-400', 'hover:bg-gray-800');
-                navStudents.classList.add('bg-brand-red', 'text-white');
-                navFinancial.classList.add('text-gray-400', 'hover:bg-gray-800');
-                navFinancial.classList.remove('bg-brand-red', 'text-white');
-                
-                if(typeof renderTable === 'function') renderTable();
+                document.getElementById('nav-students').classList.add('bg-brand-red', 'text-white');
+                document.getElementById('nav-students').classList.remove('text-gray-400', 'hover:bg-gray-800');
+                document.getElementById('nav-financial').classList.add('text-gray-400', 'hover:bg-gray-800');
+                document.getElementById('nav-financial').classList.remove('bg-brand-red', 'text-white');
+                window.renderTable();
             } else {
-                viewStudents.classList.add('hidden');
-                viewFinancial.classList.remove('hidden');
-
-                navFinancial.classList.remove('text-gray-400', 'hover:bg-gray-800');
-                navFinancial.classList.add('bg-brand-red', 'text-white');
-                navStudents.classList.add('text-gray-400', 'hover:bg-gray-800');
-                navStudents.classList.remove('bg-brand-red', 'text-white');
-
-                if(typeof renderFinancialTable === 'function') renderFinancialTable();
+                document.getElementById('nav-financial').classList.add('bg-brand-red', 'text-white');
+                document.getElementById('nav-financial').classList.remove('text-gray-400', 'hover:bg-gray-800');
+                document.getElementById('nav-students').classList.add('text-gray-400', 'hover:bg-gray-800');
+                document.getElementById('nav-students').classList.remove('bg-brand-red', 'text-white');
+                window.renderFinancialTable();
             }
         };
 
         window.switchTab = (tab) => {
             window.currentTab = tab;
-            const btnAdult = document.getElementById('tab-adults');
-            const btnKid = document.getElementById('tab-kids');
-            const btnInactive = document.getElementById('tab-inactive');
-
-            // Reset classes
             const activeClass = "px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative";
             const inactiveClass = "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100";
 
-            btnAdult.className = inactiveClass;
-            btnKid.className = inactiveClass + " ml-1";
-            btnInactive.className = inactiveClass + " ml-1";
+            document.getElementById('tab-adults').className = (tab === 'adults') ? activeClass : inactiveClass;
+            document.getElementById('tab-kids').className = (tab === 'kids') ? activeClass + " ml-1" : inactiveClass + " ml-1";
+            document.getElementById('tab-inactive').className = (tab === 'inactive') ? activeClass + " ml-1" : inactiveClass + " ml-1";
 
-            if (tab === 'adults') btnAdult.className = activeClass;
-            else if (tab === 'kids') btnKid.className = activeClass + " ml-1";
-            else if (tab === 'inactive') btnInactive.className = activeClass + " ml-1";
-
-            if(typeof renderTable === 'function') renderTable();
+            window.renderTable();
         };
         
         window.switchFinancialTab = (tab) => {
             window.currentFinancialTab = tab;
-            const tabs = ['all', 'active', 'pending', 'expiring', 'inactive'];
-            
-            tabs.forEach(t => {
+            ['all', 'active', 'pending', 'expiring', 'inactive'].forEach(t => {
                 const btn = document.getElementById(`fin-tab-${t}`);
-                if (t === tab) {
-                    btn.className = "px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative ml-1";
-                } else {
-                    btn.className = "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1";
-                }
+                if (t === tab) btn.className = "px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative ml-1";
+                else btn.className = "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1";
             });
-            if(typeof renderFinancialTable === 'function') renderFinancialTable();
+            window.renderFinancialTable();
         };
 
-        // EXPOSED FILTER FUNCTION FOR THE HTML <SELECT> ONCHANGES
         window.filterTable = () => {
-            if(window.currentView === 'students') {
-                if(typeof renderTable === 'function') renderTable();
-            } else {
-                if(typeof renderFinancialTable === 'function') renderFinancialTable();
-            }
+            if(window.currentView === 'students') window.renderTable();
+            else window.renderFinancialTable();
         };
 
         function formatDate(isoStr) {
@@ -1278,9 +1177,7 @@
                 const d = new Date(isoStr);
                 if (isNaN(d)) return '--';
                 return d.toLocaleDateString('pt-BR');
-            } catch (e) {
-                return '--';
-            }
+            } catch (e) { return '--'; }
         }
         
         function renderBeltSVG(beltStr) {
@@ -1291,50 +1188,25 @@
                 'Laranja': '#f97316', 'Verde': '#10b981', 'Azul': '#3b82f6', 
                 'Roxa': '#8b5cf6', 'Marrom': '#78350f', 'Preta': '#000000'
             };
-
             let color = '#ffffff'; let degree = 0; let colorName = 'Branca';
-
             for (const [name, hex] of Object.entries(colors)) {
-                if (safeBeltStr.includes(name)) {
-                    color = hex;
-                    colorName = name;
-                    break;
-                }
+                if (safeBeltStr.includes(name)) { color = hex; colorName = name; break; }
             }
-
             const degreeMatch = safeBeltStr.match(/(\d)º/);
             if (degreeMatch) degree = parseInt(degreeMatch[1]);
-
-            const width = 100;
-            const height = 24;
-            const tipWidth = 25;
-            const stripeWidth = 4;
-            const stripeGap = 3;
-
-            let stripesSVG = '';
-            const barColor = (colorName === 'Preta') ? '#dc2626' : '#000000';
-            const stripeColor = '#ffffff';
-
+            const width = 100; const height = 24; const tipWidth = 25; const stripeWidth = 4; const stripeGap = 3;
+            let stripesSVG = ''; const barColor = (colorName === 'Preta') ? '#dc2626' : '#000000'; const stripeColor = '#ffffff';
             for (let i = 0; i < degree; i++) {
                 const x = width - 5 - (i * (stripeWidth + stripeGap)) - stripeWidth;
                 stripesSVG += `<rect x="${x}" y="0" width="${stripeWidth}" height="${height}" fill="${stripeColor}" />`;
             }
-
-            return `
-                <svg width="${width}" height="${height}" class="shadow-sm rounded" style="border:1px solid #ddd">
-                    <rect x="0" y="0" width="${width}" height="${height}" fill="${color}" />
-                    <rect x="${width - tipWidth}" y="0" width="${tipWidth}" height="${height}" fill="${barColor}" />
-                    ${stripesSVG}
-                </svg>
-            `;
+            return `<svg width="${width}" height="${height}" class="shadow-sm rounded" style="border:1px solid #ddd"><rect x="0" y="0" width="${width}" height="${height}" fill="${color}" /><rect x="${width - tipWidth}" y="0" width="${tipWidth}" height="${height}" fill="${barColor}" />${stripesSVG}</svg>`;
         }
 
-        // --- RENDER STUDENTS LIST ---
-        function renderTable() {
+        window.renderTable = function() {
             const tbody = document.getElementById('students-table-body');
             const thead = document.getElementById('table-headers');
             const search = (document.getElementById('searchInput')?.value || "").toLowerCase();
-            
             const beltFilter = (document.getElementById('filter-belt')?.value || "").toLowerCase();
             const statusFilter = document.getElementById('filter-payment-status')?.value || "";
             const sortOrder = document.getElementById('sort-order')?.value || "recent";
@@ -1345,7 +1217,6 @@
                 const studentName = String(s.name || '').toLowerCase();
                 const matchesSearch = studentName.includes(search);
                 const currentEnrollment = s.enrollmentStatus || 'Ativo';
-                
                 const matchesBelt = beltFilter === "" || (s.belt && s.belt.toLowerCase().includes(beltFilter));
                 
                 let virtualStatus = s.paymentStatus || 'Pendente';
@@ -1355,11 +1226,8 @@
                 if (s.paymentStatus !== 'Isento' && s.plan !== 'administracao' && s.plan !== 'dependente') {
                     const diffTime = targetDate - today;
                     const diffDays = isNaN(diffTime) ? 0 : Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    if (diffDays < 0 && s.paymentStatus !== 'Em dia') {
-                        virtualStatus = 'Pendente';
-                    } else if (diffDays <= 7 && diffDays >= 0) {
-                        virtualStatus = 'Expirando';
-                    }
+                    if (diffDays < 0 && s.paymentStatus !== 'Em dia') virtualStatus = 'Pendente';
+                    else if (diffDays <= 7 && diffDays >= 0) virtualStatus = 'Expirando';
                 }
                 
                 const matchesPayment = statusFilter === "" || virtualStatus === statusFilter || s.paymentStatus === statusFilter;
@@ -1368,30 +1236,20 @@
                     return matchesSearch && matchesBelt && matchesPayment && currentEnrollment === 'Inativo';
                 } else {
                     if (currentEnrollment === 'Inativo') return false;
-                    
                     let isKid = isStudentKid(s);
                     const matchesTab = (window.currentTab === 'kids' && isKid) || (window.currentTab === 'adults' && !isKid);
                     return matchesTab && matchesSearch && matchesBelt && matchesPayment;
                 }
             });
 
-            if (sortOrder === 'az') {
-                filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-            } else if (sortOrder === 'za') {
-                filtered.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
-            } else {
-                filtered.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
-            }
+            if (sortOrder === 'az') filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            else if (sortOrder === 'za') filtered.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+            else filtered.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
 
             document.getElementById('list-count').innerText = filtered.length;
-            
-            let listTitle = "Lista de Alunos";
-            if (window.currentTab === 'adults') listTitle = "Adultos e Família";
-            else if (window.currentTab === 'kids') listTitle = "Infantil (Ativos)";
-            else listTitle = "Alunos Inativos";
-            document.getElementById('list-title').innerText = listTitle;
+            document.getElementById('list-title').innerText = (window.currentTab === 'adults') ? "Adultos e Família" : (window.currentTab === 'kids' ? "Infantil (Ativos)" : "Alunos Inativos");
 
-            let headers = `
+            thead.innerHTML = `
                 <th class="px-6 py-3 border-b w-10 text-center"><input type="checkbox" id="cb-select-all" onclick="toggleSelectAll(this)" class="rounded text-brand-red focus:ring-brand-red cursor-pointer"></th>
                 <th class="px-6 py-3 border-b">Aluno</th>
                 ${window.currentTab === 'kids' ? '<th class="px-6 py-3 border-b">Responsável</th>' : ''}
@@ -1401,155 +1259,92 @@
                 <th class="px-6 py-3 border-b text-center">Acesso</th>
                 <th class="px-6 py-3 border-b text-center">Ações</th>
             `;
-            thead.innerHTML = headers;
 
             if (filtered.length === 0) {
-                const cols = window.currentTab === 'kids' ? 8 : 7;
-                tbody.innerHTML = `<tr><td colspan="${cols}" class="px-6 py-8 text-center text-gray-400 italic">Nenhum aluno encontrado nesta categoria.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${window.currentTab === 'kids' ? 8 : 7}" class="px-6 py-8 text-center text-gray-400 italic">Nenhum aluno encontrado.</td></tr>`;
                 return;
             }
 
             filtered.forEach(s => {
-                try {
-                    const attendanceCount = s.attendance ? s.attendance.length : 0;
-                    const hasLogin = (s.studentLogin && s.studentPassword) 
-                        ? '<span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-lock"></i> OK</span>' 
-                        : '<span class="text-gray-400 text-xs italic">--</span>';
-
-                    const today = new Date();
-                    const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
-                    
-                    let statusBadge = '';
-                    if (s.paymentStatus === 'Isento' || s.plan === 'administracao' || s.plan === 'dependente') {
-                        statusBadge = '<span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">Isento</span>';
+                const attendanceCount = s.attendance ? s.attendance.length : 0;
+                const hasLogin = (s.studentLogin && s.studentPassword) ? '<span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-lock"></i> OK</span>' : '<span class="text-gray-400 text-xs italic">--</span>';
+                const today = new Date();
+                const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
+                
+                let statusBadge = '';
+                if (s.paymentStatus === 'Isento' || s.plan === 'administracao' || s.plan === 'dependente') {
+                    statusBadge = '<span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">Isento</span>';
+                } else {
+                    const diffTime = targetDate - today;
+                    const diffDays = isNaN(diffTime) ? 0 : Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (diffDays < 0 && s.paymentStatus !== 'Em dia') {
+                         statusBadge = s.paymentStatus === 'Pendente' ? '<span class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>' : '<span class="px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-800">Em dia</span>';
+                    } else if (diffDays <= 7 && diffDays >= 0) {
+                        statusBadge = '<span class="px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800">Expirando</span>';
                     } else {
-                        const diffTime = targetDate - today;
-                        const diffDays = isNaN(diffTime) ? 0 : Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                        if (diffDays < 0 && s.paymentStatus !== 'Em dia') {
-                             if(s.paymentStatus === 'Pendente') statusBadge = '<span class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>';
-                             else statusBadge = '<span class="px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-800">Em dia</span>';
-                        } else if (diffDays <= 7 && diffDays >= 0) {
-                            statusBadge = '<span class="px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800">Expirando</span>';
-                        } else {
-                            const payClass = s.paymentStatus === 'Em dia' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-                            statusBadge = `<span class="px-2 py-1 rounded text-xs font-bold ${payClass}">${s.paymentStatus || 'Pendente'}</span>`;
-                        }
+                        statusBadge = `<span class="px-2 py-1 rounded text-xs font-bold ${s.paymentStatus === 'Em dia' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${s.paymentStatus || 'Pendente'}</span>`;
                     }
-
-                    // Check for photo safely
-                    let avatarHtml = '';
-                    if(s.photoBase64) {
-                         avatarHtml = `<img src="${s.photoBase64}" class="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200">`;
-                    } else {
-                         const initial = s.name ? String(s.name).charAt(0).toUpperCase() : '?';
-                         avatarHtml = `<div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 mr-3 font-bold text-xs">${initial}</div>`;
-                    }
-                    
-                    // AGE BADGE FOR ADULT PLANS
-                    const age = getAge(s.dob);
-                    let nameDisplay = `<div class="font-medium text-gray-900 flex items-center">${s.name || 'Sem Nome'}`;
-                    if (window.currentTab === 'adults' && age !== null && age < 18) {
-                        nameDisplay += `<span class="ml-2 text-[10px] text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200 font-bold" title="Menor de idade em turma adulta">Menor (${age})</span>`;
-                    }
-                    
-                    // Plan Badges safely
-                    const safePlan = String(s.plan || '').toLowerCase();
-                    if (safePlan.includes('combo')) {
-                        nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase">Combo</span>`;
-                    }
-                    if (safePlan === 'administracao') {
-                        nameDisplay += `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-bold uppercase">Admin</span>`;
-                    }
-                    if (safePlan === 'dependente') {
-                        nameDisplay += `<span class="ml-2 text-[10px] text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded border border-indigo-200 font-bold uppercase">Dependente de: ${s.titularName || 'Não Informado'}</span>`;
-                    }
-                    
-                    nameDisplay += `</div>`;
-                    
-                    // Inactive Badge for name
-                    if (s.enrollmentStatus === 'Inativo') {
-                        nameDisplay += `<span class="ml-2 text-[10px] text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded border border-gray-300 font-bold">INATIVO</span>`;
-                    }
-
-                    const beltSVG = renderBeltSVG(s.belt || 'Faixa Branca - 0º Grau');
-                    const guardianCell = window.currentTab === 'kids' 
-                        ? `<td class="px-6 py-4 align-middle text-sm text-gray-700"><i class="fa-solid fa-user-shield text-gray-400 mr-1"></i> ${s.guardian || '-'}</td>` 
-                        : '';
-
-                    // TOGGLE BUTTON (Active/Inactive)
-                    let toggleBtn = '';
-                    if (s.enrollmentStatus === 'Inativo') {
-                        toggleBtn = `<button onclick="toggleStudentStatus('${s.id}', 'Inativo')" class="text-green-600 hover:text-green-900 mr-2" title="Reativar Aluno"><i class="fa-solid fa-power-off"></i></button>`;
-                    } else {
-                        toggleBtn = `<button onclick="toggleStudentStatus('${s.id}', 'Ativo')" class="text-gray-400 hover:text-red-600 mr-2" title="Inativar Aluno"><i class="fa-solid fa-power-off"></i></button>`;
-                    }
-                    
-                    let displayPlanName = '-';
-                    if(s.plan) {
-                        if(safePlan === 'combo-dupla') displayPlanName = 'Combo Dupla';
-                        else if(safePlan === 'combo-familia') displayPlanName = 'Combo Família';
-                        else if(safePlan === 'administracao') displayPlanName = 'Administração';
-                        else if(safePlan === 'dependente') displayPlanName = 'Dependente (Combo)';
-                        else displayPlanName = safePlan.replace('-', ' ').toUpperCase();
-                    }
-
-                    const tr = document.createElement('tr');
-                    tr.className = "border-b hover:bg-gray-50 transition";
-                    tr.innerHTML = `
-                        <td class="px-6 py-4 align-middle text-center">
-                            <input type="checkbox" class="student-cb rounded text-brand-red focus:ring-brand-red cursor-pointer" value="${s.id}" onclick="updateBulkActions()">
-                        </td>
-                        <td class="px-6 py-4 align-middle">
-                            <div class="flex items-center">
-                                ${avatarHtml}
-                                <div>
-                                    ${nameDisplay}
-                                    <div class="text-xs text-gray-500">${displayPlanName}</div>
-                                </div>
-                            </div>
-                        </td>
-                        ${guardianCell}
-                        <td class="px-6 py-4 align-middle">
-                            <div class="w-32 h-8 flex items-center">${beltSVG}</div>
-                            <div class="text-xs text-gray-400 mt-1">${s.belt || 'Branca'}</div>
-                        </td>
-                        <td class="px-6 py-4 align-middle">
-                            <div class="flex items-center gap-2">
-                                <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded w-16 text-center">${attendanceCount} aulas</span>
-                                <button onclick="addPresence('${s.id}')" class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow" title="Adicionar Presença Hoje">
-                                    <i class="fa-solid fa-plus text-xs"></i>
-                                </button>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 align-middle text-center">${statusBadge}</td>
-                        <td class="px-6 py-4 align-middle text-center">${hasLogin}</td>
-                        <td class="px-6 py-4 align-middle text-center">
-                            ${toggleBtn}
-                            <button onclick="openAttendanceModal('${s.id}')" class="text-gray-500 hover:text-black mr-2" title="Gerenciar Frequência"><i class="fa-solid fa-list-check"></i></button>
-                            <button onclick="openGraduationModal('${s.id}', '${s.name || ''}')" class="text-yellow-500 hover:text-yellow-700 mr-2" title="Graduar"><i class="fa-solid fa-medal"></i></button>
-                            <button onclick="viewStudentDetails('${s.id}')" class="text-gray-500 hover:text-black mr-2" title="Visualizar"><i class="fa-solid fa-eye"></i></button>
-                            <button onclick="openEditModal('${s.id}')" class="text-blue-600 hover:text-blue-900 mr-2" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button onclick="deleteStudent('${s.id}')" class="text-red-600 hover:text-red-900" title="Excluir Definitivamente"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                } catch (err) {
-                    console.error("Erro ao renderizar linha de aluno:", s, err);
                 }
-            });
-        }
 
-        // --- RENDER FINANCIAL LIST ---
-        function renderFinancialTable() {
+                let avatarHtml = s.photoBase64 ? `<img src="${s.photoBase64}" class="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200">` : `<div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 mr-3 font-bold text-xs">${(s.name || '?').charAt(0).toUpperCase()}</div>`;
+                
+                const age = getAge(s.dob);
+                let nameDisplay = `<div class="font-medium text-gray-900 flex items-center">${s.name || 'Sem Nome'}`;
+                if (window.currentTab === 'adults' && age !== null && age < 18) nameDisplay += `<span class="ml-2 text-[10px] text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200 font-bold" title="Menor de idade em turma adulta">Menor (${age})</span>`;
+                
+                const safePlan = String(s.plan || '').toLowerCase();
+                if (safePlan.includes('combo')) nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase">Combo</span>`;
+                if (safePlan === 'administracao') nameDisplay += `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-bold uppercase">Admin</span>`;
+                if (safePlan === 'dependente') nameDisplay += `<span class="ml-2 text-[10px] text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded border border-indigo-200 font-bold uppercase">Dependente de: ${s.titularName || 'Não Informado'}</span>`;
+                nameDisplay += `</div>`;
+                
+                if (s.enrollmentStatus === 'Inativo') nameDisplay += `<span class="ml-2 text-[10px] text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded border border-gray-300 font-bold">INATIVO</span>`;
+
+                const beltSVG = renderBeltSVG(s.belt || 'Faixa Branca - 0º Grau');
+                const guardianCell = window.currentTab === 'kids' ? `<td class="px-6 py-4 align-middle text-sm text-gray-700"><i class="fa-solid fa-user-shield text-gray-400 mr-1"></i> ${s.guardian || '-'}</td>` : '';
+
+                let toggleBtn = s.enrollmentStatus === 'Inativo' ? `<button onclick="toggleStudentStatus('${s.id}', 'Inativo')" class="text-green-600 hover:text-green-900 mr-2" title="Reativar Aluno"><i class="fa-solid fa-power-off"></i></button>` : `<button onclick="toggleStudentStatus('${s.id}', 'Ativo')" class="text-gray-400 hover:text-red-600 mr-2" title="Inativar Aluno"><i class="fa-solid fa-power-off"></i></button>`;
+                
+                let displayPlanName = '-';
+                if(s.plan) {
+                    if(safePlan === 'combo-dupla') displayPlanName = 'Combo Dupla';
+                    else if(safePlan === 'combo-casal') displayPlanName = 'Combo Casal';
+                    else if(safePlan === 'combo-familia') displayPlanName = 'Combo Família';
+                    else if(safePlan === 'administracao') displayPlanName = 'Administração';
+                    else if(safePlan === 'dependente') displayPlanName = 'Dependente (Combo)';
+                    else displayPlanName = safePlan.replace('-', ' ').toUpperCase();
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-gray-50 transition";
+                tr.innerHTML = `
+                    <td class="px-6 py-4 align-middle text-center"><input type="checkbox" class="student-cb rounded text-brand-red focus:ring-brand-red cursor-pointer" value="${s.id}" onclick="updateBulkActions()"></td>
+                    <td class="px-6 py-4 align-middle"><div class="flex items-center">${avatarHtml}<div>${nameDisplay}<div class="text-xs text-gray-500">${displayPlanName}</div></div></div></td>
+                    ${guardianCell}
+                    <td class="px-6 py-4 align-middle"><div class="w-32 h-8 flex items-center">${beltSVG}</div><div class="text-xs text-gray-400 mt-1">${s.belt || 'Branca'}</div></td>
+                    <td class="px-6 py-4 align-middle"><div class="flex items-center gap-2"><span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded w-16 text-center">${attendanceCount} aulas</span><button onclick="addPresence('${s.id}')" class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow" title="Adicionar Presença Hoje"><i class="fa-solid fa-plus text-xs"></i></button></div></td>
+                    <td class="px-6 py-4 align-middle text-center">${statusBadge}</td>
+                    <td class="px-6 py-4 align-middle text-center">${hasLogin}</td>
+                    <td class="px-6 py-4 align-middle text-center">
+                        ${toggleBtn}
+                        <button onclick="openAttendanceModal('${s.id}')" class="text-gray-500 hover:text-black mr-2" title="Gerenciar Frequência"><i class="fa-solid fa-list-check"></i></button>
+                        <button onclick="openGraduationModal('${s.id}', '${s.name || ''}')" class="text-yellow-500 hover:text-yellow-700 mr-2" title="Graduar"><i class="fa-solid fa-medal"></i></button>
+                        <button onclick="viewStudentDetails('${s.id}')" class="text-gray-500 hover:text-black mr-2" title="Visualizar"><i class="fa-solid fa-eye"></i></button>
+                        <button onclick="openEditModal('${s.id}')" class="text-blue-600 hover:text-blue-900 mr-2" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteStudent('${s.id}')" class="text-red-600 hover:text-red-900" title="Excluir Definitivamente"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        window.renderFinancialTable = function() {
             const tbody = document.getElementById('financial-table-body');
             const search = (document.getElementById('searchInput')?.value || "").toLowerCase();
             tbody.innerHTML = '';
 
-            // FILTER LOGIC
             const filtered = window.students.filter(s => {
-                const studentName = String(s.name || '').toLowerCase();
-                const matchesSearch = studentName.includes(search);
+                const matchesSearch = String(s.name || '').toLowerCase().includes(search);
                 const currentEnrollment = s.enrollmentStatus || 'Ativo';
                 
                 let status = 'pending'; 
@@ -1561,14 +1356,10 @@
                 else if (s.paymentStatus === 'Em dia' || s.paymentStatus === 'Isento') status = 'active';
                 else status = 'pending';
                 
-                if (window.currentFinancialTab === 'inactive') {
-                    return matchesSearch && currentEnrollment === 'Inativo';
-                }
-
+                if (window.currentFinancialTab === 'inactive') return matchesSearch && currentEnrollment === 'Inativo';
                 if (currentEnrollment === 'Inativo') return false;
                 
-                const matchesTab = (window.currentFinancialTab === 'all') || (window.currentFinancialTab === status);
-                return matchesSearch && matchesTab;
+                return matchesSearch && ((window.currentFinancialTab === 'all') || (window.currentFinancialTab === status));
             });
 
             if (filtered.length === 0) {
@@ -1577,67 +1368,57 @@
             }
 
             filtered.forEach(s => {
-                try {
-                    let regDay = 10;
-                    if(s.registrationDate) {
-                        const rDate = new Date(s.registrationDate);
-                        if (!isNaN(rDate)) regDay = rDate.getDate();
-                    }
-
-                    const nextDue = s.nextDueDate ? formatDate(s.nextDueDate) : `Dia ${regDay}`;
-
-                    let statusHtml = '';
-                    if (s.paymentStatus === 'Isento' || s.plan === 'administracao' || s.plan === 'dependente') {
-                        statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">Isento</span>`;
-                    } else {
-                         const today = new Date();
-                         const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
-                         const diffDays = isNaN(targetDate) ? 0 : Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
-
-                         if (diffDays < 0 && s.paymentStatus !== 'Em dia') {
-                              statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>`;
-                         } else if (diffDays >= 0 && diffDays <= 7) {
-                              statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800">Expirando</span>`;
-                         } else {
-                              const payStatus = s.paymentStatus || 'Pendente';
-                              const statusColor = payStatus === 'Em dia' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100';
-                              statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold ${statusColor}">${payStatus}</span>`;
-                         }
-                    }
-                    
-                    const safePlan = String(s.plan || '');
-                    let displayPlanName = '-';
-                    if(safePlan) {
-                        if(safePlan === 'combo-dupla') displayPlanName = 'Combo Dupla';
-                        else if(safePlan === 'combo-casal') displayPlanName = 'Combo Casal';
-                        else if(safePlan === 'combo-familia') displayPlanName = 'Combo Família';
-                        else if(safePlan === 'administracao') displayPlanName = 'Administração';
-                        else if(safePlan === 'dependente') displayPlanName = 'Dependente (Combo)';
-                        else displayPlanName = safePlan.replace('-', ' ').toUpperCase();
-                    }
-
-                    const tr = document.createElement('tr');
-                    tr.className = "border-b hover:bg-gray-50 transition";
-                    tr.innerHTML = `
-                        <td class="px-6 py-4 align-middle font-medium">${s.name || 'Sem Nome'}</td>
-                        <td class="px-6 py-4 align-middle text-xs text-gray-500">${displayPlanName}</td>
-                        <td class="px-6 py-4 align-middle text-sm">${formatDate(s.registrationDate)}</td>
-                        <td class="px-6 py-4 align-middle text-center font-bold text-gray-700">Dia ${regDay}</td>
-                        <td class="px-6 py-4 align-middle text-center text-sm font-mono text-blue-700">${nextDue}</td>
-                        <td class="px-6 py-4 align-middle">${statusHtml}</td>
-                        <td class="px-6 py-4 align-middle text-center">
-                            <button onclick="openPaymentModal('${s.id}')" class="bg-green-600 text-white w-8 h-8 rounded-full hover:bg-green-700 mr-2 shadow" title="Informar Pagamento"><i class="fa-solid fa-dollar-sign"></i></button>
-                            <button onclick="viewHistory('${s.id}')" class="bg-gray-200 text-gray-600 w-8 h-8 rounded-full hover:bg-gray-300 shadow" title="Histórico de Pagamentos"><i class="fa-solid fa-clock-rotate-left"></i></button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                } catch (err) {
-                    console.error("Erro na tabela financeira para:", s, err);
+                let regDay = 10;
+                if(s.registrationDate) {
+                    const rDate = new Date(s.registrationDate);
+                    if (!isNaN(rDate)) regDay = rDate.getDate();
                 }
-            });
-        }
+                const nextDue = s.nextDueDate ? formatDate(s.nextDueDate) : `Dia ${regDay}`;
 
-        // --- PAYMENT MODAL LOGIC ---
+                let statusHtml = '';
+                if (s.paymentStatus === 'Isento' || s.plan === 'administracao' || s.plan === 'dependente') {
+                    statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">Isento</span>`;
+                } else {
+                     const today = new Date();
+                     const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
+                     const diffDays = isNaN(targetDate) ? 0 : Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+                     if (diffDays < 0 && s.paymentStatus !== 'Em dia') statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>`;
+                     else if (diffDays >= 0 && diffDays <= 7) statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800">Expirando</span>`;
+                     else {
+                          const statusColor = s.paymentStatus === 'Em dia' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100';
+                          statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold ${statusColor}">${s.paymentStatus || 'Pendente'}</span>`;
+                     }
+                }
+                
+                const safePlan = String(s.plan || '');
+                let displayPlanName = '-';
+                if(safePlan) {
+                    if(safePlan === 'combo-dupla') displayPlanName = 'Combo Dupla';
+                    else if(safePlan === 'combo-casal') displayPlanName = 'Combo Casal';
+                    else if(safePlan === 'combo-familia') displayPlanName = 'Combo Família';
+                    else if(safePlan === 'administracao') displayPlanName = 'Administração';
+                    else if(safePlan === 'dependente') displayPlanName = 'Dependente (Combo)';
+                    else displayPlanName = safePlan.replace('-', ' ').toUpperCase();
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-gray-50 transition";
+                tr.innerHTML = `
+                    <td class="px-6 py-4 align-middle font-medium">${s.name || 'Sem Nome'}</td>
+                    <td class="px-6 py-4 align-middle text-xs text-gray-500">${displayPlanName}</td>
+                    <td class="px-6 py-4 align-middle text-sm">${formatDate(s.registrationDate)}</td>
+                    <td class="px-6 py-4 align-middle text-center font-bold text-gray-700">Dia ${regDay}</td>
+                    <td class="px-6 py-4 align-middle text-center text-sm font-mono text-blue-700">${nextDue}</td>
+                    <td class="px-6 py-4 align-middle">${statusHtml}</td>
+                    <td class="px-6 py-4 align-middle text-center">
+                        <button onclick="openPaymentModal('${s.id}')" class="bg-green-600 text-white w-8 h-8 rounded-full hover:bg-green-700 mr-2 shadow" title="Informar Pagamento"><i class="fa-solid fa-dollar-sign"></i></button>
+                        <button onclick="viewHistory('${s.id}')" class="bg-gray-200 text-gray-600 w-8 h-8 rounded-full hover:bg-gray-300 shadow" title="Histórico de Pagamentos"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
         window.openPaymentModal = (id) => {
             const s = window.students.find(st => st.id === id);
             if(!s) return;
@@ -1645,19 +1426,12 @@
             document.getElementById('pay-student-name').innerText = s.name;
             document.getElementById('pay-date').valueAsDate = new Date();
             
-            // Try to set the plan select based on student data
             const planSelect = document.getElementById('pay-plan-select');
             if (s.plan) {
                 const option = Array.from(planSelect.options).find(opt => opt.value === s.plan);
-                if (option) {
-                    planSelect.value = s.plan;
-                    window.updatePayAmount(); // Trigger update
-                } else {
-                     planSelect.value = ""; 
-                }
-            } else {
-                 planSelect.value = "";
-            }
+                if (option) { planSelect.value = s.plan; window.updatePayAmount(); } 
+                else planSelect.value = ""; 
+            } else planSelect.value = "";
 
             const today = new Date();
             const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
@@ -1670,7 +1444,6 @@
         window.updatePayAmount = () => {
             const plan = document.getElementById('pay-plan-select').value;
             const amountInput = document.getElementById('pay-amount');
-            
             let price = "";
             if (plan === 'infantil-mensal') price = 189.90;
             else if (plan === 'infantil-trimestral') price = 168.90;
@@ -1682,7 +1455,6 @@
             else if (plan === 'combo-dupla') price = 250.00;
             else if (plan === 'combo-familia') price = 340.00;
             else if (plan === 'isento' || plan === 'administracao' || plan === 'dependente') price = 0;
-            
             if (price !== "") amountInput.value = price;
         };
 
@@ -1700,13 +1472,7 @@
 
             if(!amount && amount !== "0") { alert("Informe o valor."); return; }
 
-            const paymentRecord = {
-                date: date,
-                amount: amount,
-                method: method,
-                timestamp: new Date().toISOString()
-            };
-
+            const paymentRecord = { date: date, amount: amount, method: method, timestamp: new Date().toISOString() };
             let nextDueISO = null;
             if(nextDue) {
                 const [y, m, d] = nextDue.split('-').map(Number);
@@ -1714,28 +1480,21 @@
             }
 
             try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', id);
-                await updateDoc(docRef, {
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), {
                     paymentHistory: arrayUnion(paymentRecord),
                     nextDueDate: nextDueISO,
                     paymentStatus: 'Em dia',
-                    paymentMethod: method // Update current method too
+                    paymentMethod: method 
                 });
-                
-                closePaymentModal();
-                loadData();
+                window.closePaymentModal();
+                window.loadData();
                 alert("Pagamento registrado com sucesso!");
-            } catch(e) {
-                console.error(e);
-                alert("Erro ao registrar pagamento.");
-            }
+            } catch(e) { console.error(e); alert("Erro ao registrar pagamento."); }
         };
 
-        // --- HISTORY MODAL LOGIC ---
         window.viewHistory = (id) => {
             const s = window.students.find(st => st.id === id);
             if(!s) return;
-
             document.getElementById('hist-student-name').innerText = s.name;
             const tbody = document.getElementById('history-table-body');
             tbody.innerHTML = '';
@@ -1745,20 +1504,13 @@
             } else {
                 document.getElementById('history-empty').classList.add('hidden');
                 const sorted = [...s.paymentHistory].sort((a,b) => new Date(b.date) - new Date(a.date));
-                
                 sorted.forEach(p => {
                     const row = document.createElement('tr');
                     const d = p.date ? new Date(p.date + 'T12:00:00').toLocaleDateString('pt-BR') : '-';
-                    row.innerHTML = `
-                        <td class="px-3 py-2 font-medium">${d}</td>
-                        <td class="px-3 py-2 text-green-700 font-bold">R$ ${p.amount}</td>
-                        <td class="px-3 py-2">${p.method}</td>
-                        <td class="px-3 py-2 text-xs text-gray-400">Registrado</td>
-                    `;
+                    row.innerHTML = `<td class="px-3 py-2 font-medium">${d}</td><td class="px-3 py-2 text-green-700 font-bold">R$ ${p.amount}</td><td class="px-3 py-2">${p.method}</td><td class="px-3 py-2 text-xs text-gray-400">Registrado</td>`;
                     tbody.appendChild(row);
                 });
             }
-
             document.getElementById('history-modal').classList.remove('hidden');
             document.getElementById('history-modal').classList.add('flex');
         };
@@ -1768,8 +1520,14 @@
             document.getElementById('history-modal').classList.remove('flex');
         };
 
-        // Helper to populate contract
-        function populateContractDOM(s) {
+        window.printIndividualContract = (id) => {
+            const s = window.students.find(st => st.id === id);
+            if (!s) { alert("Aluno não encontrado."); return; }
+            window.populateContractDOM(s);
+            window.print();
+        };
+
+        window.populateContractDOM = function(s) {
             let price = "R$ 0,00";
             if(s.plan === 'infantil-mensal') price = "R$ 189,90";
             else if(s.plan === 'infantil-trimestral') price = "R$ 168,90";
@@ -1818,7 +1576,6 @@
             
             document.getElementById('printPlan').innerText = displayName;
             document.getElementById('printPrice').innerText = price + promoNote;
-            
             document.getElementById('printPaymentMethod').innerText = s.paymentMethod || "DEFINIDO NO ATO";
             
             const printGraduation = document.getElementById('printGraduation');
@@ -1832,9 +1589,8 @@
             const regDate = s.registrationDate ? new Date(s.registrationDate) : new Date();
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
             document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', options);
-            document.getElementById('printContractSignature').innerText = s.signature || ""; 
-            
             document.getElementById('printPaymentDay').innerText = regDate.getDate();
+            
             let planCheckboxes = '( ) MENSAL ( ) TRIMESTRAL ( ) SEMESTRAL';
             if (s.plan && s.plan.includes('mensal')) planCheckboxes = '(X) MENSAL ( ) TRIMESTRAL ( ) SEMESTRAL';
             else if (s.plan && s.plan.includes('trimestral')) planCheckboxes = '( ) MENSAL (X) TRIMESTRAL ( ) SEMESTRAL';
@@ -1843,14 +1599,16 @@
             
             document.getElementById('printPlanCheckboxes').innerText = planCheckboxes;
             document.getElementById('printContractValue').innerText = price; 
-        window.deleteStudent = async (id) => {
-            if(!confirm("Excluir aluno permanentemente?")) return;
-            try {
-                await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id));
-                loadData();
-                alert("Aluno excluído.");
-            } catch(e) {
-                alert("Erro ao excluir: " + e.message);
+            
+            const guardianBlock = document.getElementById('printGuardianBlock');
+            if (s.guardian) {
+                guardianBlock.classList.remove('hidden');
+                document.getElementById('printGuardianName').innerText = s.guardian;
+                const kin = s.guardianKinship ? `(${s.guardianKinship})` : '';
+                document.getElementById('printGuardianName').innerText += " " + kin;
+                document.getElementById('printGuardianCPF').innerText = s.cpf; 
+            } else {
+                guardianBlock.classList.add('hidden');
             }
         };
 
@@ -1866,7 +1624,6 @@
             
             const photoImg = document.getElementById('detail-photo');
             const photoIcon = document.getElementById('detail-icon');
-            
             if(s.photoBase64) {
                 photoImg.src = s.photoBase64;
                 photoImg.classList.remove('hidden');
@@ -1913,7 +1670,8 @@
                 'adulto-trimestral': 'R$ 147,90',
                 'adulto-semestral': 'R$ 126,90',
                 'combo-dupla': 'R$ 250,00',
-                'combo-familia': 'R$ 362,02',
+                'combo-casal': 'R$ 220,00',
+                'combo-familia': 'R$ 340,00',
                 'administracao': 'Isento (R$ 0,00)',
                 'dependente': 'Isento (R$ 0,00)'
             };
@@ -1921,31 +1679,28 @@
             let displayName = 'NÃO INFORMADO';
             if(s.plan) {
                 if(s.plan === 'combo-dupla') displayName = 'COMBO DUPLA (1 ADULTO + 1 INFANTIL) SEMESTRAL';
-                else if(s.plan === 'combo-familia') displayName = 'COMBO FAMÍLIA (2 AD + 1 INF) SEMESTRAL';
+                else if(s.plan === 'combo-casal') displayName = 'COMBO CASAL (2 ADULTOS) SEMESTRAL';
+                else if(s.plan === 'combo-familia') displayName = 'COMBO FAMÍLIA (3 PESSOAS) SEMESTRAL';
                 else if(s.plan === 'administracao') displayName = 'ADMINISTRAÇÃO (ISENTO)';
                 else if(s.plan === 'dependente') displayName = 'DEPENDENTE (COMBO)';
                 else displayName = s.plan.replace('infantil-', 'Infantil ').replace('adulto-', 'Jovem/Adulto ').replace('mensal', 'Mensal').replace('trimestral', 'Trimestral').replace('semestral', 'Semestral').toUpperCase();
             }
             
             const planValue = planMap[s.plan] || 'Sob Consulta';
-            const payMethod = s.paymentMethod || 'Não informado';
-        window.updatePayAmount = () => {
-            const plan = document.getElementById('pay-plan-select').value;
-            const amountInput = document.getElementById('pay-amount');
+            document.getElementById('detail-plan').innerText = displayName;
+            document.getElementById('detail-value').innerText = planValue;
+            document.getElementById('detail-method').innerText = s.paymentMethod || 'Não informado';
             
-            let price = "";
-            if (plan === 'infantil-mensal') price = 189.90;
-            else if (plan === 'infantil-trimestral') price = 168.90;
-            else if (plan === 'infantil-semestral') price = 157.90;
-            else if (plan === 'adulto-mensal') price = 168.90;
-            else if (plan === 'adulto-trimestral') price = 147.90;
-            else if (plan === 'adulto-semestral') price = 126.90;
-            else if (plan === 'combo-dupla') price = 250.00;
-            else if (plan === 'combo-familia') price = 362.02;
-            else if (plan === 'isento' || plan === 'administracao' || plan === 'dependente') price = 0;
-            
-            if (price !== "") amountInput.value = price;
+            const titularBox = document.getElementById('detail-titular-box');
+            if (s.titularName && s.titularName.trim() !== "") {
+                document.getElementById('detail-titular-name').innerText = s.titularName;
+                titularBox.classList.remove('hidden');
+            } else { titularBox.classList.add('hidden'); }
+
+            document.getElementById('details-modal').classList.remove('hidden');
+            document.getElementById('details-modal').classList.add('flex');
         };
+        
         window.closeDetailsModal = () => { document.getElementById('details-modal').classList.add('hidden'); document.getElementById('details-modal').classList.remove('flex'); };
 
         window.openEditModal = (id) => {
@@ -1954,17 +1709,14 @@
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-name').value = s.name;
             document.getElementById('edit-plan').value = s.plan || 'infantil-mensal';
-            document.getElementById('edit-titular').value = s.titularName || ''; // Novo campo de Titular
+            document.getElementById('edit-titular').value = s.titularName || ''; 
             document.getElementById('edit-payment').value = s.paymentStatus || 'Pendente';
             document.getElementById('edit-email').value = s.email || '';
             document.getElementById('edit-phone').value = s.phone || '';
             
             const preview = document.getElementById('edit-photo-preview');
-            if(s.photoBase64) {
-                 preview.src = s.photoBase64;
-            } else {
-                 preview.src = `https://ui-avatars.com/api/?name=${s.name}&background=random`;
-            }
+            if(s.photoBase64) preview.src = s.photoBase64;
+            else preview.src = `https://ui-avatars.com/api/?name=${s.name}&background=random`;
 
             let color = 'Branca'; let degree = '0';
             if(s.belt) { const parts = s.belt.split(' - '); if(parts.length > 0) color = parts[0].replace('Faixa ', ''); if(parts.length > 1) degree = parts[1].replace('º Grau', ''); }
@@ -1979,15 +1731,14 @@
             document.getElementById('edit-modal').classList.remove('hidden');
             document.getElementById('edit-modal').classList.add('flex');
         };
+        
         window.closeEditModal = () => { document.getElementById('edit-modal').classList.add('hidden'); document.getElementById('edit-modal').classList.remove('flex'); };
         
         window.previewPhoto = (event) => {
             const file = event.target.files[0];
             if(file) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('edit-photo-preview').src = e.target.result;
-                }
+                reader.onload = function(e) { document.getElementById('edit-photo-preview').src = e.target.result; }
                 reader.readAsDataURL(file);
             }
         };
@@ -1996,7 +1747,7 @@
             const id = document.getElementById('edit-id').value;
             const name = document.getElementById('edit-name').value;
             const plan = document.getElementById('edit-plan').value;
-            const titular = document.getElementById('edit-titular').value; // Titular
+            const titular = document.getElementById('edit-titular').value; 
             const payment = document.getElementById('edit-payment').value;
             const email = document.getElementById('edit-email').value;
             const phone = document.getElementById('edit-phone').value;
@@ -2019,13 +1770,9 @@
             
             const photoInput = document.getElementById('edit-photo');
             let photoBase64 = null;
-            
             if(photoInput.files && photoInput.files[0]) {
                  const file = photoInput.files[0];
-                 if(file.size > 800 * 1024) { 
-                      alert("A foto é muito grande. Por favor, use uma imagem menor que 800KB.");
-                      return;
-                 }
+                 if(file.size > 800 * 1024) { alert("A foto é muito grande."); return; }
                  photoBase64 = await new Promise((resolve) => {
                       const reader = new FileReader();
                       reader.onloadend = () => resolve(reader.result);
@@ -2035,23 +1782,13 @@
 
             try {
                 const updateData = { 
-                     name: name, 
-                     plan: plan, 
-                     titularName: titular, // Titular
-                     category: newCategory, 
-                     paymentStatus: payment, 
-                     enrollmentStatus: status,
-                     belt: beltStr, 
-                     contractEndDate: dateObj, 
-                     studentLogin: login, 
-                     studentPassword: pass, 
-                     email: email, 
-                     phone: phone 
+                     name: name, plan: plan, titularName: titular, category: newCategory, 
+                     paymentStatus: payment, enrollmentStatus: status, belt: beltStr, 
+                     contractEndDate: dateObj, studentLogin: login, studentPassword: pass, email: email, phone: phone 
                 };
                 if(photoBase64) updateData.photoBase64 = photoBase64;
-
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id), updateData);
-                closeEditModal(); loadData(); alert("Dados atualizados!");
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), updateData);
+                window.closeEditModal(); window.loadData(); alert("Dados atualizados!");
             } catch(e) { console.error(e); alert("Erro ao salvar."); }
         };
 
@@ -2073,7 +1810,7 @@
             const address = document.getElementById('reg-address').value;
             const guardian = document.getElementById('reg-guardian').value;
             const plan = document.getElementById('reg-plan').value;
-            const titular = document.getElementById('reg-titular').value; // Titular
+            const titular = document.getElementById('reg-titular').value; 
             const payment = document.getElementById('reg-payment').value;
             const beltColor = document.getElementById('reg-belt-color').value;
             const beltDegree = document.getElementById('reg-belt-degree').value;
@@ -2099,34 +1836,17 @@
             if (plan === 'dependente') category = 'Dependente (Combo)';
 
             try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'students'), {
-                    name: name,
-                    dob: dob,
-                    cpf: cpf,
-                    email: email,
-                    phone: phone,
-                    address: address,
-                    guardian: guardian,
-                    plan: plan,
-                    titularName: titular, // Titular Guardado
-                    paymentStatus: payment,
-                    enrollmentStatus: 'Ativo',
-                    belt: beltStr,
-                    category: category,
-                    registrationDate: regDate.toISOString(),
-                    contractEndDate: endDate.toISOString(),
-                    studentLogin: login,
-                    studentPassword: pass,
-                    attendance: [],
-                    paymentHistory: []
+                await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), {
+                    name: name, dob: dob, cpf: cpf, email: email, phone: phone, address: address,
+                    guardian: guardian, plan: plan, titularName: titular, paymentStatus: payment,
+                    enrollmentStatus: 'Ativo', belt: beltStr, category: category,
+                    registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(),
+                    studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: []
                 });
-                closeAdminRegisterModal();
-                loadData();
+                window.closeAdminRegisterModal();
+                window.loadData();
                 alert("Aluno cadastrado com sucesso!");
-            } catch(e) {
-                console.error(e);
-                alert("Erro ao cadastrar.");
-            }
+            } catch(e) { console.error(e); alert("Erro ao cadastrar."); }
         };
         
         window.sendNewStudentAccessEmail = async () => {
@@ -2157,25 +1877,10 @@
                     <p>Atenciosamente,<br>Equipe Tanque Team</p>
                 </div>
             `;
-
-            const params = {
-                to_name: name,
-                to_email: email,
-                subject: "Acesso ao Portal do Aluno - Tanque Team BJJ",
-                message: messageContent,
-                reply_to: "contato@tanqueteambjj.com"
-            };
-
             try {
-                await emailjs.send("service_yq744mr", "template_few5bna", params);
+                await emailjs.send("service_yq744mr", "template_few5bna", { to_name: name, to_email: email, subject: "Acesso ao Portal do Aluno - Tanque Team BJJ", message: messageContent, reply_to: "contato@tanqueteambjj.com" });
                 alert("E-mail com credenciais enviado com sucesso!");
-            } catch (error) {
-                console.error("Erro ao enviar email:", error);
-                alert("Erro ao enviar e-mail. Verifique o console ou a configuração do EmailJS.");
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
+            } catch (error) { alert("Erro ao enviar e-mail."); } finally { btn.disabled = false; btn.innerHTML = originalText; }
         };
 
         window.sendAccessEmail = async () => {
@@ -2206,59 +1911,34 @@
                     <p>Atenciosamente,<br>Equipe Tanque Team</p>
                 </div>
             `;
-
-            const params = {
-                to_name: name,
-                to_email: email,
-                subject: "Acesso ao Portal do Aluno - Tanque Team BJJ",
-                message: messageContent,
-                reply_to: "contato@tanqueteambjj.com"
-            };
-
             try {
-                await emailjs.send("service_yq744mr", "template_few5bna", params);
+                await emailjs.send("service_yq744mr", "template_few5bna", { to_name: name, to_email: email, subject: "Acesso ao Portal do Aluno - Tanque Team BJJ", message: messageContent, reply_to: "contato@tanqueteambjj.com" });
                 alert("E-mail com credenciais enviado com sucesso!");
-            } catch (error) {
-                console.error("Erro ao enviar email:", error);
-                alert("Erro ao enviar e-mail. Verifique o console ou a configuração do EmailJS.");
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
+            } catch (error) { alert("Erro ao enviar e-mail."); } finally { btn.disabled = false; btn.innerHTML = originalText; }
         };
 
-        // --- GRADUATION LOGIC ---
         window.openGraduationModal = (id, name) => {
             document.getElementById('grad-student-id').value = id;
             document.getElementById('grad-student-name').innerText = name;
             document.getElementById('graduation-modal').classList.remove('hidden');
             document.getElementById('graduation-modal').classList.add('flex');
         }
-
         window.closeGraduationModal = () => {
             document.getElementById('graduation-modal').classList.add('hidden');
             document.getElementById('graduation-modal').classList.remove('flex');
         }
-
         window.saveGraduation = async () => {
             const id = document.getElementById('grad-student-id').value;
             const color = document.getElementById('grad-belt-color').value;
             const degree = document.getElementById('grad-belt-degree').value;
             const newBeltStr = `Faixa ${color} - ${degree}º Grau`;
             const today = new Date().toISOString();
-
             try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', id);
-                await updateDoc(docRef, {
-                    belt: newBeltStr,
-                    lastGraduationDate: today
-                });
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { belt: newBeltStr, lastGraduationDate: today });
                 alert(`Aluno graduado para ${newBeltStr}!`);
-                closeGraduationModal();
-                loadData();
-            } catch(e) {
-                alert("Erro ao graduar: " + e.message);
-            }
+                window.closeGraduationModal();
+                window.loadData();
+            } catch(e) { alert("Erro ao graduar: " + e.message); }
         }
     </script>
 </body>
