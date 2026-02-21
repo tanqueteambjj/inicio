@@ -156,90 +156,38 @@
                              <button onclick="loadData()" class="text-gray-500 hover:text-black text-sm flex items-center gap-1"><i class="fa-solid fa-rotate" id="icon-refresh"></i></button>
                         </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider" id="table-headers">
-                                    <!-- Headers injetados via JS -->
-                                </tr>
-                            </thead>
-                            <tbody id="students-table-body" class="text-sm text-gray-700 divide-y divide-gray-200">
-                                <tr><td colspan="8" class="px-6 py-4 text-center">Carregando dados...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+                    
+                    <!-- NOVO: Barra de Filtros -->
+                    <div class="px-6 py-3 border-b border-gray-200 bg-white flex flex-wrap gap-4 items-center text-sm no-print">
+                        <span class="font-bold text-gray-500"><i class="fa-solid fa-filter"></i> Filtros:</span>
+                        
+                        <select id="sort-order" onchange="renderTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
+                            <option value="recent">⏱️ Mais Recentes</option>
+                            <option value="az">🔤 Ordem Alfabética (A-Z)</option>
+                            <option value="za">🔤 Ordem Alfabética (Z-A)</option>
+                        </select>
+                        
+                        <select id="filter-belt" onchange="renderTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
+                            <option value="">🥋 Todas as Faixas</option>
+                            <option value="branca">Branca</option>
+                            <option value="cinza">Cinza</option>
+                            <option value="amarela">Amarela</option>
+                            <option value="laranja">Laranja</option>
+                            <option value="verde">Verde</option>
+                            <option value="azul">Azul</option>
+                            <option value="roxa">Roxa</option>
+                            <option value="marrom">Marrom</option>
+                            <option value="preta">Preta</option>
+                        </select>
 
-            <!-- VIEW: FINANCEIRO -->
-            <div id="view-financial" class="hidden">
-                 <!-- Stats Row Financeiro -->
-                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500">
-                        <div class="flex justify-between">
-                            <div>
-                                <p class="text-gray-400 text-xs font-bold uppercase">Total (Ativos)</p>
-                                <p class="text-2xl font-bold text-gray-800" id="fin-stat-total">0</p>
-                            </div>
-                            <div class="text-blue-500 text-2xl"><i class="fa-solid fa-users"></i></div>
-                        </div>
+                        <select id="filter-payment-status" onchange="renderTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
+                            <option value="">💲 Pagamento (Todos)</option>
+                            <option value="Em dia">Em dia</option>
+                            <option value="Pendente">Pendente</option>
+                            <option value="Isento">Isento</option>
+                        </select>
                     </div>
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-green-500">
-                        <div class="flex justify-between">
-                            <div>
-                                <p class="text-gray-400 text-xs font-bold uppercase">Em Dia / Isento</p>
-                                <p class="text-2xl font-bold text-gray-800" id="fin-stat-active">0</p>
-                            </div>
-                            <div class="text-green-500 text-2xl"><i class="fa-solid fa-check-circle"></i></div>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-red-500">
-                        <div class="flex justify-between">
-                            <div>
-                                <p class="text-gray-400 text-xs font-bold uppercase">Pendente</p>
-                                <p class="text-2xl font-bold text-gray-800" id="fin-stat-pending">0</p>
-                            </div>
-                            <div class="text-red-500 text-2xl"><i class="fa-solid fa-circle-exclamation"></i></div>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-yellow-500">
-                        <div class="flex justify-between">
-                            <div>
-                                <p class="text-gray-400 text-xs font-bold uppercase">Expirando (7d)</p>
-                                <p class="text-2xl font-bold text-gray-800" id="fin-stat-expiring">0</p>
-                            </div>
-                            <div class="text-yellow-500 text-2xl"><i class="fa-solid fa-hourglass-half"></i></div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Tabs Financeiro -->
-                <div class="flex mb-0">
-                    <button onclick="switchFinancialTab('all')" id="fin-tab-all" class="px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative">
-                        TODOS
-                    </button>
-                    <button onclick="switchFinancialTab('active')" id="fin-tab-active" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
-                        EM DIA
-                    </button>
-                    <button onclick="switchFinancialTab('pending')" id="fin-tab-pending" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
-                        PENDENTE
-                    </button>
-                    <button onclick="switchFinancialTab('expiring')" id="fin-tab-expiring" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
-                        EXPIRANDO
-                    </button>
-                    <button onclick="switchFinancialTab('inactive')" id="fin-tab-inactive" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
-                        INATIVOS
-                    </button>
-                </div>
-
-                <div class="bg-white rounded-b-xl rounded-tr-xl shadow overflow-hidden border border-gray-200 relative top-[-1px]">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-                        <div>
-                            <h3 class="font-bold text-gray-800 uppercase text-lg"><i class="fa-solid fa-coins text-brand-red mr-2"></i> Gestão Financeira</h3>
-                            <p class="text-xs text-gray-500">Controle de pagamentos e vencimentos</p>
-                        </div>
-                        <button onclick="loadData()" class="text-gray-500 hover:text-black text-sm"><i class="fa-solid fa-rotate"></i></button>
-                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
@@ -430,7 +378,6 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1">Plano</label>
-                                <!-- ADDED NEW PLANS & ADMIN PLAN -->
                                 <select id="edit-plan" class="w-full border rounded p-2">
                                     <option value="infantil-mensal">Infantil Mensal</option>
                                     <option value="infantil-trimestral">Infantil Trimestral</option>
@@ -448,7 +395,9 @@
                             <!-- CAMPO TITULAR (VINCULAÇÃO) -->
                             <div class="md:col-span-2">
                                 <label class="block text-xs font-bold text-purple-600 mb-1">Titular do Plano (Preencher caso seja Dependente)</label>
-                                <input type="text" id="edit-titular" class="w-full border border-purple-200 rounded p-2 bg-purple-50 focus:ring-purple-500" placeholder="Nome do Responsável Financeiro pelo Combo">
+                                <select id="edit-titular" class="w-full border border-purple-200 rounded p-2 bg-purple-50 focus:ring-purple-500">
+                                    <option value="">-- Selecione o Titular --</option>
+                                </select>
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1">Email</label>
@@ -669,7 +618,9 @@
                     <!-- CAMPO TITULAR (VINCULAÇÃO) -->
                     <div class="col-span-1">
                         <label class="block text-xs font-bold text-purple-600 mb-1">Titular do Plano (Se Dependente)</label>
-                        <input type="text" id="reg-titular" class="w-full border border-purple-200 rounded p-2 bg-purple-50 focus:ring-purple-500" placeholder="Nome de quem paga o Combo">
+                        <select id="reg-titular" class="w-full border border-purple-200 rounded p-2 bg-purple-50 focus:ring-purple-500">
+                            <option value="">-- Selecione o Titular --</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Status Pagamento</label>
@@ -851,6 +802,29 @@
             return Math.abs(age_dt.getUTCFullYear() - 1970);
         }
 
+        // --- PREENCHIMENTO AUTOMATICO TITULARES (COMBOS) ---
+        function populateTitularSelects() {
+            // Pega apenas alunos com "combo" no nome do plano e que estejam Ativos
+            const comboStudents = window.students.filter(s => 
+                s.plan && s.plan.includes('combo') && s.enrollmentStatus !== 'Inativo'
+            );
+
+            const regTitularSelect = document.getElementById('reg-titular');
+            const editTitularSelect = document.getElementById('edit-titular');
+
+            let optionsHtml = '<option value="">-- Selecione o Titular --</option>';
+            
+            // Ordena alfabeticamente para ficar mais bonito
+            comboStudents.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+            comboStudents.forEach(s => {
+                optionsHtml += `<option value="${s.name}">${s.name}</option>`;
+            });
+
+            if (regTitularSelect) regTitularSelect.innerHTML = optionsHtml;
+            if (editTitularSelect) editTitularSelect.innerHTML = optionsHtml;
+        }
+
         async function loadData() {
             try {
                 if(!db) throw new Error("Database not initialized");
@@ -863,6 +837,9 @@
                 // Ordenar por data de registro
                 window.students.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
                 
+                // Preenche os selects de titular baseados nos dados carregados
+                populateTitularSelects();
+
                 updateStats();
                 if(window.currentView === 'students') renderTable();
                 else renderFinancialTable();
@@ -1249,24 +1226,44 @@
             const tbody = document.getElementById('students-table-body');
             const thead = document.getElementById('table-headers');
             const search = (document.getElementById('searchInput')?.value || "").toLowerCase();
+            
+            // Lendo os novos filtros
+            const beltFilter = (document.getElementById('filter-belt')?.value || "").toLowerCase();
+            const statusFilter = document.getElementById('filter-payment-status')?.value || "";
+            const sortOrder = document.getElementById('sort-order')?.value || "recent";
+            
             tbody.innerHTML = '';
 
-            const filtered = window.students.filter(s => {
+            let filtered = window.students.filter(s => {
                 const studentName = String(s.name || '').toLowerCase();
                 const matchesSearch = studentName.includes(search);
                 const currentEnrollment = s.enrollmentStatus || 'Ativo';
                 
-                // Tab Logic
+                // Aplicando os filtros de faixa e status
+                const matchesBelt = beltFilter === "" || (s.belt && s.belt.toLowerCase().includes(beltFilter));
+                const matchesPayment = statusFilter === "" || s.paymentStatus === statusFilter;
+                
+                // Tab Logic (com filtros anexados)
                 if (window.currentTab === 'inactive') {
-                    return matchesSearch && currentEnrollment === 'Inativo';
+                    return matchesSearch && matchesBelt && matchesPayment && currentEnrollment === 'Inativo';
                 } else {
                     if (currentEnrollment === 'Inativo') return false;
                     
                     let isKid = isStudentKid(s);
                     const matchesTab = (window.currentTab === 'kids' && isKid) || (window.currentTab === 'adults' && !isKid);
-                    return matchesTab && matchesSearch;
+                    return matchesTab && matchesSearch && matchesBelt && matchesPayment;
                 }
             });
+            
+            // Aplicando a ordenação
+            if (sortOrder === 'az') {
+                filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            } else if (sortOrder === 'za') {
+                filtered.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+            } else {
+                // Default: Recentes
+                filtered.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
+            }
 
             document.getElementById('list-count').innerText = filtered.length;
             
@@ -1718,6 +1715,7 @@
             const regDate = s.registrationDate ? new Date(s.registrationDate) : new Date();
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
             document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', options);
+            document.getElementById('printContractSignature').innerText = s.signature || ""; 
             
             document.getElementById('printPaymentDay').innerText = regDate.getDate();
             let planCheckboxes = '( ) MENSAL ( ) TRIMESTRAL ( ) SEMESTRAL';
