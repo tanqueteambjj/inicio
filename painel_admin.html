@@ -806,8 +806,9 @@
                             <option value="adulto-mensal">Adulto Mensal</option>
                             <option value="adulto-trimestral">Adulto Trimestral</option>
                             <option value="adulto-semestral">Adulto Semestral</option>
+                            <option value="combo-casal">Combo Casal (2 Adultos)</option>
                             <option value="combo-dupla">Combo Dupla (1 Ad + 1 Inf)</option>
-                            <option value="combo-familia">Combo Família (2 Ad + 1 Inf)</option>
+                            <option value="combo-familia">Combo Família (3 Pessoas)</option>
                             <option value="dependente">Dependente (Isento)</option>
                             <option value="administracao">Administração (Isento)</option>
                         </select>
@@ -1228,6 +1229,7 @@
                     if(!s.attendance.includes(dateVal)) s.attendance.push(dateVal);
                 }
                 window.openAttendanceModal(id);
+                window.loadData();
             } catch(e) { alert("Erro: " + e.message); }
         };
 
@@ -1242,7 +1244,23 @@
                     s.attendance = s.attendance.filter(d => d !== dateStr);
                 }
                 window.openAttendanceModal(id);
+                window.loadData();
             } catch(e) { alert("Erro: " + e.message); }
+        };
+
+        window.addPresence = async (id) => {
+            const todayISO = new Date().toISOString().split('T')[0];
+            try {
+                const docRef = doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id);
+                await updateDoc(docRef, { attendance: arrayUnion(todayISO) });
+                const s = window.students.find(st => st.id === id);
+                if(s) { 
+                    if(!s.attendance) s.attendance = []; 
+                    if(!s.attendance.includes(todayISO)) s.attendance.push(todayISO); 
+                }
+                window.renderTable();
+                alert(`Presença confirmada para hoje!`);
+            } catch(e) { console.error(e); alert("Erro ao confirmar presença."); }
         };
         
         window.toggleStudentStatus = async (id, currentStatus) => {
@@ -1491,6 +1509,7 @@
                         <button onclick="openGraduationModal('${s.id}', '${s.name || ''}')" class="text-yellow-500 hover:text-yellow-700 mr-2" title="Graduar"><i class="fa-solid fa-medal"></i></button>
                         <button onclick="viewStudentDetails('${s.id}')" class="text-gray-500 hover:text-black mr-2" title="Visualizar"><i class="fa-solid fa-eye"></i></button>
                         <button onclick="openEditModal('${s.id}')" class="text-blue-600 hover:text-blue-900 mr-2" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="printIndividualContract('${s.id}')" class="text-indigo-600 hover:text-indigo-900 mr-2" title="Imprimir Contrato"><i class="fa-solid fa-file-contract"></i></button>
                         <button onclick="deleteStudent('${s.id}')" class="text-red-600 hover:text-red-900" title="Excluir Definitivamente"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 `;
@@ -1696,6 +1715,7 @@
             const s = window.students.find(st => st.id === id);
             if (!s) { alert("Aluno não encontrado."); return; }
             window.populateContractDOM(s);
+            document.body.classList.remove('printing-report'); // Garante que imprimirá o contrato, não o relatório
             window.print();
         };
 
@@ -1732,7 +1752,7 @@
             
             const formattedDob = `${dobDate.getDate().toString().padStart(2,'0')}/${(dobDate.getMonth()+1).toString().padStart(2,'0')}/${dobDate.getFullYear()}`;
             
-            document.getElementById('printContratante').innerText = s.guardian || s.name;
+            document.getElementById('printContratante').innerText = s.guardian || s.titularName || s.name;
             document.getElementById('printStudent').innerText = s.name;
             document.getElementById('printDob').innerText = formattedDob;
             document.getElementById('printCPF').innerText = s.cpf || "Não informado";
