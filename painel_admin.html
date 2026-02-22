@@ -30,18 +30,22 @@
     </script>
 
     <style>
-        /* CSS OTIMIZADO PARA IMPRESSÃO DE RELATÓRIOS E CONTRATOS */
+        /* CSS OTIMIZADO PARA IMPRESSÃO - NORMAS ABNT E MULTIPAGINAS */
         @media print {
-            @page { margin: 1cm; size: auto; }
+            @page { 
+                margin: 3cm 2cm 2cm 3cm; /* ABNT */
+                size: A4 portrait; 
+            }
             
-            /* Remove bloqueios de rolagem para permitir múltiplas páginas */
+            /* Libera o container para o motor de impressão criar novas páginas */
             body, html { 
                 height: auto !important; 
+                min-height: auto !important;
                 overflow: visible !important; 
                 background: white !important; 
             }
             
-            /* Ocultar TUDO por padrão na impressão */
+            /* Ocultar a Interface do Sistema */
             body * { 
                 visibility: hidden; 
             }
@@ -52,7 +56,9 @@
                 visibility: visible;
             }
             body:not(.printing-report) #printable-contract {
-                position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; display: block !important;
+                position: relative !important; /* Vital para permitir múltiplas páginas */
+                display: block !important;
+                left: auto; top: auto; width: 100%; margin: 0; padding: 0;
             }
 
             /* ===== MODO RELATÓRIO ===== */
@@ -61,9 +67,31 @@
                 visibility: visible;
             }
             body.printing-report #report-container {
-                position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; display: block !important;
+                position: relative !important;
+                display: block !important;
+                left: auto; top: auto; width: 100%; margin: 0; padding: 0;
             }
             
+            /* Esconder componentes da UI que podem vazar */
+            #admin-dashboard, aside, header, nav, .no-print { 
+                display: none !important; 
+            }
+            
+            /* Tipografia ABNT para Textos e Cláusulas */
+            p { 
+                text-align: justify; 
+                line-height: 1.5; 
+                orphans: 3; 
+                widows: 3; 
+                margin-bottom: 12px;
+            }
+            h1, h2, h3 { 
+                page-break-after: avoid; 
+            }
+            .signatures-section { 
+                page-break-inside: avoid; 
+            }
+
             /* Estilização das Tabelas no Relatório */
             body.printing-report table { 
                 width: 100%; 
@@ -1831,7 +1859,8 @@
             document.getElementById('printDependentsBlock').innerHTML = dependentsHtml;
 
             // SIGNATURE NAME
-            document.getElementById('printSignatureName').innerText = s.guardian || s.titularName || s.name;
+            const signName = s.guardian || s.titularName || s.name;
+            document.getElementById('printSignatureName').innerText = signName;
         };
 
         window.viewStudentDetails = (id) => {
