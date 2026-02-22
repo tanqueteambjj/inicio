@@ -1450,7 +1450,7 @@
                 
                 if (safePlan.includes('combo')) nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase">Combo</span>`;
                 if (safePlan === 'administracao') nameDisplay += `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-bold uppercase">Admin</span>`;
-                if (safePlan === 'dependente') nameDisplay += `<span class="ml-2 text-[10px] text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded border border-indigo-200 font-bold uppercase">Dependente de: ${s.titularName || 'Não Informado'}</span>`;
+                if (safePlan === 'dependente') nameDisplay += `<span class="ml-2 text-[10px] text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded border border-indigo-200 font-bold uppercase">Dependente</span>`;
                 
                 nameDisplay += `</div>`;
                 
@@ -1487,7 +1487,6 @@
                         ${toggleBtn}
                         <button onclick="openAttendanceModal('${s.id}')" class="text-gray-500 hover:text-black mr-2" title="Gerenciar Frequência"><i class="fa-solid fa-list-check"></i></button>
                         <button onclick="openGraduationModal('${s.id}', '${s.name || ''}')" class="text-yellow-500 hover:text-yellow-700 mr-2" title="Graduar"><i class="fa-solid fa-medal"></i></button>
-                        <!-- REMOVIDO: Botão de visualizar (olho) -->
                         <button onclick="openEditModal('${s.id}')" class="text-blue-600 hover:text-blue-900 mr-2" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
                         <button onclick="printIndividualContract('${s.id}')" class="text-indigo-600 hover:text-indigo-900 mr-2" title="Imprimir Contrato"><i class="fa-solid fa-file-contract"></i></button>
                         <button onclick="deleteStudent('${s.id}')" class="text-red-600 hover:text-red-900" title="Excluir Definitivamente"><i class="fa-solid fa-trash"></i></button>
@@ -1750,6 +1749,11 @@
                 else displayName = s.plan.replace('infantil-', 'Infantil ').replace('adulto-', 'Jovem/Adulto ').replace('mensal', 'Mensal').replace('trimestral', 'Trimestral').replace('semestral', 'Semestral').toUpperCase();
             }
             
+            document.getElementById('printPlan').innerText = displayName;
+            document.getElementById('printPrice').innerText = price;
+            document.getElementById('printPromoNote').innerText = promoNote;
+            document.getElementById('printPaymentMethod').innerText = s.paymentMethod || "DEFINIDO NO ATO DA MATRÍCULA";
+            
             let beltInfo = "";
             if(s.belt && !s.belt.includes("Branca - 0º Grau") && !s.belt.includes("Iniciante")) {
                 beltInfo = `| Graduação Atual: ${s.belt}`;
@@ -1759,6 +1763,7 @@
             const regDate = s.registrationDate ? new Date(s.registrationDate) : new Date();
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
             document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', options);
+            document.getElementById('printPaymentDay').innerText = regDate.getDate();
 
             // LOGIC FOR CLAUSES GENERATION
             const isCombo = s.plan && s.plan.includes('combo');
