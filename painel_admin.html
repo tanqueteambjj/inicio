@@ -739,6 +739,52 @@
         </div>
     </div>
 
+    <!-- MODAL DE GRADUAÇÃO (RESTAURADO) -->
+    <div id="graduation-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden animate-fade-in">
+            <div class="bg-yellow-500 px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-medal mr-2"></i> Graduar Aluno</h3>
+                <button onclick="closeGraduationModal()" class="hover:text-yellow-200"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-gray-500 mb-4">Nova graduação para: <strong id="grad-student-name" class="text-gray-800">--</strong></p>
+                <input type="hidden" id="grad-student-id">
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Nova Cor da Faixa</label>
+                        <select id="grad-belt-color" class="w-full border rounded p-2 text-sm bg-gray-50">
+                            <option value="Branca">Branca</option>
+                            <option value="Cinza">Cinza</option>
+                            <option value="Amarela">Amarela</option>
+                            <option value="Laranja">Laranja</option>
+                            <option value="Verde">Verde</option>
+                            <option value="Azul">Azul</option>
+                            <option value="Roxa">Roxa</option>
+                            <option value="Marrom">Marrom</option>
+                            <option value="Preta">Preta</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Novo Grau</label>
+                        <select id="grad-belt-degree" class="w-full border rounded p-2 text-sm bg-gray-50">
+                            <option value="0">0º</option>
+                            <option value="1">1º</option>
+                            <option value="2">2º</option>
+                            <option value="3">3º</option>
+                            <option value="4">4º</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-2">
+                    <button onclick="closeGraduationModal()" class="px-4 py-2 border rounded text-sm hover:bg-gray-100">Cancelar</button>
+                    <button onclick="saveGraduation()" class="px-4 py-2 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600 font-bold">Confirmar Graduação</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- DETAILS MODAL (READ ONLY) -->
     <div id="details-modal" class="fixed inset-0 z-[60] hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto transform transition-all relative">
@@ -1770,15 +1816,15 @@
             
             const formattedDob = `${dobDate.getDate().toString().padStart(2,'0')}/${(dobDate.getMonth()+1).toString().padStart(2,'0')}/${dobDate.getFullYear()}`;
             
-            document.getElementById('printContratante').innerText = s.guardian || s.titularName || s.name;
-            
-            let relText = "";
-            if ((s.guardian && s.guardian !== s.name) || (s.titularName && s.titularName !== s.name)) {
-                let kinship = s.guardianKinship || s.parentesco || "Dependente";
-                relText = ` (Parentesco: ${kinship})`;
+            let contratanteText = s.name;
+            if (s.guardian && s.guardian.trim() !== "") {
+                contratanteText = `${s.guardian} (Responsável Legal: ${s.guardianKinship || 'Não informado'})`;
+            } else if (s.titularName && s.titularName.trim() !== "") {
+                contratanteText = `${s.titularName} (Titular do Plano)`;
             }
-            document.getElementById('printStudent').innerText = s.name + relText;
-            
+
+            document.getElementById('printContratante').innerText = contratanteText;
+            document.getElementById('printStudent').innerText = s.name;
             document.getElementById('printDob').innerText = formattedDob;
             document.getElementById('printCPF').innerText = s.cpf || "Não informado";
             document.getElementById('printEmail').innerText = s.email || "Não informado";
