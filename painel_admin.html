@@ -173,11 +173,6 @@
         <!-- Content Area -->
         <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6 relative">
             
-            <!-- PRINTABLE REPORT CONTAINER -->
-            <div id="report-container" class="hidden bg-white text-black p-4 font-sans absolute inset-0 z-50">
-                <!-- Preenchido via JS -->
-            </div>
-
             <!-- VIEW: ALUNOS (DEFAULT) -->
             <div id="view-students">
                 <!-- Stats Row -->
@@ -439,6 +434,50 @@
             </div>
 
         </main>
+    </div>
+
+    <!-- PRINTABLE CONTAINERS (FORA DO MAIN UI PARA NÃO CORTAR PÁGINAS) -->
+    <div id="report-container" class="hidden bg-white text-black p-4 font-sans absolute inset-0 z-50">
+        <!-- Preenchido via JS -->
+    </div>
+
+    <!-- Printable Contract (Hidden in Web, Visible in Print) -->
+    <div id="printable-contract" class="hidden bg-white text-black p-10 font-serif text-[11pt] leading-relaxed">
+        <div class="header-section text-center mb-6 border-b-2 border-black pb-4">
+            <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
+            <p class="text-xs">CNPJ: 00.000.000/0001-00</p>
+            <p class="text-xs">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, CEP 66635-110</p>
+            <p class="text-xs">Tel: (91) 99819-2610 | Email: contato@tanqueteambjj.com</p>
+        </div>
+        <h2 class="text-center font-bold text-lg mb-6 uppercase underline tracking-wide">Contrato de Prestação de Serviços Esportivos</h2>
+        
+        <div class="parties-section mb-6 text-sm text-justify space-y-2 bg-gray-50 p-4 border border-gray-200 rounded">
+            <p><strong>1. CONTRATADA:</strong> <span class="uppercase font-bold">Tanque Team Academia de Artes Marciais LTDA</span>, inscrita no CNPJ sob o nº 00.000.000/0001-00.</p>
+            <p><strong>2. CONTRATANTE (Responsável Financeiro):</strong> <span id="printContratante" class="font-bold uppercase"></span>, inscrito(a) no CPF sob o nº <span id="printCPF" class="font-mono font-bold"></span>, residente e domiciliado(a) em <span id="printAddress" class="uppercase"></span>, Telefone: <span id="printPhone"></span>, E-mail: <span id="printEmail"></span>.</p>
+            <p><strong>3. ALUNO(A) PRINCIPAL:</strong> <span id="printStudent" class="font-bold uppercase"></span>, nascido(a) em <span id="printDob" class="font-mono"></span>. <span id="printBeltInfo"></span></p>
+            <div id="printDependentsBlock" class="mt-2 pl-4 border-l-2 border-gray-400"></div>
+        </div>
+
+        <div id="print-clauses-container" class="clauses-section text-sm text-justify mb-6 space-y-3">
+            <!-- JS Injected Clauses -->
+        </div>
+
+        <div class="signatures-section mt-16 page-break-inside-avoid">
+            <p class="mb-12 text-right text-sm">Belém-PA, <span id="printContractDate"></span>.</p>
+            <div class="flex justify-between gap-12 mt-16 px-8">
+                <div class="w-1/2 text-center">
+                    <div class="border-t border-black pt-2">
+                        <p class="font-bold uppercase text-xs tracking-wider">Tanque Team BJJ (CONTRATADA)</p>
+                    </div>
+                </div>
+                <div class="w-1/2 text-center">
+                    <div class="border-t border-black pt-2">
+                        <p class="font-bold text-sm uppercase" id="printSignatureName"></p>
+                        <p class="font-bold uppercase text-[10px] text-gray-600 tracking-wider">CONTRATANTE / RESPONSÁVEL FINANCEIRO</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Attendance Management Modal -->
@@ -1721,7 +1760,11 @@
             if (!s) { alert("Aluno não encontrado."); return; }
             window.populateContractDOM(s);
             document.body.classList.remove('printing-report'); 
-            window.print();
+            
+            // Garantir que a UI seja escondida a tempo antes de imprimir
+            setTimeout(() => {
+                window.print();
+            }, 100);
         };
 
         window.populateContractDOM = function(s) {
@@ -1775,11 +1818,6 @@
                 else displayName = s.plan.replace('infantil-', 'Infantil ').replace('adulto-', 'Jovem/Adulto ').replace('mensal', 'Mensal').replace('trimestral', 'Trimestral').replace('semestral', 'Semestral').toUpperCase();
             }
             
-            document.getElementById('printPlan').innerText = displayName;
-            document.getElementById('printPrice').innerText = price;
-            document.getElementById('printPromoNote').innerText = promoNote;
-            document.getElementById('printPaymentMethod').innerText = s.paymentMethod || "DEFINIDO NO ATO DA MATRÍCULA";
-            
             let beltInfo = "";
             if(s.belt && !s.belt.includes("Branca - 0º Grau") && !s.belt.includes("Iniciante")) {
                 beltInfo = `| Graduação Atual: ${s.belt}`;
@@ -1789,15 +1827,15 @@
             const regDate = s.registrationDate ? new Date(s.registrationDate) : new Date();
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
             document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', options);
-            document.getElementById('printPaymentDay').innerText = regDate.getDate();
 
-            // LOGIC FOR CLAUSES GENERATION
+            // LOGICA PARA INJETAR CLAUSULAS DINAMICAS E NUMERADAS
             const isCombo = s.plan && s.plan.includes('combo');
             const isFidelity = s.plan && (s.plan.includes('semestral') || s.plan.includes('trimestral') || isCombo);
+            const safePaymentMethod = s.paymentMethod || "DEFINIDO NO ATO DA MATRÍCULA";
 
             let clausesHtml = `<p><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
 
-            clausesHtml += `<p><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong class="uppercase underline">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong class="bg-yellow-100 px-1">${price}</strong>. O vencimento ocorrerá todo dia <strong>${regDate.getDate()}</strong> de cada mês corrente.</p>`;
+            clausesHtml += `<p><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong class="uppercase underline">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong class="bg-yellow-100 px-1">${price}</strong>. O vencimento ocorrerá todo dia <strong>${regDate.getDate()}</strong> de cada mês corrente. Via de pagamento acordada: <strong>${safePaymentMethod}</strong>.</p>`;
 
             if (promoNote) {
                  clausesHtml += `<p class="italic text-xs font-bold mb-3">${promoNote}</p>`;
@@ -2194,6 +2232,10 @@
         
         window.generateReport = (type) => {
             const container = document.getElementById('report-container');
+            
+            // Remove a classe hidden ANTES da impressão
+            container.classList.remove('hidden');
+
             let html = `<div class="text-center mb-6 border-b pb-4">
                 <h2 class="text-2xl font-bold uppercase tracking-wider">TANQUE TEAM BJJ</h2>
                 <h3 class="text-lg text-gray-600 uppercase mt-1">Relatório Gerencial</h3>
@@ -2298,6 +2340,7 @@
             setTimeout(() => {
                 window.print();
                 document.body.classList.remove('printing-report');
+                container.classList.add('hidden'); // Retorna a tela ao normal
             }, 500);
         };
     </script>
