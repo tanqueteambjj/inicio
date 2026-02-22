@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tanque Team | Dashboard Aluno</title>
     
+    <!-- Updated Favicon -->
     <link rel="icon" href="https://i.ibb.co/spgfD2Nd/1771300330359.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
@@ -124,7 +125,7 @@
                 </button>
             </header>
 
-            <!-- DEPENDENT VIEW BANNER -->
+            <!-- DEPENDENT VIEW BANNER (Se estiver vendo a conta do filho) -->
             <div id="viewing-dependent-banner" class="hidden bg-purple-600 text-white px-4 py-3 flex justify-between items-center shadow-md z-20 no-print">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-users text-purple-200"></i>
@@ -422,7 +423,8 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, getDocs, collection, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = {
+        // A robust config fetch that works inside the Canvas environment
+        const manualConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
             authDomain: "tanqueteambjj.firebaseapp.com",
             projectId: "tanqueteambjj",
@@ -431,11 +433,12 @@
             appId: "1:410605992451:web:f0f341f4594fe75f376c36",
             measurementId: "G-SW8PP8X7WM"
         };
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : manualConfig;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = "tanqueteam-bjj";
 
         window.db = db;
         window.titularData = null; // Armazena a conta principal autenticada
@@ -451,11 +454,13 @@
         document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', dateOptions);
 
         const session = localStorage.getItem('tanque_user_session');
-        if (session) {
+        if (!session) {
+            window.location.href = "login_aluno.html";
+        } else {
             try {
                 const user = JSON.parse(session);
                 if (user && user.id) {
-                    // AUTHENTICATE FIRST
+                    // AUTHENTICATE FIRST BEFORE LOADING DB
                     const initAuth = async () => {
                         try {
                             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -480,8 +485,6 @@
                 console.error("Erro na sessão", e);
                 window.handleLogout();
             }
-        } else {
-            window.location.href = "login_aluno.html";
         }
 
         window.loadStudentData = async function(id) {
@@ -767,3 +770,254 @@
             const isDep = data.plan === 'dependente';
             document.getElementById('profile-login-container').classList.toggle('hidden', isDep);
             document.getElementById('profile-password-container').classList.toggle('hidden', isDep);
+
+            document.getElementById('profile-email').value = data.email || '';
+            document.getElementById('profile-phone').value = data.phone || '';
+            document.getElementById('profile-address').value = data.address || '';
+            document.getElementById('profile-login').value = data.studentLogin || 'Não definido'; 
+            document.getElementById('profile-password').value = ''; 
+            
+            const preview = document.getElementById('profile-photo-preview');
+            const placeholder = document.getElementById('profile-photo-placeholder');
+            if(data.photoBase64) {
+                 preview.src = data.photoBase64;
+                 preview.classList.remove('hidden');
+                 placeholder.classList.add('hidden');
+            } else {
+                 preview.classList.add('hidden');
+                 placeholder.classList.remove('hidden');
+                 placeholder.innerText = (data.name || '?').charAt(0).toUpperCase();
+            }
+            
+            document.getElementById('profile-edit-modal').classList.remove('hidden');
+            document.getElementById('profile-edit-modal').classList.add('flex');
+        }
+
+        window.closeProfileEditModal = () => {
+            document.getElementById('profile-edit-modal').classList.add('hidden');
+            document.getElementById('profile-edit-modal').classList.remove('flex');
+        }
+        
+        window.previewProfilePhoto = (event) => {
+            const file = event.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('profile-photo-preview');
+                    const placeholder = document.getElementById('profile-photo-placeholder');
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        };
+
+        window.saveProfileChanges = async () => {
+            const data = window.currentStudentData;
+            if(!data) return;
+
+            const newEmail = document.getElementById('profile-email').value;
+            const newPhone = document.getElementById('profile-phone').value;
+            const newAddress = document.getElementById('profile-address').value;
+            const newPass = document.getElementById('profile-password').value;
+
+            const updateData = {
+                email: newEmail,
+                phone: newPhone,
+                address: newAddress
+            };
+
+            if(!document.getElementById('profile-password-container').classList.contains('hidden') && newPass && newPass.trim() !== "") {
+                updateData.studentPassword = newPass;
+            }
+            
+            const photoInput = document.getElementById('profile-photo-input');
+            let photoBase64 = null;
+            
+            if(photoInput.files && photoInput.files[0]) {
+                 const file = photoInput.files[0];
+                 if(file.size > 800 * 1024) { 
+                      alert("A foto é muito grande. Por favor, use uma imagem menor que 800KB.");
+                      return;
+                 }
+                 photoBase64 = await new Promise((resolve) => {
+                      const reader = new FileReader();
+                      reader.onloadend = () => resolve(reader.result);
+                      reader.readAsDataURL(file);
+                 });
+                 updateData.photoBase64 = photoBase64;
+            }
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', data.id);
+                await updateDoc(docRef, updateData);
+                alert("Dados atualizados com sucesso!");
+                closeProfileEditModal();
+                // Reloads full data to maintain logic
+                loadStudentData(window.titularData.id); 
+            } catch(e) {
+                console.error(e);
+                alert("Erro ao atualizar dados.");
+            }
+        }
+
+        window.populateContractDOM = function(s) {
+            let price = "R$ 0,00";
+            if(s.plan === 'infantil-mensal') price = "R$ 189,90";
+            else if(s.plan === 'infantil-trimestral') price = "R$ 168,90";
+            else if(s.plan === 'infantil-semestral') price = "R$ 157,90";
+            else if(s.plan === 'adulto-mensal') price = "R$ 168,90";
+            else if(s.plan === 'adulto-trimestral') price = "R$ 147,90";
+            else if(s.plan === 'adulto-semestral') price = "R$ 126,90";
+            else if(s.plan === 'combo-dupla') price = "R$ 250,00";
+            else if(s.plan === 'combo-familia') price = "R$ 362,02";
+            
+            let promoNote = "";
+            if (s.plan && s.plan.includes('semestral') && !s.plan.includes('combo')) {
+                promoNote = "OBS: Promoção de Inauguração aplicada. A 1ª Mensalidade terá o valor reduzido de R$ 29,90.";
+            } else if (s.plan === 'combo-dupla') {
+                promoNote = "OBS: Promoção de Inauguração aplicada. A 1ª Mensalidade terá o valor reduzido de R$ 59,90.";
+            } else if (s.plan === 'combo-familia') {
+                promoNote = "OBS: Promoção de Inauguração aplicada. A 1ª Mensalidade terá o valor reduzido de R$ 89,90.";
+            }
+
+            let dobDate;
+            if (s.dob && s.dob.includes('T')) dobDate = new Date(s.dob);
+            else if (s.dob) { const [y, m, d] = s.dob.split('-').map(Number); dobDate = new Date(y, m - 1, d); }
+            else dobDate = new Date();
+            const formattedDob = `${dobDate.getDate().toString().padStart(2,'0')}/${(dobDate.getMonth()+1).toString().padStart(2,'0')}/${dobDate.getFullYear()}`;
+            
+            let displayName = 'NÃO INFORMADO';
+            if(s.plan) {
+                if(s.plan === 'combo-dupla') displayName = 'COMBO DUPLA (1 ADULTO + 1 INFANTIL) SEMESTRAL';
+                else if(s.plan === 'combo-casal') displayName = 'COMBO CASAL (2 ADULTOS) SEMESTRAL';
+                else if(s.plan === 'combo-familia') displayName = 'COMBO FAMÍLIA (3 PESSOAS) SEMESTRAL';
+                else if(s.plan === 'administracao') displayName = 'ADMINISTRAÇÃO (ISENTO)';
+                else if(s.plan === 'dependente') displayName = 'DEPENDENTE - COMBO FAMÍLIA';
+                else displayName = s.plan.replace('infantil-', 'Infantil ').replace('adulto-', 'Jovem/Adulto ').replace('mensal', 'Mensal').replace('trimestral', 'Trimestral').replace('semestral', 'Semestral').toUpperCase();
+            }
+            
+            document.getElementById('printContratante').innerText = s.guardian || s.titularName || s.name;
+            document.getElementById('printCPF').innerText = s.cpf || "Não informado";
+            document.getElementById('printAddress').innerText = s.address || "Não informado";
+            document.getElementById('printPhone').innerText = s.phone || "Não informado";
+            document.getElementById('printEmail').innerText = s.email || "Não informado";
+            
+            document.getElementById('printStudent').innerText = s.name;
+            document.getElementById('printDob').innerText = formattedDob;
+            
+            let beltInfo = "";
+            if(s.belt && !s.belt.includes("Branca - 0º Grau") && !s.belt.includes("Iniciante")) {
+                beltInfo = `| Graduação Atual: ${s.belt}`;
+            }
+            document.getElementById('printBeltInfo').innerText = beltInfo;
+
+            document.getElementById('printPlan').innerText = displayName;
+            document.getElementById('printPrice').innerText = price;
+            document.getElementById('printPromoNote').innerText = promoNote;
+            document.getElementById('printPaymentMethod').innerText = s.paymentMethod || "DEFINIDO NO ATO DA MATRÍCULA";
+            
+            const regDate = s.registrationDate ? new Date(s.registrationDate) : new Date();
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', options);
+            document.getElementById('printPaymentDay').innerText = regDate.getDate();
+
+            const isCombo = s.plan && s.plan.includes('combo');
+            const isFidelity = s.plan && (s.plan.includes('semestral') || s.plan.includes('trimestral') || isCombo);
+
+            let clausesHtml = `<p><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
+
+            clausesHtml += `<p><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong class="uppercase underline">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong class="bg-yellow-100 px-1">${price}</strong>. O vencimento ocorrerá todo dia <strong>${regDate.getDate()}</strong> de cada mês corrente.</p>`;
+
+            if (promoNote) {
+                 clausesHtml += `<p class="italic text-xs font-bold mb-3">${promoNote}</p>`;
+            }
+
+            let clauseNum = 3;
+
+            if (isFidelity) {
+                clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade. O cancelamento exige aviso prévio de 30 dias por escrito. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>`;
+                clauseNum++;
+            } else {
+                clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO:</strong> O cancelamento da prestação de serviços exige aviso prévio de 30 (trinta) dias por escrito à secretaria da academia. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.</p>`;
+                clauseNum++;
+            }
+
+            if (isCombo) {
+                clausesHtml += `<div class="bg-blue-50 p-2 border-l-2 border-blue-400"><p><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DO PLANO FAMÍLIA (COMBO):</strong> Por se tratar de um pacote promocional vinculado a um grupo familiar:<br>
+                a) O pagamento deve ser realizado de forma única e integral pelo CONTRATANTE (Titular).<br>
+                b) O cancelamento, trancamento ou inadimplência de UM dos beneficiários não dá direito a reembolso proporcional.<br>
+                c) Em caso de saída de um membro do Combo, o plano dos membros restantes será automaticamente revertido para a tabela de preços individuais vigente no mês do evento.</p></div>`;
+                clauseNum++;
+            }
+
+            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA INADIMPLÊNCIA:</strong> O atraso superior a 30 dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e cobrança dos valores devidos acrescidos de multa de 2% e juros de mora legais.</p>`;
+            clauseNum++;
+
+            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA SAÚDE E APTIDÃO FÍSICA:</strong> O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate, isentando a CONTRATADA de qualquer responsabilidade sobre moléstias pré-existentes não declaradas formalmente no ato desta matrícula.</p>`;
+            clauseNum++;
+
+            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DE CONDUTA (DOJO KUN):</strong> É obrigatório o uso de uniforme (Kimono) estipulado pela academia, limpo e conservado. Atos de indisciplina, desrespeito à hierarquia, agressão fora do contexto do treino esportivo ou falta de higiene poderão acarretar na suspensão ou rescisão unilateral deste contrato por parte da CONTRATADA, sem devolução de valores.</p>`;
+            clauseNum++;
+
+            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO DIREITO DE IMAGEM:</strong> O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da academia ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.</p>`;
+
+            document.getElementById('print-clauses-container').innerHTML = clausesHtml;
+
+            let dependentsHtml = '';
+            if (isCombo) {
+                let deps = [];
+                if (window.titularData && window.titularData.dependentsList) {
+                    deps = window.titularData.dependentsList;
+                }
+                
+                if (deps.length > 0) {
+                    dependentsHtml = `<p class="mt-2 text-sm"><strong>DEPENDENTES VINCULADOS AO PLANO:</strong></p><ul class="list-disc pl-5 mt-1 text-xs">`;
+                    deps.forEach(d => {
+                        let dDob = '--/--/----';
+                        if(d.dob) { const [y, m, day] = d.dob.split('-').map(Number); dDob = `${day.toString().padStart(2,'0')}/${(m).toString().padStart(2,'0')}/${y}`; }
+                        dependentsHtml += `<li><strong>${d.name}</strong> - Nasc: ${dDob} | Parentesco: ${d.parentesco || '-'} | Graduação: ${d.belt || 'Branca'}</li>`;
+                    });
+                    dependentsHtml += `</ul>`;
+                } else {
+                    dependentsHtml = `<p class="mt-2 text-xs italic text-gray-500">Nenhum dependente vinculado no sistema no momento.</p>`;
+                }
+            }
+            document.getElementById('printDependentsBlock').innerHTML = dependentsHtml;
+
+            const signName = s.guardian || s.titularName || s.name;
+            document.getElementById('printSignatureName').innerText = signName;
+        };
+
+        window.printStudentContract = () => {
+            if (window.titularData) {
+                window.populateContractDOM(window.titularData);
+                document.getElementById('printable-contract').classList.remove('hidden');
+                document.getElementById('main-ui').classList.add('hidden');
+                
+                setTimeout(() => {
+                    window.print();
+                    document.getElementById('printable-contract').classList.add('hidden');
+                    document.getElementById('main-ui').classList.remove('hidden');
+                }, 100);
+            } else {
+                alert("Erro ao gerar contrato.");
+            }
+        };
+
+        function renderBeltSVG(beltStr) {
+            if (!beltStr) return '';
+            const colors = { 'Branca': '#ffffff', 'Cinza': '#9ca3af', 'Amarela': '#fbbf24', 'Laranja': '#f97316', 'Verde': '#10b981', 'Azul': '#3b82f6', 'Roxa': '#8b5cf6', 'Marrom': '#78350f', 'Preta': '#000000' };
+            let color = '#ffffff'; let degree = 0; let colorName = 'Branca';
+            for (const [name, hex] of Object.entries(colors)) { if (beltStr.includes(name)) { color = hex; colorName = name; break; } }
+            const degreeMatch = beltStr.match(/(\d)º/); if (degreeMatch) degree = parseInt(degreeMatch[1]);
+            const width = 300; const height = 40; const tipWidth = 60; const stripeWidth = 8; const stripeGap = 6;
+            let stripesSVG = ''; const barColor = (colorName === 'Preta') ? '#dc2626' : '#000000'; const stripeColor = '#ffffff';
+            for (let i = 0; i < degree; i++) { const x = width - 10 - (i * (stripeWidth + stripeGap)) - stripeWidth; stripesSVG += `<rect x="${x}" y="0" width="${stripeWidth}" height="${height}" fill="${stripeColor}" />`; }
+            const borderStyle = colorName === 'Branca' ? 'stroke="#e5e7eb" stroke-width="2"' : '';
+            return `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"><rect x="0" y="0" width="${width}" height="${height}" fill="${color}" ${borderStyle} /><rect x="${width - tipWidth}" y="0" width="${tipWidth}" height="${height}" fill="${barColor}" />${stripesSVG}</svg>`;
+        }
+    </script>
+</body>
+</html>
