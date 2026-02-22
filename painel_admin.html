@@ -1475,12 +1475,13 @@
                 let avatarHtml = s.photoBase64 ? `<img src="${s.photoBase64}" class="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200">` : `<div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 mr-3 font-bold text-xs">${(s.name || '?').charAt(0).toUpperCase()}</div>`;
                 
                 const age = getAge(s.dob);
-                // ADICIONADO: cursor-pointer, hover:text-brand-red e onclick no nome do aluno para abrir os detalhes
+                
                 let nameDisplay = `<div onclick="viewStudentDetails('${s.id}')" class="font-medium text-gray-900 flex items-center cursor-pointer hover:text-brand-red transition" title="Ver Detalhes do Aluno">${s.name || 'Sem Nome'}`;
                 if ((window.currentTab === 'adults' || window.currentTab === 'all') && age !== null && age < 18 && !isStudentKid(s)) nameDisplay += `<span class="ml-2 text-[10px] text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200 font-bold" title="Menor de idade em turma adulta">Menor (${age})</span>`;
                 
                 if (safePlan.includes('combo')) nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase">Combo</span>`;
                 if (safePlan === 'administracao') nameDisplay += `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-bold uppercase">Admin</span>`;
+                if (safePlan === 'dependente') nameDisplay += `<span class="ml-2 text-[10px] text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded border border-indigo-200 font-bold uppercase">Dependente</span>`;
                 
                 nameDisplay += `</div>`;
                 
@@ -1723,12 +1724,17 @@
         window.printIndividualContract = (id) => {
             const s = window.students.find(st => st.id === id);
             if (!s) { alert("Aluno não encontrado."); return; }
+            
+            const contractContainer = document.getElementById('printable-contract');
+            contractContainer.classList.remove('hidden'); 
+            
             window.populateContractDOM(s);
             document.body.classList.remove('printing-report'); 
             
             setTimeout(() => {
                 window.print();
-            }, 100);
+                contractContainer.classList.add('hidden'); 
+            }, 500);
         };
 
         window.populateContractDOM = function(s) {
@@ -1782,19 +1788,6 @@
                 else displayName = s.plan.replace('infantil-', 'Infantil ').replace('adulto-', 'Jovem/Adulto ').replace('mensal', 'Mensal').replace('trimestral', 'Trimestral').replace('semestral', 'Semestral').toUpperCase();
             }
             
-            document.getElementById('printPlan').innerText = displayName;
-            document.getElementById('printPrice').innerText = price;
-            
-            const printPromoNoteEl = document.getElementById('printPromoNote');
-            if(printPromoNoteEl) {
-                printPromoNoteEl.innerText = promoNote;
-            }
-            
-            const printMethod = document.getElementById('printPaymentMethod');
-            if(printMethod) {
-                printMethod.innerText = s.paymentMethod || "DEFINIDO NO ATO DA MATRÍCULA";
-            }
-            
             let beltInfo = "";
             if(s.belt && !s.belt.includes("Branca - 0º Grau") && !s.belt.includes("Iniciante")) {
                 beltInfo = `| Graduação Atual: ${s.belt}`;
@@ -1804,13 +1797,8 @@
             const regDate = s.registrationDate ? new Date(s.registrationDate) : new Date();
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
             document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', options);
-            
-            const printPaymentDayEl = document.getElementById('printPaymentDay');
-            if(printPaymentDayEl) {
-                printPaymentDayEl.innerText = regDate.getDate();
-            }
 
-            // LOGICA PARA INJETAR CLAUSULAS DINAMICAS E NUMERADAS
+            // LÓGICA PARA INJETAR CLÁUSULAS DINÂMICAS E NUMERADAS
             const isCombo = s.plan && s.plan.includes('combo');
             const isFidelity = s.plan && (s.plan.includes('semestral') || s.plan.includes('trimestral') || isCombo);
             const safePaymentMethod = s.paymentMethod || "DEFINIDO NO ATO DA MATRÍCULA";
@@ -1852,10 +1840,7 @@
 
             clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO DIREITO DE IMAGEM:</strong> O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da academia ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.</p>`;
 
-            const clausesContainer = document.getElementById('print-clauses-container');
-            if(clausesContainer) {
-                clausesContainer.innerHTML = clausesHtml;
-            }
+            document.getElementById('print-clauses-container').innerHTML = clausesHtml;
 
             // Dependents Block
             let dependentsHtml = '';
@@ -1877,18 +1862,11 @@
                     dependentsHtml = `<p class="mt-2 text-xs italic text-gray-500">Nenhum dependente vinculado no sistema no momento.</p>`;
                 }
             }
-            
-            const depBlock = document.getElementById('printDependentsBlock');
-            if (depBlock) {
-                depBlock.innerHTML = dependentsHtml;
-            }
+            document.getElementById('printDependentsBlock').innerHTML = dependentsHtml;
 
             // SIGNATURE NAME
             const signName = s.guardian || s.titularName || s.name;
-            const printSig = document.getElementById('printSignatureName');
-            if(printSig) {
-                printSig.innerText = signName;
-            }
+            document.getElementById('printSignatureName').innerText = signName;
         };
 
         window.viewStudentDetails = (id) => {
