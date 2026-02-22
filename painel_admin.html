@@ -30,14 +30,14 @@
     </script>
 
     <style>
-        /* CSS OTIMIZADO PARA IMPRESSÃO - NORMAS ABNT E MULTIPAGINAS */
+        /* CSS OTIMIZADO PARA IMPRESSÃO - NORMAS ABNT E MÚLTIPLAS PÁGINAS */
         @media print {
             @page { 
-                margin: 3cm 2cm 2cm 3cm; /* ABNT */
+                margin: 2.5cm; /* Margem segura ABNT */
                 size: A4 portrait; 
             }
             
-            /* Libera o container para o motor de impressão criar novas páginas */
+            /* Destrava a rolagem do site para permitir a quebra de página */
             body, html { 
                 height: auto !important; 
                 min-height: auto !important;
@@ -45,76 +45,76 @@
                 background: white !important; 
             }
             
-            /* Ocultar a Interface do Sistema */
-            body * { 
-                visibility: hidden; 
+            /* Ocultar a Interface do Sistema e Modais por padrão */
+            body > * { 
+                display: none !important; 
             }
 
             /* ===== MODO CONTRATO ===== */
-            body:not(.printing-report) #printable-contract,
-            body:not(.printing-report) #printable-contract * {
-                visibility: visible;
-            }
             body:not(.printing-report) #printable-contract {
-                position: relative !important; 
                 display: block !important;
-                left: auto; top: auto; width: 100%; margin: 0; padding: 0;
+                position: relative !important; 
+                width: 100% !important; 
+                margin: 0 !important; 
+                padding: 0 !important;
+                visibility: visible !important;
+            }
+            body:not(.printing-report) #printable-contract * {
+                visibility: visible !important;
             }
 
             /* ===== MODO RELATÓRIO ===== */
-            body.printing-report #report-container,
-            body.printing-report #report-container * {
-                visibility: visible;
-            }
             body.printing-report #report-container {
-                position: relative !important;
                 display: block !important;
-                left: auto; top: auto; width: 100%; margin: 0; padding: 0;
+                position: relative !important;
+                width: 100% !important; 
+                margin: 0 !important; 
+                padding: 0 !important;
+                visibility: visible !important;
             }
-            
-            /* Esconder componentes da UI que podem vazar */
-            #admin-dashboard, aside, header, nav, .no-print { 
-                display: none !important; 
+            body.printing-report #report-container * {
+                visibility: visible !important;
             }
             
             /* Tipografia ABNT para Textos e Cláusulas */
             p { 
                 text-align: justify; 
-                line-height: 1.5; 
+                line-height: 1.6; 
                 orphans: 3; 
                 widows: 3; 
                 margin-bottom: 12px;
             }
-            h1, h2, h3 { 
+            h1, h2, h3, h4 { 
                 page-break-after: avoid; 
             }
-            .signatures-section { 
+            .page-break-inside-avoid { 
                 page-break-inside: avoid; 
+                break-inside: avoid;
             }
 
             /* Estilização das Tabelas no Relatório */
-            body.printing-report table { 
+            table { 
                 width: 100%; 
                 border-collapse: collapse; 
                 font-size: 10pt; 
                 margin-top: 15px; 
                 page-break-inside: auto; 
             }
-            body.printing-report tr { page-break-inside: avoid; page-break-after: auto; }
-            body.printing-report th, body.printing-report td { 
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            th, td { 
                 border: 1px solid #ddd; 
                 padding: 8px; 
                 text-align: left; 
                 color: black; 
             }
-            body.printing-report th { 
+            th { 
                 background-color: #f3f3f3 !important; 
                 font-weight: bold; 
                 border-bottom: 2px solid #000; 
                 -webkit-print-color-adjust: exact; 
                 print-color-adjust: exact; 
             }
-            body.printing-report tfoot th { 
+            tfoot th { 
                 background-color: #eee !important; 
                 border-top: 2px solid #000; 
                 -webkit-print-color-adjust: exact; 
@@ -172,7 +172,7 @@
 
         <!-- Content Area -->
         <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6 relative">
-            
+
             <!-- VIEW: ALUNOS (DEFAULT) -->
             <div id="view-students">
                 <!-- Stats Row -->
@@ -437,13 +437,16 @@
     </div>
 
     <!-- PRINTABLE CONTAINERS (FORA DO MAIN UI PARA NÃO CORTAR PÁGINAS) -->
+    
+    <!-- Relatórios -->
     <div id="report-container" class="hidden bg-white text-black p-4 font-sans absolute inset-0 z-50">
         <!-- Preenchido via JS -->
     </div>
 
     <!-- Printable Contract (Hidden in Web, Visible in Print) -->
-    <div id="printable-contract" class="hidden bg-white text-black p-10 font-serif text-[11pt] leading-relaxed">
+    <div id="printable-contract" class="hidden bg-white text-black p-10 font-serif text-[11pt] leading-relaxed absolute inset-0 z-50">
         <div class="header-section text-center mb-6 border-b-2 border-black pb-4">
+            <img src="https://i.ibb.co/spgfD2Nd/1771300330359.png" alt="Logo" class="h-16 mx-auto mb-2" style="filter: grayscale(100%);">
             <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
             <p class="text-xs">CNPJ: 00.000.000/0001-00</p>
             <p class="text-xs">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, CEP 66635-110</p>
@@ -933,45 +936,6 @@
             <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3">
                 <button onclick="closeAdminRegisterModal()" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100 font-bold text-sm">Cancelar</button>
                 <button onclick="saveAdminNewStudent()" class="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-bold text-sm shadow-md">Cadastrar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Printable Contract (Hidden in Web, Visible in Print) -->
-    <div id="printable-contract" class="hidden bg-white text-black p-10 font-serif text-[11pt] leading-relaxed">
-        <div class="header-section text-center mb-6 border-b-2 border-black pb-4">
-            <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
-            <p class="text-xs">CNPJ: 00.000.000/0001-00</p>
-            <p class="text-xs">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, CEP 66635-110</p>
-            <p class="text-xs">Tel: (91) 99819-2610 | Email: contato@tanqueteambjj.com</p>
-        </div>
-        <h2 class="text-center font-bold text-lg mb-6 uppercase underline tracking-wide">Contrato de Prestação de Serviços Esportivos</h2>
-        
-        <div class="parties-section mb-6 text-sm text-justify space-y-2 bg-gray-50 p-4 border border-gray-200 rounded">
-            <p><strong>1. CONTRATADA:</strong> <span class="uppercase font-bold">Tanque Team Academia de Artes Marciais LTDA</span>, inscrita no CNPJ sob o nº 00.000.000/0001-00.</p>
-            <p><strong>2. CONTRATANTE (Responsável Financeiro):</strong> <span id="printContratante" class="font-bold uppercase"></span>, inscrito(a) no CPF sob o nº <span id="printCPF" class="font-mono font-bold"></span>, residente e domiciliado(a) em <span id="printAddress" class="uppercase"></span>, Telefone: <span id="printPhone"></span>, E-mail: <span id="printEmail"></span>.</p>
-            <p><strong>3. ALUNO(A) PRINCIPAL:</strong> <span id="printStudent" class="font-bold uppercase"></span>, nascido(a) em <span id="printDob" class="font-mono"></span>. <span id="printBeltInfo"></span></p>
-            <div id="printDependentsBlock" class="mt-2 pl-4 border-l-2 border-gray-400"></div>
-        </div>
-
-        <div id="print-clauses-container" class="clauses-section text-sm text-justify mb-6 space-y-3">
-            <!-- JS Injected Clauses -->
-        </div>
-
-        <div class="signatures-section mt-16 page-break-inside-avoid">
-            <p class="mb-12 text-right text-sm">Belém-PA, <span id="printContractDate"></span>.</p>
-            <div class="flex justify-between gap-12 mt-16 px-8">
-                <div class="w-1/2 text-center">
-                    <div class="border-t border-black pt-2">
-                        <p class="font-bold uppercase text-xs tracking-wider">Tanque Team BJJ (CONTRATADA)</p>
-                    </div>
-                </div>
-                <div class="w-1/2 text-center">
-                    <div class="border-t border-black pt-2">
-                        <p class="font-bold text-sm uppercase" id="printSignatureName"></p>
-                        <p class="font-bold uppercase text-[10px] text-gray-600 tracking-wider">CONTRATANTE / RESPONSÁVEL FINANCEIRO</p>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -1511,6 +1475,7 @@
                 let avatarHtml = s.photoBase64 ? `<img src="${s.photoBase64}" class="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200">` : `<div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 mr-3 font-bold text-xs">${(s.name || '?').charAt(0).toUpperCase()}</div>`;
                 
                 const age = getAge(s.dob);
+                // ADICIONADO: cursor-pointer, hover:text-brand-red e onclick no nome do aluno para abrir os detalhes
                 let nameDisplay = `<div onclick="viewStudentDetails('${s.id}')" class="font-medium text-gray-900 flex items-center cursor-pointer hover:text-brand-red transition" title="Ver Detalhes do Aluno">${s.name || 'Sem Nome'}`;
                 if ((window.currentTab === 'adults' || window.currentTab === 'all') && age !== null && age < 18 && !isStudentKid(s)) nameDisplay += `<span class="ml-2 text-[10px] text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200 font-bold" title="Menor de idade em turma adulta">Menor (${age})</span>`;
                 
@@ -1761,7 +1726,6 @@
             window.populateContractDOM(s);
             document.body.classList.remove('printing-report'); 
             
-            // Garantir que a UI seja escondida a tempo antes de imprimir
             setTimeout(() => {
                 window.print();
             }, 100);
@@ -1818,6 +1782,19 @@
                 else displayName = s.plan.replace('infantil-', 'Infantil ').replace('adulto-', 'Jovem/Adulto ').replace('mensal', 'Mensal').replace('trimestral', 'Trimestral').replace('semestral', 'Semestral').toUpperCase();
             }
             
+            document.getElementById('printPlan').innerText = displayName;
+            document.getElementById('printPrice').innerText = price;
+            
+            const printPromoNoteEl = document.getElementById('printPromoNote');
+            if(printPromoNoteEl) {
+                printPromoNoteEl.innerText = promoNote;
+            }
+            
+            const printMethod = document.getElementById('printPaymentMethod');
+            if(printMethod) {
+                printMethod.innerText = s.paymentMethod || "DEFINIDO NO ATO DA MATRÍCULA";
+            }
+            
             let beltInfo = "";
             if(s.belt && !s.belt.includes("Branca - 0º Grau") && !s.belt.includes("Iniciante")) {
                 beltInfo = `| Graduação Atual: ${s.belt}`;
@@ -1827,6 +1804,11 @@
             const regDate = s.registrationDate ? new Date(s.registrationDate) : new Date();
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
             document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', options);
+            
+            const printPaymentDayEl = document.getElementById('printPaymentDay');
+            if(printPaymentDayEl) {
+                printPaymentDayEl.innerText = regDate.getDate();
+            }
 
             // LOGICA PARA INJETAR CLAUSULAS DINAMICAS E NUMERADAS
             const isCombo = s.plan && s.plan.includes('combo');
@@ -1844,7 +1826,7 @@
             let clauseNum = 3;
 
             if (isFidelity) {
-                clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade. O cancelamento exige aviso prévio de 30 dias por escrito. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>`;
+                clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade correspondente à sua nomenclatura (Trimestral ou Semestral). O cancelamento exige aviso prévio de 30 dias por escrito. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>`;
                 clauseNum++;
             } else {
                 clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO:</strong> O cancelamento da prestação de serviços exige aviso prévio de 30 (trinta) dias por escrito à secretaria da academia. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.</p>`;
@@ -1870,7 +1852,10 @@
 
             clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO DIREITO DE IMAGEM:</strong> O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da academia ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.</p>`;
 
-            document.getElementById('print-clauses-container').innerHTML = clausesHtml;
+            const clausesContainer = document.getElementById('print-clauses-container');
+            if(clausesContainer) {
+                clausesContainer.innerHTML = clausesHtml;
+            }
 
             // Dependents Block
             let dependentsHtml = '';
@@ -1892,11 +1877,18 @@
                     dependentsHtml = `<p class="mt-2 text-xs italic text-gray-500">Nenhum dependente vinculado no sistema no momento.</p>`;
                 }
             }
-            document.getElementById('printDependentsBlock').innerHTML = dependentsHtml;
+            
+            const depBlock = document.getElementById('printDependentsBlock');
+            if (depBlock) {
+                depBlock.innerHTML = dependentsHtml;
+            }
 
             // SIGNATURE NAME
             const signName = s.guardian || s.titularName || s.name;
-            document.getElementById('printSignatureName').innerText = signName;
+            const printSig = document.getElementById('printSignatureName');
+            if(printSig) {
+                printSig.innerText = signName;
+            }
         };
 
         window.viewStudentDetails = (id) => {
