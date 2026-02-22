@@ -1771,7 +1771,14 @@
             const formattedDob = `${dobDate.getDate().toString().padStart(2,'0')}/${(dobDate.getMonth()+1).toString().padStart(2,'0')}/${dobDate.getFullYear()}`;
             
             document.getElementById('printContratante').innerText = s.guardian || s.titularName || s.name;
-            document.getElementById('printStudent').innerText = s.name;
+            
+            let relText = "";
+            if ((s.guardian && s.guardian !== s.name) || (s.titularName && s.titularName !== s.name)) {
+                let kinship = s.guardianKinship || s.parentesco || "Dependente";
+                relText = ` (Parentesco: ${kinship})`;
+            }
+            document.getElementById('printStudent').innerText = s.name + relText;
+            
             document.getElementById('printDob').innerText = formattedDob;
             document.getElementById('printCPF').innerText = s.cpf || "Não informado";
             document.getElementById('printEmail').innerText = s.email || "Não informado";
@@ -1798,14 +1805,13 @@
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
             document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', options);
 
-            // LÓGICA PARA INJETAR CLÁUSULAS DINÂMICAS E NUMERADAS
+            // LOGICA PARA INJETAR CLAUSULAS DINAMICAS E NUMERADAS
             const isCombo = s.plan && s.plan.includes('combo');
             const isFidelity = s.plan && (s.plan.includes('semestral') || s.plan.includes('trimestral') || isCombo);
-            const safePaymentMethod = s.paymentMethod || "DEFINIDO NO ATO DA MATRÍCULA";
 
             let clausesHtml = `<p><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
 
-            clausesHtml += `<p><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong class="uppercase underline">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong class="bg-yellow-100 px-1">${price}</strong>. O vencimento ocorrerá todo dia <strong>${regDate.getDate()}</strong> de cada mês corrente. Via de pagamento acordada: <strong>${safePaymentMethod}</strong>.</p>`;
+            clausesHtml += `<p><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong class="uppercase underline">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong class="bg-yellow-100 px-1">${price}</strong>. O vencimento ocorrerá todo dia <strong>${regDate.getDate()}</strong> de cada mês corrente.</p>`;
 
             if (promoNote) {
                  clausesHtml += `<p class="italic text-xs font-bold mb-3">${promoNote}</p>`;
