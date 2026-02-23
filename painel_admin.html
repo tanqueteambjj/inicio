@@ -172,6 +172,11 @@
 
         <!-- Content Area -->
         <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6 relative">
+            
+            <!-- PRINTABLE REPORT CONTAINER -->
+            <div id="report-container" class="hidden bg-white text-black p-4 font-sans absolute inset-0 z-50">
+                <!-- Preenchido via JS -->
+            </div>
 
             <!-- VIEW: ALUNOS (DEFAULT) -->
             <div id="view-students">
@@ -450,7 +455,7 @@
             <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
             <p class="text-xs">CNPJ: 00.000.000/0001-00</p>
             <p class="text-xs">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, CEP 66635-110</p>
-            <p class="text-xs">Tel: (91) 99819-2610 | Email: contato@tanqueteambjj.com</p>
+            <p class="text-xs">Tel: (91) 99819-2610 | Email: administrativo@tanqueteambjj.com.br</p>
         </div>
         <h2 class="text-center font-bold text-lg mb-6 uppercase underline tracking-wide">Contrato de Prestação de Serviços Esportivos</h2>
         
@@ -1030,12 +1035,12 @@
         // Auth Check FIRST
         const session = localStorage.getItem('tanque_user_session');
         if (!session) {
-            window.location.href = "login_aluno.html";
+            window.location.href = "login.html";
         } else {
             const user = JSON.parse(session);
             if(user.role !== 'admin') {
                 alert("Acesso negado.");
-                window.location.href = "login_aluno.html";
+                window.location.href = "login.html";
             } else {
                 try {
                     app = initializeApp(firebaseConfig);
@@ -1069,7 +1074,7 @@
 
         window.handleLogout = () => {
             localStorage.removeItem('tanque_user_session');
-            window.location.href = "login_aluno.html";
+            window.location.href = "login.html";
         }
 
         function getAge(dobStr) {
@@ -1527,7 +1532,6 @@
                 
                 if (safePlan.includes('combo')) nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase">Combo</span>`;
                 if (safePlan === 'administracao') nameDisplay += `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-bold uppercase">Admin</span>`;
-                if (safePlan === 'dependente') nameDisplay += `<span class="ml-2 text-[10px] text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded border border-indigo-200 font-bold uppercase">Dependente</span>`;
                 
                 nameDisplay += `</div>`;
                 
@@ -1770,17 +1774,12 @@
         window.printIndividualContract = (id) => {
             const s = window.students.find(st => st.id === id);
             if (!s) { alert("Aluno não encontrado."); return; }
-            
-            const contractContainer = document.getElementById('printable-contract');
-            contractContainer.classList.remove('hidden'); 
-            
             window.populateContractDOM(s);
             document.body.classList.remove('printing-report'); 
             
             setTimeout(() => {
                 window.print();
-                contractContainer.classList.add('hidden'); 
-            }, 500);
+            }, 100);
         };
 
         window.populateContractDOM = function(s) {
@@ -1851,9 +1850,10 @@
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
             document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', options);
 
-            // LOGICA PARA INJETAR CLAUSULAS DINAMICAS E NUMERADAS
+            // LÓGICA PARA INJETAR CLÁUSULAS DINÂMICAS E NUMERADAS
             const isCombo = s.plan && s.plan.includes('combo');
             const isFidelity = s.plan && (s.plan.includes('semestral') || s.plan.includes('trimestral') || isCombo);
+            const safePaymentMethod = s.paymentMethod || "DEFINIDO NO ATO DA MATRÍCULA";
 
             let clausesHtml = `<p><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
 
@@ -1959,7 +1959,15 @@
             statusEl.className = s.paymentStatus === 'Em dia' ? 'text-sm font-bold mt-1 text-green-600' : 'text-sm font-bold mt-1 text-red-600';
 
             document.getElementById('detail-cpf').innerText = s.cpf || '-';
-            document.getElementById('detail-phone').innerText = s.phone || '-';
+            
+            const phoneDisplay = document.getElementById('detail-phone');
+            if (s.phone && s.phone.trim() !== "") {
+                const cleanPhone = s.phone.replace(/\D/g, '');
+                phoneDisplay.innerHTML = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold transition inline-flex items-center gap-1" title="Chamar no WhatsApp"><i class="fa-brands fa-whatsapp text-lg"></i> ${s.phone}</a>`;
+            } else {
+                phoneDisplay.innerText = '-';
+            }
+            
             document.getElementById('detail-email').innerText = s.email || '-';
             document.getElementById('detail-address').innerText = s.address || '-';
             document.getElementById('detail-login').innerText = s.studentLogin || 'Não configurado';
@@ -2183,7 +2191,7 @@
                         <p><strong>Senha:</strong> ${pass}</p>
                     </div>
                     <p>Para acessar o painel e acompanhar sua evolução, clique no link abaixo:</p>
-                    <p><a href="https://tanqueteambjj.github.io/inicio/login_aluno.html" style="color: #D90429; font-weight: bold; text-decoration: underline;">https://tanqueteambjj.github.io/inicio/login_aluno.html</a></p>
+                    <p><a href="http://www.tanqueteambjj.com.br/login.html" style="color: #D90429; font-weight: bold; text-decoration: underline;">http://www.tanqueteambjj.com.br/login.html</a></p>
                     <p>Por favor, altere sua senha no primeiro acesso se desejar.</p>
                     <p>Atenciosamente,<br>Equipe Tanque Team</p>
                 </div>
@@ -2217,7 +2225,7 @@
                         <p><strong>Senha:</strong> ${pass}</p>
                     </div>
                     <p>Para acessar o painel e acompanhar sua evolução, clique no link abaixo:</p>
-                    <p><a href="https://tanqueteambjj.github.io/inicio/login_aluno.html" style="color: #D90429; font-weight: bold; text-decoration: underline;">https://tanqueteambjj.github.io/inicio/login_aluno.html</a></p>
+                    <p><a href="http://www.tanqueteambjj.com.br/login.html" style="color: #D90429; font-weight: bold; text-decoration: underline;">http://www.tanqueteambjj.com.br/login.html</a></p>
                     <p>Por favor, altere sua senha no primeiro acesso se desejar.</p>
                     <p>Atenciosamente,<br>Equipe Tanque Team</p>
                 </div>
