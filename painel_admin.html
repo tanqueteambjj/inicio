@@ -1622,40 +1622,20 @@
                 ${window.currentTab === 'kids' || window.currentTab === 'all' ? '<th class="px-6 py-3 border-b">Responsável/Titular</th>' : ''}
                 <th class="px-6 py-3 border-b">Faixa</th>
                 <th class="px-6 py-3 border-b">Frequência</th>
-                <th class="px-6 py-3 border-b text-center">Status</th>
                 <th class="px-6 py-3 border-b text-center">Acesso</th>
                 <th class="px-6 py-3 border-b text-center">Ações</th>
             `;
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${window.currentTab === 'kids' || window.currentTab === 'all' ? 8 : 7}" class="px-6 py-8 text-center text-gray-400 italic">Nenhum aluno encontrado.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${window.currentTab === 'kids' || window.currentTab === 'all' ? 7 : 6}" class="px-6 py-8 text-center text-gray-400 italic">Nenhum aluno encontrado.</td></tr>`;
                 return;
             }
 
             filtered.forEach(s => {
                 const attendanceCount = s.attendance ? s.attendance.length : 0;
                 const hasLogin = (s.studentLogin && s.studentPassword) ? '<span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-lock"></i> OK</span>' : '<span class="text-gray-400 text-xs italic">--</span>';
-                const today = new Date();
-                const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
                 const safePlan = String(s.plan || '').toLowerCase();
                 
-                let statusBadge = '';
-                if (safePlan === 'dependente') {
-                    statusBadge = '<span class="px-2 py-1 rounded text-xs font-bold bg-purple-100 text-purple-800">DEPENDENTE</span>';
-                } else if (s.paymentStatus === 'Isento' || safePlan === 'administracao') {
-                    statusBadge = '<span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">Isento</span>';
-                } else {
-                    const diffTime = targetDate - today;
-                    const diffDays = isNaN(diffTime) ? 0 : Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    if (diffDays < 0 && s.paymentStatus !== 'Em dia') {
-                         statusBadge = s.paymentStatus === 'Pendente' ? '<span class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>' : '<span class="px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-800">Em dia</span>';
-                    } else if (diffDays <= 7 && diffDays >= 0) {
-                        statusBadge = '<span class="px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800">Expirando</span>';
-                    } else {
-                        statusBadge = `<span class="px-2 py-1 rounded text-xs font-bold ${s.paymentStatus === 'Em dia' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${s.paymentStatus || 'Pendente'}</span>`;
-                    }
-                }
-
                 let avatarHtml = s.photoBase64 ? `<img src="${s.photoBase64}" class="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200">` : `<div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 mr-3 font-bold text-xs">${(s.name || '?').charAt(0).toUpperCase()}</div>`;
                 
                 const age = getAge(s.dob);
@@ -1663,8 +1643,9 @@
                 let nameDisplay = `<div onclick="viewStudentDetails('${s.id}')" class="font-medium text-gray-900 flex items-center cursor-pointer hover:text-brand-red transition" title="Ver Detalhes do Aluno">${s.name || 'Sem Nome'}`;
                 if ((window.currentTab === 'adults' || window.currentTab === 'all') && age !== null && age < 18 && !isStudentKid(s)) nameDisplay += `<span class="ml-2 text-[10px] text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200 font-bold" title="Menor de idade em turma adulta">Menor (${age})</span>`;
                 
-                if (safePlan.includes('combo')) nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase">Combo</span>`;
+                if (safePlan.includes('combo') && safePlan !== 'dependente') nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase">Combo</span>`;
                 if (safePlan === 'administracao') nameDisplay += `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-bold uppercase">Admin</span>`;
+                if (safePlan === 'dependente') nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase" title="Dependente"><i class="fa-solid fa-link"></i> DEP</span>`;
                 
                 nameDisplay += `</div>`;
                 
@@ -1695,7 +1676,6 @@
                     ${guardianCell}
                     <td class="px-6 py-4 align-middle"><div class="w-32 h-8 flex items-center">${beltSVG}</div><div class="text-xs text-gray-400 mt-1">${s.belt || 'Branca'}</div></td>
                     <td class="px-6 py-4 align-middle"><div class="flex items-center gap-2"><span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded w-16 text-center">${attendanceCount} aulas</span><button onclick="addPresence('${s.id}')" class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow" title="Adicionar Presença Hoje"><i class="fa-solid fa-plus text-xs"></i></button></div></td>
-                    <td class="px-6 py-4 align-middle text-center">${statusBadge}</td>
                     <td class="px-6 py-4 align-middle text-center">${hasLogin}</td>
                     <td class="px-6 py-4 align-middle text-center">
                         ${toggleBtn}
