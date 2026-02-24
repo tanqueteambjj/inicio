@@ -449,7 +449,7 @@
                     
                     <div id="admin-notices-list" class="space-y-4">
                         <!-- Preenchido via JS -->
-                        <div class="text-center py-8 text-gray-400 italic text-sm">A carregar avisos...</div>
+                        <div class="text-center py-8 text-gray-400 italic text-sm">Carregando avisos...</div>
                     </div>
                 </div>
             </div>
@@ -1011,10 +1011,11 @@
     <div id="notice-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-fade-in">
             <div class="bg-yellow-500 px-6 py-4 flex justify-between items-center text-white">
-                <h3 class="font-bold text-lg"><i class="fa-solid fa-bullhorn mr-2"></i> Publicar Aviso</h3>
+                <h3 class="font-bold text-lg" id="notice-modal-title"><i class="fa-solid fa-bullhorn mr-2"></i> Publicar Aviso</h3>
                 <button onclick="closeNoticeModal()" class="hover:text-yellow-200"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="p-6 space-y-4">
+                <input type="hidden" id="notice-id">
                 <div>
                     <label class="block text-xs font-bold text-gray-500 mb-1">Título do Aviso</label>
                     <input type="text" id="notice-title" class="w-full border rounded p-2 text-sm" placeholder="Ex: Feriado nesta Sexta-feira">
@@ -1034,7 +1035,7 @@
                 </div>
                 <div class="mt-6 flex justify-end gap-2">
                     <button onclick="closeNoticeModal()" class="px-4 py-2 border rounded text-sm hover:bg-gray-100">Cancelar</button>
-                    <button onclick="saveNotice()" class="px-4 py-2 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600 font-bold">Publicar</button>
+                    <button onclick="saveNotice()" class="px-4 py-2 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600 font-bold">Salvar Aviso</button>
                 </div>
             </div>
         </div>
@@ -1044,7 +1045,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
@@ -1911,11 +1912,10 @@
             // LÓGICA PARA INJETAR CLÁUSULAS DINÂMICAS E NUMERADAS
             const isCombo = s.plan && s.plan.includes('combo');
             const isFidelity = s.plan && (s.plan.includes('semestral') || s.plan.includes('trimestral') || isCombo);
-            const safePaymentMethod = s.paymentMethod || "DEFINIDO NO ATO DA MATRÍCULA";
 
             let clausesHtml = `<p><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
 
-            clausesHtml += `<p><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong class="uppercase underline">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong class="bg-yellow-100 px-1">${price}</strong>. O vencimento ocorrerá todo dia <strong>${regDate.getDate()}</strong> de cada mês corrente.</p>`;
+            clausesHtml += `<p><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong class="uppercase underline">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong class="bg-yellow-100 px-1">${price}</strong>. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.</p>`;
 
             if (promoNote) {
                  clausesHtml += `<p class="italic text-xs font-bold mb-3">${promoNote}</p>`;
@@ -1932,10 +1932,7 @@
             }
 
             if (isCombo) {
-                clausesHtml += `<div class="bg-blue-50 p-2 border-l-2 border-blue-400"><p><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DO PLANO FAMÍLIA (COMBO):</strong> Por se tratar de um pacote promocional vinculado a um grupo familiar:<br>
-                a) O pagamento deve ser realizado de forma única e integral pelo CONTRATANTE (Titular).<br>
-                b) O cancelamento, trancamento ou inadimplência de UM dos beneficiários não dá direito a reembolso proporcional.<br>
-                c) Em caso de saída de um membro do Combo, o plano dos membros restantes será automaticamente revertido para a tabela de preços individuais vigente no mês do evento.</p></div>`;
+                clausesHtml += `<div class="bg-blue-50 p-2 border-l-2 border-blue-400"><p><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DO PLANO FAMÍLIA (COMBO):</strong> O pagamento das mensalidades é unificado e de inteira responsabilidade do CONTRATANTE titular. O cancelamento ou afastamento de um dos beneficiários dependentes não dá direito a desconto ou reembolso parcial, e reverte automaticamente o plano dos membros restantes para o valor da tabela individual vigente.</p></div>`;
                 clauseNum++;
             }
 
@@ -2466,16 +2463,33 @@
                             <p class="text-sm text-gray-600 mt-1 whitespace-pre-wrap">${notice.text}</p>
                             <p class="text-[10px] text-gray-400 mt-2">Publicado em: ${d}</p>
                         </div>
-                        <button onclick="deleteNotice('${notice.id}')" class="text-red-400 hover:text-red-600 transition"><i class="fa-solid fa-trash"></i></button>
+                        <div class="flex gap-3">
+                            <button onclick="editNotice('${notice.id}')" class="text-blue-400 hover:text-blue-600 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteNotice('${notice.id}')" class="text-red-400 hover:text-red-600 transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                        </div>
                     </div>
                 `;
             });
         };
 
         window.openNoticeModal = () => {
+            document.getElementById('notice-id').value = '';
             document.getElementById('notice-title').value = '';
             document.getElementById('notice-text').value = '';
             document.getElementById('notice-type').value = 'info';
+            document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-bullhorn mr-2"></i> Publicar Aviso';
+            document.getElementById('notice-modal').classList.remove('hidden');
+            document.getElementById('notice-modal').classList.add('flex');
+        };
+
+        window.editNotice = (id) => {
+            const notice = window.noticesList.find(n => n.id === id);
+            if (!notice) return;
+            document.getElementById('notice-id').value = notice.id;
+            document.getElementById('notice-title').value = notice.title;
+            document.getElementById('notice-text').value = notice.text;
+            document.getElementById('notice-type').value = notice.type || 'info';
+            document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-pen mr-2"></i> Editar Aviso';
             document.getElementById('notice-modal').classList.remove('hidden');
             document.getElementById('notice-modal').classList.add('flex');
         };
@@ -2486,23 +2500,31 @@
         };
 
         window.saveNotice = async () => {
+            const id = document.getElementById('notice-id').value;
             const title = document.getElementById('notice-title').value;
             const text = document.getElementById('notice-text').value;
             const type = document.getElementById('notice-type').value;
             if(!title || !text) { alert("Preencha título e mensagem."); return; }
             
             try {
-                await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'), {
-                    title: title, text: text, type: type, date: new Date().toISOString()
-                });
+                if (id) {
+                    await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', id), {
+                        title: title, text: text, type: type
+                    });
+                    alert("Aviso atualizado com sucesso!");
+                } else {
+                    await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'), {
+                        title: title, text: text, type: type, date: new Date().toISOString()
+                    });
+                    alert("Aviso publicado com sucesso!");
+                }
                 window.closeNoticeModal();
                 window.loadNotices();
-                alert("Aviso publicado com sucesso!");
-            } catch(e) { alert("Erro ao publicar: " + e.message); }
+            } catch(e) { alert("Erro ao salvar aviso: " + e.message); }
         };
 
         window.deleteNotice = async (id) => {
-            if(!confirm("Excluir este aviso permanentemente?")) return;
+            if(!confirm("Tem certeza que deseja excluir este aviso permanentemente? Ele vai sumir do painel de todos os alunos.")) return;
             try {
                 await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', id));
                 window.loadNotices();
