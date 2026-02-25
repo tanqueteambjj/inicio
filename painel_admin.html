@@ -79,6 +79,8 @@
                 margin: 0 !important; 
                 padding: 0 !important;
                 visibility: visible !important;
+                background-color: white !important;
+                color: black !important;
             }
             body.printing-report #report-container * {
                 visibility: visible !important;
@@ -827,7 +829,7 @@
                             <th class="px-3 py-2">Data Pagto</th>
                             <th class="px-3 py-2">Valor</th>
                             <th class="px-3 py-2">Forma</th>
-                            <th class="px-3 py-2">Vencimento Gerado</th>
+                            <th class="px-3 py-2 text-right">Ação</th>
                         </tr>
                     </thead>
                     <tbody id="history-table-body" class="divide-y divide-gray-100">
@@ -2083,12 +2085,29 @@
                 sorted.forEach(p => {
                     const row = document.createElement('tr');
                     const d = p.date ? new Date(p.date + 'T12:00:00').toLocaleDateString('pt-BR') : '-';
-                    row.innerHTML = `<td class="px-3 py-2 font-medium">${d}</td><td class="px-3 py-2 text-green-700 font-bold">R$ ${p.amount}</td><td class="px-3 py-2">${p.method}</td><td class="px-3 py-2 text-xs text-gray-400">Registrado</td>`;
+                    row.innerHTML = `<td class="px-3 py-2 font-medium">${d}</td><td class="px-3 py-2 text-green-700 font-bold">R$ ${p.amount}</td><td class="px-3 py-2">${p.method}</td><td class="px-3 py-2 text-right"><button onclick="deletePaymentRecord('${id}', '${p.timestamp}')" class="text-red-500 hover:text-red-700 p-1 rounded" title="Excluir Pagamento"><i class="fa-solid fa-trash"></i></button></td>`;
                     tbody.appendChild(row);
                 });
             }
             document.getElementById('history-modal').classList.remove('hidden');
             document.getElementById('history-modal').classList.add('flex');
+        };
+
+        window.deletePaymentRecord = async (studentId, timestamp) => {
+            if(!confirm("Tem certeza que deseja excluir este pagamento? A ação não pode ser desfeita.")) return;
+            const s = window.students.find(st => st.id === studentId);
+            if(!s) return;
+            const payment = s.paymentHistory.find(p => p.timestamp === timestamp);
+            if(!payment) return;
+            
+            try {
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), {
+                    paymentHistory: arrayRemove(payment)
+                });
+                alert("Pagamento excluído com sucesso.");
+                await window.loadData();
+                window.viewHistory(studentId);
+            } catch(e) { alert("Erro ao excluir pagamento: " + e.message); }
         };
 
         window.closeHistoryModal = () => {
@@ -2783,27 +2802,65 @@
                 html += tableRows + `</tbody></table>`;
             }
             else if (type === 'financeiro') {
-                html += `<h3 class="font-bold text-lg mb-4 text-green-600">RESUMO FINANCEIRO (MENSALIDADE ESPERADA BASEADA EM PLANOS ATIVOS)</h3>`;
-                html += `<table><thead><tr><th>Plano</th><th>Qtd Alunos (Titulares)</th><th>Valor Unit. Estimado</th><th>Subtotal Mensal</th></tr></thead><tbody>`;
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+                const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                
+                html += `<h3 class="font-bold text-lg mb-4 text-green-600">RESUMO FINANCEIRO ESTIMADO - REFERÊNCIA: ${monthNames[currentMonth].toUpperCase()}/${currentYear}</h3>`;
+                html += `<table><thead><tr><th>Plano / Categoria</th><th>Qtd Alunos (Titulares)</th><th>Valor Unit. Estimado</th><th>Subtotal Mensal</th></tr></thead><tbody>`;
                 
                 let sumMap = {};
                 let totalExpected = 0;
                 
                 window.students.forEach(s => {
-                    if (s.enrollmentStatus === 'Inativo' || s.plan === 'administracao' || s.plan === 'dependente') return;
-                    if (!sumMap[s.plan]) sumMap[s.plan] = 0;
-                    sumMap[s.plan]++;
+                    if (s.enrollmentStatus === 'Inativo') return;
+                    
+                    let pName = s.plan || 'outros';
+                    let pInfo = window.getPlanInfo(pName);
+                    
+                    // Trata Isentos, Dependentes e Administração separadamente
+                    if (s.paymentStatus === 'Isento' || pName === 'administracao' || pName === 'dependente') {
+                        if (!sumMap['isento']) sumMap['isento'] = { name: 'Isentos / Dependentes / Admin', count: 0, price: 0, subtotal: 0 };
+                        sumMap['isento'].count++;
+                        return;
+                    }
+
+                    // Verifica se a matrícula foi feita no mês vigente
+                    let isNewThisMonth = false;
+                    if (s.registrationDate) {
+                        const rDate = new Date(s.registrationDate);
+                        if (rDate.getMonth() === currentMonth && rDate.getFullYear() === currentYear) {
+                            isNewThisMonth = true;
+                        }
+                    }
+
+                    let price = pInfo.price;
+                    let isPromo = false;
+                    if (isNewThisMonth) {
+                        if (pName.includes('semestral') && !pName.includes('combo')) { price = 29.90; isPromo = true; }
+                        else if (pName === 'combo-dupla') { price = 59.90; isPromo = true; }
+                        else if (pName === 'combo-familia') { price = 89.90; isPromo = true; }
+                    }
+
+                    let mapKey = isPromo ? pName + '_promo' : pName;
+                    let displayName = pInfo.short + (isPromo ? ' <span class="text-brand-red text-xs font-bold">(Promo 1º Mês)</span>' : '');
+
+                    if (!sumMap[mapKey]) {
+                        sumMap[mapKey] = { name: displayName, count: 0, price: price, subtotal: 0 };
+                    }
+                    
+                    sumMap[mapKey].count++;
+                    sumMap[mapKey].subtotal += price;
+                    totalExpected += price;
                 });
 
-                for (const [pName, count] of Object.entries(sumMap)) {
-                    const pInfo = window.getPlanInfo(pName);
-                    let subtotal = pInfo.price * count;
-                    totalExpected += subtotal;
-                    tableRows += `<tr><td class="uppercase">${pInfo.short}</td><td>${count}</td><td>R$ ${pInfo.price.toFixed(2)}</td><td>R$ ${subtotal.toFixed(2)}</td></tr>`;
+                for (const [key, data] of Object.entries(sumMap)) {
+                    tableRows += `<tr><td class="uppercase">${data.name}</td><td class="text-center">${data.count}</td><td>R$ ${data.price.toFixed(2).replace('.', ',')}</td><td class="font-bold">R$ ${data.subtotal.toFixed(2).replace('.', ',')}</td></tr>`;
                 }
                 
-                html += tableRows + `</tbody><tfoot><tr><th colspan="3" class="text-right">TOTAL ESTIMADO MENSAL:</th><th>R$ ${totalExpected.toFixed(2)}</th></tr></tfoot></table>`;
-                html += `<p class="text-xs text-gray-500 mt-2">* Obs: Valores calculados assumindo mensalidades normais (desconsidera 1º mês promocional ou descontos negociados isoladamente).</p>`;
+                html += tableRows + `</tbody><tfoot><tr><th colspan="3" class="text-right">TOTAL ESTIMADO PARA ESTE MÊS:</th><th class="text-green-700 text-lg">R$ ${totalExpected.toFixed(2).replace('.', ',')}</th></tr></tfoot></table>`;
+                html += `<p class="text-xs text-gray-500 mt-2">* Obs: Valores calculados dinamicamente baseados nos planos ativos, isenções e alunos matriculados com promoção no mês corrente (${monthNames[currentMonth]}).</p>`;
             }
             else if (type === 'frequencia') {
                 html += `<h3 class="font-bold text-lg mb-4 text-purple-600">FREQUÊNCIA - TOP 15 ALUNOS (Últimos 30 dias)</h3>`;
@@ -2837,7 +2894,7 @@
                     document.body.classList.remove('printing-report');
                     container.classList.add('hidden'); // Retorna a tela ao normal
                 }, 2000);
-            }, 500);
+            }, 800); // Delay extra para forçar o render em celulares lentos antes de imprimir
         };
 
         window.loadNotices = async () => {
