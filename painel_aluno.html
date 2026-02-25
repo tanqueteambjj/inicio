@@ -134,13 +134,20 @@
     </div>
 
     <!-- Main UI Wrapped for Easy Hiding During Print -->
-    <div id="main-ui" class="flex h-screen overflow-hidden">
+    <div id="main-ui" class="flex h-screen overflow-hidden relative w-full">
         
-        <!-- Sidebar (Desktop) -->
-        <aside class="hidden md:flex flex-col w-64 bg-brand-dark text-white shadow-xl z-10 no-print">
-            <div class="p-6 flex items-center justify-center border-b border-gray-800">
+        <!-- Mobile Sidebar Overlay -->
+        <div id="mobile-sidebar-overlay" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden backdrop-blur-sm transition-opacity" onclick="toggleMobileMenu()"></div>
+
+        <!-- Sidebar (Desktop & Mobile Drawer) -->
+        <aside id="sidebar-menu" class="fixed md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 w-64 bg-brand-dark text-white flex flex-col shadow-2xl z-40 transition-transform duration-300 ease-in-out no-print h-full">
+            <div class="p-6 flex items-center justify-center border-b border-gray-800 relative">
                 <img src="https://i.ibb.co/spgfD2Nd/1771300330359.png" alt="Logo" class="h-12 w-auto">
                 <span class="ml-3 font-display font-bold text-xl tracking-wider">TANQUE TEAM</span>
+                <!-- Close Button Mobile -->
+                <button onclick="toggleMobileMenu()" class="md:hidden absolute top-4 right-4 text-gray-400 hover:text-white focus:outline-none">
+                    <i class="fa-solid fa-times text-xl"></i>
+                </button>
             </div>
             <nav class="flex-1 px-4 py-6 space-y-2">
                 <a href="#" onclick="switchMainView('dashboard')" id="nav-dashboard" class="flex items-center px-4 py-3 bg-brand-red text-white rounded-lg shadow-md transition-transform transform hover:translate-x-1">
@@ -161,27 +168,26 @@
         </aside>
 
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <div class="flex-1 flex flex-col h-full overflow-hidden relative w-full">
             
-            <!-- Mobile Header -->
-            <header class="md:hidden bg-brand-dark text-white p-4 flex justify-between items-center shadow-md z-20 no-print">
-                <div class="flex items-center">
-                    <img src="https://i.ibb.co/spgfD2Nd/1771300330359.png" alt="Logo" class="h-8 w-auto mr-2">
-                    <span class="font-display font-bold text-lg">TANQUE TEAM</span>
+            <!-- Mobile Header (Updated with Hamburger Menu) -->
+            <header class="md:hidden bg-brand-dark text-white p-4 flex justify-between items-center shadow-md z-20 no-print shrink-0">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleMobileMenu()" class="text-white hover:text-brand-red focus:outline-none text-2xl transition">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="flex items-center">
+                        <img src="https://i.ibb.co/spgfD2Nd/1771300330359.png" alt="Logo" class="h-8 w-auto mr-2">
+                        <span class="font-display font-bold text-lg">TANQUE TEAM</span>
+                    </div>
                 </div>
-                <button onclick="handleLogout()" class="text-white focus:outline-none">
+                <button onclick="handleLogout()" class="text-red-400 hover:text-red-500 focus:outline-none text-xl transition">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
             </header>
-            
-            <!-- Mobile Nav (Apenas Visível no Celular) -->
-            <div class="md:hidden bg-brand-dark px-4 pb-3 flex gap-2 no-print shadow-md z-10 relative">
-                <button onclick="switchMainView('dashboard')" id="nav-mobile-dashboard" class="flex-1 bg-brand-red text-white py-2 rounded text-xs font-bold shadow transition">Dashboard</button>
-                <button onclick="switchMainView('profile')" id="nav-mobile-profile" class="flex-1 bg-gray-800 text-gray-400 hover:text-white py-2 rounded text-xs font-bold transition">Meus Dados</button>
-            </div>
 
             <!-- DEPENDENT VIEW BANNER -->
-            <div id="viewing-dependent-banner" class="hidden bg-purple-600 text-white px-4 py-3 flex justify-between items-center shadow-md z-20 no-print">
+            <div id="viewing-dependent-banner" class="hidden bg-purple-600 text-white px-4 py-3 flex justify-between items-center shadow-md z-10 no-print shrink-0">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-users text-purple-200"></i>
                     <span class="text-sm">A gerir dependente: <strong id="viewing-dependent-name">Nome</strong></span>
@@ -197,7 +203,7 @@
                 <!-- ==================== ABA 1: DASHBOARD ==================== -->
                 <div id="view-dashboard" class="animate-fade-in">
                     <!-- Welcome Section -->
-                    <div class="mb-6 flex justify-between items-end">
+                    <div class="mb-8 flex justify-between items-end">
                         <div class="flex items-center gap-4">
                             <div class="w-16 h-16 rounded-full bg-gray-200 border-2 border-white shadow-md overflow-hidden flex-shrink-0">
                                 <img id="welcome-photo" src="" class="w-full h-full object-cover hidden">
@@ -525,11 +531,18 @@
                         <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider truncate mt-1" id="qr-plan">Plano</p>
                     </div>
                     
-                    <!-- QR Code -->
-                    <div class="mt-auto bg-white p-1.5 border border-gray-200 rounded shadow-sm z-10 inline-block">
+                    <!-- QR Code Block OR Pending Message -->
+                    <div id="qr-code-wrapper" class="mt-auto bg-white p-1.5 border border-gray-200 rounded shadow-sm z-10 inline-block">
                         <img id="qr-image" src="" alt="QR Code" class="w-24 h-24">
                     </div>
-                    <p class="text-[8px] text-gray-400 mt-2 z-10 font-bold uppercase tracking-wider">Apresente no Check-in</p>
+                    
+                    <!-- Pending Message Block -->
+                    <div id="qr-blocked-wrapper" class="hidden mt-auto bg-red-50 p-2 border border-red-200 rounded shadow-sm z-10 flex-col items-center justify-center w-24 h-24 text-center">
+                        <i class="fa-solid fa-lock text-red-500 text-2xl mb-1"></i>
+                        <span class="text-[9px] font-bold text-red-700 leading-tight">Pagamento<br>Pendente</span>
+                    </div>
+
+                    <p id="qr-footer-text" class="text-[8px] text-gray-400 mt-2 z-10 font-bold uppercase tracking-wider">Apresente no Check-in</p>
                 </div>
             </div>
 
@@ -1476,7 +1489,34 @@
                 photoPlaceholder.innerText = (data.name || '?').charAt(0).toUpperCase();
             }
 
-            document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${data.id}`;
+            // Logic to check Pending status
+            const todayDate = new Date();
+            const targetDate = data.nextDueDate ? new Date(data.nextDueDate) : (data.contractEndDate ? new Date(data.contractEndDate) : new Date(0));
+            const diffDays = isNaN(targetDate) ? 0 : Math.ceil((targetDate - todayDate) / (1000 * 60 * 60 * 24));
+            const safePlan = String(data.plan || '').toLowerCase();
+            
+            let isBlocked = false;
+            if (safePlan !== 'dependente' && safePlan !== 'administracao' && data.paymentStatus !== 'Isento') {
+                if (diffDays < 0 || data.paymentStatus === 'Pendente') {
+                    isBlocked = true;
+                }
+            }
+
+            if (isBlocked) {
+                document.getElementById('qr-code-wrapper').classList.add('hidden');
+                document.getElementById('qr-blocked-wrapper').classList.remove('hidden');
+                document.getElementById('qr-blocked-wrapper').classList.add('flex');
+                document.getElementById('qr-footer-text').innerText = "REGULARIZE NA RECEPÇÃO";
+                document.getElementById('qr-footer-text').classList.add('text-red-500');
+            } else {
+                document.getElementById('qr-code-wrapper').classList.remove('hidden');
+                document.getElementById('qr-blocked-wrapper').classList.add('hidden');
+                document.getElementById('qr-blocked-wrapper').classList.remove('flex');
+                document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${data.id}`;
+                document.getElementById('qr-footer-text').innerText = "Apresente no Check-in";
+                document.getElementById('qr-footer-text').classList.remove('text-red-500');
+            }
+
             document.getElementById('qr-modal').classList.remove('hidden');
             document.getElementById('qr-modal').classList.add('flex');
         };
