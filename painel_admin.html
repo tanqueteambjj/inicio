@@ -170,11 +170,18 @@
 </head>
 <body class="bg-gray-100 font-sans antialiased h-screen flex overflow-hidden">
 
+    <!-- Mobile Sidebar Overlay -->
+    <div id="mobile-sidebar-overlay" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden backdrop-blur-sm transition-opacity" onclick="toggleMobileMenu()"></div>
+
     <!-- Sidebar -->
-    <aside class="w-64 bg-brand-dark text-white flex flex-col shadow-2xl z-20 hidden md:flex no-print">
-        <div class="p-6 flex items-center justify-center border-b border-gray-800">
+    <aside id="sidebar-menu" class="fixed md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 w-64 bg-brand-dark text-white flex flex-col shadow-2xl z-40 transition-transform duration-300 ease-in-out no-print h-full">
+        <div class="p-6 flex items-center justify-center border-b border-gray-800 relative">
             <img src="https://i.ibb.co/spgfD2Nd/1771300330359.png" alt="Logo" class="h-10 w-auto mr-3">
             <span class="font-display font-bold text-lg tracking-wider">ADMIN</span>
+            <!-- Botão Fechar Menu Mobile -->
+            <button onclick="toggleMobileMenu()" class="md:hidden absolute top-4 right-4 text-gray-400 hover:text-white focus:outline-none">
+                <i class="fa-solid fa-times text-xl"></i>
+            </button>
         </div>
         <div class="px-4 mt-4">
             <button onclick="openCheckinModal()" class="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg shadow-lg transition-transform transform hover:-translate-y-1">
@@ -203,13 +210,15 @@
     </aside>
 
     <!-- Main Content -->
-    <div id="admin-dashboard" class="flex-1 flex flex-col h-full overflow-hidden relative">
+    <div id="admin-dashboard" class="flex-1 flex flex-col h-full overflow-hidden relative w-full">
         
         <!-- Topbar -->
-        <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6 z-10 no-print">
-            <div class="flex items-center md:hidden">
-                <img src="https://i.ibb.co/spgfD2Nd/1771300330359.png" class="h-8 w-auto mr-2">
-                <span class="font-display font-bold text-brand-dark">TANQUE TEAM</span>
+        <header class="bg-white shadow-sm h-16 flex items-center justify-between px-4 md:px-6 z-10 no-print shrink-0">
+            <div class="flex items-center md:hidden gap-3">
+                <button onclick="toggleMobileMenu()" class="text-brand-dark hover:text-brand-red focus:outline-none text-2xl transition">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <img src="https://i.ibb.co/spgfD2Nd/1771300330359.png" class="h-8 w-auto">
             </div>
             
             <div class="hidden md:flex relative w-96">
@@ -217,12 +226,16 @@
                 <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border rounded-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent transition">
             </div>
 
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
                 <button onclick="openCheckinModal()" class="md:hidden w-10 h-10 flex items-center justify-center bg-green-600 text-white rounded-full shadow-lg">
                     <i class="fa-solid fa-camera"></i>
                 </button>
+                <!-- Botão de Sair Mobile -->
+                <button onclick="handleLogout()" class="md:hidden w-10 h-10 flex items-center justify-center bg-red-100 text-red-600 rounded-full shadow-sm hover:bg-red-200 transition">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
                 <span class="text-sm text-gray-500 hidden md:block">Administração</span>
-                <div class="w-8 h-8 rounded-full bg-brand-dark text-white flex items-center justify-center font-bold">A</div>
+                <div class="hidden md:flex w-8 h-8 rounded-full bg-brand-dark text-white items-center justify-center font-bold">A</div>
             </div>
         </header>
 
@@ -312,6 +325,12 @@
                     
                     <!-- Barra de Filtros Inteligentes -->
                     <div class="px-6 py-3 border-b border-gray-200 bg-white flex flex-wrap gap-4 items-center text-sm no-print">
+                        <!-- Busca Mobile Integrada -->
+                        <div class="w-full md:hidden relative mb-2">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-search"></i></span>
+                            <input type="text" id="searchInputMobile1" onkeyup="filterTable()" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-red transition">
+                        </div>
+                        
                         <span class="font-bold text-gray-500"><i class="fa-solid fa-filter"></i> Filtros:</span>
                         
                         <select id="sort-order" onchange="filterTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
@@ -1587,7 +1606,21 @@
             } catch(e) { alert("Erro ao excluir: " + e.message); }
         };
 
+        window.toggleMobileMenu = () => {
+            const sidebar = document.getElementById('sidebar-menu');
+            const overlay = document.getElementById('mobile-sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        };
+
         window.switchMainView = (viewName) => {
+            if(window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar-menu');
+                if(sidebar && !sidebar.classList.contains('-translate-x-full')) {
+                    window.toggleMobileMenu();
+                }
+            }
+
             window.currentView = viewName;
             document.getElementById('view-students').classList.toggle('hidden', viewName !== 'students');
             document.getElementById('view-financial').classList.toggle('hidden', viewName !== 'financial');
@@ -1634,6 +1667,16 @@
         };
 
         window.filterTable = () => {
+            // Sincronizar os inputs de busca entre Mobile e Desktop
+            const desktopSearch = document.getElementById('searchInput');
+            const mobileSearch1 = document.getElementById('searchInputMobile1');
+            
+            if (document.activeElement === mobileSearch1 && desktopSearch) {
+                desktopSearch.value = mobileSearch1.value;
+            } else if (document.activeElement === desktopSearch && mobileSearch1) {
+                mobileSearch1.value = desktopSearch.value;
+            }
+
             if(window.currentView === 'students') window.renderTable();
             else window.renderFinancialTable();
         };
