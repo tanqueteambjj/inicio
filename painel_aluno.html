@@ -241,6 +241,10 @@
                                 <div class="mt-4">
                                     <p class="text-sm text-gray-600">Plano: <span class="font-bold text-brand-dark" id="plan-display">--</span></p>
                                     <p class="text-xs text-gray-400 mt-1">Vence em: <span id="contract-end">--/--/----</span></p>
+                                    
+                                    <!-- NOVO: Container do Botão PIX -->
+                                    <div id="pix-button-container"></div>
+
                                     <button onclick="viewPaymentHistory()" class="mt-3 text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center">
                                         <i class="fa-solid fa-clock-rotate-left mr-1"></i> Ver Histórico Financeiro
                                     </button>
@@ -326,7 +330,7 @@
                     <div class="bg-white rounded-xl shadow-lg overflow-hidden border-t-4 border-brand-dark flex flex-col">
                         <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center shrink-0">
                             <div>
-                                <h3 class="font-display text-xl font-bold text-brand-dark flex items-center gap-2"><i class="fa-solid fa-fire text-orange-500"></i> Top 10 - Frequência</h3>
+                                <h3 class="font-display text-xl font-bold text-brand-dark flex items-center gap-2"><i class="fa-solid fa-fire text-orange-500"></i> Top 5 - Frequência</h3>
                                 <p class="text-[10px] text-gray-500 uppercase tracking-wider mt-1">Os guerreiros que mais treinaram</p>
                             </div>
                             <span class="text-xs font-bold text-brand-dark bg-gray-200 px-3 py-1 rounded-full uppercase tracking-wider shadow-inner" id="ranking-month-name">--</span>
@@ -366,6 +370,41 @@
             </main>
         </div>
     </div> <!-- End Main UI -->
+
+    <!-- NOVO: PIX Modal -->
+    <div id="pix-modal" class="fixed inset-0 z-[120] hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden animate-fade-in text-center relative border-t-4 border-[#32bcad]">
+            <button onclick="closePixModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-800"><i class="fa-solid fa-times text-lg"></i></button>
+            <div class="p-6">
+                <div class="w-16 h-16 bg-[#e8f5e9] rounded-full flex items-center justify-center mx-auto mb-4 text-[#2e7d32] text-3xl shadow-sm">
+                    <i class="fa-brands fa-pix"></i>
+                </div>
+                <h3 class="font-display font-bold text-2xl text-gray-800 mb-1">Pagar Mensalidade</h3>
+                <p class="text-sm text-gray-500 mb-6">Regularize seu plano de forma rápida e segura.</p>
+                
+                <div class="bg-gray-50 rounded-lg border border-gray-200 p-4 mb-4">
+                    <p class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Valor a Pagar</p>
+                    <p class="text-4xl font-bold text-brand-dark mb-4" id="pix-amount">R$ 0,00</p>
+                    
+                    <p class="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1 mt-4">Chave PIX (Celular)</p>
+                    <div class="flex items-center gap-2 bg-white border border-gray-300 rounded p-1 shadow-inner">
+                        <input type="text" id="pix-key-input" value="(91) 99819-2610" readonly class="w-full text-center font-bold text-lg text-gray-700 outline-none bg-transparent select-all">
+                        <button onclick="copyPixKey()" class="bg-brand-dark text-white px-4 py-2 rounded text-xs font-bold hover:bg-black transition whitespace-nowrap" id="btn-copy-pix">Copiar</button>
+                    </div>
+                </div>
+
+                <div class="mb-4 text-left bg-yellow-50 p-3 rounded border border-yellow-200">
+                     <p class="text-[11px] text-yellow-800 mb-2 font-medium leading-tight"><i class="fa-solid fa-triangle-exclamation text-yellow-600 mr-1"></i> <strong>Atenção:</strong> É obrigatório enviar o comprovante pelo WhatsApp após a transferência para darmos baixa no sistema.</p>
+                     <p class="text-[11px] text-gray-600 font-medium leading-tight"><i class="fa-solid fa-credit-card mr-1 text-gray-400"></i> Pagamentos em <strong>Dinheiro, Débito ou Crédito</strong> devem ser feitos presencialmente na unidade.</p>
+                </div>
+
+                <button onclick="notifyPaymentPix()" class="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-3 rounded-lg transition shadow-sm mt-2 flex justify-center items-center gap-2">
+                    <i class="fa-brands fa-whatsapp text-xl"></i> Já paguei! Enviar Comprovante
+                </button>
+                <button onclick="closePixModal()" class="w-full mt-4 text-xs text-gray-400 hover:text-gray-600 font-bold underline">Fechar esta janela</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Printable Contract Container for Student (Fora do Main UI) -->
     <div id="printable-contract" class="hidden bg-white text-black p-10 font-serif text-[11pt] leading-relaxed absolute inset-0 z-50">
@@ -564,6 +603,20 @@
         window.currentCalendarDate = new Date(); 
         window.noticesList = [];
 
+        window.getPlanPriceStr = function(planStr) {
+            let price = "0,00";
+            if(planStr === 'infantil-mensal') price = "189,90";
+            else if(planStr === 'infantil-trimestral') price = "168,90";
+            else if(planStr === 'infantil-semestral') price = "157,90";
+            else if(planStr === 'adulto-mensal') price = "168,90";
+            else if(planStr === 'adulto-trimestral') price = "147,90";
+            else if(planStr === 'adulto-semestral') price = "126,90";
+            else if(planStr === 'combo-dupla') price = "250,00";
+            else if(planStr === 'combo-casal') price = "220,00";
+            else if(planStr === 'combo-familia') price = "362,02";
+            return price;
+        };
+
         window.handleLogout = () => {
             localStorage.removeItem('tanque_user_session');
             window.location.href = "https://www.tanqueteambjj.com.br/login.html";
@@ -702,6 +755,8 @@
                 const status = data.paymentStatus || 'Pendente';
                 statusBadge.innerText = status.toUpperCase();
                 
+                let isPending = false;
+
                 if(status === 'Em dia') {
                     statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-green-100 text-green-800 border border-green-200";
                     statusBadge.innerHTML = '<i class="fa-solid fa-check mr-1"></i> EM DIA';
@@ -709,8 +764,26 @@
                     statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-blue-100 text-blue-800 border border-blue-200";
                     statusBadge.innerHTML = '<i class="fa-solid fa-gift mr-1"></i> ISENTO';
                 } else {
+                    isPending = true;
                     statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-red-100 text-red-800 border border-red-200 animate-pulse";
                     statusBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> PENDENTE';
+                }
+
+                // Injetar Botão PIX
+                const pixContainer = document.getElementById('pix-button-container');
+                if (isPending && !isDependent) {
+                    const priceStr = window.getPlanPriceStr(data.plan);
+                    if(priceStr !== "0,00") {
+                        pixContainer.innerHTML = `
+                            <button onclick="openPixModal('${priceStr}')" class="mt-4 w-full bg-[#e8f5e9] hover:bg-[#c8e6c9] text-[#2e7d32] border border-[#a5d6a7] font-bold py-3 rounded-lg shadow-sm flex justify-center items-center gap-2 transition duration-300">
+                                <i class="fa-brands fa-pix text-[#1b5e20] text-xl"></i> Pagar R$ ${priceStr} com PIX
+                            </button>
+                        `;
+                    } else {
+                        pixContainer.innerHTML = '';
+                    }
+                } else {
+                    pixContainer.innerHTML = '';
                 }
 
                 const attendanceCount = data.attendance ? data.attendance.length : 0;
@@ -846,17 +919,17 @@
                 });
 
                 rankingData.sort((a, b) => b.count - a.count);
-                const top10 = rankingData.slice(0, 10);
+                const top5 = rankingData.slice(0, 5);
 
                 const list = document.getElementById('ranking-list');
                 list.innerHTML = '';
 
-                if (top10.length === 0) {
+                if (top5.length === 0) {
                     list.innerHTML = `<tr><td class="px-6 py-8 text-center text-gray-400 italic">Nenhum treino registado este mês ainda.</td></tr>`;
                     return;
                 }
 
-                top10.forEach((student, index) => {
+                top5.forEach((student, index) => {
                     let medal = `<span class="font-bold text-gray-400 w-8 inline-block text-center">${index + 1}º</span>`;
                     if (index === 0) medal = `<div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center mx-auto shadow-sm border border-yellow-200"><i class="fa-solid fa-medal text-yellow-500 text-lg" title="1º Lugar"></i></div>`;
                     else if (index === 1) medal = `<div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mx-auto shadow-sm border border-gray-300"><i class="fa-solid fa-medal text-gray-500 text-lg" title="2º Lugar"></i></div>`;
@@ -986,6 +1059,50 @@
             document.getElementById('student-history-modal').classList.add('hidden');
             document.getElementById('student-history-modal').classList.remove('flex');
         }
+
+        window.openPixModal = (amount) => {
+            document.getElementById('pix-amount').innerText = `R$ ${amount}`;
+            const btn = document.getElementById('btn-copy-pix');
+            btn.innerText = "Copiar";
+            btn.classList.remove('bg-green-600', 'text-white');
+            btn.classList.add('bg-brand-dark', 'text-white');
+            document.getElementById('pix-modal').classList.remove('hidden');
+            document.getElementById('pix-modal').classList.add('flex');
+        };
+
+        window.closePixModal = () => {
+            document.getElementById('pix-modal').classList.add('hidden');
+            document.getElementById('pix-modal').classList.remove('flex');
+        };
+
+        window.notifyPaymentPix = () => {
+            const amountText = document.getElementById('pix-amount').innerText;
+            const studentName = window.currentStudentData ? window.currentStudentData.name.split(' ')[0] : 'Aluno';
+            
+            const message = `🥊 *TANQUE TEAM BJJ* 🥊\n\nOlá! Sou o aluno *${studentName}*.\nAcabei de realizar o pagamento da minha mensalidade no valor de *${amountText}* via PIX.\n\nSegue o meu comprovante abaixo:`;
+            const encodedMessage = encodeURIComponent(message);
+            
+            window.open(`https://wa.me/5591998192610?text=${encodedMessage}`, '_blank');
+            window.closePixModal();
+        };
+
+        window.copyPixKey = () => {
+            const input = document.getElementById("pix-key-input");
+            const cleanKey = "91998192610"; // Chave limpa para a área de transferência
+            
+            // Cria um elemento temporário para copiar apenas os números
+            const tempInput = document.createElement("input");
+            tempInput.value = cleanKey;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+            
+            const btn = document.getElementById('btn-copy-pix');
+            btn.innerText = "Chave Copiada!";
+            btn.classList.remove('bg-brand-dark');
+            btn.classList.add('bg-green-600');
+        };
 
         window.openProfileEditModal = () => {
             const data = window.currentStudentData;
