@@ -55,7 +55,7 @@
             }
 
             /* ===== MODO CONTRATO ===== */
-            body:not(.printing-report):not(.printing-qr) #printable-contract {
+            body:not(.printing-report):not(.printing-qr):not(.printing-receipt) #printable-contract {
                 display: block !important;
                 position: relative !important; 
                 width: 100% !important; 
@@ -63,7 +63,7 @@
                 padding: 0 !important;
                 visibility: visible !important;
             }
-            body:not(.printing-report):not(.printing-qr) #printable-contract * {
+            body:not(.printing-report):not(.printing-qr):not(.printing-receipt) #printable-contract * {
                 visibility: visible !important;
             }
 
@@ -346,7 +346,7 @@
                                 </tr>
                             </thead>
                             <tbody id="students-table-body" class="text-sm text-gray-700 divide-y divide-gray-200">
-                                <tr><td colspan="8" class="px-6 py-4 text-center">Carregando dados...</td></tr>
+                                <tr><td colspan="7" class="px-6 py-4 text-center">Carregando dados...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -2754,156 +2754,4 @@
 
         window.loadNotices = async () => {
             try {
-                const q = query(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'));
-                const querySnapshot = await getDocs(q);
-                window.noticesList = [];
-                querySnapshot.forEach((doc) => {
-                    window.noticesList.push({ id: doc.id, ...doc.data() });
-                });
-                window.noticesList.sort((a, b) => new Date(b.date) - new Date(a.date));
-                if (window.currentView === 'notices') { window.renderAdminNotices(); window.renderBirthdays(); }
-            } catch (error) { console.error("Erro ao carregar avisos:", error); }
-        };
-
-        window.renderBirthdays = () => {
-            const currentMonth = new Date().getMonth();
-            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            document.getElementById('birthday-month-name').innerText = monthNames[currentMonth];
-
-            const birthdays = window.students.filter(s => {
-                if (!s.dob || s.enrollmentStatus === 'Inativo') return false;
-                let dobDate;
-                if (s.dob.includes('T')) {
-                    dobDate = new Date(s.dob);
-                } else {
-                    const [y, m, d] = s.dob.split('-').map(Number);
-                    dobDate = new Date(y, m - 1, d);
-                }
-                return dobDate.getMonth() === currentMonth;
-            });
-
-            const container = document.getElementById('admin-birthdays-widget');
-            const list = document.getElementById('birthday-list');
-            list.innerHTML = '';
-
-            if (birthdays.length === 0) {
-                container.classList.add('hidden');
-            } else {
-                container.classList.remove('hidden');
-                
-                // Ordenar pelo dia do mês (crescente)
-                birthdays.sort((a, b) => {
-                    const getDay = (dob) => dob.includes('T') ? new Date(dob).getDate() : Number(dob.split('-')[2]);
-                    return getDay(a.dob) - getDay(b.dob);
-                });
-
-                birthdays.forEach(s => {
-                    const day = s.dob.includes('T') ? new Date(s.dob).getDate() : Number(s.dob.split('-')[2]);
-                    list.innerHTML += `
-                        <div class="bg-white p-2 rounded shadow-sm flex items-center gap-3 border-l-4 border-blue-400">
-                            <div class="bg-blue-100 text-blue-800 font-bold w-10 h-10 rounded flex flex-col items-center justify-center leading-tight shrink-0">
-                                <span class="text-[10px] font-normal uppercase">Dia</span>
-                                <span>${day}</span>
-                            </div>
-                            <div class="truncate">
-                                <p class="font-bold text-sm text-gray-800 truncate" title="${s.name}">${s.name.split(' ')[0]} ${s.name.split(' ').length > 1 ? s.name.split(' ').pop() : ''}</p>
-                                <p class="text-[10px] text-gray-500 uppercase truncate">${(s.plan || 'Sem plano').replace('-', ' ')}</p>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-        };
-
-        window.renderAdminNotices = () => {
-            const list = document.getElementById('admin-notices-list');
-            list.innerHTML = '';
-            if (window.noticesList.length === 0) {
-                list.innerHTML = '<div class="text-center py-8 text-gray-400 italic text-sm">Nenhum aviso publicado.</div>';
-                return;
-            }
-            window.noticesList.forEach(notice => {
-                const d = new Date(notice.date).toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
-                let bg = 'bg-blue-50 border-blue-200'; let icon = '<i class="fa-solid fa-circle-info text-blue-500"></i>';
-                if(notice.type === 'alert') { bg = 'bg-yellow-50 border-yellow-200'; icon = '<i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>'; }
-                if(notice.type === 'success') { bg = 'bg-green-50 border-green-200'; icon = '<i class="fa-solid fa-check-circle text-green-500"></i>'; }
-                if(notice.type === 'danger') { bg = 'bg-red-50 border-red-200'; icon = '<i class="fa-solid fa-circle-xmark text-red-500"></i>'; }
-                
-                list.innerHTML += `
-                    <div class="p-4 border rounded-lg ${bg} flex justify-between items-start">
-                        <div>
-                            <h4 class="font-bold text-gray-800 flex items-center gap-2">${icon} ${notice.title}</h4>
-                            <p class="text-sm text-gray-600 mt-1 whitespace-pre-wrap">${notice.text}</p>
-                            <p class="text-[10px] text-gray-400 mt-2">Publicado em: ${d}</p>
-                        </div>
-                        <div class="flex gap-3">
-                            <button onclick="editNotice('${notice.id}')" class="text-blue-400 hover:text-blue-600 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="deleteNotice('${notice.id}')" class="text-red-400 hover:text-red-600 transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                `;
-            });
-        };
-
-        window.openNoticeModal = () => {
-            document.getElementById('notice-id').value = '';
-            document.getElementById('notice-title').value = '';
-            document.getElementById('notice-text').value = '';
-            document.getElementById('notice-type').value = 'info';
-            document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-bullhorn mr-2"></i> Publicar Aviso';
-            document.getElementById('notice-modal').classList.remove('hidden');
-            document.getElementById('notice-modal').classList.add('flex');
-        };
-
-        window.editNotice = (id) => {
-            const notice = window.noticesList.find(n => n.id === id);
-            if (!notice) return;
-            document.getElementById('notice-id').value = notice.id;
-            document.getElementById('notice-title').value = notice.title;
-            document.getElementById('notice-text').value = notice.text;
-            document.getElementById('notice-type').value = notice.type || 'info';
-            document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-pen mr-2"></i> Editar Aviso';
-            document.getElementById('notice-modal').classList.remove('hidden');
-            document.getElementById('notice-modal').classList.add('flex');
-        };
-
-        window.closeNoticeModal = () => {
-            document.getElementById('notice-modal').classList.add('hidden');
-            document.getElementById('notice-modal').classList.remove('flex');
-        };
-
-        window.saveNotice = async () => {
-            const id = document.getElementById('notice-id').value;
-            const title = document.getElementById('notice-title').value;
-            const text = document.getElementById('notice-text').value;
-            const type = document.getElementById('notice-type').value;
-            if(!title || !text) { alert("Preencha título e mensagem."); return; }
-            
-            try {
-                if (id) {
-                    await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', id), {
-                        title: title, text: text, type: type
-                    });
-                    alert("Aviso atualizado com sucesso!");
-                } else {
-                    await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'), {
-                        title: title, text: text, type: type, date: new Date().toISOString()
-                    });
-                    alert("Aviso publicado com sucesso!");
-                }
-                window.closeNoticeModal();
-                window.loadNotices();
-            } catch(e) { alert("Erro ao salvar aviso: " + e.message); }
-        };
-
-        window.deleteNotice = async (id) => {
-            if(!confirm("Tem certeza que deseja excluir este aviso permanentemente? Ele vai sumir do painel de todos os alunos.")) return;
-            try {
-                await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', id));
-                window.loadNotices();
-            } catch(e) { alert("Erro ao excluir: " + e.message); }
-        };
-
-    </script>
-</body>
-</html>
+                const q = query(collection(window
