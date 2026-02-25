@@ -99,6 +99,24 @@
                 visibility: visible !important;
             }
             
+            /* ===== MODO RECIBO ===== */
+            body.printing-receipt #printable-receipt {
+                display: block !important;
+                position: absolute !important;
+                left: 50% !important;
+                top: 50px !important;
+                transform: translateX(-50%) !important;
+                width: 14cm !important;
+                height: auto !important;
+                visibility: visible !important;
+                border: 2px dashed #000 !important;
+                padding: 30px !important;
+                background: white !important;
+            }
+            body.printing-receipt #printable-receipt * {
+                visibility: visible !important;
+            }
+
             /* Tipografia ABNT para Textos e Cláusulas */
             p { 
                 text-align: justify; 
@@ -579,6 +597,52 @@
                     <i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i>
                     Aponte o QR Code do aluno para a câmera...
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Printable Receipt Container (Hidden by default) -->
+    <div id="printable-receipt" class="hidden bg-white text-black p-8 font-sans absolute inset-0 z-50">
+        <div class="text-center mb-6 border-b-2 border-gray-300 pb-4">
+            <img src="https://i.ibb.co/spgfD2Nd/1771300330359.png" alt="Logo" class="h-16 mx-auto mb-2" style="filter: grayscale(100%);">
+            <h1 class="text-2xl font-display font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
+            <p class="text-xs text-gray-600">CNPJ: 00.000.000/0001-00</p>
+            <h2 class="text-lg font-bold mt-4 uppercase border border-black inline-block px-4 py-1 rounded">Recibo de Pagamento</h2>
+        </div>
+        <div class="space-y-4 text-sm mb-8">
+            <p>Recebemos de <strong id="rec-student-name" class="uppercase"></strong>,</p>
+            <p>A quantia de <strong id="rec-amount" class="text-lg"></strong>,</p>
+            <p>Referente ao plano: <strong id="rec-plan" class="uppercase"></strong>.</p>
+            <div class="grid grid-cols-2 gap-4 mt-4 bg-gray-50 p-4 border border-gray-200 rounded">
+                <div><span class="text-xs text-gray-500 block">Data do Pagamento:</span><strong id="rec-date"></strong></div>
+                <div><span class="text-xs text-gray-500 block">Forma de Pagamento:</span><strong id="rec-method"></strong></div>
+                <div class="col-span-2"><span class="text-xs text-gray-500 block">Válido até (Próx. Vencimento):</span><strong id="rec-next-due"></strong></div>
+            </div>
+        </div>
+        <div class="mt-12 pt-4 border-t border-black text-center w-64 mx-auto">
+            <p class="font-bold text-sm uppercase">Tanque Team BJJ</p>
+            <p class="text-[10px] text-gray-500">Assinatura Digital / Administração</p>
+        </div>
+    </div>
+
+    <!-- Receipt Modal (Ações pós-pagamento) -->
+    <div id="receipt-modal" class="fixed inset-0 z-[110] hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden animate-fade-in text-center">
+            <div class="bg-green-600 p-6 text-white">
+                <i class="fa-solid fa-circle-check text-5xl mb-2"></i>
+                <h3 class="font-bold text-xl mt-2">Pagamento Confirmado!</h3>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-gray-600 mb-6">O que deseja fazer com o recibo de <strong id="rm-student-name"></strong>?</p>
+                <div class="space-y-3">
+                    <button onclick="printReceipt()" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-lg transition shadow-md flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-file-pdf text-lg"></i> Imprimir / Gerar PDF
+                    </button>
+                    <button onclick="sendReceiptWhatsApp()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg transition shadow-md flex justify-center items-center gap-2">
+                        <i class="fa-brands fa-whatsapp text-lg"></i> Enviar por WhatsApp
+                    </button>
+                </div>
+                <button onclick="closeReceiptModal()" class="mt-6 text-sm text-gray-400 hover:text-gray-600 font-bold underline">Fechar esta janela</button>
             </div>
         </div>
     </div>
@@ -1828,6 +1892,8 @@
             document.getElementById('payment-modal').classList.remove('flex');
         };
 
+        window.currentReceiptData = null; // Armazena temporariamente os dados do recibo
+
         window.confirmPayment = async () => {
             const id = document.getElementById('pay-student-id').value;
             const date = document.getElementById('pay-date').value;
@@ -1836,6 +1902,9 @@
             const nextDue = document.getElementById('pay-next-due').value;
 
             if(!amount && amount !== "0") { alert("Informe o valor."); return; }
+            
+            const student = window.students.find(s => s.id === id);
+            if(!student) return;
 
             const paymentRecord = { date: date, amount: amount, method: method, timestamp: new Date().toISOString() };
             let nextDueISO = null;
@@ -1851,10 +1920,69 @@
                     paymentStatus: 'Em dia',
                     paymentMethod: method 
                 });
+                
+                // Preparar dados para o Recibo
+                const planSelect = document.getElementById('pay-plan-select');
+                const planText = planSelect.options[planSelect.selectedIndex].text;
+                
+                window.currentReceiptData = {
+                    name: student.name,
+                    phone: student.phone,
+                    amount: amount,
+                    plan: planText,
+                    date: date ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR') : '-',
+                    method: method,
+                    nextDue: nextDue ? new Date(nextDue + 'T12:00:00').toLocaleDateString('pt-BR') : 'Não definido'
+                };
+
+                // Preencher o DOM do Recibo para Impressão
+                document.getElementById('rec-student-name').innerText = window.currentReceiptData.name;
+                document.getElementById('rec-amount').innerText = "R$ " + window.currentReceiptData.amount;
+                document.getElementById('rec-plan').innerText = window.currentReceiptData.plan;
+                document.getElementById('rec-date').innerText = window.currentReceiptData.date;
+                document.getElementById('rec-method').innerText = window.currentReceiptData.method;
+                document.getElementById('rec-next-due').innerText = window.currentReceiptData.nextDue;
+                
+                document.getElementById('rm-student-name').innerText = window.currentReceiptData.name.split(' ')[0];
+
                 window.closePaymentModal();
                 window.loadData();
-                alert("Pagamento registrado com sucesso!");
+                
+                // Abrir Modal de Opções de Recibo
+                document.getElementById('receipt-modal').classList.remove('hidden');
+                document.getElementById('receipt-modal').classList.add('flex');
+                
             } catch(e) { console.error(e); alert("Erro ao registrar pagamento."); }
+        };
+        
+        window.closeReceiptModal = () => {
+            document.getElementById('receipt-modal').classList.add('hidden');
+            document.getElementById('receipt-modal').classList.remove('flex');
+        };
+
+        window.printReceipt = () => {
+            document.body.classList.add('printing-receipt');
+            setTimeout(() => {
+                window.print();
+                document.body.classList.remove('printing-receipt');
+            }, 500);
+        };
+
+        window.sendReceiptWhatsApp = () => {
+            const data = window.currentReceiptData;
+            if(!data) return;
+            
+            if(!data.phone || data.phone.trim() === "") {
+                alert("Este aluno não possui um número de telefone cadastrado.");
+                return;
+            }
+            
+            const cleanPhone = data.phone.replace(/\D/g, '');
+            
+            const message = `🥊 *TANQUE TEAM BJJ* 🥊\n*RECIBO DE PAGAMENTO*\n\nOlá, *${data.name.split(' ')[0]}*!\nConfirmamos o recebimento do seu pagamento. Muito obrigado e bons treinos! Oss 🥋\n\n*Detalhes do Pagamento:*\n🔹 Plano: ${data.plan}\n🔹 Valor: R$ ${data.amount}\n🔹 Forma: ${data.method}\n🔹 Data: ${data.date}\n🔹 Próx. Vencimento: ${data.nextDue}\n\nAcesse o Portal do Aluno para o seu histórico completo.`;
+            
+            const encodedMessage = encodeURIComponent(message);
+            window.open(`https://wa.me/55${cleanPhone}?text=${encodedMessage}`, '_blank');
         };
 
         window.viewHistory = (id) => {
