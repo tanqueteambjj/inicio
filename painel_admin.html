@@ -34,6 +34,10 @@
     </script>
 
     <style>
+        /* Animações UI */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+
         /* CSS OTIMIZADO PARA IMPRESSÃO - NORMAS ABNT E MÚLTIPLAS PÁGINAS */
         @media print {
             @page { 
@@ -700,17 +704,17 @@
                         <label class="block text-xs font-bold text-gray-500 mb-1">Referente ao Plano</label>
                         <select id="pay-plan-select" onchange="updatePayAmount()" class="w-full border rounded p-2 text-sm bg-gray-50">
                             <option value="" disabled selected>Selecione...</option>
-                            <option value="infantil-mensal">Infantil Mensal (R$ 189,90)</option>
-                            <option value="infantil-trimestral">Infantil Trimestral (R$ 168,90)</option>
-                            <option value="infantil-semestral">Infantil Semestral (R$ 157,90)</option>
-                            <option value="adulto-mensal">Adulto Mensal (R$ 168,90)</option>
-                            <option value="adulto-trimestral">Adulto Trimestral (R$ 147,90)</option>
-                            <option value="adulto-semestral">Adulto Semestral (R$ 126,90)</option>
-                            <option value="combo-dupla">Combo Dupla (R$ 250,00)</option>
-                            <option value="combo-familia">Combo Família (R$ 362,02)</option>
-                            <option value="dependente">Dependente (Isento R$ 0,00)</option>
-                            <option value="administracao">Administração (R$ 0,00)</option>
-                            <option value="isento">Isento / Bolsista (R$ 0,00)</option>
+                            <option value="infantil-mensal">Infantil Mensal</option>
+                            <option value="infantil-trimestral">Infantil Trimestral</option>
+                            <option value="infantil-semestral">Infantil Semestral</option>
+                            <option value="adulto-mensal">Adulto Mensal</option>
+                            <option value="adulto-trimestral">Adulto Trimestral</option>
+                            <option value="adulto-semestral">Adulto Semestral</option>
+                            <option value="combo-dupla">Combo Dupla</option>
+                            <option value="combo-familia">Combo Família</option>
+                            <option value="dependente">Dependente</option>
+                            <option value="administracao">Administração</option>
+                            <option value="isento">Isento / Bolsista</option>
                             <option value="outros">Outros / Avulso</option>
                         </select>
                     </div>
@@ -722,7 +726,7 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-bold text-gray-500 mb-1">Valor (R$)</label>
-                            <input type="number" id="pay-amount" class="w-full border rounded p-2 text-sm font-bold text-gray-700" placeholder="0,00">
+                            <input type="number" id="pay-amount" class="w-full border rounded p-2 text-sm font-bold text-gray-700" placeholder="0.00" step="0.01">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 mb-1">Forma</label>
@@ -827,7 +831,8 @@
                                     <option value="adulto-trimestral">Adulto Trimestral</option>
                                     <option value="adulto-semestral">Adulto Semestral</option>
                                     <option value="combo-dupla">Combo Dupla (1 Ad + 1 Inf)</option>
-                                    <option value="combo-familia">Combo Família (2 Ad + 1 Inf)</option>
+                                    <option value="combo-casal">Combo Casal (2 Adultos)</option>
+                                    <option value="combo-familia">Combo Família (3 Pessoas)</option>
                                     <option value="dependente">Dependente (Isento)</option>
                                     <option value="administracao">Administração (Isento)</option>
                                 </select>
@@ -896,8 +901,8 @@
                             </div>
                         </div>
                         <div class="mt-3">
-                             <button onclick="sendAccessEmail()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded flex items-center justify-center gap-2 shadow-sm transition">
-                                <i class="fa-solid fa-envelope"></i> Enviar Acesso por E-mail (EmailJS)
+                             <button onclick="window.sendCredsEmail(document.getElementById('edit-name').value, document.getElementById('edit-email').value, document.getElementById('edit-login').value, document.getElementById('edit-password').value, this)" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded flex items-center justify-center gap-2 shadow-sm transition">
+                                <i class="fa-solid fa-envelope"></i> Enviar Acesso por E-mail
                             </button>
                         </div>
                     </div>
@@ -1143,8 +1148,8 @@
                             </div>
                         </div>
                         <div class="mt-3">
-                             <button onclick="sendNewStudentAccessEmail()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded flex items-center justify-center gap-2 shadow-sm transition">
-                                <i class="fa-solid fa-envelope"></i> Enviar Acesso por E-mail (EmailJS)
+                             <button onclick="window.sendCredsEmail(document.getElementById('reg-name').value, document.getElementById('reg-email').value, document.getElementById('reg-student-login').value, document.getElementById('reg-student-pass').value, this)" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded flex items-center justify-center gap-2 shadow-sm transition">
+                                <i class="fa-solid fa-envelope"></i> Enviar Acesso por E-mail
                             </button>
                         </div>
                     </div>
@@ -1196,7 +1201,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
@@ -1215,6 +1220,44 @@
         window.currentView = 'students'; 
         window.currentFinancialTab = 'all';
         window.noticesList = [];
+
+        // CENTRAL DE PREÇOS E PLANOS OTIMIZADA
+        window.PLAN_DICT = {
+            'infantil-mensal': { price: 189.90, short: 'Infantil Mensal', long: 'INFANTIL MENSAL' },
+            'infantil-trimestral': { price: 168.90, short: 'Infantil Trimestral', long: 'INFANTIL TRIMESTRAL' },
+            'infantil-semestral': { price: 157.90, short: 'Infantil Semestral', long: 'INFANTIL SEMESTRAL' },
+            'adulto-mensal': { price: 168.90, short: 'Adulto Mensal', long: 'JOVEM/ADULTO MENSAL' },
+            'adulto-trimestral': { price: 147.90, short: 'Adulto Trimestral', long: 'JOVEM/ADULTO TRIMESTRAL' },
+            'adulto-semestral': { price: 126.90, short: 'Adulto Semestral', long: 'JOVEM/ADULTO SEMESTRAL' },
+            'combo-dupla': { price: 250.00, short: 'Combo Dupla', long: 'COMBO DUPLA (1 ADULTO + 1 INFANTIL) SEMESTRAL' },
+            'combo-casal': { price: 220.00, short: 'Combo Casal', long: 'COMBO CASAL (2 ADULTOS) SEMESTRAL' },
+            'combo-familia': { price: 362.02, short: 'Combo Família', long: 'COMBO FAMÍLIA (3 PESSOAS) SEMESTRAL' },
+            'administracao': { price: 0.00, short: 'Administração', long: 'ADMINISTRAÇÃO (ISENTO)' },
+            'dependente': { price: 0.00, short: 'Dependente (Combo)', long: 'DEPENDENTE - COMBO FAMÍLIA' },
+            'isento': { price: 0.00, short: 'Isento / Bolsista', long: 'ISENTO / BOLSISTA' },
+            'outros': { price: 0.00, short: 'Outros / Avulso', long: 'OUTROS / AVULSO' }
+        };
+
+        window.getPlanInfo = (planKey) => {
+            return window.PLAN_DICT[planKey] || { price: 0, short: String(planKey||'').toUpperCase(), long: 'NÃO INFORMADO' };
+        };
+
+        window.getStatusBadge = (student, targetDate, today) => {
+            const safePlan = String(student.plan || '').toLowerCase();
+            if (safePlan === 'dependente') return `<span class="px-2 py-1 rounded text-xs font-bold bg-purple-100 text-purple-800">DEPENDENTE</span>`;
+            if (student.paymentStatus === 'Isento' || safePlan === 'administracao') return `<span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">Isento</span>`;
+
+            const diffDays = isNaN(targetDate) ? 0 : Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 0 && student.paymentStatus !== 'Em dia') {
+                return student.paymentStatus === 'Pendente' ? `<span class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>` : `<span class="px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-800">Em dia</span>`;
+            } else if (diffDays <= 7 && diffDays >= 0) {
+                return `<span class="px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800">Expirando</span>`;
+            } else {
+                const statusColor = student.paymentStatus === 'Em dia' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100';
+                return `<span class="px-2 py-1 rounded text-xs font-bold ${statusColor}">${student.paymentStatus || 'Pendente'}</span>`;
+            }
+        };
 
         document.addEventListener('DOMContentLoaded', function() {
             const cpfInput = document.getElementById('reg-cpf');
@@ -1334,13 +1377,9 @@
             
             if (cat === 'administração' || plan === 'administracao') return false; 
             
-            // PRIORIDADE 1: A idade
             const age = getAge(s.dob);
             if (age !== null && age < 12) return true;
-
-            // PRIORIDADE 2: Fallback para o nome do plano se não tiver idade
             if (cat.includes('infantil') || plan.includes('infantil')) return true;
-            
             return false; 
         }
 
@@ -1730,15 +1769,7 @@
 
                 let toggleBtn = s.enrollmentStatus === 'Inativo' ? `<button onclick="toggleStudentStatus('${s.id}', 'Inativo')" class="text-green-600 hover:text-green-900 mr-2" title="Reativar Aluno"><i class="fa-solid fa-power-off"></i></button>` : `<button onclick="toggleStudentStatus('${s.id}', 'Ativo')" class="text-gray-400 hover:text-red-600 mr-2" title="Inativar Aluno"><i class="fa-solid fa-power-off"></i></button>`;
                 
-                let displayPlanName = '-';
-                if(s.plan) {
-                    if(safePlan === 'combo-dupla') displayPlanName = 'Combo Dupla';
-                    else if(safePlan === 'combo-casal') displayPlanName = 'Combo Casal';
-                    else if(safePlan === 'combo-familia') displayPlanName = 'Combo Família';
-                    else if(safePlan === 'administracao') displayPlanName = 'Administração';
-                    else if(safePlan === 'dependente') displayPlanName = 'Dependente (Combo)';
-                    else displayPlanName = safePlan.replace('-', ' ').toUpperCase();
-                }
+                let displayPlanName = window.getPlanInfo(s.plan).short;
 
                 const tr = document.createElement('tr');
                 tr.className = "border-b hover:bg-gray-50 transition";
@@ -1802,38 +1833,11 @@
                         if (!isNaN(rDate)) regDay = rDate.getDate();
                     }
                     const nextDue = s.nextDueDate ? formatDate(s.nextDueDate) : `Dia ${regDay}`;
-                    const safePlan = String(s.plan || '').toLowerCase();
-
-                    let statusHtml = '';
-                    if (safePlan === 'dependente') {
-                        statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-purple-100 text-purple-800">DEPENDENTE</span>`;
-                    } else if (s.paymentStatus === 'Isento' || safePlan === 'administracao') {
-                        statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">Isento</span>`;
-                    } else {
-                         const today = new Date();
-                         const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
-                         const diffDays = isNaN(targetDate) ? 0 : Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
-
-                         if (diffDays < 0 && s.paymentStatus !== 'Em dia') {
-                              statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>`;
-                         } else if (diffDays >= 0 && diffDays <= 7) {
-                              statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800">Expirando</span>`;
-                         } else {
-                              const payStatus = s.paymentStatus || 'Pendente';
-                              const statusColor = payStatus === 'Em dia' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100';
-                              statusHtml = `<span class="px-2 py-1 rounded text-xs font-bold ${statusColor}">${payStatus}</span>`;
-                         }
-                    }
                     
-                    let displayPlanName = '-';
-                    if(s.plan) {
-                        if(safePlan === 'combo-dupla') displayPlanName = 'Combo Dupla';
-                        else if(safePlan === 'combo-casal') displayPlanName = 'Combo Casal';
-                        else if(safePlan === 'combo-familia') displayPlanName = 'Combo Família';
-                        else if(safePlan === 'administracao') displayPlanName = 'Administração';
-                        else if(safePlan === 'dependente') displayPlanName = 'Dependente (Combo)';
-                        else displayPlanName = safePlan.replace('-', ' ').toUpperCase();
-                    }
+                    const today = new Date();
+                    const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
+                    const statusHtml = window.getStatusBadge(s, targetDate, today);
+                    const displayPlanName = window.getPlanInfo(s.plan).short;
 
                     const tr = document.createElement('tr');
                     tr.className = "border-b hover:bg-gray-50 transition";
@@ -1881,18 +1885,9 @@
         window.updatePayAmount = () => {
             const plan = document.getElementById('pay-plan-select').value;
             const amountInput = document.getElementById('pay-amount');
-            let price = "";
-            if (plan === 'infantil-mensal') price = 189.90;
-            else if (plan === 'infantil-trimestral') price = 168.90;
-            else if (plan === 'infantil-semestral') price = 157.90;
-            else if (plan === 'adulto-mensal') price = 168.90;
-            else if (plan === 'adulto-trimestral') price = 147.90;
-            else if (plan === 'adulto-semestral') price = 126.90;
-            else if (plan === 'combo-casal') price = 220.00;
-            else if (plan === 'combo-dupla') price = 250.00;
-            else if (plan === 'combo-familia') price = 340.00;
-            else if (plan === 'isento' || plan === 'administracao' || plan === 'dependente') price = 0;
-            if (price !== "") amountInput.value = price;
+            const pInfo = window.getPlanInfo(plan);
+            if(pInfo && pInfo.price > 0) amountInput.value = pInfo.price;
+            else if (pInfo && pInfo.price === 0) amountInput.value = 0;
         };
 
         window.closePaymentModal = () => {
@@ -2038,16 +2033,9 @@
         };
 
         window.populateContractDOM = function(s) {
-            let price = "R$ 0,00";
-            if(s.plan === 'infantil-mensal') price = "R$ 189,90";
-            else if(s.plan === 'infantil-trimestral') price = "R$ 168,90";
-            else if(s.plan === 'infantil-semestral') price = "R$ 157,90";
-            else if(s.plan === 'adulto-mensal') price = "R$ 168,90";
-            else if(s.plan === 'adulto-trimestral') price = "R$ 147,90";
-            else if(s.plan === 'adulto-semestral') price = "R$ 126,90";
-            else if(s.plan === 'combo-dupla') price = "R$ 250,00";
-            else if(s.plan === 'combo-casal') price = "R$ 220,00";
-            else if(s.plan === 'combo-familia') price = "R$ 362,02";
+            const pInfo = window.getPlanInfo(s.plan);
+            let price = "R$ " + pInfo.price.toFixed(2).replace('.', ',');
+            let displayName = pInfo.long;
             
             let promoNote = "";
             if (s.plan && s.plan.includes('semestral') && !s.plan.includes('combo')) {
@@ -2084,16 +2072,6 @@
             document.getElementById('printEmail').innerText = s.email || "Não informado";
             document.getElementById('printPhone').innerText = s.phone || "Não informado";
             document.getElementById('printAddress').innerText = s.address || "Não informado";
-            
-            let displayName = 'NÃO INFORMADO';
-            if(s.plan) {
-                if(s.plan === 'combo-dupla') displayName = 'COMBO DUPLA (1 ADULTO + 1 INFANTIL) SEMESTRAL';
-                else if(s.plan === 'combo-casal') displayName = 'COMBO CASAL (2 ADULTOS) SEMESTRAL';
-                else if(s.plan === 'combo-familia') displayName = 'COMBO FAMÍLIA (3 PESSOAS) SEMESTRAL';
-                else if(s.plan === 'administracao') displayName = 'ADMINISTRAÇÃO (ISENTO)';
-                else if(s.plan === 'dependente') displayName = 'DEPENDENTE - COMBO FAMÍLIA';
-                else displayName = s.plan.replace('infantil-', 'Infantil ').replace('adulto-', 'Jovem/Adulto ').replace('mensal', 'Mensal').replace('trimestral', 'Trimestral').replace('semestral', 'Semestral').toUpperCase();
-            }
             
             let beltInfo = "";
             if(s.belt && !s.belt.includes("Branca - 0º Grau") && !s.belt.includes("Iniciante")) {
@@ -2229,36 +2207,12 @@
                 guardianBox.classList.remove('hidden');
             } else { guardianBox.classList.add('hidden'); }
 
-            const planMap = {
-                'infantil-mensal': 'R$ 189,90',
-                'infantil-trimestral': 'R$ 168,90',
-                'infantil-semestral': 'R$ 157,90',
-                'adulto-mensal': 'R$ 168,90',
-                'adulto-trimestral': 'R$ 147,90',
-                'adulto-semestral': 'R$ 126,90',
-                'combo-dupla': 'R$ 250,00',
-                'combo-casal': 'R$ 220,00',
-                'combo-familia': 'R$ 362,02',
-                'administracao': 'Isento (R$ 0,00)',
-                'dependente': 'Isento (R$ 0,00)'
-            };
+            const pInfo = window.getPlanInfo(s.plan);
+            const planValue = pInfo.price > 0 ? "R$ " + pInfo.price.toFixed(2).replace('.', ',') : (s.plan === 'dependente' || s.plan === 'administracao' ? "Isento (R$ 0,00)" : 'Sob Consulta');
             
-            let displayName = 'NÃO INFORMADO';
-            if(s.plan) {
-                if(s.plan === 'combo-dupla') displayName = 'COMBO DUPLA (1 ADULTO + 1 INFANTIL) SEMESTRAL';
-                else if(s.plan === 'combo-casal') displayName = 'COMBO CASAL (2 ADULTOS) SEMESTRAL';
-                else if(s.plan === 'combo-familia') displayName = 'COMBO FAMÍLIA (3 PESSOAS) SEMESTRAL';
-                else if(s.plan === 'administracao') displayName = 'ADMINISTRAÇÃO (ISENTO)';
-                else if(s.plan === 'dependente') displayName = 'DEPENDENTE (COMBO)';
-                else displayName = s.plan.replace('infantil-', 'Infantil ').replace('adulto-', 'Jovem/Adulto ').replace('mensal', 'Mensal').replace('trimestral', 'Trimestral').replace('semestral', 'Semestral').toUpperCase();
-            }
-            
-            const planValue = planMap[s.plan] || 'Sob Consulta';
-            const payMethod = s.paymentMethod || 'Não informado';
-
-            document.getElementById('detail-plan').innerText = displayName;
+            document.getElementById('detail-plan').innerText = pInfo.long;
             document.getElementById('detail-value').innerText = planValue;
-            document.getElementById('detail-method').innerText = payMethod;
+            document.getElementById('detail-method').innerText = s.paymentMethod || 'Não informado';
             
             const titularBox = document.getElementById('detail-titular-box');
             if (s.titularName && s.titularName.trim() !== "") {
@@ -2418,19 +2372,13 @@
             } catch(e) { console.error(e); alert("Erro ao cadastrar."); }
         };
         
-        window.sendNewStudentAccessEmail = async () => {
-            const name = document.getElementById('reg-name').value;
-            const email = document.getElementById('reg-email').value;
-            const login = document.getElementById('reg-student-login').value;
-            const pass = document.getElementById('reg-student-pass').value;
-
+        window.sendCredsEmail = async (name, email, login, pass, btnElement) => {
             if(!email) { alert("Preencha o e-mail do aluno antes de enviar."); return; }
             if(!login || !pass) { alert("Preencha o login e senha antes de enviar."); return; }
 
-            const btn = event.currentTarget; 
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+            const originalText = btnElement.innerHTML;
+            btnElement.disabled = true;
+            btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
 
             const messageContent = `
                 <div style="font-family: Arial, sans-serif; color: #333;">
@@ -2449,41 +2397,7 @@
             try {
                 await emailjs.send("service_2twa33d", "template_few5bna", { from_name: "Tanque Team BJJ", from_email: "administrativo@tanqueteambjj.com.br", to_name: name, to_email: email, subject: "Acesso ao Portal do Aluno - Tanque Team BJJ", message: messageContent, reply_to: "administrativo@tanqueteambjj.com.br" });
                 alert("E-mail com credenciais enviado com sucesso!");
-            } catch (error) { alert("Erro ao enviar e-mail."); } finally { btn.disabled = false; btn.innerHTML = originalText; }
-        };
-
-        window.sendAccessEmail = async () => {
-            const name = document.getElementById('edit-name').value;
-            const email = document.getElementById('edit-email').value;
-            const login = document.getElementById('edit-login').value;
-            const pass = document.getElementById('edit-password').value;
-
-            if(!email) { alert("O aluno precisa ter um email cadastrado."); return; }
-            if(!login || !pass) { alert("Defina login e senha antes de enviar."); return; }
-
-            const btn = event.currentTarget; 
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
-
-            const messageContent = `
-                <div style="font-family: Arial, sans-serif; color: #333;">
-                    <h2>Olá, ${name}!</h2>
-                    <p>Segue abaixo suas credenciais de acesso ao <strong>Portal do Aluno - Tanque Team BJJ</strong>:</p>
-                    <div style="background: #f4f4f4; padding: 15px; border-radius: 5px; border-left: 4px solid #D90429;">
-                        <p><strong>Login:</strong> ${login}</p>
-                        <p><strong>Senha:</strong> ${pass}</p>
-                    </div>
-                    <p>Para acessar o painel e acompanhar sua evolução, clique no link abaixo:</p>
-                    <p><a href="https://www.tanqueteambjj.com.br/login.html" style="color: #D90429; font-weight: bold; text-decoration: underline;">https://www.tanqueteambjj.com.br/login.html</a></p>
-                    <p>Por favor, altere sua senha no primeiro acesso se desejar.</p>
-                    <p>Atenciosamente,<br>Equipe Tanque Team</p>
-                </div>
-            `;
-            try {
-                await emailjs.send("service_2twa33d", "template_few5bna", { from_name: "Tanque Team BJJ", from_email: "administrativo@tanqueteambjj.com.br", to_name: name, to_email: email, subject: "Acesso ao Portal do Aluno - Tanque Team BJJ", message: messageContent, reply_to: "administrativo@tanqueteambjj.com.br" });
-                alert("E-mail com credenciais enviado com sucesso!");
-            } catch (error) { alert("Erro ao enviar e-mail."); } finally { btn.disabled = false; btn.innerHTML = originalText; }
+            } catch (error) { alert("Erro ao enviar e-mail."); } finally { btnElement.disabled = false; btnElement.innerHTML = originalText; }
         };
 
         // --- SISTEMA DE QR CODE E CHECK-IN ---
@@ -2694,12 +2608,6 @@
                 html += `<h3 class="font-bold text-lg mb-4 text-green-600">RESUMO FINANCEIRO (MENSALIDADE ESPERADA BASEADA EM PLANOS ATIVOS)</h3>`;
                 html += `<table><thead><tr><th>Plano</th><th>Qtd Alunos (Titulares)</th><th>Valor Unit. Estimado</th><th>Subtotal Mensal</th></tr></thead><tbody>`;
                 
-                const planMap = {
-                    'infantil-mensal': 189.90, 'infantil-trimestral': 168.90, 'infantil-semestral': 157.90,
-                    'adulto-mensal': 168.90, 'adulto-trimestral': 147.90, 'adulto-semestral': 126.90,
-                    'combo-dupla': 250.00, 'combo-casal': 220.00, 'combo-familia': 362.02
-                };
-
                 let sumMap = {};
                 let totalExpected = 0;
                 
@@ -2710,10 +2618,10 @@
                 });
 
                 for (const [pName, count] of Object.entries(sumMap)) {
-                    let price = planMap[pName] || 0;
-                    let subtotal = price * count;
+                    const pInfo = window.getPlanInfo(pName);
+                    let subtotal = pInfo.price * count;
                     totalExpected += subtotal;
-                    tableRows += `<tr><td class="uppercase">${pName.replace('-',' ')}</td><td>${count}</td><td>R$ ${price.toFixed(2)}</td><td>R$ ${subtotal.toFixed(2)}</td></tr>`;
+                    tableRows += `<tr><td class="uppercase">${pInfo.short}</td><td>${count}</td><td>R$ ${pInfo.price.toFixed(2)}</td><td>R$ ${subtotal.toFixed(2)}</td></tr>`;
                 }
                 
                 html += tableRows + `</tbody><tfoot><tr><th colspan="3" class="text-right">TOTAL ESTIMADO MENSAL:</th><th>R$ ${totalExpected.toFixed(2)}</th></tr></tfoot></table>`;
@@ -2754,4 +2662,191 @@
 
         window.loadNotices = async () => {
             try {
-                const q = query(collection(window
+                const q = query(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'));
+                const querySnapshot = await getDocs(q);
+                window.noticesList = [];
+                querySnapshot.forEach((doc) => {
+                    window.noticesList.push({ id: doc.id, ...doc.data() });
+                });
+                window.noticesList.sort((a, b) => new Date(b.date) - new Date(a.date));
+                if (window.currentView === 'notices') { window.renderAdminNotices(); window.renderBirthdays(); }
+            } catch (error) { console.error("Erro ao carregar avisos:", error); }
+        };
+
+        window.sendBirthdayWhatsApp = (name, phone) => {
+            if(!phone || phone.trim() === "") {
+                alert("Este aluno não possui um número de telefone cadastrado.");
+                return;
+            }
+            const firstName = name.split(' ')[0];
+            const message = `Fala ${firstName}! Aqui é da equipe Tanque Team BJJ. Passando para te desejar um Feliz Aniversário! 🎉🥋\n\nQue você tenha muita saúde, paz e que continue evoluindo sempre, com muita resiliência dentro e fora dos tatames. Aproveite o seu dia! Oss! 👊`;
+            const encodedMessage = encodeURIComponent(message);
+            window.open(`https://wa.me/55${phone}?text=${encodedMessage}`, '_blank');
+        };
+
+        window.publishBirthdayNotice = async (name) => {
+            if(!confirm(`Deseja publicar uma homenagem no mural para ${name}?`)) return;
+            const firstName = name.split(' ')[0];
+            const title = `🎉 Parabéns, ${firstName}! 🥋`;
+            const text = `Hoje é o aniversário do nosso colega de tatame ${name}! Desejamos muita saúde, vitórias, resiliência e que a evolução seja constante dentro e fora dos tatames. Parabéns! Oss! 👊`;
+            
+            try {
+                await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'), {
+                    title: title, text: text, type: 'success', date: new Date().toISOString()
+                });
+                alert("Homenagem publicada no mural com sucesso!");
+                window.loadNotices();
+            } catch(e) { alert("Erro ao publicar homenagem: " + e.message); }
+        };
+
+        window.renderBirthdays = () => {
+            const currentMonth = new Date().getMonth();
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            document.getElementById('birthday-month-name').innerText = monthNames[currentMonth];
+
+            const birthdays = window.students.filter(s => {
+                if (!s.dob || s.enrollmentStatus === 'Inativo') return false;
+                let dobDate;
+                if (s.dob.includes('T')) {
+                    dobDate = new Date(s.dob);
+                } else {
+                    const [y, m, d] = s.dob.split('-').map(Number);
+                    dobDate = new Date(y, m - 1, d);
+                }
+                return dobDate.getMonth() === currentMonth;
+            });
+
+            const container = document.getElementById('admin-birthdays-widget');
+            const list = document.getElementById('birthday-list');
+            list.innerHTML = '';
+
+            if (birthdays.length === 0) {
+                container.classList.add('hidden');
+            } else {
+                container.classList.remove('hidden');
+                
+                // Ordenar pelo dia do mês (crescente)
+                birthdays.sort((a, b) => {
+                    const getDay = (dob) => dob.includes('T') ? new Date(dob).getDate() : Number(dob.split('-')[2]);
+                    return getDay(a.dob) - getDay(b.dob);
+                });
+
+                birthdays.forEach(s => {
+                    const day = s.dob.includes('T') ? new Date(s.dob).getDate() : Number(s.dob.split('-')[2]);
+                    const cleanPhone = (s.phone || '').replace(/\D/g, '');
+                    
+                    const wppBtn = cleanPhone ? `<button onclick="sendBirthdayWhatsApp('${s.name}', '${cleanPhone}')" class="text-green-500 hover:text-green-700 p-1" title="Enviar Parabéns no WhatsApp"><i class="fa-brands fa-whatsapp text-lg"></i></button>` : '';
+                    const muralBtn = `<button onclick="publishBirthdayNotice('${s.name}')" class="text-blue-500 hover:text-blue-700 p-1" title="Publicar Parabéns no Mural"><i class="fa-solid fa-bullhorn text-lg"></i></button>`;
+
+                    list.innerHTML += `
+                        <div class="bg-white p-2 rounded shadow-sm flex items-center gap-3 border-l-4 border-blue-400">
+                            <div class="bg-blue-100 text-blue-800 font-bold w-10 h-10 rounded flex flex-col items-center justify-center leading-tight shrink-0">
+                                <span class="text-[10px] font-normal uppercase">Dia</span>
+                                <span>${day}</span>
+                            </div>
+                            <div class="flex-1 truncate">
+                                <p class="font-bold text-sm text-gray-800 truncate" title="${s.name}">${s.name.split(' ')[0]} ${s.name.split(' ').length > 1 ? s.name.split(' ').pop() : ''}</p>
+                                <p class="text-[10px] text-gray-500 uppercase truncate">${(s.plan || 'Sem plano').replace('-', ' ')}</p>
+                            </div>
+                            <div class="flex items-center gap-1 border-l border-gray-100 pl-2">
+                                ${wppBtn}
+                                ${muralBtn}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        };
+
+        window.renderAdminNotices = () => {
+            const list = document.getElementById('admin-notices-list');
+            list.innerHTML = '';
+            if (window.noticesList.length === 0) {
+                list.innerHTML = '<div class="text-center py-8 text-gray-400 italic text-sm">Nenhum aviso publicado.</div>';
+                return;
+            }
+            window.noticesList.forEach(notice => {
+                const d = new Date(notice.date).toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+                let bg = 'bg-blue-50 border-blue-200'; let icon = '<i class="fa-solid fa-circle-info text-blue-500"></i>';
+                if(notice.type === 'alert') { bg = 'bg-yellow-50 border-yellow-200'; icon = '<i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>'; }
+                if(notice.type === 'success') { bg = 'bg-green-50 border-green-200'; icon = '<i class="fa-solid fa-check-circle text-green-500"></i>'; }
+                if(notice.type === 'danger') { bg = 'bg-red-50 border-red-200'; icon = '<i class="fa-solid fa-circle-xmark text-red-500"></i>'; }
+                
+                list.innerHTML += `
+                    <div class="p-4 border rounded-lg ${bg} flex justify-between items-start">
+                        <div>
+                            <h4 class="font-bold text-gray-800 flex items-center gap-2">${icon} ${notice.title}</h4>
+                            <p class="text-sm text-gray-600 mt-1 whitespace-pre-wrap">${notice.text}</p>
+                            <p class="text-[10px] text-gray-400 mt-2">Publicado em: ${d}</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="editNotice('${notice.id}')" class="text-blue-400 hover:text-blue-600 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteNotice('${notice.id}')" class="text-red-400 hover:text-red-600 transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+        };
+
+        window.openNoticeModal = () => {
+            document.getElementById('notice-id').value = '';
+            document.getElementById('notice-title').value = '';
+            document.getElementById('notice-text').value = '';
+            document.getElementById('notice-type').value = 'info';
+            document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-bullhorn mr-2"></i> Publicar Aviso';
+            document.getElementById('notice-modal').classList.remove('hidden');
+            document.getElementById('notice-modal').classList.add('flex');
+        };
+
+        window.editNotice = (id) => {
+            const notice = window.noticesList.find(n => n.id === id);
+            if (!notice) return;
+            document.getElementById('notice-id').value = notice.id;
+            document.getElementById('notice-title').value = notice.title;
+            document.getElementById('notice-text').value = notice.text;
+            document.getElementById('notice-type').value = notice.type || 'info';
+            document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-pen mr-2"></i> Editar Aviso';
+            document.getElementById('notice-modal').classList.remove('hidden');
+            document.getElementById('notice-modal').classList.add('flex');
+        };
+
+        window.closeNoticeModal = () => {
+            document.getElementById('notice-modal').classList.add('hidden');
+            document.getElementById('notice-modal').classList.remove('flex');
+        };
+
+        window.saveNotice = async () => {
+            const id = document.getElementById('notice-id').value;
+            const title = document.getElementById('notice-title').value;
+            const text = document.getElementById('notice-text').value;
+            const type = document.getElementById('notice-type').value;
+            if(!title || !text) { alert("Preencha título e mensagem."); return; }
+            
+            try {
+                if (id) {
+                    await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', id), {
+                        title: title, text: text, type: type
+                    });
+                    alert("Aviso atualizado com sucesso!");
+                } else {
+                    await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'), {
+                        title: title, text: text, type: type, date: new Date().toISOString()
+                    });
+                    alert("Aviso publicado com sucesso!");
+                }
+                window.closeNoticeModal();
+                window.loadNotices();
+            } catch(e) { alert("Erro ao salvar aviso: " + e.message); }
+        };
+
+        window.deleteNotice = async (id) => {
+            if(!confirm("Tem certeza que deseja excluir este aviso permanentemente? Ele vai sumir do painel de todos os alunos.")) return;
+            try {
+                await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', id));
+                window.loadNotices();
+            } catch(e) { alert("Erro ao excluir: " + e.message); }
+        };
+
+    </script>
+</body>
+</html>
