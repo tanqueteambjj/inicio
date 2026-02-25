@@ -671,18 +671,31 @@
         window.currentCalendarDate = new Date(); 
         window.noticesList = [];
 
+        // Dicionário de Planos e Funções Utilitárias OBRIGATÓRIAS
+        window.PLAN_DICT = {
+            'infantil-mensal': { price: 189.90, short: 'Infantil Mensal', long: 'INFANTIL MENSAL' },
+            'infantil-trimestral': { price: 168.90, short: 'Infantil Trimestral', long: 'INFANTIL TRIMESTRAL' },
+            'infantil-semestral': { price: 157.90, short: 'Infantil Semestral', long: 'INFANTIL SEMESTRAL' },
+            'adulto-mensal': { price: 168.90, short: 'Adulto Mensal', long: 'JOVEM/ADULTO MENSAL' },
+            'adulto-trimestral': { price: 147.90, short: 'Adulto Trimestral', long: 'JOVEM/ADULTO TRIMESTRAL' },
+            'adulto-semestral': { price: 126.90, short: 'Adulto Semestral', long: 'JOVEM/ADULTO SEMESTRAL' },
+            'combo-dupla': { price: 250.00, short: 'Combo Dupla', long: 'COMBO DUPLA (1 ADULTO + 1 INFANTIL) SEMESTRAL' },
+            'combo-casal': { price: 220.00, short: 'Combo Casal', long: 'COMBO CASAL (2 ADULTOS) SEMESTRAL' },
+            'combo-familia': { price: 362.02, short: 'Combo Família', long: 'COMBO FAMÍLIA (3 PESSOAS) SEMESTRAL' },
+            'administracao': { price: 0.00, short: 'Administração', long: 'ADMINISTRAÇÃO (ISENTO)' },
+            'dependente': { price: 0.00, short: 'Dependente', long: 'DEPENDENTE - COMBO FAMÍLIA' },
+            'isento': { price: 0.00, short: 'Isento', long: 'ISENTO / BOLSISTA' },
+            'outros': { price: 0.00, short: 'Outros', long: 'OUTROS / AVULSO' }
+        };
+
+        window.getPlanInfo = (planKey) => {
+            return window.PLAN_DICT[planKey] || { price: 0, short: String(planKey||'').toUpperCase(), long: 'NÃO INFORMADO' };
+        };
+
         window.getPlanPriceStr = function(planStr) {
-            let price = "0,00";
-            if(planStr === 'infantil-mensal') price = "189,90";
-            else if(planStr === 'infantil-trimestral') price = "168,90";
-            else if(planStr === 'infantil-semestral') price = "157,90";
-            else if(planStr === 'adulto-mensal') price = "168,90";
-            else if(planStr === 'adulto-trimestral') price = "147,90";
-            else if(planStr === 'adulto-semestral') price = "126,90";
-            else if(planStr === 'combo-dupla') price = "250,00";
-            else if(planStr === 'combo-casal') price = "220,00";
-            else if(planStr === 'combo-familia') price = "362,02";
-            return price;
+            let info = window.getPlanInfo(planStr);
+            if(info && info.price > 0) return info.price.toFixed(2).replace('.', ',');
+            return "0,00";
         };
 
         window.handleLogout = () => {
@@ -812,15 +825,8 @@
                 document.getElementById('data-phone').innerText = data.phone || '-';
                 document.getElementById('data-address').innerText = data.address || '-';
 
-                let displayName = 'NÃO INFORMADO';
-                if(data.plan) {
-                    if(data.plan === 'combo-dupla') displayName = 'COMBO DUPLA';
-                    else if(data.plan === 'combo-casal') displayName = 'COMBO CASAL';
-                    else if(data.plan === 'combo-familia') displayName = 'COMBO FAMÍLIA';
-                    else if(data.plan === 'dependente') displayName = 'DEPENDENTE - COMBO FAMÍLIA';
-                    else displayName = data.plan.replace('infantil-', 'Infantil ').replace('adulto-', 'Jovem/Adulto ').replace('mensal', 'Mensal').replace('trimestral', 'Trimestral').replace('semestral', 'Semestral').toUpperCase();
-                }
-                document.getElementById('plan-display').innerText = displayName;
+                let pInfo = window.getPlanInfo(data.plan);
+                document.getElementById('plan-display').innerText = pInfo.long;
                 
                 // Photo Display
                 const photoImg = document.getElementById('welcome-photo');
@@ -1180,9 +1186,8 @@
 
         window.copyPixKey = () => {
             const input = document.getElementById("pix-key-input");
-            const cleanKey = "91998192610"; // Chave limpa para a área de transferência
+            const cleanKey = "91998192610"; 
             
-            // Cria um elemento temporário para copiar apenas os números
             const tempInput = document.createElement("input");
             tempInput.value = cleanKey;
             document.body.appendChild(tempInput);
@@ -1429,7 +1434,6 @@
         window.printStudentContract = () => {
             if (window.titularData) {
                 const contractContainer = document.getElementById('printable-contract');
-                const mainUi = document.getElementById('main-ui');
                 
                 contractContainer.classList.remove('hidden');
                 
