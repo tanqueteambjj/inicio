@@ -214,6 +214,9 @@
             <a href="#" onclick="switchMainView('reports')" id="nav-reports" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
                 <i class="fa-solid fa-chart-pie w-6"></i> <span class="font-bold">Relatórios</span>
             </a>
+            <a href="#" onclick="switchMainView('experimental')" id="nav-experimental" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
+                <i class="fa-solid fa-fire w-6"></i> <span class="font-bold">Aulas Exp.</span>
+            </a>
             <a href="#" onclick="switchMainView('notices')" id="nav-notices" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
                 <i class="fa-solid fa-bullhorn w-6"></i> <span class="font-bold">Mural de Avisos</span>
             </a>
@@ -239,7 +242,7 @@
             
             <div class="hidden md:flex relative w-96">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-search"></i></span>
-                <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border rounded-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent transition">
+                <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Buscar..." class="w-full pl-10 pr-4 py-2 border rounded-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent transition">
             </div>
 
             <div class="flex items-center gap-3">
@@ -520,6 +523,35 @@
                             </div>
                             <button class="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: AULA EXPERIMENTAL -->
+            <div id="view-experimental" class="hidden">
+                <div class="bg-white rounded-xl shadow overflow-hidden border border-gray-200">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center no-print">
+                        <div>
+                            <h3 class="font-bold text-gray-800 uppercase text-lg"><i class="fa-solid fa-fire text-yellow-500 mr-2"></i> Gestão de Aulas Experimentais</h3>
+                            <p class="text-xs text-gray-500">Controle os visitantes que agendaram pelo site</p>
+                        </div>
+                        <button onclick="loadExperimentalData()" class="text-gray-500 hover:text-black text-sm"><i class="fa-solid fa-rotate"></i></button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
+                                    <th class="px-6 py-3 border-b">Data / Hora</th>
+                                    <th class="px-6 py-3 border-b">Nome do Visitante</th>
+                                    <th class="px-6 py-3 border-b">Contato</th>
+                                    <th class="px-6 py-3 border-b">Status</th>
+                                    <th class="px-6 py-3 border-b text-center no-print-col">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="experimental-table-body" class="text-sm text-gray-700 divide-y divide-gray-200">
+                                <tr><td colspan="5" class="px-6 py-4 text-center">Carregando dados...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1160,7 +1192,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1">Data de Nascimento</label>
-                                <input type="date" id="reg-dob" class="w-full border rounded p-2">
+                                <input type="text" id="reg-dob" class="w-full border rounded p-2" placeholder="DD/MM/AAAA" maxlength="10">
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1">CPF</label>
@@ -1317,6 +1349,7 @@
         window.currentView = 'students'; 
         window.currentFinancialTab = 'all';
         window.noticesList = [];
+        window.experimentalList = []; 
 
         // CENTRAL DE PREÇOS E PLANOS OTIMIZADA
         window.PLAN_DICT = {
@@ -1359,6 +1392,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const cpfInput = document.getElementById('reg-cpf');
             const phoneInput = document.getElementById('reg-phone');
+            const dobInput = document.getElementById('reg-dob');
             
             if(cpfInput) {
                 cpfInput.addEventListener('input', function(e) {
@@ -1370,6 +1404,15 @@
                 phoneInput.addEventListener('input', function(e) {
                     let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
                     e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+                });
+            }
+            if(dobInput) {
+                dobInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 8) value = value.slice(0, 8);
+                    if (value.length > 4) value = value.replace(/^(\d{2})(\d{2})(\d{4}).*/, '$1/$2/$3');
+                    else if (value.length > 2) value = value.replace(/^(\d{2})(\d{0,2}).*/, '$1/$2');
+                    e.target.value = value;
                 });
             }
         });
@@ -1422,11 +1465,28 @@
 
         function getAge(dobStr) {
             if (!dobStr) return null;
-            const dob = new Date(dobStr);
-            if (isNaN(dob)) return null;
-            const diff_ms = Date.now() - dob.getTime();
+            let dobDate;
+            if (dobStr.includes('/')) {
+                const [d, m, y] = dobStr.split('/');
+                dobDate = new Date(y, m - 1, d);
+            } else if (dobStr.includes('T')) {
+                dobDate = new Date(dobStr);
+            } else {
+                const [y, m, d] = dobStr.split('-').map(Number);
+                dobDate = new Date(y, m - 1, d);
+            }
+            if (isNaN(dobDate)) return null;
+            const diff_ms = Date.now() - dobDate.getTime();
             const age_dt = new Date(diff_ms);
             return Math.abs(age_dt.getUTCFullYear() - 1970);
+        }
+
+        function toISODate(ptBrDate) {
+            if(!ptBrDate) return ptBrDate;
+            if(ptBrDate.includes('/')) {
+                return ptBrDate.split('/').reverse().join('-');
+            }
+            return ptBrDate;
         }
 
         window.populateTitularSelects = function() {
@@ -1462,7 +1522,7 @@
                 updateStats();
                 
                 if(window.currentView === 'students') window.renderTable();
-                else window.renderFinancialTable();
+                else if(window.currentView === 'financial') window.renderFinancialTable();
             } catch (error) {
                 console.error("Erro ao carregar dados do Firebase:", error);
             }
@@ -1704,21 +1764,25 @@
             document.getElementById('view-financial').classList.toggle('hidden', viewName !== 'financial');
             document.getElementById('view-reports').classList.toggle('hidden', viewName !== 'reports');
             document.getElementById('view-notices').classList.toggle('hidden', viewName !== 'notices');
+            document.getElementById('view-experimental').classList.toggle('hidden', viewName !== 'experimental');
             
-            ['students', 'financial', 'reports', 'notices'].forEach(v => {
+            ['students', 'financial', 'reports', 'notices', 'experimental'].forEach(v => {
                 const nav = document.getElementById('nav-' + v);
-                if (v === viewName) {
-                    nav.classList.add('bg-brand-red', 'text-white');
-                    nav.classList.remove('text-gray-400', 'hover:bg-gray-800');
-                } else {
-                    nav.classList.remove('bg-brand-red', 'text-white');
-                    nav.classList.add('text-gray-400', 'hover:bg-gray-800');
+                if(nav) {
+                    if (v === viewName) {
+                        nav.classList.add('bg-brand-red', 'text-white');
+                        nav.classList.remove('text-gray-400', 'hover:bg-gray-800');
+                    } else {
+                        nav.classList.remove('bg-brand-red', 'text-white');
+                        nav.classList.add('text-gray-400', 'hover:bg-gray-800');
+                    }
                 }
             });
 
             if(viewName === 'students') window.renderTable();
             else if(viewName === 'financial') window.renderFinancialTable();
             else if(viewName === 'notices') { window.renderAdminNotices(); window.renderBirthdays(); }
+            else if(viewName === 'experimental') window.loadExperimentalData();
         };
 
         window.switchTab = (tab) => {
@@ -1756,7 +1820,8 @@
             }
 
             if(window.currentView === 'students') window.renderTable();
-            else window.renderFinancialTable();
+            else if(window.currentView === 'financial') window.renderFinancialTable();
+            else if(window.currentView === 'experimental') window.renderExperimentalTable();
         };
 
         function formatDate(isoStr) {
@@ -2016,7 +2081,7 @@
             document.getElementById('payment-modal').classList.remove('flex');
         };
 
-        window.currentReceiptData = null; // Armazena temporariamente os dados do recibo
+        window.currentReceiptData = null; 
 
         window.confirmPayment = async () => {
             const id = document.getElementById('pay-student-id').value;
@@ -2570,6 +2635,106 @@
             } catch(e) { console.error(e); alert("Erro ao cadastrar."); }
         };
         
+        window.sendNewStudentAccessEmail = async () => {
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const login = document.getElementById('reg-student-login').value;
+            const pass = document.getElementById('reg-student-pass').value;
+
+            if(!email) { alert("Preencha o e-mail do aluno antes de enviar."); return; }
+            if(!login || !pass) { alert("Preencha o login e senha antes de enviar."); return; }
+
+            const btn = event.currentTarget; 
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+
+            const messageContent = `
+                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                    <div style="background-color: #D90429; color: white; padding: 20px; text-align: center;">
+                        <h2 style="margin: 0; text-transform: uppercase; letter-spacing: 1px;">Bem-vindo(a) à Tanque Team! 🥋</h2>
+                    </div>
+                    <div style="padding: 25px;">
+                        <p style="font-size: 16px;">Fala, <strong>${name.split(' ')[0]}</strong>! Oss!</p>
+                        <p style="font-size: 14px; line-height: 1.5;">O seu acesso ao nosso <strong>Portal do Aluno</strong> acabou de ser liberado. Através dele você pode acompanhar o seu histórico de treinos, evolução de faixas, pagamentos e o nosso ranking mensal da academia!</p>
+                        
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #D90429; margin: 25px 0;">
+                            <p style="margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; color: #777; font-weight: bold;">Suas credenciais de acesso:</p>
+                            <p style="margin: 5px 0; font-size: 16px;"><strong>Login:</strong> ${login}</p>
+                            <p style="margin: 5px 0; font-size: 16px;"><strong>Senha:</strong> ${pass}</p>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="https://www.tanqueteambjj.com.br/login.html" style="background-color: #D90429; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Acessar Portal do Aluno</a>
+                        </div>
+
+                        <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; border-left: 4px solid #2e7d32; margin: 25px 0;">
+                            <p style="margin: 0 0 10px 0; color: #2e7d32; font-size: 16px;"><strong>📱 NOVIDADE: Check-in por QR Code!</strong></p>
+                            <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #1b5e20;">Dentro do seu painel, você encontrará o seu <strong>Meu Cartão QR Code</strong>. Lembre-se de apresentá-lo na recepção antes de cada treino para registrar sua presença automaticamente, subir no ranking e desbloquear as suas conquistas!</p>
+                        </div>
+
+                        <p style="margin-top: 30px; font-size: 12px; color: #666;"><em>Dica: Você pode alterar sua senha a qualquer momento na aba "Meus Dados".</em></p>
+                        <p style="font-size: 14px; margin-top: 20px;">Nos vemos no tatame!</p>
+                        <p style="font-size: 14px; font-weight: bold; color: #D90429;">Equipe Tanque Team BJJ</p>
+                    </div>
+                </div>
+            `;
+            try {
+                await emailjs.send("service_2twa33d", "template_few5bna", { from_name: "Tanque Team BJJ", from_email: "administrativo@tanqueteambjj.com.br", to_name: name, to_email: email, subject: "Seu Acesso ao Portal + QR Code de Check-in", message: messageContent, reply_to: "administrativo@tanqueteambjj.com.br" });
+                alert("E-mail com credenciais enviado com sucesso!");
+            } catch (error) { alert("Erro ao enviar e-mail."); } finally { btn.disabled = false; btn.innerHTML = originalText; }
+        };
+
+        window.sendAccessEmail = async () => {
+            const name = document.getElementById('edit-name').value;
+            const email = document.getElementById('edit-email').value;
+            const login = document.getElementById('edit-login').value;
+            const pass = document.getElementById('edit-password').value;
+
+            if(!email) { alert("O aluno precisa ter um email cadastrado."); return; }
+            if(!login || !pass) { alert("Defina login e senha antes de enviar."); return; }
+
+            const btn = event.currentTarget; 
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+
+            const messageContent = `
+                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                    <div style="background-color: #D90429; color: white; padding: 20px; text-align: center;">
+                        <h2 style="margin: 0; text-transform: uppercase; letter-spacing: 1px;">Bem-vindo(a) à Tanque Team! 🥋</h2>
+                    </div>
+                    <div style="padding: 25px;">
+                        <p style="font-size: 16px;">Fala, <strong>${name.split(' ')[0]}</strong>! Oss!</p>
+                        <p style="font-size: 14px; line-height: 1.5;">O seu acesso ao nosso <strong>Portal do Aluno</strong> acabou de ser liberado. Através dele você pode acompanhar o seu histórico de treinos, evolução de faixas, pagamentos e o nosso ranking mensal da academia!</p>
+                        
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #D90429; margin: 25px 0;">
+                            <p style="margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; color: #777; font-weight: bold;">Suas credenciais de acesso:</p>
+                            <p style="margin: 5px 0; font-size: 16px;"><strong>Login:</strong> ${login}</p>
+                            <p style="margin: 5px 0; font-size: 16px;"><strong>Senha:</strong> ${pass}</p>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="https://www.tanqueteambjj.com.br/login.html" style="background-color: #D90429; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Acessar Portal do Aluno</a>
+                        </div>
+
+                        <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; border-left: 4px solid #2e7d32; margin: 25px 0;">
+                            <p style="margin: 0 0 10px 0; color: #2e7d32; font-size: 16px;"><strong>📱 NOVIDADE: Check-in por QR Code!</strong></p>
+                            <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #1b5e20;">Dentro do seu painel, você encontrará o seu <strong>Meu Cartão QR Code</strong>. Lembre-se de apresentá-lo na recepção antes de cada treino para registrar sua presença automaticamente, subir no ranking e desbloquear as suas conquistas!</p>
+                        </div>
+
+                        <p style="margin-top: 30px; font-size: 12px; color: #666;"><em>Dica: Você pode alterar sua senha a qualquer momento na aba "Meus Dados".</em></p>
+                        <p style="font-size: 14px; margin-top: 20px;">Nos vemos no tatame!</p>
+                        <p style="font-size: 14px; font-weight: bold; color: #D90429;">Equipe Tanque Team BJJ</p>
+                    </div>
+                </div>
+            `;
+            try {
+                await emailjs.send("service_2twa33d", "template_few5bna", { from_name: "Tanque Team BJJ", from_email: "administrativo@tanqueteambjj.com.br", to_name: name, to_email: email, subject: "Seu Acesso ao Portal + QR Code de Check-in", message: messageContent, reply_to: "administrativo@tanqueteambjj.com.br" });
+                alert("E-mail com credenciais enviado com sucesso!");
+            } catch (error) { alert("Erro ao enviar e-mail."); } finally { btn.disabled = false; btn.innerHTML = originalText; }
+        };
+
         window.sendCredsEmail = async (name, email, login, pass, btnElement) => {
             if(!email) { alert("Preencha o e-mail do aluno antes de enviar."); return; }
             if(!login || !pass) { alert("Preencha o login e senha antes de enviar."); return; }
@@ -3022,12 +3187,16 @@
             const birthdays = window.students.filter(s => {
                 if (!s.dob || s.enrollmentStatus === 'Inativo') return false;
                 let dobDate;
-                if (s.dob.includes('T')) {
+                if (s.dob.includes('/')) {
+                    const [day, month, year] = s.dob.split('/');
+                    dobDate = new Date(year, month - 1, day);
+                } else if (s.dob.includes('T')) {
                     dobDate = new Date(s.dob);
                 } else {
                     const [y, m, d] = s.dob.split('-').map(Number);
                     dobDate = new Date(y, m - 1, d);
                 }
+                if(isNaN(dobDate)) return false;
                 return dobDate.getMonth() === currentMonth;
             });
 
@@ -3042,12 +3211,20 @@
                 
                 // Ordenar pelo dia do mês (crescente)
                 birthdays.sort((a, b) => {
-                    const getDay = (dob) => dob.includes('T') ? new Date(dob).getDate() : Number(dob.split('-')[2]);
+                    const getDay = (dob) => {
+                        if (dob.includes('/')) return Number(dob.split('/')[0]);
+                        if (dob.includes('T')) return new Date(dob).getDate();
+                        return Number(dob.split('-')[2]);
+                    };
                     return getDay(a.dob) - getDay(b.dob);
                 });
 
                 birthdays.forEach(s => {
-                    const day = s.dob.includes('T') ? new Date(s.dob).getDate() : Number(s.dob.split('-')[2]);
+                    let day = 1;
+                    if (s.dob.includes('/')) day = Number(s.dob.split('/')[0]);
+                    else if (s.dob.includes('T')) day = new Date(s.dob).getDate();
+                    else day = Number(s.dob.split('-')[2]);
+                    
                     const cleanPhone = (s.phone || '').replace(/\D/g, '');
                     
                     const wppBtn = cleanPhone ? `<button onclick="sendBirthdayWhatsApp('${s.name}', '${cleanPhone}')" class="text-green-500 hover:text-green-700 p-1" title="Enviar Parabéns no WhatsApp"><i class="fa-brands fa-whatsapp text-lg"></i></button>` : '';
@@ -3159,6 +3336,100 @@
             try {
                 await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', id));
                 window.loadNotices();
+            } catch(e) { alert("Erro ao excluir: " + e.message); }
+        };
+
+        // --- SISTEMA DE AULA EXPERIMENTAL ---
+        window.loadExperimentalData = async () => {
+            try {
+                const q = query(collection(window.db, 'artifacts', appId, 'public', 'data', 'experimental'));
+                const querySnapshot = await getDocs(q);
+                window.experimentalList = [];
+                querySnapshot.forEach((doc) => {
+                    window.experimentalList.push({ id: doc.id, ...doc.data() });
+                });
+                window.renderExperimentalTable();
+            } catch (error) { console.error("Erro ao carregar experimentais:", error); }
+        };
+
+        window.renderExperimentalTable = () => {
+            const tbody = document.getElementById('experimental-table-body');
+            const search = (document.getElementById('searchInput')?.value || "").toLowerCase();
+            tbody.innerHTML = '';
+
+            let filtered = window.experimentalList.filter(e => {
+                return (e.name || '').toLowerCase().includes(search) || (e.phone || '').includes(search);
+            });
+
+            // Sort by date DESC
+            filtered.sort((a,b) => {
+                const dateA = new Date(a.date + 'T' + (a.time || '00:00'));
+                const dateB = new Date(b.date + 'T' + (b.time || '00:00'));
+                return dateB - dateA;
+            });
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">Nenhum agendamento encontrado.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(exp => {
+                const age = getAge(exp.dob);
+                const isMinor = age !== null && age < 18;
+                const cleanPhone = (exp.phone || '').replace(/\D/g, '');
+                
+                let dateFormatted = exp.date ? new Date(exp.date + 'T12:00:00').toLocaleDateString('pt-BR') : '--';
+                
+                let statusColor = 'bg-gray-100 text-gray-800';
+                if(exp.status === 'Agendado') statusColor = 'bg-yellow-100 text-yellow-800';
+                else if(exp.status === 'Concluído') statusColor = 'bg-green-100 text-green-800';
+                else if(exp.status === 'Cancelado' || exp.status === 'Faltou') statusColor = 'bg-red-100 text-red-800';
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-gray-50 transition";
+                tr.innerHTML = `
+                    <td class="px-6 py-4 align-middle">
+                        <div class="font-bold text-gray-800">${dateFormatted}</div>
+                        <div class="text-xs text-brand-red font-bold"><i class="fa-regular fa-clock"></i> ${exp.time || '--'}</div>
+                    </td>
+                    <td class="px-6 py-4 align-middle">
+                        <div class="font-bold text-gray-900">${exp.name} <span class="text-xs font-normal text-gray-500">(${age} anos)</span></div>
+                        ${isMinor && exp.guardian ? `<div class="text-xs text-gray-500"><i class="fa-solid fa-user-shield text-gray-400"></i> Resp: ${exp.guardian}</div>` : ''}
+                    </td>
+                    <td class="px-6 py-4 align-middle">
+                        <a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${exp.phone}</a>
+                    </td>
+                    <td class="px-6 py-4 align-middle">
+                        <select onchange="changeExpStatus('${exp.id}', this.value)" class="border rounded px-2 py-1 text-xs font-bold ${statusColor} outline-none cursor-pointer">
+                            <option value="Agendado" ${exp.status === 'Agendado' ? 'selected' : ''}>Agendado</option>
+                            <option value="Concluído" ${exp.status === 'Concluído' ? 'selected' : ''}>Compareceu</option>
+                            <option value="Faltou" ${exp.status === 'Faltou' ? 'selected' : ''}>Faltou</option>
+                            <option value="Cancelado" ${exp.status === 'Cancelado' ? 'selected' : ''}>Cancelou</option>
+                        </select>
+                    </td>
+                    <td class="px-6 py-4 align-middle text-center">
+                        <button onclick="deleteExperimental('${exp.id}')" class="text-red-500 hover:text-red-700 p-2 rounded transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        window.changeExpStatus = async (id, newStatus) => {
+            try {
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental'), { status: newStatus });
+                const exp = window.experimentalList.find(e => e.id === id);
+                if(exp) exp.status = newStatus;
+                window.renderExperimentalTable();
+            } catch(e) { alert("Erro ao atualizar status: " + e.message); }
+        };
+
+        window.deleteExperimental = async (id) => {
+            if(!confirm("Excluir este agendamento permanentemente?")) return;
+            try {
+                await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id));
+                window.experimentalList = window.experimentalList.filter(e => e.id !== id);
+                window.renderExperimentalTable();
             } catch(e) { alert("Erro ao excluir: " + e.message); }
         };
 
