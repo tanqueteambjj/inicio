@@ -424,6 +424,23 @@
         </div>
     </div> <!-- End Main UI -->
 
+    <!-- NOVO: Modal de Bloqueio (Inadimplência) -->
+    <div id="blocked-modal" class="fixed inset-0 z-[100] hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden animate-fade-in text-center relative border-t-4 border-brand-red">
+            <button onclick="closeBlockedModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-800"><i class="fa-solid fa-times text-lg"></i></button>
+            <div class="p-6">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-brand-red text-3xl shadow-sm">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 class="font-display font-bold text-2xl text-gray-800 mb-2">Acesso Bloqueado</h3>
+                <p class="text-sm text-gray-600 mb-6">Seu status financeiro consta como <strong class="text-brand-red">Pendente</strong>. Por favor, regularize sua mensalidade para liberar a sua carteirinha de check-in e o acesso aos treinos.</p>
+                <button onclick="closeBlockedModal(); document.getElementById('view-dashboard').scrollIntoView();" class="w-full bg-brand-red hover:bg-red-700 text-white font-bold py-3 rounded-lg transition shadow-sm">
+                    Ver Opções de Pagamento
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- NOVO: PIX Modal -->
     <div id="pix-modal" class="fixed inset-0 z-[120] hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden animate-fade-in text-center relative border-t-4 border-[#32bcad]">
@@ -716,6 +733,16 @@
             window.location.href = "https://www.tanqueteambjj.com.br/login.html";
         };
 
+        // Lógica do Menu Mobile no Painel do Aluno
+        window.toggleMobileMenu = () => {
+            const sidebar = document.getElementById('sidebar-menu');
+            const overlay = document.getElementById('mobile-sidebar-overlay');
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            }
+        };
+
         // Lógica das Abas (Tab Navigation)
         window.switchMainView = (viewName) => {
             document.getElementById('view-dashboard').classList.toggle('hidden', viewName !== 'dashboard');
@@ -736,6 +763,14 @@
                 if(navDash) navDash.className = "flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors";
                 if(mobProf) { mobProf.classList.add('bg-brand-red', 'text-white'); mobProf.classList.remove('bg-gray-800', 'text-gray-400'); }
                 if(mobDash) { mobDash.classList.add('bg-gray-800', 'text-gray-400'); mobDash.classList.remove('bg-brand-red', 'text-white'); }
+            }
+
+            // Fecha o menu lateral mobile ao clicar numa opção
+            if(window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar-menu');
+                if(sidebar && !sidebar.classList.contains('-translate-x-full')) {
+                    window.toggleMobileMenu();
+                }
             }
         };
 
