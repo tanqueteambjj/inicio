@@ -2307,6 +2307,155 @@
                 
                 const depHtmlEl = document.getElementById('rec-dependents-list');
                 if (depHtmlEl) {
+                    depHtmlEl.innerText = depText;
+                    depHtmlEl.classList.toggle('hidden', depText === '');
+                }
+
+                document.getElementById('rm-student-name').innerText = window.currentReceiptData.name.split(' ')[0];
+
+                window.closePaymentModal();
+                window.loadData();
+                
+                // Abrir Modal de Opções de Recibo
+                document.getElementById('receipt-modal').classList.remove('hidden');
+                document.getElementById('receipt-modal').classList.add('flex');
+                
+            } catch(e) { console.error(e); alert("Erro ao registrar pagamento."); }
+        };
+        
+        window.closeReceiptModal = () => {
+            document.getElementById('receipt-modal').classList.add('hidden');
+            document.getElementById('receipt-modal').classList.remove('flex');
+        };
+
+        window.printReceipt = () => {
+            document.body.classList.add('printing-receipt');
+            setTimeout(() => {
+                window.print();
+                setTimeout(() => {
+                    document.body.classList.remove('printing-receipt');
+                }, 2000);
+            }, 500);
+        };
+
+        window.sendReceiptWhatsApp = () => {
+            const data = window.currentReceiptData;
+            if(!data) return;
+            
+            if(!data.phone || data.phone.trim() === "") {
+                alert("Este aluno não possui um número de telefone cadastrado.");
+                return;
+            }
+            
+            const cleanPhone = data.phone.replace(/\D/g, '');
+            const depStr = data.dependentsText ? `\n🔹 ${data.dependentsText}` : '';
+            
+            const message = `🥊 *TANQUE TEAM BJJ* 🥊\n*RECIBO DE PAGAMENTO*\n\nOlá, *${data.name.split(' ')[0]}*!\nConfirmamos o recebimento do seu pagamento. Muito obrigado e bons treinos! Oss 🥋\n\n*Detalhes do Pagamento:*\n🔹 Plano: ${data.plan}\n🔹 Valor: R$ ${data.amount}\n🔹 Forma: ${data.method}\n🔹 Data: ${data.date}\n🔹 Próx. Vencimento: ${data.nextDue}${depStr}\n\nAcesse o Portal do Aluno para o seu histórico completo.`;
+            
+            const encodedMessage = encodeURIComponent(message);
+            window.open(`https://wa.me/55${cleanPhone}?text=${encodedMessage}`, '_blank');
+        };
+
+        window.viewHistory = (id) => {
+            const s = window.students.find(st => st.id === id);
+            if(!s) return;
+            document.getElementById('hist-student-name').innerText = s.name;
+            const tbody = document.getElementById('history-table-body');
+            tbody.innerHTML = '';
+
+            if(!s.paymentHistory || s.paymentHistory.length === 0) {
+                document.getElementById('history-empty').classList.remove('hidden');
+            } else {
+                document.getElementById('history-empty').classList.add('hidden');
+                const sorted = [...s.paymentHistory].sort((a,b) => new Date(b.date) - new Date(a.date));
+                sorted.forEach(p => {
+                    const row = document.createElement('tr');
+                    const d = p.date ? new Date(p.date + 'T12:00:00').toLocaleDateString('pt-BR') : '-';
+                    row.innerHTML = `<td class="px-3 py-2 font-medium">${d}</td><td class="px-3 py-2 text-green-700 font-bold">R$ ${p.amount}</td><td class="px-3 py-2">${p.method}</td><td class="px-3 py-2 text-right whitespace-nowrap"><button onclick="openEditPaymentModal('${id}', '${p.timestamp}')" class="text-blue-500 hover:text-blue-700 p-1 rounded mr-2" title="Editar Pagamento"><i class="fa-solid fa-pen"></i></button><button onclick="deletePaymentRecord('${id}', '${p.timestamp}')" class="text-red-500 hover:text-red-700 p-1 rounded" title="Excluir Pagamento"><i class="fa-solid fa-trash"></i></button></td>`;
+                    tbody.appendChild(row);
+                });
+            }
+            document.getElementById('history-modal').classList.remove('hidden');
+            document.getElementById('history-modal').classList.add('flex');
+        };
+
+        window.deletePaymentRecord = async (studentId, timestamp) => {
+            if(!confirm("Tem certeza que deseja excluir este pagamento? A ação não pode ser desfeita.")) return;
+            const s = window.students.find(st => st.id === studentId);
+            if(!s) return;
+            const payment = s.paymentHistory.find(p => p.timestamp === timestamp);
+            if(!payment) return;
+            
+            try {
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), {
+                    paymentHistory: arrayRemove(payment)
+                });
+                alert("Pagamento excluído com sucesso.");
+                await window.loadData();
+                window.viewHistory(studentId);
+            } catch(e) { alert("Erro ao excluir pagamento: " + e.message); }
+        };
+
+        window.openEditPaymentModal = (studentId, timestamp) => {
+            const s = window.students.find(st => st.id === studentId);
+            if(!s) return;
+            const payment = s.paymentHistory.find(p => p.timestamp === timestamp);
+            if(!payment) return;
+
+            document.getElementById('edit-pay-student-id').value = studentId;
+            document.getElementById('edit-pay-timestamp').value = timestamp;
+            document.getElementById('edit-pay-date').value = payment.date || '';
+            document.getElementById('edit-pay-amount').value = payment.amount || '';
+            document.getElementById('edit-pay-method').value = payment.method || 'Pix';
+
+            document.getElementById('edit-payment-modal').classList.remove('hidden');
+            document.getElementById('edit-payment-modal').classList.add('flex');
+        };
+
+        window.closeEditPaymentModal = () => {
+            document.getElementById('edit-payment-modal').classList.add('hidden');
+            document.getElementById('edit-payment-modal').classList.remove('flex');
+        };
+
+        window.saveEditedPayment = async () => {
+            const studentId = document.getElementById('edit-pay-student-id').value;
+            const timestamp = document.getElementById('edit-pay-timestamp').value;
+            const newDate = document.getElementById('edit-pay-date').value;
+            const newAmount = document.getElementById('edit-pay-amount').value;
+            const newMethod = document.getElementById('edit-pay-method').value;
+
+            if(!newAmount && newAmount !== "0") { alert("Informe o valor."); return; }
+
+            const s = window.students.find(st => st.id === studentId);
+            if(!s) return;
+
+            let updatedHistory = [...s.paymentHistory];
+            const index = updatedHistory.findIndex(p => p.timestamp === timestamp);
+            
+            if(index !== -1) {
+                updatedHistory[index].date = newDate;
+                updatedHistory[index].amount = newAmount;
+                updatedHistory[index].method = newMethod;
+            }
+
+            try {
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), {
+                    paymentHistory: updatedHistory
+                });
+                alert("Pagamento atualizado com sucesso!");
+                window.closeEditPaymentModal();
+                await window.loadData();
+                window.viewHistory(studentId); 
+            } catch(e) {
+                alert("Erro ao atualizar pagamento: " + e.message);
+            }
+        };
+
+        window.closeHistoryModal = () => {
+            document.getElementById('history-modal').classList.add('hidden');
+            document.getElementById('history-modal').classList.remove('flex');
+        };
+
         window.printIndividualContract = (id) => {
             const s = window.students.find(st => st.id === id);
             if (!s) { alert("Aluno não encontrado."); return; }
@@ -2764,7 +2913,7 @@
             try {
                 await emailjs.send("service_2twa33d", "template_few5bna", { from_name: "Tanque Team BJJ", from_email: "administrativo@tanqueteambjj.com.br", to_name: name, to_email: email, subject: "Seu Acesso ao Portal + QR Code de Check-in", message: messageContent, reply_to: "administrativo@tanqueteambjj.com.br" });
                 alert("E-mail com credenciais enviado com sucesso!");
-            } catch (error) { alert("Erro ao enviar e-mail."); } finally { btn.disabled = false; btn.innerHTML = originalText; }
+            } catch (error) { console.error(error); alert("Erro ao enviar e-mail. Verifique a configuração."); } finally { btn.disabled = false; btn.innerHTML = originalText; }
         };
 
         window.sendCredsEmail = async (name, email, login, pass, btnElement) => {
