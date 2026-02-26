@@ -397,6 +397,21 @@
 
             <!-- VIEW: FINANCEIRO -->
             <div id="view-financial" class="hidden">
+                 
+                 <!-- ALERTA DE PROMOÇÃO VENCENDO (DICA 5) -->
+                 <div id="financial-promo-alerts" class="hidden mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-xl shadow-sm animate-fade-in">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0"><i class="fa-solid fa-triangle-exclamation text-yellow-500 text-xl"></i></div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-bold text-yellow-800">Atenção: Promoções Vencendo (Checar Valores)</h3>
+                            <p class="text-xs text-yellow-700 mt-1">Os seguintes combos completaram (ou estão próximos de) 30 dias de matrícula. Certifique-se de cobrar o valor atualizado no próximo pagamento.</p>
+                            <ul id="promo-alerts-list" class="mt-2 text-xs text-yellow-900 font-bold space-y-1 list-disc pl-4">
+                                <!-- Preenchido via JS -->
+                            </ul>
+                        </div>
+                    </div>
+                 </div>
+
                  <!-- Stats Row Financeiro -->
                  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 stats-container">
                     <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500">
@@ -718,6 +733,8 @@
                 <div><span class="text-xs text-gray-500 block">Forma de Pagamento:</span><strong id="rec-method"></strong></div>
                 <div class="col-span-2"><span class="text-xs text-gray-500 block">Válido até (Próx. Vencimento):</span><strong id="rec-next-due"></strong></div>
             </div>
+            <!-- NOVO: TEXTO DEPENDENTES RECIBO -->
+            <div id="rec-dependents-list" class="text-xs font-bold text-purple-700 mt-3 bg-purple-50 p-2 rounded border border-purple-200 hidden"></div>
         </div>
         <div class="mt-12 pt-4 border-t border-black text-center w-64 mx-auto">
             <p class="font-bold text-sm uppercase">Tanque Team BJJ</p>
@@ -1202,6 +1219,11 @@
                             <span class="mx-2 text-blue-200">|</span>
                             <span class="font-bold">Senha:</span> <span id="detail-pass">--</span>
                         </p>
+                    </div>
+                    
+                    <!-- NEW: FAMILY INFO SECTION (TIP 3) -->
+                    <div id="detail-family-box" class="hidden mt-3 bg-purple-50 p-3 rounded border border-purple-200">
+                        <!-- Filled by JS -->
                     </div>
                 </div>
             </div>
@@ -1769,21 +1791,51 @@
             } catch(e) { console.error(e); alert("Erro ao confirmar presença."); }
         };
         
+        // --- DICA 2: BLOQUEIO EM CASCATA ---
         window.toggleStudentStatus = async (id, currentStatus) => {
             const newStatus = (currentStatus === 'Inativo') ? 'Ativo' : 'Inativo';
-            const confirmMsg = (newStatus === 'Inativo') 
-                ? "Deseja inativar este aluno?" : "Deseja reativar este aluno?";
+            const confirmMsg = (newStatus === 'Inativo') ? "Deseja inativar este aluno?" : "Deseja reativar este aluno?";
+            
             if(!confirm(confirmMsg)) return;
+            
             try {
                 const docRef = doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id);
                 await updateDoc(docRef, { enrollmentStatus: newStatus });
+                
+                // Lógica em Cascata para Dependentes
+                if (newStatus === 'Inativo') {
+                    const myDeps = window.students.filter(d => d.titularId === id && d.enrollmentStatus !== 'Inativo');
+                    if (myDeps.length > 0) {
+                        if (confirm(`💡 DICA: Este titular possui ${myDeps.length} dependente(s) ativo(s) no combo. Deseja inativar o acesso deles também?`)) {
+                            for(let dep of myDeps) {
+                                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', dep.id), { enrollmentStatus: 'Inativo' });
+                            }
+                        }
+                    }
+                } else if (newStatus === 'Ativo') {
+                    const myDeps = window.students.filter(d => d.titularId === id && d.enrollmentStatus === 'Inativo');
+                    if (myDeps.length > 0) {
+                        if (confirm(`💡 DICA: Deseja reativar também os ${myDeps.length} dependente(s) inativo(s) vinculados a este titular?`)) {
+                            for(let dep of myDeps) {
+                                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', dep.id), { enrollmentStatus: 'Ativo' });
+                            }
+                        }
+                    }
+                }
+
                 window.loadData();
-                alert(`Aluno agora está ${newStatus}!`);
+                alert(`Status atualizado!`);
             } catch(e) { alert("Erro ao alterar status: " + e.message); }
         };
 
         window.deleteStudent = async (id) => {
-            if(!confirm("Excluir aluno permanentemente? Esta ação é irreversível.")) return;
+            const s = window.students.find(st => st.id === id);
+            if(!s) return;
+            
+            const myDeps = window.students.filter(d => d.titularId === id);
+            let extraWarn = myDeps.length > 0 ? `\n\n⚠️ AVISO: Este aluno possui ${myDeps.length} dependente(s) vinculado(s). Você deverá excluir ou atualizar os dependentes manualmente depois.` : "";
+            
+            if(!confirm("Excluir aluno permanentemente? Esta ação é irreversível." + extraWarn)) return;
             try {
                 await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id));
                 alert("Aluno excluído.");
@@ -1903,6 +1955,20 @@
             return `<svg width="${width}" height="${height}" class="shadow-sm rounded" style="border:1px solid #ddd"><rect x="0" y="0" width="${width}" height="${height}" fill="${color}" /><rect x="${width - tipWidth}" y="0" width="${tipWidth}" height="${height}" fill="${barColor}" />${stripesSVG}</svg>`;
         }
 
+        // --- DICA 1: ÁRVORE DE DEPENDENTES (TABLE RENDER) ---
+        window.toggleDepRows = (titularId) => {
+            const rows = document.querySelectorAll(`.dep-row-${titularId}`);
+            const icon = document.getElementById(`icon-dep-${titularId}`);
+            let isHidden = false;
+            rows.forEach(r => {
+                if(r.classList.contains('hidden')) { r.classList.remove('hidden'); isHidden = true; }
+                else { r.classList.add('hidden'); isHidden = false; }
+            });
+            if(icon) {
+                icon.className = isHidden ? "fa-solid fa-minus text-[10px]" : "fa-solid fa-plus text-[10px]";
+            }
+        };
+
         window.renderTable = function() {
             const tbody = document.getElementById('students-table-body');
             const thead = document.getElementById('table-headers');
@@ -1975,37 +2041,45 @@
                 return;
             }
 
-            filtered.forEach(s => {
+            // Agrupamento para Árvore de Dependentes
+            const renderRow = (s, isDepRow = false, parentId = null) => {
                 const attendanceCount = s.attendance ? s.attendance.length : 0;
                 const hasLogin = (s.studentLogin && s.studentPassword) ? '<span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-lock"></i> OK</span>' : '<span class="text-gray-400 text-xs italic">--</span>';
                 const safePlan = String(s.plan || '').toLowerCase();
                 
                 let avatarHtml = s.photoBase64 ? `<img src="${s.photoBase64}" class="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200">` : `<div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 mr-3 font-bold text-xs">${(s.name || '?').charAt(0).toUpperCase()}</div>`;
-                
                 const age = getAge(s.dob);
                 
-                let nameDisplay = `<div onclick="viewStudentDetails('${s.id}')" class="font-medium text-gray-900 flex items-center cursor-pointer hover:text-brand-red transition" title="Ver Detalhes do Aluno">${s.name || 'Sem Nome'}`;
+                let nameHtml = s.name || 'Sem Nome';
+                if (isDepRow) {
+                    nameHtml = `<i class="fa-solid fa-level-up-alt fa-rotate-90 text-purple-300 mr-2 text-xs"></i>${s.name}`;
+                }
+
+                let nameDisplay = `<div onclick="viewStudentDetails('${s.id}')" class="font-medium text-gray-900 flex items-center cursor-pointer hover:text-brand-red transition ${isDepRow ? 'pl-4 border-l-2 border-purple-200' : ''}" title="Ver Detalhes do Aluno">${nameHtml}`;
+                
                 if ((window.currentTab === 'adults' || window.currentTab === 'all') && age !== null && age < 18 && !isStudentKid(s)) nameDisplay += `<span class="ml-2 text-[10px] text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200 font-bold" title="Menor de idade em turma adulta">Menor (${age})</span>`;
                 
                 if (safePlan.includes('combo') && safePlan !== 'dependente') nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase">Combo</span>`;
                 if (safePlan === 'administracao') nameDisplay += `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-bold uppercase">Admin</span>`;
                 if (safePlan === 'dependente') nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase" title="Dependente"><i class="fa-solid fa-link"></i> DEP</span>`;
                 
-                nameDisplay += `</div>`;
-                
                 if (s.enrollmentStatus === 'Inativo') nameDisplay += `<span class="ml-2 text-[10px] text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded border border-gray-300 font-bold">INATIVO</span>`;
 
+                // Adiciona botão Expande/Recolhe SE tiver dependentes e for Titular
+                const myFilteredDeps = filtered.filter(d => d.plan === 'dependente' && d.titularId === s.id);
+                if (!isDepRow && myFilteredDeps.length > 0) {
+                    nameDisplay += `<button onclick="event.stopPropagation(); toggleDepRows('${s.id}')" class="ml-2 bg-purple-100 text-purple-700 w-5 h-5 rounded flex items-center justify-center shadow-sm hover:bg-purple-200 transition" title="Expandir/Recolher Dependentes"><i id="icon-dep-${s.id}" class="fa-solid fa-plus text-[10px]"></i></button>`;
+                }
+                nameDisplay += `</div>`;
+
                 const beltSVG = renderBeltSVG(s.belt || 'Faixa Branca - 0º Grau');
-                
                 let relName = s.guardian || s.titularName || '-';
                 const guardianCell = (window.currentTab === 'kids' || window.currentTab === 'all') ? `<td class="px-6 py-4 align-middle text-sm text-gray-700"><i class="fa-solid fa-user-shield text-gray-400 mr-1"></i> ${relName}</td>` : '';
-
                 let toggleBtn = s.enrollmentStatus === 'Inativo' ? `<button onclick="toggleStudentStatus('${s.id}', 'Inativo')" class="text-green-600 hover:text-green-900 mr-2" title="Reativar Aluno"><i class="fa-solid fa-power-off"></i></button>` : `<button onclick="toggleStudentStatus('${s.id}', 'Ativo')" class="text-gray-400 hover:text-red-600 mr-2" title="Inativar Aluno"><i class="fa-solid fa-power-off"></i></button>`;
-                
                 let displayPlanName = window.getPlanInfo(s.plan).short;
 
                 const tr = document.createElement('tr');
-                tr.className = "border-b hover:bg-gray-50 transition";
+                tr.className = isDepRow ? `hidden dep-row-${parentId} bg-purple-50/40 hover:bg-purple-50 transition border-b border-purple-100` : `border-b hover:bg-gray-50 transition`;
                 tr.innerHTML = `
                     <td class="px-6 py-4 align-middle text-center"><input type="checkbox" class="student-cb rounded text-brand-red focus:ring-brand-red cursor-pointer" value="${s.id}" onclick="updateBulkActions()"></td>
                     <td class="px-6 py-4 align-middle"><div class="flex items-center">${avatarHtml}<div>${nameDisplay}<div class="text-xs text-gray-500">${displayPlanName}</div></div></div></td>
@@ -2024,10 +2098,54 @@
                     </td>
                 `;
                 tbody.appendChild(tr);
+            };
+
+            filtered.forEach(s => {
+                const titularInList = s.plan === 'dependente' && filtered.some(t => t.id === s.titularId);
+                if (titularInList) return; // Só renderiza depois (como sub-item) se o titular estiver na lista
+
+                renderRow(s, false);
+                
+                const myFilteredDeps = filtered.filter(d => d.plan === 'dependente' && d.titularId === s.id);
+                myFilteredDeps.forEach(dep => {
+                    renderRow(dep, true, s.id);
+                });
             });
         };
 
+        // --- DICA 5: ALERTA DE PROMOÇÃO ---
+        function checkPromoExpirations() {
+            const alertsContainer = document.getElementById('financial-promo-alerts');
+            const alertsList = document.getElementById('promo-alerts-list');
+            if(alertsContainer && alertsList) {
+                alertsList.innerHTML = '';
+                const today = new Date();
+                let expiredPromos = window.students.filter(s => {
+                    if (s.enrollmentStatus === 'Inativo') return false;
+                    if (s.plan && s.plan.includes('combo') && s.registrationDate) {
+                        const regDate = new Date(s.registrationDate);
+                        const diffTime = Math.abs(today - regDate);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                        return diffDays >= 25 && diffDays <= 45; // Mostra aviso entre 25 e 45 dias
+                    }
+                    return false;
+                });
+
+                if(expiredPromos.length > 0) {
+                    expiredPromos.forEach(s => {
+                        const rDate = new Date(s.registrationDate).toLocaleDateString('pt-BR');
+                        alertsList.innerHTML += `<li>${s.name} (${window.getPlanInfo(s.plan).short}) - Matriculado em ${rDate}</li>`;
+                    });
+                    alertsContainer.classList.remove('hidden');
+                } else {
+                    alertsContainer.classList.add('hidden');
+                }
+            }
+        }
+
         window.renderFinancialTable = function() {
+            checkPromoExpirations(); // Chamada do Alerta
+
             const tbody = document.getElementById('financial-table-body');
             const search = (document.getElementById('searchInput')?.value || "").toLowerCase();
             tbody.innerHTML = '';
@@ -2130,6 +2248,7 @@
 
         window.currentReceiptData = null; 
 
+        // --- DICA 4: RECIBO UNIFICADO ---
         window.confirmPayment = async () => {
             const id = document.getElementById('pay-student-id').value;
             const date = document.getElementById('pay-date').value;
@@ -2157,9 +2276,16 @@
                     paymentMethod: method 
                 });
                 
-                // Preparar dados para o Recibo
                 const planSelect = document.getElementById('pay-plan-select');
                 const planText = planSelect.options[planSelect.selectedIndex].text;
+                
+                // Buscar Dependentes para Recibo Unificado
+                const myDeps = window.students.filter(d => d.titularId === id && d.plan === 'dependente');
+                let depText = '';
+                if(myDeps.length > 0) {
+                    const depNames = myDeps.map(d => d.name.split(' ')[0]).join(', ');
+                    depText = `Também cobre o acesso de: ${depNames}`;
+                }
                 
                 window.currentReceiptData = {
                     name: student.name,
@@ -2168,10 +2294,10 @@
                     plan: planText,
                     date: date ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR') : '-',
                     method: method,
-                    nextDue: nextDue ? new Date(nextDue + 'T12:00:00').toLocaleDateString('pt-BR') : 'Não definido'
+                    nextDue: nextDue ? new Date(nextDue + 'T12:00:00').toLocaleDateString('pt-BR') : 'Não definido',
+                    dependentsText: depText
                 };
 
-                // Preencher o DOM do Recibo para Impressão
                 document.getElementById('rec-student-name').innerText = window.currentReceiptData.name;
                 document.getElementById('rec-amount').innerText = "R$ " + window.currentReceiptData.amount;
                 document.getElementById('rec-plan').innerText = window.currentReceiptData.plan;
@@ -2179,12 +2305,17 @@
                 document.getElementById('rec-method').innerText = window.currentReceiptData.method;
                 document.getElementById('rec-next-due').innerText = window.currentReceiptData.nextDue;
                 
+                const depHtmlEl = document.getElementById('rec-dependents-list');
+                if (depHtmlEl) {
+                    depHtmlEl.innerText = depText;
+                    depHtmlEl.classList.toggle('hidden', depText === '');
+                }
+
                 document.getElementById('rm-student-name').innerText = window.currentReceiptData.name.split(' ')[0];
 
                 window.closePaymentModal();
                 window.loadData();
                 
-                // Abrir Modal de Opções de Recibo
                 document.getElementById('receipt-modal').classList.remove('hidden');
                 document.getElementById('receipt-modal').classList.add('flex');
                 
@@ -2216,8 +2347,9 @@
             }
             
             const cleanPhone = data.phone.replace(/\D/g, '');
+            const depStr = data.dependentsText ? `\n🔹 ${data.dependentsText}` : '';
             
-            const message = `🥊 *TANQUE TEAM BJJ* 🥊\n*RECIBO DE PAGAMENTO*\n\nOlá, *${data.name.split(' ')[0]}*!\nConfirmamos o recebimento do seu pagamento. Muito obrigado e bons treinos! Oss 🥋\n\n*Detalhes do Pagamento:*\n🔹 Plano: ${data.plan}\n🔹 Valor: R$ ${data.amount}\n🔹 Forma: ${data.method}\n🔹 Data: ${data.date}\n🔹 Próx. Vencimento: ${data.nextDue}\n\nAcesse o Portal do Aluno para o seu histórico completo.`;
+            const message = `🥊 *TANQUE TEAM BJJ* 🥊\n*RECIBO DE PAGAMENTO*\n\nOlá, *${data.name.split(' ')[0]}*!\nConfirmamos o recebimento do seu pagamento. Muito obrigado e bons treinos! Oss 🥋\n\n*Detalhes do Pagamento:*\n🔹 Plano: ${data.plan}\n🔹 Valor: R$ ${data.amount}\n🔹 Forma: ${data.method}\n🔹 Data: ${data.date}\n🔹 Próx. Vencimento: ${data.nextDue}${depStr}\n\nAcesse o Portal do Aluno para o seu histórico completo.`;
             
             const encodedMessage = encodeURIComponent(message);
             window.open(`https://wa.me/55${cleanPhone}?text=${encodedMessage}`, '_blank');
@@ -2296,7 +2428,6 @@
             const s = window.students.find(st => st.id === studentId);
             if(!s) return;
 
-            // Clona o array de histórico e atualiza o item específico
             let updatedHistory = [...s.paymentHistory];
             const index = updatedHistory.findIndex(p => p.timestamp === timestamp);
             
@@ -2313,7 +2444,7 @@
                 alert("Pagamento atualizado com sucesso!");
                 window.closeEditPaymentModal();
                 await window.loadData();
-                window.viewHistory(studentId); // Recarrega o modal de histórico
+                window.viewHistory(studentId); 
             } catch(e) {
                 alert("Erro ao atualizar pagamento: " + e.message);
             }
@@ -2324,141 +2455,7 @@
             document.getElementById('history-modal').classList.remove('flex');
         };
 
-        window.printIndividualContract = (id) => {
-            const s = window.students.find(st => st.id === id);
-            if (!s) { alert("Aluno não encontrado."); return; }
-            
-            const contractContainer = document.getElementById('printable-contract');
-            contractContainer.classList.remove('hidden'); 
-            
-            window.populateContractDOM(s);
-            document.body.classList.add('printing-contract'); 
-            
-            setTimeout(() => {
-                window.print();
-                setTimeout(() => {
-                    contractContainer.classList.add('hidden'); 
-                    document.body.classList.remove('printing-contract'); 
-                }, 2000);
-            }, 500);
-        };
-
-        window.populateContractDOM = function(s) {
-            const pInfo = window.getPlanInfo(s.plan);
-            let price = "R$ " + pInfo.price.toFixed(2).replace('.', ',');
-            let displayName = pInfo.long;
-            
-            let promoNote = "";
-            if (s.plan && s.plan.includes('semestral') && !s.plan.includes('combo')) {
-                promoNote = "OBS: Promoção de Inauguração aplicada. A 1ª Mensalidade terá o valor reduzido de R$ 29,90.";
-            } else if (s.plan === 'combo-dupla') {
-                promoNote = "OBS: Promoção de Inauguração aplicada. A 1ª Mensalidade terá o valor reduzido de R$ 59,90.";
-            } else if (s.plan === 'combo-familia') {
-                promoNote = "OBS: Promoção de Inauguração aplicada. A 1ª Mensalidade terá o valor reduzido de R$ 89,90.";
-            }
-
-            let dobDate;
-            if (s.dob && s.dob.includes('T')) {
-                 dobDate = new Date(s.dob);
-            } else if (s.dob) {
-                 const [y, m, d] = s.dob.split('-').map(Number);
-                 dobDate = new Date(y, m - 1, d);
-            } else {
-                 dobDate = new Date();
-            }
-            
-            const formattedDob = `${dobDate.getDate().toString().padStart(2,'0')}/${(dobDate.getMonth()+1).toString().padStart(2,'0')}/${dobDate.getFullYear()}`;
-            
-            let contratanteText = s.name;
-            if (s.guardian && s.guardian.trim() !== "") {
-                contratanteText = `${s.guardian} (Responsável Legal: ${s.guardianKinship || 'Não informado'})`;
-            } else if (s.titularName && s.titularName.trim() !== "") {
-                contratanteText = `${s.titularName} (Titular do Plano)`;
-            }
-
-            document.getElementById('printContratante').innerText = contratanteText;
-            document.getElementById('printStudent').innerText = s.name;
-            document.getElementById('printDob').innerText = formattedDob;
-            document.getElementById('printCPF').innerText = s.cpf || "Não informado";
-            document.getElementById('printEmail').innerText = s.email || "Não informado";
-            document.getElementById('printPhone').innerText = s.phone || "Não informado";
-            document.getElementById('printAddress').innerText = s.address || "Não informado";
-            
-            let beltInfo = "";
-            if(s.belt && !s.belt.includes("Branca - 0º Grau") && !s.belt.includes("Iniciante")) {
-                beltInfo = `| Graduação Atual: ${s.belt}`;
-            }
-            document.getElementById('printBeltInfo').innerText = beltInfo;
-            
-            const regDate = s.registrationDate ? new Date(s.registrationDate) : new Date();
-            const options = { day: 'numeric', month: 'long', year: 'numeric' };
-            document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', options);
-
-            const isCombo = s.plan && s.plan.includes('combo');
-            const isFidelity = s.plan && (s.plan.includes('semestral') || s.plan.includes('trimestral') || isCombo);
-
-            let clausesHtml = `<p><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
-
-            clausesHtml += `<p><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong class="uppercase underline">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong class="bg-yellow-100 px-1">${price}</strong>. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.</p>`;
-
-            if (promoNote) {
-                 clausesHtml += `<p class="italic text-xs font-bold mb-3">${promoNote}</p>`;
-            }
-
-            let clauseNum = 3;
-
-            if (isFidelity) {
-                clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade correspondente à sua nomenclatura (Trimestral ou Semestral). O cancelamento exige aviso prévio de 30 dias por escrito. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>`;
-                clauseNum++;
-            } else {
-                clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO:</strong> O cancelamento da prestação de serviços exige aviso prévio de 30 (trinta) dias por escrito à secretaria da academia. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.</p>`;
-                clauseNum++;
-            }
-
-            if (isCombo) {
-                clausesHtml += `<div class="bg-blue-50 p-2 border-l-2 border-blue-400"><p><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DO PLANO FAMÍLIA (COMBO):</strong> O pagamento das mensalidades é unificado e de inteira responsabilidade do CONTRATANTE titular. O cancelamento ou afastamento de um dos beneficiários dependentes não dá direito a desconto ou reembolso parcial, e reverte automaticamente o plano dos membros restantes para o valor da tabela individual vigente.</p></div>`;
-                clauseNum++;
-            }
-
-            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA INADIMPLÊNCIA:</strong> O atraso superior a 30 dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e cobrança dos valores devidos acrescidos de multa de 2% e juros de mora legais.</p>`;
-            clauseNum++;
-
-            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA SAÚDE E APTIDÃO FÍSICA:</strong> O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate, isentando a CONTRATADA de qualquer responsabilidade sobre moléstias pré-existentes não declaradas formalmente no ato desta matrícula.</p>`;
-            clauseNum++;
-
-            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DE CONDUTA (DOJO KUN):</strong> É obrigatório o uso de uniforme (Kimono) estipulado pela academia, limpo e conservado. Atos de indisciplina, desrespeito à hierarquia, agressão fora do contexto do treino esportivo ou falta de higiene poderão acarretar na suspensão ou rescisão unilateral deste contrato por parte da CONTRATADA, sem devolução de valores.</p>`;
-            clauseNum++;
-
-            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO DIREITO DE IMAGEM:</strong> O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da academia ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.</p>`;
-
-            document.getElementById('print-clauses-container').innerHTML = clausesHtml;
-
-            let dependentsHtml = '';
-            if (isCombo) {
-                let deps = [];
-                if (window.students) {
-                    deps = window.students.filter(d => d.titularId === s.id);
-                }
-                
-                if (deps.length > 0) {
-                    dependentsHtml = `<p class="mt-2 text-sm"><strong>DEPENDENTES VINCULADOS AO PLANO:</strong></p><ul class="list-disc pl-5 mt-1 text-xs">`;
-                    deps.forEach(d => {
-                        let dDob = '--/--/----';
-                        if(d.dob) { const [y, m, day] = d.dob.split('-').map(Number); dDob = `${day.toString().padStart(2,'0')}/${(m).toString().padStart(2,'0')}/${y}`; }
-                        dependentsHtml += `<li><strong>${d.name}</strong> - Nasc: ${dDob} | Parentesco: ${d.parentesco || '-'} | Graduação: ${d.belt || 'Branca'}</li>`;
-                    });
-                    dependentsHtml += `</ul>`;
-                } else {
-                    dependentsHtml = `<p class="mt-2 text-xs italic text-gray-500">Nenhum dependente vinculado no sistema no momento.</p>`;
-                }
-            }
-            document.getElementById('printDependentsBlock').innerHTML = dependentsHtml;
-
-            // SIGNATURE NAME
-            const signName = s.guardian || s.titularName || s.name;
-            document.getElementById('printSignatureName').innerText = signName;
-        };
-
+        // --- DICA 3: FICHA ÚNICA (DETALHES DA FAMÍLIA) ---
         window.viewStudentDetails = (id) => {
             const s = window.students.find(st => st.id === id);
             if(!s) return;
@@ -2529,6 +2526,43 @@
                 document.getElementById('detail-titular-name').innerText = s.titularName;
                 titularBox.classList.remove('hidden');
             } else { titularBox.classList.add('hidden'); }
+
+            // Lógica Ficha da Família
+            const familyBox = document.getElementById('detail-family-box');
+            familyBox.innerHTML = '';
+            
+            if (s.plan === 'dependente' && s.titularId) {
+                const titular = window.students.find(t => t.id === s.titularId);
+                const tName = titular ? titular.name : 'Titular Desconhecido';
+                familyBox.innerHTML = `
+                    <h4 class="text-xs font-bold text-purple-700 uppercase mb-2"><i class="fa-solid fa-link"></i> Vínculo Familiar</h4>
+                    <p class="text-sm text-purple-900 mb-2">Este aluno é dependente de <strong>${tName}</strong>.</p>
+                    <button onclick="closeDetailsModal(); setTimeout(() => viewStudentDetails('${s.titularId}'), 300)" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-xs font-bold transition w-full shadow-sm"><i class="fa-solid fa-user-tie"></i> Ver Ficha do Titular</button>
+                `;
+                familyBox.classList.remove('hidden');
+            } else {
+                const deps = window.students.filter(d => d.titularId === s.id && d.plan === 'dependente');
+                if (deps.length > 0) {
+                    let html = `
+                        <h4 class="text-xs font-bold text-purple-700 uppercase mb-2"><i class="fa-solid fa-users"></i> Dependentes Vinculados (${deps.length})</h4>
+                        <ul class="space-y-2">`;
+                    deps.forEach(d => {
+                        const attCount = d.attendance ? d.attendance.length : 0;
+                        html += `<li class="flex justify-between items-center bg-white p-2 rounded shadow-sm border border-purple-100">
+                            <div>
+                                <p class="font-bold text-xs text-purple-900 cursor-pointer hover:text-brand-red" onclick="closeDetailsModal(); setTimeout(() => viewStudentDetails('${d.id}'), 300)">${d.name}</p>
+                                <p class="text-[10px] text-purple-600">${d.belt || 'Branca'} • Freq: ${attCount}</p>
+                            </div>
+                            <button onclick="closeDetailsModal(); setTimeout(() => viewStudentDetails('${d.id}'), 300)" class="text-purple-500 hover:text-purple-700 text-xs px-2 py-1 bg-purple-50 rounded" title="Abrir Ficha"><i class="fa-solid fa-eye"></i></button>
+                        </li>`;
+                    });
+                    html += `</ul>`;
+                    familyBox.innerHTML = html;
+                    familyBox.classList.remove('hidden');
+                } else {
+                    familyBox.classList.add('hidden');
+                }
+            }
 
             document.getElementById('details-modal').classList.remove('hidden');
             document.getElementById('details-modal').classList.add('flex');
@@ -2636,7 +2670,7 @@
 
         window.saveAdminNewStudent = async () => {
             const name = document.getElementById('reg-name').value;
-            const dob = document.getElementById('reg-dob').value;
+            const dob = toISODate(document.getElementById('reg-dob').value);
             const cpf = document.getElementById('reg-cpf').value;
             const email = document.getElementById('reg-email').value;
             const phone = document.getElementById('reg-phone').value;
@@ -2690,56 +2724,6 @@
 
             if(!email) { alert("Preencha o e-mail do aluno antes de enviar."); return; }
             if(!login || !pass) { alert("Preencha o login e senha antes de enviar."); return; }
-
-            const btn = event.currentTarget; 
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
-
-            const messageContent = `
-                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
-                    <div style="background-color: #D90429; color: white; padding: 20px; text-align: center;">
-                        <h2 style="margin: 0; text-transform: uppercase; letter-spacing: 1px;">Bem-vindo(a) à Tanque Team! 🥋</h2>
-                    </div>
-                    <div style="padding: 25px;">
-                        <p style="font-size: 16px;">Fala, <strong>${name.split(' ')[0]}</strong>! Oss!</p>
-                        <p style="font-size: 14px; line-height: 1.5;">O seu acesso ao nosso <strong>Portal do Aluno</strong> acabou de ser liberado. Através dele você pode acompanhar o seu histórico de treinos, evolução de faixas, pagamentos e o nosso ranking mensal da academia!</p>
-                        
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #D90429; margin: 25px 0;">
-                            <p style="margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; color: #777; font-weight: bold;">Suas credenciais de acesso:</p>
-                            <p style="margin: 5px 0; font-size: 16px;"><strong>Login:</strong> ${login}</p>
-                            <p style="margin: 5px 0; font-size: 16px;"><strong>Senha:</strong> ${pass}</p>
-                        </div>
-                        
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="https://www.tanqueteambjj.com.br/login.html" style="background-color: #D90429; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Acessar Portal do Aluno</a>
-                        </div>
-
-                        <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; border-left: 4px solid #2e7d32; margin: 25px 0;">
-                            <p style="margin: 0 0 10px 0; color: #2e7d32; font-size: 16px;"><strong>📱 NOVIDADE: Check-in por QR Code!</strong></p>
-                            <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #1b5e20;">Dentro do seu painel, você encontrará o seu <strong>Meu Cartão QR Code</strong>. Lembre-se de apresentá-lo na recepção antes de cada treino para registrar sua presença automaticamente, subir no ranking e desbloquear as suas conquistas!</p>
-                        </div>
-
-                        <p style="margin-top: 30px; font-size: 12px; color: #666;"><em>Dica: Você pode alterar sua senha a qualquer momento na aba "Meus Dados".</em></p>
-                        <p style="font-size: 14px; margin-top: 20px;">Nos vemos no tatame!</p>
-                        <p style="font-size: 14px; font-weight: bold; color: #D90429;">Equipe Tanque Team BJJ</p>
-                    </div>
-                </div>
-            `;
-            try {
-                await emailjs.send("service_2twa33d", "template_few5bna", { from_name: "Tanque Team BJJ", from_email: "administrativo@tanqueteambjj.com.br", to_name: name, to_email: email, subject: "Seu Acesso ao Portal + QR Code de Check-in", message: messageContent, reply_to: "administrativo@tanqueteambjj.com.br" });
-                alert("E-mail com credenciais enviado com sucesso!");
-            } catch (error) { alert("Erro ao enviar e-mail."); } finally { btn.disabled = false; btn.innerHTML = originalText; }
-        };
-
-        window.sendAccessEmail = async () => {
-            const name = document.getElementById('edit-name').value;
-            const email = document.getElementById('edit-email').value;
-            const login = document.getElementById('edit-login').value;
-            const pass = document.getElementById('edit-password').value;
-
-            if(!email) { alert("O aluno precisa ter um email cadastrado."); return; }
-            if(!login || !pass) { alert("Defina login e senha antes de enviar."); return; }
 
             const btn = event.currentTarget; 
             const originalText = btn.innerHTML;
@@ -3493,7 +3477,15 @@
             
             // Preenche os dados
             document.getElementById('reg-name').value = exp.name || '';
-            document.getElementById('reg-dob').value = exp.dob || '';
+            
+            // Formata DD/MM/AAAA para o input se estiver em formato ISO
+            if (exp.dob && exp.dob.includes('-')) {
+                const [y, m, d] = exp.dob.split('-');
+                document.getElementById('reg-dob').value = `${d}/${m}/${y}`;
+            } else {
+                document.getElementById('reg-dob').value = exp.dob || '';
+            }
+            
             document.getElementById('reg-email').value = exp.email || '';
             document.getElementById('reg-phone').value = exp.phone || '';
             
@@ -3514,7 +3506,15 @@
             document.getElementById('edit-exp-id').value = id;
             document.getElementById('edit-exp-name').value = exp.name || '';
             document.getElementById('edit-exp-phone').value = exp.phone || '';
-            document.getElementById('edit-exp-dob').value = exp.dob || '';
+            
+            // Formata a data de nascimento para exibição no Modal
+            if (exp.dob && exp.dob.includes('-')) {
+                const [y, m, d] = exp.dob.split('-');
+                document.getElementById('edit-exp-dob').value = `${d}/${m}/${y}`;
+            } else {
+                document.getElementById('edit-exp-dob').value = exp.dob || '';
+            }
+            
             document.getElementById('edit-exp-date').value = exp.date || '';
             document.getElementById('edit-exp-time').value = exp.time || '';
 
@@ -3531,15 +3531,21 @@
             const id = document.getElementById('edit-exp-id').value;
             const name = document.getElementById('edit-exp-name').value;
             const phone = document.getElementById('edit-exp-phone').value;
-            const dob = document.getElementById('edit-exp-dob').value;
+            const dobRaw = document.getElementById('edit-exp-dob').value;
             const date = document.getElementById('edit-exp-date').value;
             const time = document.getElementById('edit-exp-time').value;
 
             if(!name || !date || !time) { alert("Preencha o Nome, Data e Horário."); return; }
+            
+            // Converte a data formatada em BR de volta para padrão do banco
+            let dobIso = dobRaw;
+            if(dobRaw && dobRaw.includes('/')) {
+                dobIso = dobRaw.split('/').reverse().join('-');
+            }
 
             try {
                 await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), {
-                    name, phone, dob, date, time
+                    name, phone, dob: dobIso, date, time
                 });
                 alert("Agendamento atualizado com sucesso!");
                 window.closeEditExperimentalModal();
