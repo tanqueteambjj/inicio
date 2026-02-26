@@ -2307,155 +2307,156 @@
                 
                 const depHtmlEl = document.getElementById('rec-dependents-list');
                 if (depHtmlEl) {
-                    depHtmlEl.innerText = depText;
-                    depHtmlEl.classList.toggle('hidden', depText === '');
-                }
-
-                document.getElementById('rm-student-name').innerText = window.currentReceiptData.name.split(' ')[0];
-
-                window.closePaymentModal();
-                window.loadData();
-                
-                document.getElementById('receipt-modal').classList.remove('hidden');
-                document.getElementById('receipt-modal').classList.add('flex');
-                
-            } catch(e) { console.error(e); alert("Erro ao registrar pagamento."); }
-        };
-        
-        window.closeReceiptModal = () => {
-            document.getElementById('receipt-modal').classList.add('hidden');
-            document.getElementById('receipt-modal').classList.remove('flex');
-        };
-
-        window.printReceipt = () => {
-            document.body.classList.add('printing-receipt');
+        window.printIndividualContract = (id) => {
+            const s = window.students.find(st => st.id === id);
+            if (!s) { alert("Aluno não encontrado."); return; }
+            
+            const contractContainer = document.getElementById('printable-contract');
+            contractContainer.classList.remove('hidden'); 
+            
+            window.populateContractDOM(s);
+            document.body.classList.add('printing-contract'); 
+            
             setTimeout(() => {
                 window.print();
                 setTimeout(() => {
-                    document.body.classList.remove('printing-receipt');
+                    contractContainer.classList.add('hidden'); 
+                    document.body.classList.remove('printing-contract'); 
                 }, 2000);
             }, 500);
         };
 
-        window.sendReceiptWhatsApp = () => {
-            const data = window.currentReceiptData;
-            if(!data) return;
+        window.populateContractDOM = function(s) {
+            const pInfo = window.getPlanInfo(s.plan);
+            let price = "R$ " + pInfo.price.toFixed(2).replace('.', ',');
+            let displayName = pInfo.long;
             
-            if(!data.phone || data.phone.trim() === "") {
-                alert("Este aluno não possui um número de telefone cadastrado.");
-                return;
+            let promoNote = "";
+            if (s.plan && s.plan.includes('semestral') && !s.plan.includes('combo')) {
+                promoNote = "OBS: Promoção de Inauguração aplicada. A 1ª Mensalidade terá o valor reduzido de R$ 29,90.";
+            } else if (s.plan === 'combo-dupla') {
+                promoNote = "OBS: Promoção de Inauguração aplicada. A 1ª Mensalidade terá o valor reduzido de R$ 59,90.";
+            } else if (s.plan === 'combo-familia') {
+                promoNote = "OBS: Promoção de Inauguração aplicada. A 1ª Mensalidade terá o valor reduzido de R$ 89,90.";
+            }
+
+            let formattedDob = '--/--/----';
+            if (s.dob) {
+                if (s.dob.includes('/')) {
+                    formattedDob = s.dob;
+                } else if (s.dob.includes('T')) {
+                    const dObj = new Date(s.dob);
+                    if (!isNaN(dObj)) formattedDob = dObj.toLocaleDateString('pt-BR');
+                } else {
+                    const parts = s.dob.split('-');
+                    if (parts.length === 3) {
+                        formattedDob = `${parts[2].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[0]}`;
+                    }
+                }
             }
             
-            const cleanPhone = data.phone.replace(/\D/g, '');
-            const depStr = data.dependentsText ? `\n🔹 ${data.dependentsText}` : '';
-            
-            const message = `🥊 *TANQUE TEAM BJJ* 🥊\n*RECIBO DE PAGAMENTO*\n\nOlá, *${data.name.split(' ')[0]}*!\nConfirmamos o recebimento do seu pagamento. Muito obrigado e bons treinos! Oss 🥋\n\n*Detalhes do Pagamento:*\n🔹 Plano: ${data.plan}\n🔹 Valor: R$ ${data.amount}\n🔹 Forma: ${data.method}\n🔹 Data: ${data.date}\n🔹 Próx. Vencimento: ${data.nextDue}${depStr}\n\nAcesse o Portal do Aluno para o seu histórico completo.`;
-            
-            const encodedMessage = encodeURIComponent(message);
-            window.open(`https://wa.me/55${cleanPhone}?text=${encodedMessage}`, '_blank');
-        };
+            let contratanteText = s.name;
+            if (s.guardian && s.guardian.trim() !== "") {
+                contratanteText = `${s.guardian} (Responsável Legal: ${s.guardianKinship || 'Não informado'})`;
+            } else if (s.titularName && s.titularName.trim() !== "") {
+                contratanteText = `${s.titularName} (Titular do Plano)`;
+            }
 
-        window.viewHistory = (id) => {
-            const s = window.students.find(st => st.id === id);
-            if(!s) return;
-            document.getElementById('hist-student-name').innerText = s.name;
-            const tbody = document.getElementById('history-table-body');
-            tbody.innerHTML = '';
+            document.getElementById('printContratante').innerText = contratanteText;
+            document.getElementById('printStudent').innerText = s.name;
+            document.getElementById('printDob').innerText = formattedDob;
+            document.getElementById('printCPF').innerText = s.cpf || "Não informado";
+            document.getElementById('printEmail').innerText = s.email || "Não informado";
+            document.getElementById('printPhone').innerText = s.phone || "Não informado";
+            document.getElementById('printAddress').innerText = s.address || "Não informado";
+            
+            let beltInfo = "";
+            if(s.belt && !s.belt.includes("Branca - 0º Grau") && !s.belt.includes("Iniciante")) {
+                beltInfo = `| Graduação Atual: ${s.belt}`;
+            }
+            document.getElementById('printBeltInfo').innerText = beltInfo;
+            
+            const regDate = s.registrationDate ? new Date(s.registrationDate) : new Date();
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', options);
 
-            if(!s.paymentHistory || s.paymentHistory.length === 0) {
-                document.getElementById('history-empty').classList.remove('hidden');
+            const isCombo = s.plan && s.plan.includes('combo');
+            const isFidelity = s.plan && (s.plan.includes('semestral') || s.plan.includes('trimestral') || isCombo);
+
+            let clausesHtml = `<p><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
+
+            clausesHtml += `<p><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong class="uppercase underline">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong class="bg-yellow-100 px-1">${price}</strong>. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.</p>`;
+
+            if (promoNote) {
+                 clausesHtml += `<p class="italic text-xs font-bold mb-3">${promoNote}</p>`;
+            }
+
+            let clauseNum = 3;
+
+            if (isFidelity) {
+                clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade correspondente à sua nomenclatura (Trimestral ou Semestral). O cancelamento exige aviso prévio de 30 dias por escrito. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>`;
+                clauseNum++;
             } else {
-                document.getElementById('history-empty').classList.add('hidden');
-                const sorted = [...s.paymentHistory].sort((a,b) => new Date(b.date) - new Date(a.date));
-                sorted.forEach(p => {
-                    const row = document.createElement('tr');
-                    const d = p.date ? new Date(p.date + 'T12:00:00').toLocaleDateString('pt-BR') : '-';
-                    row.innerHTML = `<td class="px-3 py-2 font-medium">${d}</td><td class="px-3 py-2 text-green-700 font-bold">R$ ${p.amount}</td><td class="px-3 py-2">${p.method}</td><td class="px-3 py-2 text-right whitespace-nowrap"><button onclick="openEditPaymentModal('${id}', '${p.timestamp}')" class="text-blue-500 hover:text-blue-700 p-1 rounded mr-2" title="Editar Pagamento"><i class="fa-solid fa-pen"></i></button><button onclick="deletePaymentRecord('${id}', '${p.timestamp}')" class="text-red-500 hover:text-red-700 p-1 rounded" title="Excluir Pagamento"><i class="fa-solid fa-trash"></i></button></td>`;
-                    tbody.appendChild(row);
-                });
-            }
-            document.getElementById('history-modal').classList.remove('hidden');
-            document.getElementById('history-modal').classList.add('flex');
-        };
-
-        window.deletePaymentRecord = async (studentId, timestamp) => {
-            if(!confirm("Tem certeza que deseja excluir este pagamento? A ação não pode ser desfeita.")) return;
-            const s = window.students.find(st => st.id === studentId);
-            if(!s) return;
-            const payment = s.paymentHistory.find(p => p.timestamp === timestamp);
-            if(!payment) return;
-            
-            try {
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), {
-                    paymentHistory: arrayRemove(payment)
-                });
-                alert("Pagamento excluído com sucesso.");
-                await window.loadData();
-                window.viewHistory(studentId);
-            } catch(e) { alert("Erro ao excluir pagamento: " + e.message); }
-        };
-
-        window.openEditPaymentModal = (studentId, timestamp) => {
-            const s = window.students.find(st => st.id === studentId);
-            if(!s) return;
-            const payment = s.paymentHistory.find(p => p.timestamp === timestamp);
-            if(!payment) return;
-
-            document.getElementById('edit-pay-student-id').value = studentId;
-            document.getElementById('edit-pay-timestamp').value = timestamp;
-            document.getElementById('edit-pay-date').value = payment.date || '';
-            document.getElementById('edit-pay-amount').value = payment.amount || '';
-            document.getElementById('edit-pay-method').value = payment.method || 'Pix';
-
-            document.getElementById('edit-payment-modal').classList.remove('hidden');
-            document.getElementById('edit-payment-modal').classList.add('flex');
-        };
-
-        window.closeEditPaymentModal = () => {
-            document.getElementById('edit-payment-modal').classList.add('hidden');
-            document.getElementById('edit-payment-modal').classList.remove('flex');
-        };
-
-        window.saveEditedPayment = async () => {
-            const studentId = document.getElementById('edit-pay-student-id').value;
-            const timestamp = document.getElementById('edit-pay-timestamp').value;
-            const newDate = document.getElementById('edit-pay-date').value;
-            const newAmount = document.getElementById('edit-pay-amount').value;
-            const newMethod = document.getElementById('edit-pay-method').value;
-
-            if(!newAmount && newAmount !== "0") { alert("Informe o valor."); return; }
-
-            const s = window.students.find(st => st.id === studentId);
-            if(!s) return;
-
-            let updatedHistory = [...s.paymentHistory];
-            const index = updatedHistory.findIndex(p => p.timestamp === timestamp);
-            
-            if(index !== -1) {
-                updatedHistory[index].date = newDate;
-                updatedHistory[index].amount = newAmount;
-                updatedHistory[index].method = newMethod;
+                clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO:</strong> O cancelamento da prestação de serviços exige aviso prévio de 30 (trinta) dias por escrito à secretaria da academia. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.</p>`;
+                clauseNum++;
             }
 
-            try {
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), {
-                    paymentHistory: updatedHistory
-                });
-                alert("Pagamento atualizado com sucesso!");
-                window.closeEditPaymentModal();
-                await window.loadData();
-                window.viewHistory(studentId); 
-            } catch(e) {
-                alert("Erro ao atualizar pagamento: " + e.message);
+            if (isCombo) {
+                clausesHtml += `<div class="bg-blue-50 p-2 border-l-2 border-blue-400"><p><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DO PLANO FAMÍLIA (COMBO):</strong> O pagamento das mensalidades é unificado e de inteira responsabilidade do CONTRATANTE titular. O cancelamento ou afastamento de um dos beneficiários dependentes não dá direito a desconto ou reembolso parcial, e reverte automaticamente o plano dos membros restantes para o valor da tabela individual vigente.</p></div>`;
+                clauseNum++;
             }
+
+            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA INADIMPLÊNCIA:</strong> O atraso superior a 30 dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e cobrança dos valores devidos acrescidos de multa de 2% e juros de mora legais.</p>`;
+            clauseNum++;
+
+            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA SAÚDE E APTIDÃO FÍSICA:</strong> O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate, isentando a CONTRATADA de qualquer responsabilidade sobre moléstias pré-existentes não declaradas formalmente no ato desta matrícula.</p>`;
+            clauseNum++;
+
+            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DE CONDUTA (DOJO KUN):</strong> É obrigatório o uso de uniforme (Kimono) estipulado pela academia, limpo e conservado. Atos de indisciplina, desrespeito à hierarquia, agressão fora do contexto do treino esportivo ou falta de higiene poderão acarretar na suspensão ou rescisão unilateral deste contrato por parte da CONTRATADA, sem devolução de valores.</p>`;
+            clauseNum++;
+
+            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO DIREITO DE IMAGEM:</strong> O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da academia ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.</p>`;
+
+            document.getElementById('print-clauses-container').innerHTML = clausesHtml;
+
+            let dependentsHtml = '';
+            if (isCombo) {
+                let deps = [];
+                if (window.students) {
+                    deps = window.students.filter(d => d.titularId === s.id);
+                }
+                
+                if (deps.length > 0) {
+                    dependentsHtml = `<p class="mt-2 text-sm"><strong>DEPENDENTES VINCULADOS AO PLANO:</strong></p><ul class="list-disc pl-5 mt-1 text-xs">`;
+                    deps.forEach(d => {
+                        let dDob = '--/--/----';
+                        if (d.dob) {
+                            if (d.dob.includes('/')) {
+                                dDob = d.dob;
+                            } else if (d.dob.includes('T')) {
+                                const dObj = new Date(d.dob);
+                                if (!isNaN(dObj)) dDob = dObj.toLocaleDateString('pt-BR');
+                            } else {
+                                const parts = d.dob.split('-');
+                                if (parts.length === 3) {
+                                    dDob = `${parts[2].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[0]}`;
+                                }
+                            }
+                        }
+                        dependentsHtml += `<li><strong>${d.name}</strong> - Nasc: ${dDob} | Parentesco: ${d.parentesco || '-'} | Graduação: ${d.belt || 'Branca'}</li>`;
+                    });
+                    dependentsHtml += `</ul>`;
+                } else {
+                    dependentsHtml = `<p class="mt-2 text-xs italic text-gray-500">Nenhum dependente vinculado no sistema no momento.</p>`;
+                }
+            }
+            document.getElementById('printDependentsBlock').innerHTML = dependentsHtml;
+
+            // SIGNATURE NAME
+            const signName = s.guardian || s.titularName || s.name;
+            document.getElementById('printSignatureName').innerText = signName;
         };
 
-        window.closeHistoryModal = () => {
-            document.getElementById('history-modal').classList.add('hidden');
-            document.getElementById('history-modal').classList.remove('flex');
-        };
-
-        // --- DICA 3: FICHA ÚNICA (DETALHES DA FAMÍLIA) ---
         window.viewStudentDetails = (id) => {
             const s = window.students.find(st => st.id === id);
             if(!s) return;
