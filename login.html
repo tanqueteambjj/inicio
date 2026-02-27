@@ -7,6 +7,14 @@
     
     <!-- Favicon -->
     <link rel="icon" href="https://i.ibb.co/spgfD2Nd/1771300330359.png" type="image/png">
+
+    <!-- PWA Manifest Inline (Faz o navegador reconhecer o site como App) -->
+    <link rel="manifest" href='data:application/manifest+json;utf-8,%7B%22name%22%3A%20%22Tanque%20Team%20BJJ%22%2C%20%22short_name%22%3A%20%22TanqueTeam%22%2C%20%22start_url%22%3A%20%22.%2Flogin_aluno.html%22%2C%20%22display%22%3A%20%22standalone%22%2C%20%22background_color%22%3A%20%22%231B1B1B%22%2C%20%22theme_color%22%3A%20%22%23D90429%22%2C%20%22icons%22%3A%20%5B%7B%22src%22%3A%20%22https%3A%2F%2Fi.ibb.co%2FspgfD2Nd%2F1771300330359.png%22%2C%20%22sizes%22%3A%20%22192x192%22%2C%20%22type%22%3A%20%22image%2Fpng%22%7D%2C%20%7B%22src%22%3A%20%22https%3A%2F%2Fi.ibb.co%2FspgfD2Nd%2F1771300330359.png%22%2C%20%22sizes%22%3A%20%22512x512%22%2C%20%22type%22%3A%20%22image%2Fpng%22%7D%5D%7D'>
+    <!-- Tags para iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TanqueTeam">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/spgfD2Nd/1771300330359.png">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -65,10 +73,10 @@
         <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-dark via-brand-red to-brand-dark"></div>
 
         <!-- Login Card -->
-        <div class="glass-effect w-full max-w-md p-8 rounded-2xl shadow-2xl fade-in relative overflow-hidden border-t-4 border-brand-red">
+        <div class="glass-effect w-full max-w-md p-8 rounded-2xl shadow-2xl fade-in relative overflow-hidden border-t-4 border-brand-red flex flex-col max-h-[95vh] overflow-y-auto">
             
             <!-- Header / Logo -->
-            <div class="text-center mb-8">
+            <div class="text-center mb-8 shrink-0">
                 <div class="w-24 h-24 bg-brand-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg ring-4 ring-brand-red ring-opacity-20">
                     <img src="https://i.ibb.co/spgfD2Nd/1771300330359.png" alt="Logo" class="w-16 h-16 object-contain">
                 </div>
@@ -77,13 +85,13 @@
             </div>
 
             <!-- Error Message Box (Hidden by default) -->
-            <div id="error-box" class="hidden bg-red-100 border-l-4 border-brand-red text-red-700 p-4 mb-6 rounded text-sm" role="alert">
+            <div id="error-box" class="hidden bg-red-100 border-l-4 border-brand-red text-red-700 p-4 mb-6 rounded text-sm shrink-0" role="alert">
                 <p class="font-bold">Erro de Acesso</p>
                 <p id="error-msg">Usuário ou senha incorretos.</p>
             </div>
 
             <!-- Login Form -->
-            <form id="loginForm" onsubmit="handleLogin(event)">
+            <form id="loginForm" onsubmit="handleLogin(event)" class="shrink-0">
                 <div class="space-y-5">
                     
                     <!-- Email/Login Input -->
@@ -129,17 +137,24 @@
                         <span>ENTRAR</span>
                         <i class="fa-solid fa-arrow-right-to-bracket"></i>
                     </button>
+                    
+                    <!-- PWA Native Install Button (Hidden by default) -->
+                    <button type="button" id="btn-install-pwa" class="hidden w-full bg-gray-800 hover:bg-black text-white focus:ring-4 focus:outline-none focus:ring-gray-300 font-bold rounded-lg text-sm px-5 py-3 text-center transition-all duration-300 shadow-md transform active:scale-95 flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Instalar Aplicativo Tanque Team</span>
+                    </button>
+
                 </div>
             </form>
 
             <!-- Divider -->
-            <div class="mt-8 mb-6 relative">
+            <div class="mt-8 mb-6 relative shrink-0">
                 <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div>
                 <div class="relative flex justify-center text-sm"><span class="px-2 bg-white text-gray-500 font-display tracking-wider">TANQUE TEAM BJJ</span></div>
             </div>
 
             <!-- Footer Links -->
-            <div class="text-center space-y-2">
+            <div class="text-center space-y-2 shrink-0 pb-2">
                 <p class="text-sm text-gray-600">Ainda não tem acesso?</p>
                 <a href="http://www.tanqueteambjj.com.br/#register" class="text-brand-dark font-bold hover:text-brand-red transition underline decoration-brand-red decoration-2 underline-offset-4">Fazer Matrícula Online</a>
                 <div class="mt-4 pt-4 border-t border-gray-100">
@@ -155,39 +170,6 @@
             &copy; 2026 TANQUE TEAM BJJ SYSTEM
         </div>
 
-    </div>
-
-    <!-- Modal de Instalação (App Prompt) -->
-    <div id="install-prompt-modal" class="fixed inset-0 z-[100] hidden bg-black/80 flex items-end justify-center sm:items-center p-4 pb-10 sm:pb-4 backdrop-blur-sm transition-opacity duration-300 opacity-0">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform translate-y-full sm:translate-y-0 transition-transform duration-500 relative" id="install-prompt-card">
-            <button onclick="closeInstallPrompt()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-800 bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center transition"><i class="fa-solid fa-times"></i></button>
-            <div class="p-6 text-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-brand-red to-red-800 text-white rounded-2xl flex items-center justify-center mx-auto mb-5 text-3xl shadow-lg transform -rotate-3">
-                    <i class="fa-solid fa-mobile-screen"></i>
-                </div>
-                <h3 class="font-display font-bold text-2xl text-gray-800 mb-2">Instale o nosso App!</h3>
-                <p class="text-sm text-gray-600 mb-5 px-2">Tenha a sua carteirinha de check-in e horários com acesso rápido na tela inicial do seu celular.</p>
-
-                <!-- Instruções Dinâmicas (Mostradas via JS) -->
-                <div id="ios-instructions" class="hidden bg-gray-50 p-4 rounded-xl border border-gray-200 text-left text-sm text-gray-700 shadow-inner">
-                    <p class="font-bold mb-3 text-brand-dark flex items-center gap-2"><i class="fa-brands fa-apple text-xl text-gray-800"></i> No iPhone (Safari):</p>
-                    <ol class="list-decimal pl-5 space-y-2">
-                        <li>Toque no ícone de Compartilhar <i class="fa-solid fa-arrow-up-from-bracket text-blue-500 mx-1"></i> (na barra inferior)</li>
-                        <li>Role para baixo e selecione <strong>"Adicionar à Tela de Início"</strong> <i class="fa-solid fa-plus-square text-gray-500 mx-1"></i></li>
-                    </ol>
-                </div>
-
-                <div id="android-instructions" class="hidden bg-gray-50 p-4 rounded-xl border border-gray-200 text-left text-sm text-gray-700 shadow-inner">
-                    <p class="font-bold mb-3 text-brand-dark flex items-center gap-2"><i class="fa-brands fa-android text-xl text-green-500"></i> No Android (Chrome):</p>
-                    <ol class="list-decimal pl-5 space-y-2">
-                        <li>Toque nos 3 pontinhos <i class="fa-solid fa-ellipsis-vertical text-gray-500 mx-1"></i> (no topo direito)</li>
-                        <li>Selecione <strong>"Adicionar à tela inicial"</strong> ou <strong>"Instalar aplicativo"</strong> <i class="fa-solid fa-mobile-screen text-gray-500 mx-1"></i></li>
-                    </ol>
-                </div>
-
-                <button onclick="closeInstallPrompt()" class="w-full mt-6 bg-brand-dark text-white font-bold py-3 rounded-xl shadow-md hover:bg-gray-800 transition active:scale-95">Entendi, vou adicionar!</button>
-            </div>
-        </div>
     </div>
 
     <!-- Firebase Logic -->
@@ -235,60 +217,56 @@
     </script>
 
     <script>
-        // --- LÓGICA DO ALERTA DE INSTALAÇÃO (APP) ---
-        document.addEventListener('DOMContentLoaded', () => {
-            // Verifica se o utilizador já fechou este alerta no passado
-            if (localStorage.getItem('tanque_pwa_prompt_dismissed')) return;
+        // --- PWA NATIVE INSTALL PROMPT ---
+        let deferredPrompt;
+        const installBtn = document.getElementById('btn-install-pwa');
 
-            // Verifica se já está instalado/rodando como App
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
-            if (isStandalone) return;
+        // Captura o evento nativo de instalação do navegador
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Impede que o mini-infobar do Chrome apareça instantaneamente
+            e.preventDefault();
+            // Guarda o evento para disparar quando clicarem no botão
+            deferredPrompt = e;
+            // Exibe o nosso botão personalizado
+            installBtn.classList.remove('hidden');
+        });
 
-            // Deteta o dispositivo para dar as instruções certas
-            const userAgent = window.navigator.userAgent.toLowerCase();
-            const isIOS = /iphone|ipad|ipod/.test(userAgent);
-            const isAndroid = /android/.test(userAgent);
-            const isMobile = isIOS || isAndroid;
-
-            if (isMobile) {
-                setTimeout(() => {
-                    const modal = document.getElementById('install-prompt-modal');
-                    const card = document.getElementById('install-prompt-card');
-                    const iosInst = document.getElementById('ios-instructions');
-                    const androidInst = document.getElementById('android-instructions');
-
-                    if (isIOS) {
-                        iosInst.classList.remove('hidden');
-                    } else {
-                        androidInst.classList.remove('hidden'); // Default para o resto
-                    }
-
-                    modal.classList.remove('hidden');
-                    
-                    // Pequeno atraso para a animação CSS fluir
-                    setTimeout(() => {
-                        modal.classList.remove('opacity-0');
-                        card.classList.remove('translate-y-full');
-                    }, 50);
-                }, 2000); // Mostra 2 segundos após carregar a página
+        // Quando o aluno clica no botão "Instalar Aplicativo"
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Exibe o prompt nativo oficial do Android/Desktop
+                deferredPrompt.prompt();
+                
+                // Aguarda a resposta do usuário
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('App instalado com sucesso!');
+                    installBtn.classList.add('hidden'); // Esconde o botão após aceitar
+                }
+                
+                // Limpa o evento
+                deferredPrompt = null;
             }
         });
 
-        window.closeInstallPrompt = () => {
-            const modal = document.getElementById('install-prompt-modal');
-            const card = document.getElementById('install-prompt-card');
-            
-            modal.classList.add('opacity-0');
-            card.classList.add('translate-y-full');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
+        // Evento escutado quando o app é finalmente instalado com sucesso
+        window.addEventListener('appinstalled', () => {
+            installBtn.classList.add('hidden');
+            console.log('PWA está instalado!');
+        });
 
-            // Grava na memória para não chatear o aluno sempre que ele entrar
-            localStorage.setItem('tanque_pwa_prompt_dismissed', 'true');
-        };
+        // --- REGISTRO DE SERVICE WORKER FAKE (Obrigatório para PWA funcionar) ---
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', () => self.skipWaiting());
+                self.addEventListener('activate', () => self.clients.claim());
+                self.addEventListener('fetch', (e) => { });
+            `;
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(console.error);
+        }
 
+        // --- LÓGICA DE LOGIN NORMAL ---
         function togglePassword() {
             const passwordInput = document.getElementById('password');
             const eyeIcon = document.getElementById('eye-icon');
@@ -304,7 +282,6 @@
             }
         }
 
-        // --- SAFE REDIRECT HELPER ---
         function safeRedirect(url) {
             try {
                 const protocol = window.location.protocol;
