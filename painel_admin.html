@@ -1282,7 +1282,6 @@
                     <!-- Plano e Faixa -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Plano</label>
-                        <!-- ADDED NEW PLANS & ADMIN PLAN -->
                         <select id="reg-plan" class="w-full border rounded p-2" onchange="handleAdminPlanChange()">
                             <option value="infantil-mensal">Infantil Mensal</option>
                             <option value="infantil-trimestral">Infantil Trimestral</option>
@@ -1304,14 +1303,8 @@
                             <option value="">-- Selecione o Titular --</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Status Pagamento</label>
-                        <select id="reg-payment" class="w-full border rounded p-2">
-                            <option value="Em dia">Em dia</option>
-                            <option value="Pendente">Pendente</option>
-                            <option value="Isento">Isento</option>
-                        </select>
-                    </div>
+                    
+                    <!-- FAIXA E GRAU MUDARAM PARA UMA COLUNA CADA AQUI -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Faixa</label>
                         <select id="reg-belt-color" class="w-full border rounded p-2 text-xs">
@@ -1323,6 +1316,37 @@
                         <select id="reg-belt-degree" class="w-full border rounded p-2 text-xs">
                             <option value="0">0º</option><option value="1">1º</option><option value="2">2º</option><option value="3">3º</option><option value="4">4º</option>
                         </select>
+                    </div>
+
+                    <!-- NOVO: PAYMENT SECTION -->
+                    <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200">
+                        <h4 class="text-sm font-bold text-green-700 uppercase mb-3"><i class="fa-solid fa-cash-register"></i> Primeiro Pagamento (Opcional)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Status Inicial</label>
+                                <select id="reg-payment" class="w-full border rounded p-2 text-sm bg-gray-50">
+                                    <option value="Pendente">Pendente (Paga depois)</option>
+                                    <option value="Em dia">Em dia (Já pagou)</option>
+                                    <option value="Isento">Isento</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Valor Pago (R$)</label>
+                                <input type="number" id="reg-pay-amount" class="w-full border rounded p-2 text-sm font-bold text-gray-700" placeholder="Ex: 189.90" step="0.01">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Forma de Pagamento</label>
+                                <select id="reg-pay-method" class="w-full border rounded p-2 text-sm bg-gray-50">
+                                    <option value="Pix">Pix</option>
+                                    <option value="Dinheiro">Dinheiro</option>
+                                    <option value="Débito">Débito</option>
+                                    <option value="Crédito à vista">Crédito à vista</option>
+                                    <option value="Crédito 2x">Crédito 2x</option>
+                                    <option value="Crédito 3x">Crédito 3x</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-1">Se preencher o Valor Pago, o sistema já registrará o recibo e deixará o aluno "Em dia".</p>
                     </div>
 
                     <!-- DEPENDENTES SECTION (Adaptativo) -->
@@ -2877,6 +2901,15 @@
             const depsContainer = document.getElementById('admin-reg-deps-container');
             const dep1 = document.getElementById('admin-reg-dep1');
             const dep2 = document.getElementById('admin-reg-dep2');
+            const amountInput = document.getElementById('reg-pay-amount');
+
+            // Auto-fill price
+            const pInfo = window.getPlanInfo(plan);
+            if (pInfo && pInfo.price > 0) {
+                amountInput.value = pInfo.price;
+            } else {
+                amountInput.value = '';
+            }
 
             // Reseta UI
             titularContainer.classList.add('hidden');
@@ -2921,6 +2954,11 @@
             document.getElementById('admin-dep1-dob').value = '';
             document.getElementById('admin-dep2-name').value = '';
             document.getElementById('admin-dep2-dob').value = '';
+            
+            document.getElementById('reg-payment').value = 'Pendente';
+            document.getElementById('reg-pay-amount').value = '';
+            document.getElementById('reg-pay-method').value = 'Pix';
+            
             window.handleAdminPlanChange();
         };
 
@@ -2934,7 +2972,11 @@
             const guardian = document.getElementById('reg-guardian').value;
             const plan = document.getElementById('reg-plan').value;
             const titular = plan === 'dependente' ? document.getElementById('reg-titular').value : ""; 
-            const payment = document.getElementById('reg-payment').value;
+            
+            let paymentStatus = document.getElementById('reg-payment').value;
+            const payAmount = document.getElementById('reg-pay-amount').value;
+            const payMethod = document.getElementById('reg-pay-method').value;
+            
             const beltColor = document.getElementById('reg-belt-color').value;
             const beltDegree = document.getElementById('reg-belt-degree').value;
             const login = document.getElementById('reg-student-login').value;
@@ -2959,14 +3001,25 @@
             if (plan === 'administracao') category = 'Administração';
             if (plan === 'dependente') category = 'Dependente (Combo)';
 
+            let initialPaymentHistory = [];
+            if (payAmount && parseFloat(payAmount) > 0) {
+                initialPaymentHistory.push({
+                    date: regDate.toISOString().split('T')[0],
+                    amount: payAmount,
+                    method: payMethod,
+                    timestamp: regDate.toISOString()
+                });
+                paymentStatus = 'Em dia'; 
+            }
+
             try {
                 // Guarda o Titular
                 const titularDocRef = await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), {
                     name: name, dob: dob, cpf: cpf, email: email, phone: phone, address: address,
-                    guardian: guardian, plan: plan, titularName: titular, paymentStatus: payment,
+                    guardian: guardian, plan: plan, titularName: titular, paymentStatus: paymentStatus,
                     enrollmentStatus: 'Ativo', belt: beltStr, category: category,
                     registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(),
-                    studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: []
+                    studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory
                 });
 
                 // Auto-cadastra os Dependentes (se aplicável ao plano)
