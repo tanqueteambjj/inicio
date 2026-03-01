@@ -342,10 +342,14 @@
                         <div id="dash-dependents-list" class="space-y-3"></div>
                     </div>
                     
-                    <!-- BOTOES DE AÇÃO SECUNDÁRIOS -->
-                    <div class="mt-6 mb-6">
-                        <button onclick="printStudentContract()" class="w-full md:w-1/2 mx-auto bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg flex justify-center items-center gap-2 transition transform hover:-translate-y-1">
-                            <i class="fa-solid fa-file-contract text-xl"></i> Imprimir Minha Matrícula / Contrato
+                    <!-- BOTOES DE AÇÃO SECUNDÁRIOS: CONTRATO E CONVIDAR AMIGO -->
+                    <div class="mt-6 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto no-print">
+                        <button onclick="printStudentContract()" class="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg flex justify-center items-center gap-2 transition transform hover:-translate-y-1">
+                            <i class="fa-solid fa-file-contract text-xl"></i> Imprimir Minha Matrícula
+                        </button>
+                        
+                        <button onclick="shareTrialLink()" class="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-4 rounded-xl shadow-lg flex justify-center items-center gap-2 transition transform hover:-translate-y-1">
+                            <i class="fa-brands fa-whatsapp text-xl"></i> Convidar Amigo p/ Treino
                         </button>
                     </div>
                 </div>
@@ -712,6 +716,14 @@
             }
         };
 
+        window.shareTrialLink = () => {
+            const student = window.currentStudentData;
+            const studentName = student ? student.name.split(' ')[0] : 'um amigo';
+            const message = `🥋 Fala! Estou treinando Jiu-Jitsu na *Tanque Team* e lembrei de você.\n\nBora fazer uma *Aula Experimental Gratuita* comigo? É só clicar no link abaixo e agendar o seu horário:\n\n👉 https://www.tanqueteambjj.com.br/\n\nTe espero no tatame! Oss!`;
+            const encodedMessage = encodeURIComponent(message);
+            window.open(`https://api.whatsapp.com/send?text=${encodedMessage}`, '_blank');
+        };
+
         const isCanvasPreview = typeof __app_id !== 'undefined';
         let session = localStorage.getItem('tanque_user_session');
         
@@ -740,12 +752,12 @@
                                 window.titularData = mockData;
                                 window.currentStudentData = mockData;
                                 renderDashboard(mockData, false);
-                                window.loadStudentNotices();
+                                await window.loadStudentNotices();
                                 document.getElementById('ranking-list').innerHTML = `<tr><td class="px-6 py-8 text-center text-gray-400 dark:text-gray-500 italic">Preview Mode: Sem dados reais de ranking.</td></tr>`;
                             } else {
                                 await window.loadStudentData(user.id);
-                                window.loadStudentNotices();
-                                window.loadRanking();
+                                await window.loadStudentNotices();
+                                await window.loadRanking();
                             }
                         } catch (e) {
                             console.error("Erro na autenticação Firebase:", e);
@@ -1556,7 +1568,7 @@
             } catch (error) { console.error("Erro ao carregar avisos:", error); }
         };
 
-        function renderStudentNotices() {
+        window.renderStudentNotices = () => {
             const container = document.getElementById('student-notices-container');
             const list = document.getElementById('student-notices-list');
             
@@ -1638,7 +1650,7 @@
             try {
                 await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', noticeId));
                 window.noticesList = window.noticesList.filter(n => n.id !== noticeId);
-                renderStudentNotices();
+                window.renderStudentNotices();
             } catch(e) {
                 console.error("Erro ao apagar aviso: ", e);
                 alert("Erro ao apagar publicação: " + e.message);
@@ -1659,7 +1671,7 @@
             if (hasReacted) notice.reactions = reactions.filter(id => id !== student.id);
             else notice.reactions = [...reactions, student.id];
             
-            renderStudentNotices();
+            window.renderStudentNotices();
 
             try {
                 const docRef = doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', noticeId);
@@ -1669,7 +1681,7 @@
                 console.error("Erro ao registrar a reação:", e);
                 if (hasReacted) notice.reactions.push(student.id);
                 else notice.reactions = notice.reactions.filter(id => id !== student.id);
-                renderStudentNotices();
+                window.renderStudentNotices();
             }
         };
 
