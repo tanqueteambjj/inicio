@@ -92,14 +92,8 @@
             <a href="#" onclick="window.switchMainView('students')" id="nav-students" class="flex items-center px-4 py-3 bg-brand-red text-white rounded-lg shadow-md transition-all">
                 <i class="fa-solid fa-users w-6"></i> <span class="font-bold">Alunos</span>
             </a>
-            <a href="#" onclick="window.switchMainView('financial')" id="nav-financial" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
-                <i class="fa-solid fa-file-invoice-dollar w-6"></i> <span class="font-bold">Financeiro</span>
-            </a>
-            <a href="#" onclick="window.switchMainView('reports')" id="nav-reports" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
-                <i class="fa-solid fa-chart-pie w-6"></i> <span class="font-bold">Relatórios</span>
-            </a>
             <a href="#" onclick="window.switchMainView('experimental')" id="nav-experimental" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
-                <i class="fa-solid fa-fire w-6"></i> <span class="font-bold">Aulas Exp.</span>
+                <i class="fa-solid fa-fire w-6"></i> <span class="font-bold">Aulas Exp. / CRM</span>
             </a>
             <a href="#" onclick="window.switchMainView('notices')" id="nav-notices" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
                 <i class="fa-solid fa-bullhorn w-6"></i> <span class="font-bold">Mural de Avisos</span>
@@ -210,8 +204,8 @@
                                 <span id="list-title">Lista de Alunos</span>
                                 <span class="bg-gray-200 text-gray-600 py-0.5 px-2 rounded-full text-xs" id="list-count">0</span>
                             </h3>
-                            <button onclick="window.deleteSelectedStudents()" id="btn-bulk-delete" class="hidden flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition animate-fade-in">
-                                <i class="fa-solid fa-trash-can"></i> Excluir Selecionados (<span id="selected-count">0</span>)
+                            <button onclick="window.archiveSelectedStudents()" id="btn-bulk-archive" class="hidden flex items-center gap-1 bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs font-bold hover:bg-gray-300 transition animate-fade-in border border-gray-300">
+                                <i class="fa-solid fa-box-archive"></i> Arquivar (<span id="selected-count">0</span>)
                             </button>
                             <div id="bulk-actions" class="hidden flex items-center gap-2 animate-fade-in">
                                 <button onclick="window.addPresenceSelectedStudents()" class="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-bold hover:bg-green-200 transition">
@@ -252,14 +246,6 @@
                             <option value="marrom">Marrom</option>
                             <option value="preta">Preta</option>
                         </select>
-
-                        <select id="filter-payment-status" onchange="window.filterTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
-                            <option value="">💲 Pagamento (Todos)</option>
-                            <option value="Em dia">Em dia</option>
-                            <option value="Pendente">Pendente</option>
-                            <option value="Isento">Isento</option>
-                            <option value="Expirando">Expirando</option>
-                        </select>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -270,6 +256,14 @@
                                 </tr>
                             </thead>
                             <tbody id="students-table-body" class="text-sm text-gray-700 divide-y divide-gray-200">
+                                <tr><td colspan="7" class="px-6 py-4 text-center">Carregando dados...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: AULA EXPERIMENTAL (KANBAN CRM) -->
                                 <tr><td colspan="7" class="px-6 py-4 text-center">Carregando dados...</td></tr>
                             </tbody>
                         </table>
@@ -1075,19 +1069,6 @@
                         </div>
                     </div>
 
-                    <!-- FINANCIAL INFO -->
-                    <div class="bg-gray-50 p-3 rounded border border-gray-100 relative">
-                        <h4 class="text-xs font-bold text-gray-400 uppercase border-b pb-1 mb-2">Financeiro</h4>
-                        <div class="grid grid-cols-2 gap-y-2 text-sm">
-                            <div class="col-span-2"><span class="text-gray-500 block text-xs">Plano Contratado</span><span class="font-medium font-bold text-brand-dark" id="detail-plan">--</span></div>
-                            <div><span class="text-gray-500 block text-xs">Valor Mensal</span><span class="font-medium" id="detail-value">--</span></div>
-                            <div><span class="text-gray-500 block text-xs">Forma de Pagamento</span><span class="font-medium" id="detail-method">--</span></div>
-                        </div>
-                        <div id="detail-titular-box" class="hidden mt-3 p-2 bg-purple-100 text-purple-800 rounded border border-purple-200 text-xs">
-                            <span class="font-bold">Titular/Pagante:</span> <span id="detail-titular-name">--</span>
-                        </div>
-                    </div>
-
                     <!-- GUARDIAN INFO SECTION -->
                     <div id="detail-guardian-box" class="hidden bg-yellow-50 p-3 rounded border border-yellow-100">
                         <h4 class="text-xs font-bold text-yellow-700 uppercase mb-1 flex items-center gap-1"><i class="fa-solid fa-people-roof"></i> Responsável Legal</h4>
@@ -1200,36 +1181,6 @@
                         </select>
                     </div>
 
-                    <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200">
-                        <h4 class="text-sm font-bold text-green-700 uppercase mb-3"><i class="fa-solid fa-cash-register"></i> Primeiro Pagamento (Opcional)</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Status Inicial</label>
-                                <select id="reg-payment" class="w-full border rounded p-2 text-sm bg-gray-50">
-                                    <option value="Pendente">Pendente (Paga depois)</option>
-                                    <option value="Em dia">Em dia (Já pagou)</option>
-                                    <option value="Isento">Isento</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Valor Pago (R$)</label>
-                                <input type="number" id="reg-pay-amount" class="w-full border rounded p-2 text-sm font-bold text-gray-700" placeholder="Ex: 189.90" step="0.01">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Forma de Pagamento</label>
-                                <select id="reg-pay-method" class="w-full border rounded p-2 text-sm bg-gray-50">
-                                    <option value="Pix">Pix</option>
-                                    <option value="Dinheiro">Dinheiro</option>
-                                    <option value="Débito">Débito</option>
-                                    <option value="Crédito à vista">Crédito à vista</option>
-                                    <option value="Crédito 2x">Crédito 2x</option>
-                                    <option value="Crédito 3x">Crédito 3x</option>
-                                </select>
-                            </div>
-                        </div>
-                        <p class="text-[10px] text-gray-400 mt-1">Se preencher o Valor Pago, o sistema já registrará o recibo e deixará o aluno "Em dia".</p>
-                    </div>
-
                     <!-- DEPENDENTES SECTION (Adaptativo) -->
                     <div id="admin-reg-deps-container" class="md:col-span-2 hidden border-t-2 border-purple-200 pt-4 mt-2">
                         <h4 class="text-sm font-bold text-purple-700 uppercase mb-3"><i class="fa-solid fa-users"></i> Cadastrar Dependentes do Combo</h4>
@@ -1273,11 +1224,12 @@
 
                     <!-- Login -->
                     <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 bg-blue-50 p-4 rounded-lg">
-                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-3">Definir Acesso do Aluno</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-blue-600 mb-1">Login (Usuário/Email)</label>
-                                <input type="text" id="reg-student-login" class="w-full border border-blue-200 rounded p-2">
+                            <!-- CAMPO TITULAR (VINCULAÇÃO) -->
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-purple-600 mb-1">Titular do Plano (Preencher caso seja Dependente)</label>
+                                <select id="edit-titular" class="w-full border border-purple-200 rounded p-2 bg-purple-50 focus:ring-purple-500">
+                                    <option value="">-- Selecione o Titular --</option>
+                                </select>
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-blue-600 mb-1">Senha de Acesso</label>
@@ -1319,13 +1271,22 @@
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Tipo de Aviso</label>
-                        <select id="notice-type" class="w-full border rounded p-2 text-sm">
-                            <option value="info">ℹ️ Informativo (Azul)</option>
-                            <option value="alert">⚠️ Importante (Amarelo)</option>
-                            <option value="success">🎉 Comemoração (Verde)</option>
-                            <option value="danger">🚨 Urgente (Vermelho)</option>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Graus</label>
+                        <select id="edit-belt-degree" class="w-full border rounded p-2">
+                            <option value="0">0º</option><option value="1">1º</option><option value="2">2º</option><option value="3">3º</option><option value="4">4º</option>
                         </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Status Matrícula</label>
+                        <select id="edit-enrollment-status" class="w-full border rounded p-2 font-bold text-gray-700">
+                            <option value="Ativo" class="text-green-600">Ativo</option>
+                            <option value="Inativo" class="text-red-600">Inativo</option>
+                        </select>
+                    </div>
+                    <div class="col-span-1 md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Vencimento Contrato</label>
+                        <input type="date" id="edit-end-date" class="w-full border rounded p-2">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Data de Expiração</label>
@@ -1362,7 +1323,7 @@
         window.students = []; 
         window.currentTab = 'all'; 
         window.currentView = 'students'; 
-        window.currentFinancialTab = 'all';
+            window.currentView = 'students'; 
         window.noticesList = [];
         window.experimentalList = []; 
 
@@ -1499,6 +1460,7 @@
 
         window.loadData = async function() {
             try {
+                if(!window.db) throw new Error("Database not initialized");
                 const querySnapshot = await getDocs(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'));
                 window.students = [];
                 querySnapshot.forEach(doc => window.students.push({ id: doc.id, ...doc.data() }));
@@ -1506,12 +1468,11 @@
                 window.populateTitularSelects();
                 updateStats();
                 if(window.currentView === 'students') window.renderTable();
-                else if(window.currentView === 'financial') window.renderFinancialTable();
             } catch (error) { console.error(error); }
         }
 
         function updateStats() {
-            const total = window.students.filter(s => s.enrollmentStatus !== 'Inativo').length;
+            const total = window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).length;
             const active = window.students.filter(s => s.enrollmentStatus !== 'Inativo' && (s.paymentStatus === 'Em dia' || s.paymentStatus === 'Isento')).length;
             let expiringCount = 0, kidsCount = 0, adultsCount = 0, inactiveCount = 0;
             const today = new Date();
@@ -1519,15 +1480,10 @@
                 if (s.enrollmentStatus === 'Inativo') { inactiveCount++; return; }
                 if (isStudentKid(s)) kidsCount++; else adultsCount++;
                 const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
-                if (!isNaN(targetDate) && s.paymentStatus !== 'Isento' && s.plan !== 'dependente') {
-                    const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
-                    if (diffDays >= 0 && diffDays <= 7) expiringCount++;
-                }
             });
             const setText = (id, txt) => { const e = document.getElementById(id); if(e) e.innerText = txt; }
             setText('stat-total', total); setText('stat-infantil', kidsCount); setText('stat-adulto', adultsCount); 
-            setText('stat-inactive', inactiveCount);
-            setText('fin-stat-total', total); setText('fin-stat-active', active); setText('fin-stat-pending', total - active); setText('fin-stat-expiring', expiringCount);
+            setText('stat-inactive', inactiveCount); setText('stat-archived', archivedCount);
         }
 
         window.toggleSelectAll = (source) => { document.querySelectorAll('.student-cb').forEach(cb => cb.checked = source.checked); window.updateBulkActions(); };
@@ -1623,8 +1579,9 @@
         window.switchMainView = (viewName) => {
             if(window.innerWidth < 768 && !document.getElementById('sidebar-menu').classList.contains('-translate-x-full')) window.toggleMobileMenu();
             window.currentView = viewName;
-            ['students', 'financial', 'reports', 'notices', 'experimental'].forEach(v => {
-                document.getElementById('view-' + v).classList.toggle('hidden', viewName !== v);
+            ['students', 'reports', 'notices', 'experimental'].forEach(v => {
+                const el = document.getElementById('view-' + v);
+                if(el) el.classList.toggle('hidden', viewName !== v);
                 const nav = document.getElementById('nav-' + v);
                 if(nav) {
                     if (v === viewName) { nav.classList.add('bg-brand-red', 'text-white'); nav.classList.remove('text-gray-400', 'hover:bg-gray-800'); } 
@@ -1632,7 +1589,6 @@
                 }
             });
             if(viewName === 'students') window.renderTable();
-            else if(viewName === 'financial') window.renderFinancialTable();
             else if(viewName === 'notices') { window.renderAdminNotices(); window.renderBirthdays(); }
             else if(viewName === 'experimental') window.loadExperimentalData();
         };
@@ -1662,7 +1618,6 @@
             if (document.activeElement === mobileSearch1 && desktopSearch) desktopSearch.value = mobileSearch1.value;
             else if (document.activeElement === desktopSearch && mobileSearch1) mobileSearch1.value = desktopSearch.value;
             if(window.currentView === 'students') window.renderTable();
-            else if(window.currentView === 'financial') window.renderFinancialTable();
             else if(window.currentView === 'experimental') window.renderExperimentalTable();
         };
 
@@ -1695,7 +1650,6 @@
             const thead = document.getElementById('table-headers');
             const search = (document.getElementById('searchInput')?.value || "").toLowerCase();
             const beltFilter = (document.getElementById('filter-belt')?.value || "").toLowerCase();
-            const statusFilter = document.getElementById('filter-payment-status')?.value || "";
             const sortOrder = document.getElementById('sort-order')?.value || "recent";
 
             if(!tbody) return;
@@ -1706,31 +1660,20 @@
                 const matchesSearch = studentName.includes(search);
                 const currentEnrollment = s.enrollmentStatus || 'Ativo';
                 const matchesBelt = beltFilter === "" || (s.belt && s.belt.toLowerCase().includes(beltFilter));
-                
-                let virtualStatus = s.paymentStatus || 'Pendente';
-                const today = new Date();
-                const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
-                
-                if (s.paymentStatus !== 'Isento' && s.plan !== 'administracao' && s.plan !== 'dependente') {
-                    const diffTime = targetDate - today;
-                    const diffDays = isNaN(diffTime) ? 0 : Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    if (diffDays < 0 && s.paymentStatus !== 'Em dia') virtualStatus = 'Pendente';
-                    else if (diffDays <= 7 && diffDays >= 0) virtualStatus = 'Expirando';
-                }
-                
-                const matchesPayment = statusFilter === "" || virtualStatus === statusFilter || s.paymentStatus === statusFilter;
 
-                if (window.currentTab === 'inactive') {
-                    return matchesSearch && matchesBelt && matchesPayment && currentEnrollment === 'Inativo';
+                if (window.currentTab === 'archived') {
+                    return matchesSearch && matchesBelt && s.archived === true;
+                } else if (window.currentTab === 'inactive') {
+                    return matchesSearch && matchesBelt && currentEnrollment === 'Inativo' && !s.archived;
                 } else {
-                    if (currentEnrollment === 'Inativo') return false;
+                    if (currentEnrollment === 'Inativo' || s.archived) return false;
                     let matchesTab = false;
                     if(window.currentTab === 'all') matchesTab = true;
                     else {
                         let isKid = isStudentKid(s);
                         matchesTab = (window.currentTab === 'kids' && isKid) || (window.currentTab === 'adults' && !isKid);
                     }
-                    return matchesTab && matchesSearch && matchesBelt && matchesPayment;
+                    return matchesTab && matchesSearch && matchesBelt;
                 }
             });
 
@@ -1804,7 +1747,7 @@
                         <button onclick="window.openQrModal('${s.id}')" class="text-gray-800 hover:text-black mr-2" title="Cartão QR Code"><i class="fa-solid fa-qrcode"></i></button>
                         <button onclick="window.openEditModal('${s.id}')" class="text-blue-600 hover:text-blue-900 mr-2" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
                         <button onclick="window.printIndividualContract('${s.id}')" class="text-indigo-600 hover:text-indigo-900 mr-2" title="Imprimir Contrato"><i class="fa-solid fa-file-contract"></i></button>
-                        <button onclick="window.deleteStudent('${s.id}')" class="text-red-600 hover:text-red-900" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                        ${deleteOrRestoreBtn}
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -1817,314 +1760,6 @@
                 const myFilteredDeps = filtered.filter(d => d.plan === 'dependente' && d.titularId === s.id);
                 myFilteredDeps.forEach(dep => renderRow(dep, true, s.id));
             });
-        };
-
-        function checkPromoExpirations() {
-            const alertsContainer = document.getElementById('financial-promo-alerts');
-            const alertsList = document.getElementById('promo-alerts-list');
-            if(alertsContainer && alertsList) {
-                alertsList.innerHTML = '';
-                const today = new Date();
-                let expiredPromos = window.students.filter(s => {
-                    if (s.enrollmentStatus === 'Inativo') return false;
-                    if (s.plan && s.plan.includes('combo') && s.registrationDate) {
-                        const regDate = new Date(s.registrationDate);
-                        const diffTime = Math.abs(today - regDate);
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                        return diffDays >= 25 && diffDays <= 45;
-                    }
-                    return false;
-                });
-
-                if(expiredPromos.length > 0) {
-                    expiredPromos.forEach(s => {
-                        const rDate = new Date(s.registrationDate).toLocaleDateString('pt-BR');
-                        alertsList.innerHTML += `<li>${s.name} (${window.getPlanInfo(s.plan).short}) - Matriculado em ${rDate}</li>`;
-                    });
-                    alertsContainer.classList.remove('hidden');
-                } else {
-                    alertsContainer.classList.add('hidden');
-                }
-            }
-        }
-
-        window.renderFinancialTable = function() {
-            checkPromoExpirations(); 
-            const tbody = document.getElementById('financial-table-body');
-            const search = (document.getElementById('searchInput')?.value || "").toLowerCase();
-            
-            if(!tbody) return;
-            tbody.innerHTML = '';
-
-            const filtered = window.students.filter(s => {
-                const matchesSearch = String(s.name || '').toLowerCase().includes(search);
-                const currentEnrollment = s.enrollmentStatus || 'Ativo';
-                
-                let status = 'pending'; 
-                const today = new Date();
-                const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
-                const diffDays = isNaN(targetDate) ? 0 : Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
-                const safePlan = String(s.plan || '').toLowerCase();
-                
-                if (safePlan === 'dependente' || safePlan === 'administracao' || s.paymentStatus === 'Isento') status = 'active';
-                else if (diffDays >= 0 && diffDays <= 7) status = 'expiring';
-                else if (s.paymentStatus === 'Em dia') status = 'active';
-                else status = 'pending';
-                
-                if (window.currentFinancialTab === 'inactive') return matchesSearch && currentEnrollment === 'Inativo';
-                if (currentEnrollment === 'Inativo') return false;
-                
-                return matchesSearch && ((window.currentFinancialTab === 'all') || (window.currentFinancialTab === status));
-            });
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-gray-400">Nenhum registro encontrado.</td></tr>`;
-                return;
-            }
-
-            filtered.forEach(s => {
-                try {
-                    let regDay = 10;
-                    if(s.registrationDate) { const rDate = new Date(s.registrationDate); if (!isNaN(rDate)) regDay = rDate.getDate(); }
-                    const nextDue = s.nextDueDate ? formatDate(s.nextDueDate) : `Dia ${regDay}`;
-                    
-                    const today = new Date();
-                    const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
-                    const statusHtml = window.getStatusBadge(s, targetDate, today);
-                    const displayPlanName = window.getPlanInfo(s.plan).short;
-
-                    const tr = document.createElement('tr');
-                    tr.className = "border-b hover:bg-gray-50 transition";
-                    tr.innerHTML = `
-                        <td class="px-6 py-4 align-middle font-medium cursor-pointer hover:text-brand-red transition" onclick="window.viewStudentDetails('${s.id}')" title="Ver Detalhes do Aluno">${s.name || 'Sem Nome'}</td>
-                        <td class="px-6 py-4 align-middle text-xs text-gray-500">${displayPlanName}</td>
-                        <td class="px-6 py-4 align-middle text-sm">${formatDate(s.registrationDate)}</td>
-                        <td class="px-6 py-4 align-middle text-center font-bold text-gray-700">Dia ${regDay}</td>
-                        <td class="px-6 py-4 align-middle text-center text-sm font-mono text-blue-700">${nextDue}</td>
-                        <td class="px-6 py-4 align-middle">${statusHtml}</td>
-                        <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
-                            <button onclick="window.openPaymentModal('${s.id}')" class="bg-green-600 text-white w-8 h-8 rounded-full hover:bg-green-700 mr-2 shadow" title="Informar Pagamento"><i class="fa-solid fa-dollar-sign"></i></button>
-                            <button onclick="window.viewHistory('${s.id}')" class="bg-gray-200 text-gray-600 w-8 h-8 rounded-full hover:bg-gray-300 shadow" title="Histórico de Pagamentos"><i class="fa-solid fa-clock-rotate-left"></i></button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                } catch (err) {
-                    console.error("Erro na tabela financeira para:", s, err);
-                }
-            });
-        };
-
-        window.openPaymentModal = (id) => {
-            const s = window.students.find(st => st.id === id);
-            if(!s) return;
-            document.getElementById('pay-student-id').value = id;
-            document.getElementById('pay-student-name').innerText = s.name;
-            document.getElementById('pay-date').valueAsDate = new Date();
-            
-            const planSelect = document.getElementById('pay-plan-select');
-            if (s.plan) {
-                const option = Array.from(planSelect.options).find(opt => opt.value === s.plan);
-                if (option) { planSelect.value = s.plan; window.updatePayAmount(); } 
-                else planSelect.value = ""; 
-            } else planSelect.value = "";
-
-            const today = new Date();
-            const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
-            document.getElementById('pay-next-due').valueAsDate = nextMonth;
-
-            document.getElementById('payment-modal').classList.remove('hidden');
-            document.getElementById('payment-modal').classList.add('flex');
-        };
-
-        window.updatePayAmount = () => {
-            const plan = document.getElementById('pay-plan-select').value;
-            const amountInput = document.getElementById('pay-amount');
-            const pInfo = window.getPlanInfo(plan);
-            if(pInfo && pInfo.price > 0) amountInput.value = pInfo.price;
-            else if (pInfo && pInfo.price === 0) amountInput.value = 0;
-        };
-
-        window.closePaymentModal = () => {
-            document.getElementById('payment-modal').classList.add('hidden');
-            document.getElementById('payment-modal').classList.remove('flex');
-        };
-
-        window.currentReceiptData = null; 
-
-        window.confirmPayment = async () => {
-            const id = document.getElementById('pay-student-id').value;
-            const date = document.getElementById('pay-date').value;
-            const amount = document.getElementById('pay-amount').value;
-            const method = document.getElementById('pay-method').value;
-            const nextDue = document.getElementById('pay-next-due').value;
-
-            if(!amount && amount !== "0") { alert("Informe o valor."); return; }
-            
-            const student = window.students.find(s => s.id === id);
-            if(!student) return;
-
-            const paymentRecord = { date: date, amount: amount, method: method, timestamp: new Date().toISOString() };
-            let nextDueISO = null;
-            if(nextDue) {
-                const [y, m, d] = nextDue.split('-').map(Number);
-                nextDueISO = new Date(y, m - 1, d, 12, 0, 0).toISOString();
-            }
-
-            try {
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), {
-                    paymentHistory: arrayUnion(paymentRecord),
-                    nextDueDate: nextDueISO,
-                    paymentStatus: 'Em dia',
-                    paymentMethod: method 
-                });
-                
-                const planSelect = document.getElementById('pay-plan-select');
-                const planText = planSelect.options[planSelect.selectedIndex].text;
-                
-                const myDeps = window.students.filter(d => d.titularId === id && d.plan === 'dependente');
-                let depText = '';
-                if(myDeps.length > 0) {
-                    const depNames = myDeps.map(d => d.name.split(' ')[0]).join(', ');
-                    depText = `Também cobre o acesso de: ${depNames}`;
-                }
-                
-                window.currentReceiptData = {
-                    name: student.name, phone: student.phone, amount: amount, plan: planText,
-                    date: date ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR') : '-', method: method,
-                    nextDue: nextDue ? new Date(nextDue + 'T12:00:00').toLocaleDateString('pt-BR') : 'Não definido', dependentsText: depText
-                };
-
-                document.getElementById('rec-student-name').innerText = window.currentReceiptData.name;
-                document.getElementById('rec-amount').innerText = "R$ " + window.currentReceiptData.amount;
-                document.getElementById('rec-plan').innerText = window.currentReceiptData.plan;
-                document.getElementById('rec-date').innerText = window.currentReceiptData.date;
-                document.getElementById('rec-method').innerText = window.currentReceiptData.method;
-                document.getElementById('rec-next-due').innerText = window.currentReceiptData.nextDue;
-                
-                const depHtmlEl = document.getElementById('rec-dependents-list');
-                if (depHtmlEl) {
-                    depHtmlEl.innerText = depText;
-                    depHtmlEl.classList.toggle('hidden', depText === '');
-                }
-
-                document.getElementById('rm-student-name').innerText = window.currentReceiptData.name.split(' ')[0];
-
-                window.closePaymentModal();
-                window.loadData();
-                document.getElementById('receipt-modal').classList.remove('hidden');
-                document.getElementById('receipt-modal').classList.add('flex');
-            } catch(e) { console.error(e); alert("Erro ao registrar pagamento."); }
-        };
-        
-        window.closeReceiptModal = () => {
-            document.getElementById('receipt-modal').classList.add('hidden');
-            document.getElementById('receipt-modal').classList.remove('flex');
-        };
-
-        window.printReceipt = () => {
-            document.body.classList.add('printing-receipt');
-            setTimeout(() => { window.print(); setTimeout(() => { document.body.classList.remove('printing-receipt'); }, 2000); }, 500);
-        };
-
-        window.sendReceiptWhatsApp = () => {
-            const data = window.currentReceiptData;
-            if(!data) return;
-            if(!data.phone || data.phone.trim() === "") { alert("Este aluno não possui um número de telefone cadastrado."); return; }
-            const cleanPhone = data.phone.replace(/\D/g, '');
-            const depStr = data.dependentsText ? `\n🔹 ${data.dependentsText}` : '';
-            const message = `🥊 *TANQUE TEAM BJJ* 🥊\n*RECIBO DE PAGAMENTO*\n\nOlá, *${data.name.split(' ')[0]}*!\nConfirmamos o recebimento do seu pagamento. Muito obrigado e bons treinos! Oss 🥋\n\n*Detalhes do Pagamento:*\n🔹 Plano: ${data.plan}\n🔹 Valor: R$ ${data.amount}\n🔹 Forma: ${data.method}\n🔹 Data: ${data.date}\n🔹 Próx. Vencimento: ${data.nextDue}${depStr}\n\nAcesse o Portal do Aluno para o seu histórico completo.`;
-            window.open(`https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank');
-        };
-
-        window.viewHistory = (id) => {
-            const s = window.students.find(st => st.id === id);
-            if(!s) return;
-            document.getElementById('hist-student-name').innerText = s.name;
-            const tbody = document.getElementById('history-table-body');
-            tbody.innerHTML = '';
-
-            if(!s.paymentHistory || s.paymentHistory.length === 0) {
-                document.getElementById('history-empty').classList.remove('hidden');
-            } else {
-                document.getElementById('history-empty').classList.add('hidden');
-                const sorted = [...s.paymentHistory].sort((a,b) => new Date(b.date) - new Date(a.date));
-                sorted.forEach(p => {
-                    const row = document.createElement('tr');
-                    const d = p.date ? new Date(p.date + 'T12:00:00').toLocaleDateString('pt-BR') : '-';
-                    row.innerHTML = `<td class="px-3 py-2 font-medium">${d}</td><td class="px-3 py-2 text-green-700 font-bold">R$ ${p.amount}</td><td class="px-3 py-2">${p.method}</td><td class="px-3 py-2 text-right whitespace-nowrap"><button onclick="window.openEditPaymentModal('${id}', '${p.timestamp}')" class="text-blue-500 hover:text-blue-700 p-1 rounded mr-2" title="Editar Pagamento"><i class="fa-solid fa-pen"></i></button><button onclick="window.deletePaymentRecord('${id}', '${p.timestamp}')" class="text-red-500 hover:text-red-700 p-1 rounded" title="Excluir Pagamento"><i class="fa-solid fa-trash"></i></button></td>`;
-                    tbody.appendChild(row);
-                });
-            }
-            document.getElementById('history-modal').classList.remove('hidden');
-            document.getElementById('history-modal').classList.add('flex');
-        };
-
-        window.deletePaymentRecord = async (studentId, timestamp) => {
-            if(!confirm("Tem certeza que deseja excluir este pagamento? A ação não pode ser desfeita.")) return;
-            const s = window.students.find(st => st.id === studentId);
-            if(!s) return;
-            const payment = s.paymentHistory.find(p => p.timestamp === timestamp);
-            if(!payment) return;
-            try {
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), { paymentHistory: arrayRemove(payment) });
-                alert("Pagamento excluído com sucesso.");
-                await window.loadData();
-                window.viewHistory(studentId);
-            } catch(e) { alert("Erro ao excluir pagamento: " + e.message); }
-        };
-
-        window.openEditPaymentModal = (studentId, timestamp) => {
-            const s = window.students.find(st => st.id === studentId);
-            if(!s) return;
-            const payment = s.paymentHistory.find(p => p.timestamp === timestamp);
-            if(!payment) return;
-            document.getElementById('edit-pay-student-id').value = studentId;
-            document.getElementById('edit-pay-timestamp').value = timestamp;
-            document.getElementById('edit-pay-date').value = payment.date || '';
-            document.getElementById('edit-pay-amount').value = payment.amount || '';
-            document.getElementById('edit-pay-method').value = payment.method || 'Pix';
-            document.getElementById('edit-payment-modal').classList.remove('hidden');
-            document.getElementById('edit-payment-modal').classList.add('flex');
-        };
-
-        window.closeEditPaymentModal = () => {
-            document.getElementById('edit-payment-modal').classList.add('hidden');
-            document.getElementById('edit-payment-modal').classList.remove('flex');
-        };
-
-        window.saveEditedPayment = async () => {
-            const studentId = document.getElementById('edit-pay-student-id').value;
-            const timestamp = document.getElementById('edit-pay-timestamp').value;
-            const newDate = document.getElementById('edit-pay-date').value;
-            const newAmount = document.getElementById('edit-pay-amount').value;
-            const newMethod = document.getElementById('edit-pay-method').value;
-
-            if(!newAmount && newAmount !== "0") { alert("Informe o valor."); return; }
-
-            const s = window.students.find(st => st.id === studentId);
-            if(!s) return;
-
-            let updatedHistory = [...s.paymentHistory];
-            const index = updatedHistory.findIndex(p => p.timestamp === timestamp);
-            
-            if(index !== -1) {
-                updatedHistory[index].date = newDate;
-                updatedHistory[index].amount = newAmount;
-                updatedHistory[index].method = newMethod;
-            }
-
-            try {
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), { paymentHistory: updatedHistory });
-                alert("Pagamento atualizado com sucesso!");
-                window.closeEditPaymentModal();
-                await window.loadData();
-                window.viewHistory(studentId); 
-            } catch(e) { alert("Erro ao atualizar pagamento: " + e.message); }
-        };
-
-        window.closeHistoryModal = () => {
-            document.getElementById('history-modal').classList.add('hidden');
-            document.getElementById('history-modal').classList.remove('flex');
         };
 
         window.printIndividualContract = (id) => {
@@ -2425,7 +2060,7 @@
             try {
                 const updateData = { 
                      name: name, plan: plan, titularName: titular, category: newCategory, 
-                     paymentStatus: payment, enrollmentStatus: status, belt: beltStr, 
+                     enrollmentStatus: status, belt: beltStr, 
                      contractEndDate: dateObj, studentLogin: login, studentPassword: pass, email: email, phone: phone 
                 };
                 if(photoBase64) updateData.photoBase64 = photoBase64;
@@ -2470,10 +2105,10 @@
             document.getElementById('reg-phone').value = ''; document.getElementById('reg-address').value = '';
             document.getElementById('reg-guardian').value = ''; document.getElementById('reg-plan').value = 'infantil-mensal';
             document.getElementById('reg-titular').value = ''; document.getElementById('reg-student-login').value = '';
-            document.getElementById('reg-student-pass').value = ''; document.getElementById('admin-dep1-name').value = '';
-            document.getElementById('admin-dep1-dob').value = ''; document.getElementById('admin-dep2-name').value = '';
-            document.getElementById('admin-dep2-dob').value = ''; document.getElementById('reg-payment').value = 'Pendente';
-            document.getElementById('reg-pay-amount').value = ''; document.getElementById('reg-pay-method').value = 'Pix';
+            document.getElementById('admin-dep1-name').value = '';
+            document.getElementById('admin-dep1-dob').value = '';
+            document.getElementById('admin-dep2-name').value = '';
+            document.getElementById('admin-dep2-dob').value = '';
             window.handleAdminPlanChange();
         };
 
@@ -2487,10 +2122,6 @@
             const guardian = document.getElementById('reg-guardian').value;
             const plan = document.getElementById('reg-plan').value;
             const titular = plan === 'dependente' ? document.getElementById('reg-titular').value : ""; 
-            
-            let paymentStatus = document.getElementById('reg-payment').value;
-            const payAmount = document.getElementById('reg-pay-amount').value;
-            const payMethod = document.getElementById('reg-pay-method').value;
             
             const beltColor = document.getElementById('reg-belt-color').value;
             const beltDegree = document.getElementById('reg-belt-degree').value;
@@ -2516,17 +2147,11 @@
             if (plan === 'administracao') category = 'Administração';
             if (plan === 'dependente') category = 'Dependente (Combo)';
 
-            let initialPaymentHistory = [];
-            if (payAmount && parseFloat(payAmount) > 0) {
-                initialPaymentHistory.push({ date: regDate.toISOString().split('T')[0], amount: payAmount, method: payMethod, timestamp: regDate.toISOString() });
-                paymentStatus = 'Em dia'; 
-            }
-
             try {
                 const titularDocRef = await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), {
-                    name, dob, cpf, email, phone, address, guardian, plan, titularName: titular, paymentStatus,
+                    name, dob, cpf, email, phone, address, guardian, plan, titularName: titular, paymentStatus: 'Pendente',
                     enrollmentStatus: 'Ativo', belt: beltStr, category, registrationDate: regDate.toISOString(), 
-                    contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory
+                    contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: []
                 });
 
                 if (plan === 'combo-dupla' || plan === 'combo-casal' || plan === 'combo-familia') {
