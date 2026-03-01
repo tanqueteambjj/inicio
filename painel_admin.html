@@ -1569,12 +1569,12 @@
         }
 
         if (!session) {
-            window.location.href = "login_aluno.html";
+            window.location.href = "https://www.tanqueteambjj.com.br/login.html";
         } else {
             const user = JSON.parse(session);
             if(user.role !== 'admin' && !isCanvasPreview) {
                 alert("Acesso negado.");
-                window.location.href = "login_aluno.html";
+                window.location.href = "https://www.tanqueteambjj.com.br/login.html";
             } else {
                 try {
                     app = initializeApp(firebaseConfig);
@@ -1609,7 +1609,7 @@
 
         window.handleLogout = () => {
             localStorage.removeItem('tanque_user_session');
-            window.location.href = "login_aluno.html";
+            window.location.href = "https://www.tanqueteambjj.com.br/login.html";
         }
 
         function getAge(dobStr) {
@@ -3595,9 +3595,21 @@
                 const q = query(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'));
                 const querySnapshot = await getDocs(q);
                 window.noticesList = [];
+                const now = new Date();
+
                 querySnapshot.forEach((doc) => {
-                    window.noticesList.push({ id: doc.id, ...doc.data() });
+                    const noticeData = doc.data();
+                    
+                    // Valida se o aviso de conquista já expirou (24h)
+                    if (noticeData.expiresAt) {
+                        const expiryDate = new Date(noticeData.expiresAt);
+                        if (now > expiryDate) {
+                            return; // Ignora avisos expirados
+                        }
+                    }
+                    window.noticesList.push({ id: doc.id, ...noticeData });
                 });
+                
                 window.noticesList.sort((a, b) => new Date(b.date) - new Date(a.date));
                 if (window.currentView === 'notices') { window.renderAdminNotices(); window.renderBirthdays(); }
             } catch (error) { console.error("Erro ao carregar avisos:", error); }
@@ -3709,13 +3721,18 @@
             }
             window.noticesList.forEach(notice => {
                 const d = new Date(notice.date).toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
-                let bg = 'bg-blue-50 border-blue-200'; let icon = '<i class="fa-solid fa-circle-info text-blue-500"></i>';
-                if(notice.type === 'alert') { bg = 'bg-yellow-50 border-yellow-200'; icon = '<i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>'; }
-                if(notice.type === 'success') { bg = 'bg-green-50 border-green-200'; icon = '<i class="fa-solid fa-check-circle text-green-500"></i>'; }
-                if(notice.type === 'danger') { bg = 'bg-red-50 border-red-200'; icon = '<i class="fa-solid fa-circle-xmark text-red-500"></i>'; }
+                let bg = 'bg-blue-50 border-blue-200 text-blue-900'; let icon = '<i class="fa-solid fa-circle-info text-blue-500"></i>';
+                
+                if(notice.type === 'alert') { bg = 'bg-yellow-50 border-yellow-200 text-yellow-900'; icon = '<i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>'; }
+                if(notice.type === 'success') { bg = 'bg-green-50 border-green-200 text-green-900'; icon = '<i class="fa-solid fa-check-circle text-green-500"></i>'; }
+                if(notice.type === 'danger') { bg = 'bg-red-50 border-red-200 text-red-900'; icon = '<i class="fa-solid fa-circle-xmark text-red-500"></i>'; }
+                if(notice.type === 'achievement') { 
+                    bg = 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200 text-indigo-900'; 
+                    icon = `<i class="fa-solid ${notice.icon || 'fa-trophy'} text-indigo-500"></i>`; 
+                }
                 
                 list.innerHTML += `
-                    <div class="p-4 border rounded-lg ${bg} flex justify-between items-start">
+                    <div class="p-4 border rounded-lg shadow-sm ${bg} flex justify-between items-start">
                         <div>
                             <h4 class="font-bold text-gray-800 flex items-center gap-2">${icon} ${notice.title}</h4>
                             <p class="text-sm text-gray-600 mt-1 whitespace-pre-wrap">${notice.text}</p>
@@ -3834,146 +3851,4 @@
                 if(exp.status === 'Agendado') statusColor = 'bg-yellow-100 text-yellow-800';
                 else if(exp.status === 'Concluído') statusColor = 'bg-green-100 text-green-800';
                 else if(exp.status === 'Matriculado') statusColor = 'bg-blue-100 text-blue-800';
-                else if(exp.status === 'Cancelado' || exp.status === 'Faltou') statusColor = 'bg-red-100 text-red-800';
-
-                const tr = document.createElement('tr');
-                tr.className = "border-b hover:bg-gray-50 transition";
-                tr.innerHTML = `
-                    <td class="px-6 py-4 align-middle">
-                        <div class="font-bold text-gray-800">${dateFormatted}</div>
-                        <div class="text-xs text-brand-red font-bold"><i class="fa-regular fa-clock"></i> ${exp.time || '--'}</div>
-                    </td>
-                    <td class="px-6 py-4 align-middle">
-                        <div class="font-bold text-gray-900">${exp.name} <span class="text-xs font-normal text-gray-500">(${age} anos)</span></div>
-                        ${isMinor && exp.guardian ? `<div class="text-xs text-gray-500"><i class="fa-solid fa-user-shield text-gray-400"></i> Resp: ${exp.guardian}</div>` : ''}
-                    </td>
-                    <td class="px-6 py-4 align-middle">
-                        <a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${exp.phone}</a>
-                    </td>
-                    <td class="px-6 py-4 align-middle">
-                        <select onchange="changeExpStatus('${exp.id}', this.value)" class="border rounded px-2 py-1 text-xs font-bold ${statusColor} outline-none cursor-pointer">
-                            <option value="Agendado" ${exp.status === 'Agendado' ? 'selected' : ''}>Agendado</option>
-                            <option value="Concluído" ${exp.status === 'Concluído' ? 'selected' : ''}>Compareceu</option>
-                            <option value="Matriculado" ${exp.status === 'Matriculado' ? 'selected' : ''}>Matriculado</option>
-                            <option value="Faltou" ${exp.status === 'Faltou' ? 'selected' : ''}>Faltou</option>
-                            <option value="Cancelado" ${exp.status === 'Cancelado' ? 'selected' : ''}>Cancelou</option>
-                        </select>
-                    </td>
-                    <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
-                        <button onclick="convertToStudent('${exp.id}')" class="text-blue-500 hover:text-blue-700 p-2 rounded transition" title="Matricular como Aluno"><i class="fa-solid fa-user-plus"></i></button>
-                        <button onclick="openEditExperimentalModal('${exp.id}')" class="text-gray-500 hover:text-gray-700 p-2 rounded transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="deleteExperimental('${exp.id}')" class="text-red-500 hover:text-red-700 p-2 rounded transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        };
-
-        window.changeExpStatus = async (id, newStatus) => {
-            try {
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), { status: newStatus });
-                const exp = window.experimentalList.find(e => e.id === id);
-                if(exp) exp.status = newStatus;
-                window.renderExperimentalTable();
-            } catch(e) { alert("Erro ao atualizar status: " + e.message); }
-        };
-
-        window.deleteExperimental = async (id) => {
-            if(!confirm("Excluir este agendamento permanentemente?")) return;
-            try {
-                await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id));
-                window.experimentalList = window.experimentalList.filter(e => e.id !== id);
-                window.renderExperimentalTable();
-            } catch(e) { alert("Erro ao excluir: " + e.message); }
-        };
-
-        window.convertToStudent = (id) => {
-            const exp = window.experimentalList.find(e => e.id === id);
-            if(!exp) return;
-            
-            // Abre o modal de matrícula
-            window.openAdminRegisterModal();
-            
-            // Preenche os dados
-            document.getElementById('reg-name').value = exp.name || '';
-            
-            // Formata DD/MM/AAAA para o input se estiver em formato ISO
-            if (exp.dob && exp.dob.includes('-')) {
-                const [y, m, d] = exp.dob.split('-');
-                document.getElementById('reg-dob').value = `${d}/${m}/${y}`;
-            } else {
-                document.getElementById('reg-dob').value = exp.dob || '';
-            }
-            
-            document.getElementById('reg-email').value = exp.email || '';
-            document.getElementById('reg-phone').value = exp.phone || '';
-            
-            if (exp.guardian) {
-                document.getElementById('reg-guardian').value = exp.guardian + (exp.guardianKinship ? ` (${exp.guardianKinship})` : '');
-            } else {
-                document.getElementById('reg-guardian').value = '';
-            }
-            
-            // Altera o status da experimental para matriculado
-            window.changeExpStatus(id, 'Matriculado');
-        };
-
-        window.openEditExperimentalModal = (id) => {
-            const exp = window.experimentalList.find(e => e.id === id);
-            if(!exp) return;
-
-            document.getElementById('edit-exp-id').value = id;
-            document.getElementById('edit-exp-name').value = exp.name || '';
-            document.getElementById('edit-exp-phone').value = exp.phone || '';
-            
-            // Formata a data de nascimento para exibição no Modal
-            if (exp.dob && exp.dob.includes('-')) {
-                const [y, m, d] = exp.dob.split('-');
-                document.getElementById('edit-exp-dob').value = `${d}/${m}/${y}`;
-            } else {
-                document.getElementById('edit-exp-dob').value = exp.dob || '';
-            }
-            
-            document.getElementById('edit-exp-date').value = exp.date || '';
-            document.getElementById('edit-exp-time').value = exp.time || '';
-
-            document.getElementById('edit-exp-modal').classList.remove('hidden');
-            document.getElementById('edit-exp-modal').classList.add('flex');
-        };
-
-        window.closeEditExperimentalModal = () => {
-            document.getElementById('edit-exp-modal').classList.add('hidden');
-            document.getElementById('edit-exp-modal').classList.remove('flex');
-        };
-
-        window.saveExperimentalChanges = async () => {
-            const id = document.getElementById('edit-exp-id').value;
-            const name = document.getElementById('edit-exp-name').value;
-            const phone = document.getElementById('edit-exp-phone').value;
-            const dobRaw = document.getElementById('edit-exp-dob').value;
-            const date = document.getElementById('edit-exp-date').value;
-            const time = document.getElementById('edit-exp-time').value;
-
-            if(!name || !date || !time) { alert("Preencha o Nome, Data e Horário."); return; }
-            
-            // Converte a data formatada em BR de volta para padrão do banco
-            let dobIso = dobRaw;
-            if(dobRaw && dobRaw.includes('/')) {
-                dobIso = dobRaw.split('/').reverse().join('-');
-            }
-
-            try {
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), {
-                    name, phone, dob: dobIso, date, time
-                });
-                alert("Agendamento atualizado com sucesso!");
-                window.closeEditExperimentalModal();
-                window.loadExperimentalData();
-            } catch(e) { 
-                alert("Erro ao atualizar: " + e.message); 
-            }
-        };
-
-    </script>
-</body>
-</html>
+                else if(exp.status === 'Cancelado' || exp.status === 'Faltou') statusColor = 'bg-red-100 text-
