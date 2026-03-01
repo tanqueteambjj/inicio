@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tanque Team | Painel Financeiro</title>
+    
+    <link rel="icon" href="https://i.ibb.co/chV1Wv8t/1772237028768.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { red: '#D90429', dark: '#1B1B1B', gray: '#2B2D42', light: '#EDF2F4' }
+                    },
+                    fontFamily: {
+                        sans: ['Roboto', 'sans-serif'],
+                        display: ['Oswald', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+
+        @media print {
+            @page { margin: 2.5cm; size: A4 portrait; }
+            body, html { height: auto !important; min-height: auto !important; overflow: visible !important; background: white !important; }
+            body > * { display: none !important; }
+
+            body.printing-report #report-container { display: block !important; position: relative !important; width: 100% !important; margin: 0 !important; padding: 0 !important; visibility: visible !important; background-color: white !important; color: black !important; }
+            body.printing-report #report-container * { visibility: visible !important; }
+            
+            body.printing-receipt #printable-receipt { display: block !important; position: absolute !important; left: 50% !important; top: 50px !important; transform: translateX(-50%) !important; width: 14cm !important; height: auto !important; visibility: visible !important; border: 2px dashed #000 !important; padding: 30px !important; background: white !important; }
+            body.printing-receipt #printable-receipt * { visibility: visible !important; }
+
+            table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 15px; page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; color: black; }
+            th { background-color: #f3f3f3 !important; font-weight: bold; border-bottom: 2px solid #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            tfoot th { background-color: #eee !important; border-top: 2px solid #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans antialiased h-screen flex overflow-hidden">
+
+    <div id="mobile-sidebar-overlay" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden backdrop-blur-sm transition-opacity" onclick="window.toggleMobileMenu()"></div>
+
+    <aside id="sidebar-menu" class="fixed md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 w-64 bg-green-900 text-white flex flex-col shadow-2xl z-40 transition-transform duration-300 ease-in-out no-print h-full">
+        <div class="p-6 flex items-center justify-center border-b border-green-800 relative">
+            <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" alt="Logo" class="h-10 w-auto mr-3">
+            <span class="font-display font-bold text-lg tracking-wider">FINANCEIRO</span>
+            <button onclick="window.toggleMobileMenu()" class="md:hidden absolute top-4 right-4 text-green-300 hover:text-white focus:outline-none">
+                <i class="fa-solid fa-times text-xl"></i>
+            </button>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+            <a href="#" onclick="window.switchMainView('financial')" id="nav-financial" class="flex items-center px-4 py-3 bg-green-700 text-white rounded-lg shadow-md transition-all">
+                <i class="fa-solid fa-file-invoice-dollar w-6"></i> <span class="font-bold">Mensalidades</span>
+            </a>
+            <a href="#" onclick="window.switchMainView('reports')" id="nav-reports" class="flex items-center px-4 py-3 text-green-200 hover:bg-green-800 hover:text-white rounded-lg transition-all">
+                <i class="fa-solid fa-chart-pie w-6"></i> <span class="font-bold">Relatórios</span>
+            </a>
+        </nav>
+        <div class="p-4 border-t border-green-800">
+            <button onclick="window.handleLogout()" class="flex items-center w-full px-4 py-2 text-green-300 hover:text-white transition">
+                <i class="fa-solid fa-right-from-bracket w-6"></i> <span>Sair do Sistema</span>
+            </button>
+        </div>
+    </aside>
+
+    <div id="admin-dashboard" class="flex-1 flex flex-col h-full overflow-hidden relative w-full">
+        
+        <header class="bg-white shadow-sm h-16 flex items-center justify-between px-4 md:px-6 z-10 no-print shrink-0">
+            <div class="flex items-center md:hidden gap-3">
+                <button onclick="window.toggleMobileMenu()" class="text-green-900 hover:text-green-700 focus:outline-none text-2xl transition">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" class="h-8 w-auto">
+            </div>
+            
+            <div class="hidden md:flex relative w-96">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-search"></i></span>
+                <input type="text" id="searchInput" onkeyup="window.renderFinancialTable()" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border rounded-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent transition">
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="window.handleLogout()" class="md:hidden w-10 h-10 flex items-center justify-center bg-red-100 text-red-600 rounded-full shadow-sm hover:bg-red-200 transition">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+                <span class="text-sm text-gray-500 hidden md:block font-bold">Gestão Financeira</span>
+                <div class="hidden md:flex w-8 h-8 rounded-full bg-green-600 text-white items-center justify-center font-bold"><i class="fa-solid fa-dollar-sign"></i></div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6 relative">
+
+            <!-- VIEW: FINANCEIRO -->
+            <div id="view-financial">
+                 <div id="financial-promo-alerts" class="hidden mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-xl shadow-sm animate-fade-in">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0"><i class="fa-solid fa-triangle-exclamation text-yellow-500 text-xl"></i></div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-bold text-yellow-800">Atenção: Promoções Vencendo (Checar Valores)</h3>
+                            <p class="text-xs text-yellow-700 mt-1">Os seguintes combos completaram (ou estão próximos de) 30 dias de matrícula. Certifique-se de cobrar o valor atualizado no próximo pagamento.</p>
+                            <ul id="promo-alerts-list" class="mt-2 text-xs text-yellow-900 font-bold space-y-1 list-disc pl-4"></ul>
+                        </div>
+                    </div>
+                 </div>
+
+                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 stats-container">
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500"><div class="flex justify-between"><div><p class="text-gray-400 text-xs font-bold uppercase">Total (Ativos)</p><p class="text-2xl font-bold text-gray-800" id="fin-stat-total">0</p></div><div class="text-blue-500 text-2xl"><i class="fa-solid fa-users"></i></div></div></div>
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-green-500"><div class="flex justify-between"><div><p class="text-gray-400 text-xs font-bold uppercase">Em Dia / Isento</p><p class="text-2xl font-bold text-gray-800" id="fin-stat-active">0</p></div><div class="text-green-500 text-2xl"><i class="fa-solid fa-check-circle"></i></div></div></div>
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-red-500"><div class="flex justify-between"><div><p class="text-gray-400 text-xs font-bold uppercase">Pendente</p><p class="text-2xl font-bold text-gray-800" id="fin-stat-pending">0</p></div><div class="text-red-500 text-2xl"><i class="fa-solid fa-circle-exclamation"></i></div></div></div>
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-yellow-500"><div class="flex justify-between"><div><p class="text-gray-400 text-xs font-bold uppercase">Expirando (7d)</p><p class="text-2xl font-bold text-gray-800" id="fin-stat-expiring">0</p></div><div class="text-yellow-500 text-2xl"><i class="fa-solid fa-hourglass-half"></i></div></div></div>
+                </div>
+
+                <div class="flex mb-0 tabs-container overflow-x-auto">
+                    <button onclick="window.switchFinancialTab('all')" id="fin-tab-all" class="px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative whitespace-nowrap">TODOS</button>
+                    <button onclick="window.switchFinancialTab('active')" id="fin-tab-active" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1 whitespace-nowrap">EM DIA</button>
+                    <button onclick="window.switchFinancialTab('pending')" id="fin-tab-pending" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1 whitespace-nowrap">PENDENTE</button>
+                    <button onclick="window.switchFinancialTab('expiring')" id="fin-tab-expiring" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1 whitespace-nowrap">EXPIRANDO</button>
+                    <button onclick="window.switchFinancialTab('inactive')" id="fin-tab-inactive" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1 whitespace-nowrap">INATIVOS (S/ Acesso)</button>
+                </div>
+
+                <div class="bg-white rounded-b-xl rounded-tr-xl shadow overflow-hidden border border-gray-200 relative top-[-1px]">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center no-print">
+                        <div>
+                            <h3 class="font-bold text-gray-800 uppercase text-lg"><i class="fa-solid fa-coins text-green-600 mr-2"></i> Gestão de Mensalidades</h3>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="window.bulkWhatsAppBilling()" id="btn-bulk-whatsapp" class="hidden bg-[#25D366] hover:bg-[#1ebe5d] text-white text-xs font-bold px-3 py-1.5 rounded shadow flex items-center gap-1 transition">
+                                <i class="fa-brands fa-whatsapp text-sm"></i> Cobrar Visíveis
+                            </button>
+                            <button onclick="window.loadData()" class="text-gray-500 hover:text-black text-sm bg-white border px-3 py-1.5 rounded shadow-sm"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+                        </div>
+                    </div>
+                    
+                    <div class="w-full md:hidden px-6 py-3 border-b border-gray-200 bg-white">
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-search"></i></span>
+                            <input type="text" id="searchInputMobile" onkeyup="document.getElementById('searchInput').value = this.value; window.renderFinancialTable();" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600">
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
+                                    <th class="px-6 py-3 border-b">Aluno</th>
+                                    <th class="px-6 py-3 border-b">Plano / Valor Base</th>
+                                    <th class="px-6 py-3 border-b text-center">Dia Venc.</th>
+                                    <th class="px-6 py-3 border-b text-center">Prox. Pagamento</th>
+                                    <th class="px-6 py-3 border-b">Status</th>
+                                    <th class="px-6 py-3 border-b text-center no-print-col">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="financial-table-body" class="text-sm text-gray-700 divide-y divide-gray-200">
+                                <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Carregando dados financeiros...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: RELATÓRIOS -->
+            <div id="view-reports" class="hidden">
+                <div class="bg-white rounded-xl shadow p-6 border-t-4 border-gray-800 max-w-4xl mx-auto">
+                    <h3 class="font-display text-xl font-bold text-gray-800 mb-2"><i class="fa-solid fa-print mr-2 text-green-600"></i> Relatórios Financeiros</h3>
+                    <p class="text-sm text-gray-500 mb-6">Gere e imprima relatórios da situação monetária da academia.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="window.generateReport('financeiro')">
+                            <div>
+                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-chart-line text-green-500 mr-1"></i> Resumo Financeiro Estimado</h4>
+                                <p class="text-xs text-gray-500 mt-1">Projeção de recebimentos baseada na quantidade de planos ativos cobráveis.</p>
+                            </div>
+                            <button class="mt-4 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
+                        </div>
+
+                        <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="window.generateReport('inadimplentes')">
+                            <div>
+                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-circle-exclamation text-red-500 mr-1"></i> Inadimplentes e Próximos</h4>
+                                <p class="text-xs text-gray-500 mt-1">Alunos com pagamentos vencidos ou expirando nos próximos 7 dias.</p>
+                            </div>
+                            <button class="mt-4 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAIS FINANCEIROS OCULTOS -->
+    
+    <!-- Modal Bulk Billing (WhatsApp) -->
+    <div id="bulk-bill-modal" class="fixed inset-0 z-[90] hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col transform transition-all">
+            <div class="bg-[#25D366] px-6 py-4 flex justify-between items-center text-white shrink-0">
+                <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-brands fa-whatsapp text-xl"></i> Disparo de Cobrança</h3>
+                <button onclick="window.closeBulkBillingModal()" class="hover:text-green-200 transition"><i class="fa-solid fa-times text-xl"></i></button>
+            </div>
+            <div class="p-4 bg-green-50 border-b border-green-100 shrink-0">
+                <p class="text-sm text-green-800">Clique no botão enviar ao lado de cada aluno para abrir o seu WhatsApp com a mensagem pronta de cobrança.</p>
+                <p class="text-xs text-green-600 mt-1 font-bold">Total na lista: <span id="bulk-bill-count">0</span> alunos.</p>
+            </div>
+            <div class="overflow-y-auto p-0 flex-1 bg-gray-50">
+                <ul id="bulk-bill-list" class="divide-y divide-gray-200"></ul>
+            </div>
+            <div class="bg-white border-t px-6 py-4 flex justify-end shrink-0">
+                <button onclick="window.closeBulkBillingModal()" class="px-5 py-2 bg-gray-200 text-gray-700 font-bold rounded hover:bg-gray-300 transition">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Relatórios Container -->
+    <div id="report-container" class="hidden bg-white text-black p-4 font-sans absolute inset-0 z-50"></div>
+
+    <!-- Printable Receipt Container -->
+    <div id="printable-receipt" class="hidden bg-white text-black p-8 font-sans absolute inset-0 z-50">
+        <div class="text-center mb-6 border-b-2 border-gray-300 pb-4">
+            <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" alt="Logo" class="h-16 mx-auto mb-2" style="filter: grayscale(100%);">
+            <h1 class="text-2xl font-display font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
+            <p class="text-xs text-gray-600">CNPJ: 00.000.000/0001-00</p>
+            <h2 class="text-lg font-bold mt-4 uppercase border border-black inline-block px-4 py-1 rounded">Recibo de Pagamento</h2>
+        </div>
+        <div class="space-y-4 text-sm mb-8">
+            <p>Recebemos de <strong id="rec-student-name" class="uppercase"></strong>,</p>
+            <p>A quantia de <strong id="rec-amount" class="text-lg"></strong>,</p>
+            <p>Referente ao plano: <strong id="rec-plan" class="uppercase"></strong>.</p>
+            <div class="grid grid-cols-2 gap-4 mt-4 bg-gray-50 p-4 border border-gray-200 rounded">
+                <div><span class="text-xs text-gray-500 block">Data do Pagamento:</span><strong id="rec-date"></strong></div>
+                <div><span class="text-xs text-gray-500 block">Forma de Pagamento:</span><strong id="rec-method"></strong></div>
+                <div class="col-span-2"><span class="text-xs text-gray-500 block">Válido até (Próx. Vencimento):</span><strong id="rec-next-due"></strong></div>
+            </div>
+            <div id="rec-dependents-list" class="text-xs font-bold text-purple-700 mt-3 bg-purple-50 p-2 rounded border border-purple-200 hidden"></div>
+        </div>
+        <div class="mt-12 pt-4 border-t border-black text-center w-64 mx-auto">
+            <p class="font-bold text-sm uppercase">Tanque Team BJJ</p>
+            <p class="text-[10px] text-gray-500">Assinatura / Departamento Financeiro</p>
+        </div>
+    </div>
+
+    <!-- Receipt Modal -->
+    <div id="receipt-modal" class="fixed inset-0 z-[110] hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden animate-fade-in text-center">
+            <div class="bg-green-600 p-6 text-white">
+                <i class="fa-solid fa-circle-check text-5xl mb-2"></i>
+                <h3 class="font-bold text-xl mt-2">Pagamento Confirmado!</h3>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-gray-600 mb-6">O que deseja fazer com o recibo de <strong id="rm-student-name"></strong>?</p>
+                <div class="space-y-3">
+                    <button onclick="window.printReceipt()" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-lg transition shadow-md flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-file-pdf text-lg"></i> Imprimir / Gerar PDF
+                    </button>
+                    <button onclick="window.sendReceiptWhatsApp()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg transition shadow-md flex justify-center items-center gap-2">
+                        <i class="fa-brands fa-whatsapp text-lg"></i> Enviar por WhatsApp
+                    </button>
+                </div>
+                <button onclick="window.closeReceiptModal()" class="mt-6 text-sm text-gray-400 hover:text-gray-600 font-bold underline">Fechar esta janela</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="fixed inset-0 z-[70] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-fade-in border-t-4 border-green-600">
+            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b">
+                <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-cash-register text-green-600 mr-2"></i> Informar Pagamento</h3>
+                <button onclick="window.closePaymentModal()" class="text-gray-400 hover:text-gray-800"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <input type="hidden" id="pay-student-id">
+                <p class="text-sm text-gray-500 mb-4 bg-blue-50 p-2 rounded border border-blue-100">Registrando pagamento para: <strong id="pay-student-name" class="text-blue-900">--</strong></p>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Referente ao Plano</label>
+                        <select id="pay-plan-select" onchange="window.updatePayAmount()" class="w-full border rounded p-2 text-sm bg-white focus:border-green-500 focus:ring-green-500">
+                            <option value="" disabled selected>Selecione...</option>
+                            <option value="infantil-mensal">Infantil Mensal</option>
+                            <option value="infantil-trimestral">Infantil Trimestral</option>
+                            <option value="infantil-semestral">Infantil Semestral</option>
+                            <option value="adulto-mensal">Adulto Mensal</option>
+                            <option value="adulto-trimestral">Adulto Trimestral</option>
+                            <option value="adulto-semestral">Adulto Semestral</option>
+                            <option value="combo-dupla">Combo Dupla</option>
+                            <option value="combo-familia">Combo Família</option>
+                            <option value="dependente">Dependente</option>
+                            <option value="administracao">Administração</option>
+                            <option value="isento">Isento / Bolsista</option>
+                            <option value="outros">Outros / Avulso</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Data do Pagamento</label>
+                        <input type="date" id="pay-date" class="w-full border rounded p-2 text-sm focus:border-green-500 focus:ring-green-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Valor (R$)</label>
+                            <input type="number" id="pay-amount" class="w-full border-2 border-green-200 rounded p-2 text-sm font-bold text-gray-800 bg-green-50 focus:border-green-500 focus:ring-green-500" placeholder="0.00" step="0.01">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Forma</label>
+                            <select id="pay-method" class="w-full border rounded p-2 text-sm focus:border-green-500 focus:ring-green-500">
+                                <option value="Pix">Pix</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                                <option value="Débito">Débito</option>
+                                <option value="Crédito à vista">Crédito à vista</option>
+                                <option value="Crédito 2x">Crédito 2x</option>
+                                <option value="Crédito 3x">Crédito 3x</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="pt-4 mt-2 border-t border-gray-100">
+                        <label class="block text-xs font-bold text-blue-700 mb-1 uppercase">Definir Próximo Vencimento</label>
+                        <input type="date" id="pay-next-due" class="w-full border-2 border-blue-200 bg-blue-50 rounded p-2 text-sm font-bold text-blue-800 focus:border-blue-500 focus:ring-blue-500">
+                        <p class="text-[10px] text-gray-400 mt-1"><i class="fa-solid fa-circle-info"></i> O status do aluno ficará verde ("Em dia") até esta data passar.</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-2">
+                    <button onclick="window.closePaymentModal()" class="px-4 py-2 border rounded text-sm hover:bg-gray-100 font-bold text-gray-600">Cancelar</button>
+                    <button onclick="window.confirmPayment()" class="px-5 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 font-bold shadow-md">Salvar e Gerar Recibo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="history-modal" class="fixed inset-0 z-[70] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg overflow-hidden h-[80vh] flex flex-col">
+            <div class="bg-gray-800 px-6 py-4 flex justify-between items-center text-white shrink-0">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-clock-rotate-left mr-2"></i> Histórico Financeiro</h3>
+                <button onclick="window.closeHistoryModal()" class="hover:text-gray-300"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-4 bg-gray-50 border-b shrink-0">
+                <h4 class="font-bold text-gray-800" id="hist-student-name">--</h4>
+                <p class="text-xs text-gray-500">Registros de pagamentos efetuados.</p>
+            </div>
+            <div class="overflow-y-auto p-4 flex-1 bg-white">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-xs text-gray-500 uppercase bg-gray-100 border-b border-t">
+                        <tr>
+                            <th class="px-3 py-2">Data Pagto</th>
+                            <th class="px-3 py-2">Valor</th>
+                            <th class="px-3 py-2">Forma</th>
+                            <th class="px-3 py-2 text-right">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body" class="divide-y divide-gray-100">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+                <div id="history-empty" class="hidden text-center py-8 text-gray-400 italic text-sm">Nenhum pagamento registrado no histórico.</div>
+            </div>
+            <div class="p-4 border-t bg-gray-50 shrink-0 text-right">
+                <button onclick="window.closeHistoryModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded text-sm font-bold hover:bg-gray-300 shadow-sm">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Payment Modal -->
+    <div id="edit-payment-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden animate-fade-in border-t-4 border-blue-600">
+            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b">
+                <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-pen text-blue-600 mr-2"></i> Editar Pagamento</h3>
+                <button onclick="window.closeEditPaymentModal()" class="text-gray-400 hover:text-gray-800"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <input type="hidden" id="edit-pay-student-id">
+                <input type="hidden" id="edit-pay-timestamp">
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Data do Pagamento</label>
+                        <input type="date" id="edit-pay-date" class="w-full border rounded p-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Valor (R$)</label>
+                        <input type="number" id="edit-pay-amount" class="w-full border-2 border-gray-200 rounded p-2 text-sm font-bold text-gray-800 focus:border-blue-500 focus:ring-blue-500" step="0.01">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Forma</label>
+                        <select id="edit-pay-method" class="w-full border rounded p-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="Pix">Pix</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="Débito">Débito</option>
+                            <option value="Crédito à vista">Crédito à vista</option>
+                            <option value="Crédito 2x">Crédito 2x</option>
+                            <option value="Crédito 3x">Crédito 3x</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-2">
+                    <button onclick="window.closeEditPaymentModal()" class="px-4 py-2 border rounded text-sm hover:bg-gray-100 font-bold text-gray-600">Cancelar</button>
+                    <button onclick="window.saveEditedPayment()" class="px-5 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 font-bold shadow-md">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
+            authDomain: "tanqueteambjj.firebaseapp.com",
+            projectId: "tanqueteambjj",
+            storageBucket: "tanqueteambjj.firebasestorage.app",
+            messagingSenderId: "410605992451",
+            appId: "1:410605992451:web:f0f341f4594fe75f376c36",
+            measurementId: "G-SW8PP8X7WM"
+        };
+
+        let app, db, auth, appId;
+
+        window.students = []; 
+        window.currentFinancialTab = 'all';
+        window.currentView = 'financial'; 
+
+        window.PLAN_DICT = {
+            'infantil-mensal': { price: 189.90, short: 'Infantil Mensal', long: 'INFANTIL MENSAL' },
+            'infantil-trimestral': { price: 168.90, short: 'Infantil Trimestral', long: 'INFANTIL TRIMESTRAL' },
+            'infantil-semestral': { price: 157.90, short: 'Infantil Semestral', long: 'INFANTIL SEMESTRAL' },
+            'adulto-mensal': { price: 168.90, short: 'Adulto Mensal', long: 'JOVEM/ADULTO MENSAL' },
+            'adulto-trimestral': { price: 147.90, short: 'Adulto Trimestral', long: 'JOVEM/ADULTO TRIMESTRAL' },
+            'adulto-semestral': { price: 126.90, short: 'Adulto Semestral', long: 'JOVEM/ADULTO SEMESTRAL' },
+            'combo-dupla': { price: 250.00, short: 'Combo Dupla', long: 'COMBO DUPLA SEMESTRAL' },
+            'combo-casal': { price: 220.00, short: 'Combo Casal', long: 'COMBO CASAL SEMESTRAL' },
+            'combo-familia': { price: 362.02, short: 'Combo Família', long: 'COMBO FAMÍLIA SEMESTRAL' },
+            'administracao': { price: 0.00, short: 'Administração', long: 'ADMINISTRAÇÃO (ISENTO)' },
+            'dependente': { price: 0.00, short: 'Dependente', long: 'DEPENDENTE - COMBO FAMÍLIA' },
+            'isento': { price: 0.00, short: 'Isento', long: 'ISENTO / BOLSISTA' },
+            'outros': { price: 0.00, short: 'Outros', long: 'OUTROS' }
+        };
+
+        window.getPlanInfo = (planKey) => window.PLAN_DICT[planKey] || { price: 0, short: String(planKey||'').toUpperCase(), long: 'NÃO INFORMADO' };
+        
+        window.getStatusBadge = (student, targetDate, today) => {
+            if (student.archived) return `<span class="px-2 py-1 rounded text-xs font-bold bg-gray-200 text-gray-800"><i class="fa-solid fa-box-archive mr-1"></i> ARQUIVADO</span>`;
+            const safePlan = String(student.plan || '').toLowerCase();
+            if (safePlan === 'dependente') return `<span class="px-2 py-1 rounded text-xs font-bold bg-purple-100 text-purple-800">DEPENDENTE</span>`;
+            if (student.paymentStatus === 'Isento' || safePlan === 'administracao') return `<span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">Isento</span>`;
+            const diffDays = isNaN(targetDate) ? 0 : Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+            if (diffDays < 0 && student.paymentStatus !== 'Em dia') return student.paymentStatus === 'Pendente' ? `<span class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>` : `<span class="px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-800">Em dia</span>`;
+            else if (diffDays <= 7 && diffDays >= 0) return `<span class="px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800">Expirando</span>`;
+            return `<span class="px-2 py-1 rounded text-xs font-bold ${student.paymentStatus === 'Em dia' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'}">${student.paymentStatus || 'Pendente'}</span>`;
+        };
+
+        const isCanvasPreview = typeof __app_id !== 'undefined';
+        let session = localStorage.getItem('tanque_user_session');
+        
+        if (!session && isCanvasPreview) {
+            session = JSON.stringify({ role: 'financeiro', name: 'Financeiro (Preview)' });
+            localStorage.setItem('tanque_user_session', session);
+        }
+
+        if (!session) {
+            window.location.href = "https://www.tanqueteambjj.com.br/login.html";
+        } else {
+            const user = JSON.parse(session);
+            if(user.role !== 'financeiro' && user.role !== 'admin' && !isCanvasPreview) {
+                window.location.href = "https://www.tanqueteambjj.com.br/login.html";
+            } else {
+                try {
+                    app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+                    appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj";
+                    window.db = db;
+                    
+                    const initAuth = async () => {
+                        try {
+                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                try { await signInWithCustomToken(auth, __initial_auth_token); } 
+                                catch(e) { await signInAnonymously(auth); }
+                            } else await signInAnonymously(auth);
+                        } catch (e) { alert("Não foi possível conectar ao banco de dados."); return; }
+
+                        setTimeout(() => { if(typeof window.loadData === 'function') window.loadData(); }, 50);
+                    };
+                    initAuth();
+                } catch(e) { console.error("Firebase init error", e); }
+            }
+        }
+
+        window.handleLogout = () => { localStorage.removeItem('tanque_user_session'); window.location.href = "https://www.tanqueteambjj.com.br/login.html"; }
+
+        function formatDate(isoStr) { try { const d = new Date(isoStr); return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR'); } catch (e) { return '--'; } }
+
+        window.loadData = async function() {
+            try {
+                const querySnapshot = await getDocs(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'));
+                window.students = [];
+                querySnapshot.forEach(doc => window.students.push({ id: doc.id, ...doc.data() }));
+                window.students.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
+                updateStats();
+                window.renderFinancialTable();
+            } catch (error) { console.error(error); }
+        }
+
+        function updateStats() {
+            const total = window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).length;
+            const active = window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived && (s.paymentStatus === 'Em dia' || s.paymentStatus === 'Isento')).length;
+            let expiringCount = 0;
+            const today = new Date();
+            window.students.forEach(s => {
+                if (s.archived || s.enrollmentStatus === 'Inativo') return;
+                const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
+                if (!isNaN(targetDate) && s.paymentStatus !== 'Isento' && s.plan !== 'dependente') {
+                    const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+                    if (diffDays >= 0 && diffDays <= 7) expiringCount++;
+                }
+            });
+            const setText = (id, txt) => { const e = document.getElementById(id); if(e) e.innerText = txt; }
+            setText('fin-stat-total', total); setText('fin-stat-active', active); setText('fin-stat-pending', total - active); setText('fin-stat-expiring', expiringCount);
+        }
+
+        window.toggleMobileMenu = () => { document.getElementById('sidebar-menu').classList.toggle('-translate-x-full'); document.getElementById('mobile-sidebar-overlay').classList.toggle('hidden'); };
+
+        window.switchMainView = (viewName) => {
+            if(window.innerWidth < 768 && !document.getElementById('sidebar-menu').classList.contains('-translate-x-full')) window.toggleMobileMenu();
+            window.currentView = viewName;
+            ['financial', 'reports'].forEach(v => {
+                document.getElementById('view-' + v).classList.toggle('hidden', viewName !== v);
+                const nav = document.getElementById('nav-' + v);
+                if(nav) {
+                    if (v === viewName) { nav.classList.add('bg-green-700', 'text-white'); nav.classList.remove('text-green-200', 'hover:bg-green-800'); } 
+                    else { nav.classList.remove('bg-green-700', 'text-white'); nav.classList.add('text-green-200', 'hover:bg-green-800'); }
+                }
+            });
+            if(viewName === 'financial') window.renderFinancialTable();
+        };
+
+        window.switchFinancialTab = (tab) => {
+            window.currentFinancialTab = tab;
+            ['all', 'active', 'pending', 'expiring', 'inactive'].forEach(t => {
+                const btn = document.getElementById(`fin-tab-${t}`);
+                if(btn) btn.className = (t === tab) ? "px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative whitespace-nowrap" : "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1 whitespace-nowrap";
+            });
+            window.renderFinancialTable();
+        };
+
+        function checkPromoExpirations() {
+            const alertsContainer = document.getElementById('financial-promo-alerts');
+            const alertsList = document.getElementById('promo-alerts-list');
+            if(alertsContainer && alertsList) {
+                alertsList.innerHTML = '';
+                const today = new Date();
+                let expiredPromos = window.students.filter(s => {
+                    if (s.enrollmentStatus === 'Inativo' || s.archived) return false;
+                    if (s.plan && s.plan.includes('combo') && s.registrationDate) {
+                        const diffDays = Math.ceil(Math.abs(today - new Date(s.registrationDate)) / (1000 * 60 * 60 * 24)); 
+                        return diffDays >= 25 && diffDays <= 45;
+                    }
+                    return false;
+                });
+                if(expiredPromos.length > 0) {
+                    expiredPromos.forEach(s => alertsList.innerHTML += `<li>${s.name} (${window.getPlanInfo(s.plan).short}) - Matrícula: ${new Date(s.registrationDate).toLocaleDateString('pt-BR')}</li>`);
+                    alertsContainer.classList.remove('hidden');
+                } else alertsContainer.classList.add('hidden');
+            }
+        }
+
+        window.bulkWhatsAppBilling = () => {
+            const tableRows = document.querySelectorAll('#financial-table-body tr');
+            if(tableRows.length === 0 || (tableRows.length === 1 && tableRows[0].innerText.includes('Nenhum registro'))) { alert("Não há alunos nesta lista para cobrar."); return; }
+            const visiblePendingStudents = [];
+            tableRows.forEach(row => {
+                const nameCell = row.querySelector('td:nth-child(1)');
+                if(!nameCell) return;
+                const s = window.students.find(st => st.name === nameCell.innerText);
+                if(s && s.phone && s.phone.trim() !== '') visiblePendingStudents.push(s);
+            });
+            if(visiblePendingStudents.length === 0) { alert("Os alunos não possuem telefone cadastrado."); return; }
+            document.getElementById('bulk-bill-count').innerText = visiblePendingStudents.length;
+            const listUl = document.getElementById('bulk-bill-list'); listUl.innerHTML = '';
+            visiblePendingStudents.forEach(s => {
+                const waLink = `https://wa.me/55${s.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá ${s.name.split(' ')[0]}, tudo bem? Aqui é do financeiro da Tanque Team BJJ 🥋. Notamos que sua mensalidade encontra-se em aberto. Caso precise da chave PIX ou já tenha pago, envie o comprovante por aqui. Oss!`)}`;
+                listUl.innerHTML += `<li class="flex justify-between items-center p-4 hover:bg-green-50 transition border-b"><div><p class="font-bold text-gray-800">${s.name}</p><p class="text-xs text-gray-500">${s.phone} • ${window.getPlanInfo(s.plan).short}</p></div><a href="${waLink}" target="_blank" onclick="this.classList.add('opacity-50', 'pointer-events-none'); this.innerHTML='<i class=\\'fa-solid fa-check\\'></i> Enviado'" class="bg-[#25D366] text-white font-bold py-2 px-4 rounded text-xs whitespace-nowrap"><i class="fa-brands fa-whatsapp"></i> Cobrar</a></li>`;
+            });
+            document.getElementById('bulk-bill-modal').classList.remove('hidden'); document.getElementById('bulk-bill-modal').classList.add('flex');
+        };
+
+        window.closeBulkBillingModal = () => { document.getElementById('bulk-bill-modal').classList.add('hidden'); document.getElementById('bulk-bill-modal').classList.remove('flex'); };
+
+        window.renderFinancialTable = function() {
+            checkPromoExpirations(); 
+            const tbody = document.getElementById('financial-table-body');
+            const search = (document.getElementById('searchInput')?.value || "").toLowerCase();
+            const btnBulkWA = document.getElementById('btn-bulk-whatsapp');
+            
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            if (window.currentFinancialTab === 'pending' || window.currentFinancialTab === 'expiring') btnBulkWA.classList.remove('hidden'); else btnBulkWA.classList.add('hidden');
+
+            const filtered = window.students.filter(s => {
+                if (s.archived) return false; 
+                const matchesSearch = String(s.name || '').toLowerCase().includes(search);
+                const currentEnrollment = s.enrollmentStatus || 'Ativo';
+                
+                let status = 'pending'; 
+                const today = new Date();
+                const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
+                const diffDays = isNaN(targetDate) ? 0 : Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+                const safePlan = String(s.plan || '').toLowerCase();
+                
+                if (safePlan === 'dependente' || safePlan === 'administracao' || s.paymentStatus === 'Isento') status = 'active';
+                else if (diffDays >= 0 && diffDays <= 7) status = 'expiring';
+                else if (s.paymentStatus === 'Em dia') status = 'active';
+                else status = 'pending';
+                
+                if (window.currentFinancialTab === 'inactive') return matchesSearch && currentEnrollment === 'Inativo';
+                if (currentEnrollment === 'Inativo') return false;
+                return matchesSearch && ((window.currentFinancialTab === 'all') || (window.currentFinancialTab === status));
+            });
+
+            if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-gray-400">Nenhum registro encontrado.</td></tr>`; return; }
+
+            filtered.forEach(s => {
+                let regDay = 10;
+                if(s.registrationDate) { const rDate = new Date(s.registrationDate); if (!isNaN(rDate)) regDay = rDate.getDate(); }
+                const nextDue = s.nextDueDate ? formatDate(s.nextDueDate) : `Dia ${regDay}`;
+                const statusHtml = window.getStatusBadge(s, s.nextDueDate ? new Date(s.nextDueDate) : new Date(0), new Date());
+
+                tbody.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 align-middle font-medium cursor-pointer hover:text-green-700">${s.name || 'Sem Nome'}</td>
+                        <td class="px-6 py-4 align-middle text-xs text-gray-500">${window.getPlanInfo(s.plan).short}</td>
+                        <td class="px-6 py-4 align-middle text-sm">${formatDate(s.registrationDate)}</td>
+                        <td class="px-6 py-4 align-middle text-center font-bold text-gray-700">Dia ${regDay}</td>
+                        <td class="px-6 py-4 align-middle text-center text-sm font-mono text-blue-700">${nextDue}</td>
+                        <td class="px-6 py-4 align-middle">${statusHtml}</td>
+                        <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
+                            <button onclick="window.openPaymentModal('${s.id}')" class="bg-green-600 text-white w-8 h-8 rounded-full hover:bg-green-700 mr-2 shadow" title="Informar Pagamento"><i class="fa-solid fa-dollar-sign"></i></button>
+                            <button onclick="window.viewHistory('${s.id}')" class="bg-gray-200 text-gray-600 w-8 h-8 rounded-full hover:bg-gray-300 shadow" title="Histórico de Pagamentos"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        };
+
+        window.openPaymentModal = (id) => {
+            const s = window.students.find(st => st.id === id);
+            if(!s) return;
+            document.getElementById('pay-student-id').value = id; document.getElementById('pay-student-name').innerText = s.name; document.getElementById('pay-date').valueAsDate = new Date();
+            const planSelect = document.getElementById('pay-plan-select');
+            if (s.plan && Array.from(planSelect.options).find(opt => opt.value === s.plan)) { planSelect.value = s.plan; window.updatePayAmount(); } else planSelect.value = "";
+            const t = new Date(); document.getElementById('pay-next-due').valueAsDate = new Date(t.getFullYear(), t.getMonth() + 1, t.getDate());
+            document.getElementById('payment-modal').classList.remove('hidden'); document.getElementById('payment-modal').classList.add('flex');
+        };
+
+        window.updatePayAmount = () => {
+            const pInfo = window.getPlanInfo(document.getElementById('pay-plan-select').value);
+            document.getElementById('pay-amount').value = (pInfo && pInfo.price > 0) ? pInfo.price : ((pInfo && pInfo.price === 0) ? 0 : '');
+        };
+
+        window.closePaymentModal = () => { document.getElementById('payment-modal').classList.add('hidden'); document.getElementById('payment-modal').classList.remove('flex'); };
+
+        window.currentReceiptData = null; 
+
+        window.confirmPayment = async () => {
+            const id = document.getElementById('pay-student-id').value; const date = document.getElementById('pay-date').value; const amount = document.getElementById('pay-amount').value; const method = document.getElementById('pay-method').value; const nextDue = document.getElementById('pay-next-due').value;
+            if(!amount && amount !== "0") { alert("Informe o valor."); return; }
+            const student = window.students.find(s => s.id === id); if(!student) return;
+
+            let nextDueISO = null; if(nextDue) { const [y, m, d] = nextDue.split('-').map(Number); nextDueISO = new Date(y, m - 1, d, 12, 0, 0).toISOString(); }
+
+            try {
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), {
+                    paymentHistory: arrayUnion({ date, amount, method, timestamp: new Date().toISOString() }), nextDueDate: nextDueISO, paymentStatus: 'Em dia', paymentMethod: method 
+                });
+                
+                const planSelect = document.getElementById('pay-plan-select');
+                const myDeps = window.students.filter(d => d.titularId === id && d.plan === 'dependente');
+                let depText = myDeps.length > 0 ? `Também cobre o acesso de: ${myDeps.map(d => d.name.split(' ')[0]).join(', ')}` : '';
+                
+                window.currentReceiptData = { name: student.name, phone: student.phone, amount, plan: planSelect.options[planSelect.selectedIndex].text, date: date ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR') : '-', method, nextDue: nextDue ? new Date(nextDue + 'T12:00:00').toLocaleDateString('pt-BR') : 'Não definido', dependentsText: depText };
+
+                document.getElementById('rec-student-name').innerText = window.currentReceiptData.name; document.getElementById('rec-amount').innerText = "R$ " + window.currentReceiptData.amount; document.getElementById('rec-plan').innerText = window.currentReceiptData.plan; document.getElementById('rec-date').innerText = window.currentReceiptData.date; document.getElementById('rec-method').innerText = window.currentReceiptData.method; document.getElementById('rec-next-due').innerText = window.currentReceiptData.nextDue;
+                
+                const depHtmlEl = document.getElementById('rec-dependents-list');
+                if (depHtmlEl) { depHtmlEl.innerText = depText; depHtmlEl.classList.toggle('hidden', depText === ''); }
+                document.getElementById('rm-student-name').innerText = window.currentReceiptData.name.split(' ')[0];
+
+                window.closePaymentModal(); window.loadData();
+                document.getElementById('receipt-modal').classList.remove('hidden'); document.getElementById('receipt-modal').classList.add('flex');
+            } catch(e) { alert("Erro ao registrar pagamento."); }
+        };
+        
+        window.closeReceiptModal = () => { document.getElementById('receipt-modal').classList.add('hidden'); document.getElementById('receipt-modal').classList.remove('flex'); };
+        window.printReceipt = () => { document.body.classList.add('printing-receipt'); setTimeout(() => { window.print(); setTimeout(() => { document.body.classList.remove('printing-receipt'); }, 2000); }, 500); };
+        window.sendReceiptWhatsApp = () => {
+            const data = window.currentReceiptData; if(!data || !data.phone || data.phone.trim() === "") { alert("Aluno sem telefone."); return; }
+            const message = `🥊 *TANQUE TEAM BJJ* 🥊\n*RECIBO DE PAGAMENTO*\n\nOlá, *${data.name.split(' ')[0]}*!\nConfirmamos o recebimento do pagamento. Oss 🥋\n\n*Detalhes:*\n🔹 Plano: ${data.plan}\n🔹 Valor: R$ ${data.amount}\n🔹 Forma: ${data.method}\n🔹 Data: ${data.date}\n🔹 Próx. Vencimento: ${data.nextDue}${data.dependentsText ? `\n🔹 ${data.dependentsText}` : ''}\n\nAcesse o Portal do Aluno para histórico completo.`;
+            window.open(`https://wa.me/55${data.phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
+        };
+
+        window.viewHistory = (id) => {
+            const s = window.students.find(st => st.id === id); if(!s) return;
+            document.getElementById('hist-student-name').innerText = s.name;
+            const tbody = document.getElementById('history-table-body'); tbody.innerHTML = '';
+            if(!s.paymentHistory || s.paymentHistory.length === 0) document.getElementById('history-empty').classList.remove('hidden');
+            else {
+                document.getElementById('history-empty').classList.add('hidden');
+                [...s.paymentHistory].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(p => {
+                    const d = p.date ? new Date(p.date + 'T12:00:00').toLocaleDateString('pt-BR') : '-';
+                    tbody.innerHTML += `<tr class="border-b"><td class="px-3 py-2 font-medium">${d}</td><td class="px-3 py-2 text-green-700 font-bold">R$ ${p.amount}</td><td class="px-3 py-2">${p.method}</td><td class="px-3 py-2 text-right whitespace-nowrap"><button onclick="window.openEditPaymentModal('${id}', '${p.timestamp}')" class="text-blue-500 hover:text-blue-700 p-1 rounded mr-2" title="Editar"><i class="fa-solid fa-pen"></i></button><button onclick="window.deletePaymentRecord('${id}', '${p.timestamp}')" class="text-red-500 hover:text-red-700 p-1 rounded" title="Excluir"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                });
+            }
+            document.getElementById('history-modal').classList.remove('hidden'); document.getElementById('history-modal').classList.add('flex');
+        };
+
+        window.closeHistoryModal = () => { document.getElementById('history-modal').classList.add('hidden'); document.getElementById('history-modal').classList.remove('flex'); };
+
+        window.deletePaymentRecord = async (studentId, timestamp) => {
+            if(!confirm("Excluir este pagamento?")) return;
+            const s = window.students.find(st => st.id === studentId);
+            const payment = s ? s.paymentHistory.find(p => p.timestamp === timestamp) : null;
+            if(!payment) return;
+            try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), { paymentHistory: arrayRemove(payment) }); window.loadData(); window.viewHistory(studentId); } catch(e) { alert("Erro."); }
+        };
+
+        window.openEditPaymentModal = (studentId, timestamp) => {
+            const s = window.students.find(st => st.id === studentId);
+            const payment = s ? s.paymentHistory.find(p => p.timestamp === timestamp) : null;
+            if(!payment) return;
+            document.getElementById('edit-pay-student-id').value = studentId; document.getElementById('edit-pay-timestamp').value = timestamp; document.getElementById('edit-pay-date').value = payment.date || ''; document.getElementById('edit-pay-amount').value = payment.amount || ''; document.getElementById('edit-pay-method').value = payment.method || 'Pix';
+            document.getElementById('edit-payment-modal').classList.remove('hidden'); document.getElementById('edit-payment-modal').classList.add('flex');
+        };
+
+        window.closeEditPaymentModal = () => { document.getElementById('edit-payment-modal').classList.add('hidden'); document.getElementById('edit-payment-modal').classList.remove('flex'); };
+
+        window.saveEditedPayment = async () => {
+            const studentId = document.getElementById('edit-pay-student-id').value; const timestamp = document.getElementById('edit-pay-timestamp').value; const newDate = document.getElementById('edit-pay-date').value; const newAmount = document.getElementById('edit-pay-amount').value; const newMethod = document.getElementById('edit-pay-method').value;
+            if(!newAmount && newAmount !== "0") return;
+            const s = window.students.find(st => st.id === studentId); if(!s) return;
+            let updatedHistory = [...s.paymentHistory]; const index = updatedHistory.findIndex(p => p.timestamp === timestamp);
+            if(index !== -1) { updatedHistory[index].date = newDate; updatedHistory[index].amount = newAmount; updatedHistory[index].method = newMethod; }
+            try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), { paymentHistory: updatedHistory }); window.closeEditPaymentModal(); window.loadData(); window.viewHistory(studentId); } catch(e) { alert("Erro."); }
+        };
+
+        window.generateReport = (type) => {
+            const container = document.getElementById('report-container');
+            container.classList.remove('hidden');
+            let html = `<div class="text-center mb-6 border-b pb-4"><h2 class="text-2xl font-bold uppercase tracking-wider">TANQUE TEAM BJJ</h2><h3 class="text-lg text-gray-600 uppercase mt-1">Relatório Financeiro Gerencial</h3><p class="text-xs text-gray-500 mt-2">Gerado em: ${new Date().toLocaleString('pt-BR')}</p></div>`;
+            let tableRows = '';
+            
+            if (type === 'ativos') {
+                html += `<h3 class="font-bold text-lg mb-4">ALUNOS ATIVOS E PAGANTES</h3><table><thead><tr><th>Nome</th><th>Plano</th><th>Faixa</th><th>Status Pagto</th></tr></thead><tbody>`;
+                window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(s => { tableRows += `<tr><td>${s.name}</td><td class="uppercase">${(s.plan||'-').replace('-',' ')}</td><td>${s.belt||'Branca'}</td><td>${s.paymentStatus||'-'}</td></tr>`; });
+                html += tableRows + `</tbody></table>`;
+            } else if (type === 'inadimplentes') {
+                html += `<h3 class="font-bold text-lg mb-4 text-red-600">INADIMPLENTES E VENCIMENTOS PRÓXIMOS</h3><table><thead><tr><th>Nome</th><th>Plano</th><th>Telefone</th><th>Status Virtual</th><th>Vencimento</th></tr></thead><tbody>`;
+                const today = new Date();
+                window.students.filter(s => {
+                    if (s.enrollmentStatus === 'Inativo' || s.paymentStatus === 'Isento' || s.plan === 'administracao' || s.plan === 'dependente' || s.archived) return false;
+                    const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
+                    return !isNaN(targetDate) && (Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24)) <= 7 || s.paymentStatus === 'Pendente');
+                }).sort((a,b) => (a.nextDueDate ? new Date(a.nextDueDate) : new Date(0)) - (b.nextDueDate ? new Date(b.nextDueDate) : new Date(0))).forEach(s => {
+                    const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
+                    let status = 'EXPIRANDO';
+                    if (!isNaN(targetDate) && (Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24)) < 0 || s.paymentStatus === 'Pendente')) status = 'VENCIDO';
+                    tableRows += `<tr><td>${s.name}</td><td class="uppercase">${(s.plan||'-').replace('-',' ')}</td><td>${s.phone||'-'}</td><td class="font-bold ${status==='VENCIDO'?'text-red-600':''}">${status}</td><td>${formatDate(targetDate.toISOString())}</td></tr>`;
+                });
+                html += tableRows + `</tbody></table>`;
+            } else if (type === 'financeiro') {
+                const now = new Date(); const currentMonth = now.getMonth(); const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                html += `<h3 class="font-bold text-lg mb-4 text-green-600">RESUMO FINANCEIRO ESTIMADO - REFERÊNCIA: ${monthNames[currentMonth].toUpperCase()}/${now.getFullYear()}</h3><table><thead><tr><th>Plano / Categoria</th><th>Qtd Alunos (Titulares)</th><th>Valor Unit. Estimado</th><th>Subtotal Mensal</th></tr></thead><tbody>`;
+                let sumMap = {}; let totalExpected = 0;
+                window.students.forEach(s => {
+                    if (s.enrollmentStatus === 'Inativo' || s.archived) return;
+                    let pName = s.plan || 'outros'; let pInfo = window.getPlanInfo(pName);
+                    if (s.paymentStatus === 'Isento' || pName === 'administracao' || pName === 'dependente') {
+                        if (!sumMap['isento']) sumMap['isento'] = { name: 'Isentos / Dependentes / Admin', count: 0, price: 0, subtotal: 0 }; sumMap['isento'].count++; return;
+                    }
+                    let isPromo = false; let price = pInfo.price;
+                    if (s.registrationDate) {
+                        const rDate = new Date(s.registrationDate);
+                        if (rDate.getMonth() === currentMonth && rDate.getFullYear() === now.getFullYear()) {
+                            if (pName.includes('semestral') && !pName.includes('combo')) { price = 29.90; isPromo = true; } else if (pName === 'combo-dupla') { price = 59.90; isPromo = true; } else if (pName === 'combo-familia') { price = 89.90; isPromo = true; }
+                        }
+                    }
+                    let mapKey = isPromo ? pName + '_promo' : pName;
+                    if (!sumMap[mapKey]) sumMap[mapKey] = { name: pInfo.short + (isPromo ? ' (Promo)' : ''), count: 0, price: price, subtotal: 0 };
+                    sumMap[mapKey].count++; sumMap[mapKey].subtotal += price; totalExpected += price;
+                });
+                for (const [key, data] of Object.entries(sumMap)) tableRows += `<tr><td class="uppercase">${data.name}</td><td class="text-center">${data.count}</td><td>R$ ${data.price.toFixed(2).replace('.', ',')}</td><td class="font-bold">R$ ${data.subtotal.toFixed(2).replace('.', ',')}</td></tr>`;
+                html += tableRows + `</tbody><tfoot><tr><th colspan="3" class="text-right">TOTAL ESTIMADO PARA ESTE MÊS:</th><th class="text-green-700 text-lg">R$ ${totalExpected.toFixed(2).replace('.', ',')}</th></tr></tfoot></table>`;
+            } else if (type === 'frequencia') {
+                html += `<h3 class="font-bold text-lg mb-4 text-purple-600">FREQUÊNCIA - TOP 15 ALUNOS (Últimos 30 dias)</h3><table><thead><tr><th>Posição</th><th>Nome</th><th>Aulas nos últimos 30 dias</th><th>Faixa</th></tr></thead><tbody>`;
+                const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).map(s => ({ name: s.name, belt: s.belt, classes: s.attendance ? s.attendance.filter(d => new Date(d) >= thirtyDaysAgo).length : 0 })).sort((a,b) => b.classes - a.classes).slice(0, 15).forEach((d, i) => { tableRows += `<tr><td>#${i+1}</td><td class="font-bold">${d.name}</td><td class="text-center">${d.classes}</td><td>${d.belt||'-'}</td></tr>`; });
+                html += tableRows + `</tbody></table>`;
+            }
+
+            container.innerHTML = html;
+            document.body.classList.add('printing-report');
+            setTimeout(() => { window.print(); setTimeout(() => { document.body.classList.remove('printing-report'); container.classList.add('hidden'); }, 2000); }, 800);
+        };
+    </script>
+</body>
+</html>
