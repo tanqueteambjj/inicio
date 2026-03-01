@@ -1112,9 +1112,12 @@
             const student = window.currentStudentData;
             if (!student) return;
 
-            const studentFirstName = student.name.split(' ')[0];
-            const title = `🏆 Nova Conquista: ${studentFirstName}!`;
-            const text = `O aluno ${student.name} acabou de desbloquear a conquista "${achievementName}" no tatame! Parabéns pela dedicação! Oss 🥋`;
+            // Extrair apenas o primeiro e último nome
+            const nameParts = student.name.trim().split(' ');
+            const displayFullName = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[nameParts.length - 1]}` : nameParts[0];
+
+            const title = `🏆 Nova Conquista: ${nameParts[0]}!`;
+            const text = `O aluno ${displayFullName} acabou de desbloquear a conquista "${achievementName}" no tatame! Parabéns pela dedicação! Oss 🥋`;
 
             // Calculate expiration (24 hours from now)
             const now = new Date();
@@ -1719,7 +1722,18 @@
                     window.noticesList.push({ id: doc.id, ...noticeData });
                 });
                 
-                window.noticesList.sort((a, b) => new Date(b.date) - new Date(a.date));
+                window.noticesList.sort((a, b) => {
+                    // Prioriza avisos normais (Administração) sobre as conquistas (Alunos)
+                    const aIsAdmin = a.type !== 'achievement';
+                    const bIsAdmin = b.type !== 'achievement';
+                    
+                    if (aIsAdmin && !bIsAdmin) return -1;
+                    if (!aIsAdmin && bIsAdmin) return 1;
+                    
+                    // Dentro do mesmo grupo, ordena pelo mais recente
+                    return new Date(b.date) - new Date(a.date);
+                });
+                
                 renderStudentNotices();
             } catch (error) { console.error("Erro ao carregar avisos:", error); }
         };
