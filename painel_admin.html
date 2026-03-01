@@ -443,7 +443,7 @@
             </div>
             <div class="flex justify-end gap-2 no-print mt-6">
                 <button onclick="window.closeQrModal()" class="px-4 py-2 border border-gray-300 rounded text-sm font-bold text-gray-700 hover:bg-gray-100">Fechar</button>
-                <button onclick="window.printQrCard()" class="px-4 py-2 bg-brand-dark text-white rounded text-sm font-bold hover:bg-black"><i class="fa-solid fa-print"></i> Imprimir</button>
+                <button onclick="window.printQrCard()" class="px-4 py-2 bg-brand-dark text-white rounded text-sm font-bold hover:bg-black transition shadow-md flex items-center gap-2"><i class="fa-solid fa-print"></i> Imprimir</button>
             </div>
         </div>
     </div>
@@ -559,8 +559,9 @@
                                     <option value="dependente">Dependente (Isento)</option><option value="administracao">Administração (Isento)</option>
                                 </select>
                             </div>
+                            <!-- CAMPO TITULAR (VINCULAÇÃO) -->
                             <div class="md:col-span-2">
-                                <label class="block text-xs font-bold text-purple-600 mb-1">Titular (Apenas se for Dependente)</label>
+                                <label class="block text-xs font-bold text-purple-600 mb-1">Titular do Plano (Preencher caso seja Dependente)</label>
                                 <select id="edit-titular" class="w-full border border-purple-200 rounded p-2 bg-purple-50 focus:outline-none"><option value="">-- Selecione o Titular --</option></select>
                             </div>
                             <div><label class="block text-xs font-bold text-gray-500 mb-1">E-mail</label><input type="email" id="edit-email" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
@@ -587,8 +588,8 @@
                             <option value="Ativo" class="text-green-600">Ativo</option><option value="Inativo" class="text-red-600">Inativo</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Fim do Contrato (Fidelidade)</label>
+                    <div class="col-span-1 md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Vencimento Contrato (Fidelidade)</label>
                         <input type="date" id="edit-end-date" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none">
                     </div>
 
@@ -803,6 +804,36 @@
                                 <option value="0">0º Grau (Liso)</option><option value="1">1º Grau</option><option value="2">2º Grau</option><option value="3">3º Grau</option><option value="4">4º Grau</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200">
+                        <h4 class="text-sm font-bold text-green-700 uppercase mb-3"><i class="fa-solid fa-cash-register"></i> Primeiro Pagamento (Opcional)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Status Inicial</label>
+                                <select id="reg-payment" class="w-full border rounded p-2 text-sm bg-gray-50 focus:outline-none focus:border-green-500">
+                                    <option value="Pendente">Pendente (Paga depois)</option>
+                                    <option value="Em dia">Em dia (Já pagou)</option>
+                                    <option value="Isento">Isento</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Valor Pago (R$)</label>
+                                <input type="number" id="reg-pay-amount" class="w-full border rounded p-2 text-sm font-bold text-gray-700 focus:outline-none focus:border-green-500" placeholder="Ex: 189.90" step="0.01">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Forma de Pagamento</label>
+                                <select id="reg-pay-method" class="w-full border rounded p-2 text-sm bg-gray-50 focus:outline-none focus:border-green-500">
+                                    <option value="Pix">Pix</option>
+                                    <option value="Dinheiro">Dinheiro</option>
+                                    <option value="Débito">Débito</option>
+                                    <option value="Crédito à vista">Crédito à vista</option>
+                                    <option value="Crédito 2x">Crédito 2x</option>
+                                    <option value="Crédito 3x">Crédito 3x</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-1">Se preencher o Valor Pago, o sistema já registrará o recibo inicial e deixará o aluno "Em dia".</p>
                     </div>
 
                     <div id="admin-reg-deps-container" class="md:col-span-2 hidden border-t-2 border-purple-200 pt-4 mt-2">
@@ -1058,7 +1089,7 @@
             setText('stat-inactive', inactiveCount); setText('stat-archived', archivedCount);
         }
 
-        // FUNÇÕES EM MASSA (ARQUIVAR E PRESENÇA)
+        // FUNÇÕES EM MASSA E ARQUIVAMENTO
         window.toggleSelectAll = (source) => { document.querySelectorAll('.student-cb').forEach(cb => cb.checked = source.checked); window.updateBulkActions(); };
 
         window.updateBulkActions = () => {
@@ -1255,7 +1286,7 @@
                     <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
                         ${toggleBtn}
                         <button onclick="window.openAttendanceModal('${s.id}')" class="text-gray-500 hover:text-black mr-2" title="Frequência"><i class="fa-solid fa-list-check"></i></button>
-                        <button onclick="window.openGraduationModal('${s.id}')" class="text-yellow-500 hover:text-yellow-700 mr-2" title="Graduar"><i class="fa-solid fa-medal"></i></button>
+                        <button onclick="window.openGraduationModal('${s.id}', '${s.name || ''}')" class="text-yellow-500 hover:text-yellow-700 mr-2" title="Graduar"><i class="fa-solid fa-medal"></i></button>
                         <button onclick="window.openQrModal('${s.id}')" class="text-gray-800 hover:text-black mr-2" title="QR Code"><i class="fa-solid fa-qrcode"></i></button>
                         <button onclick="window.openEditModal('${s.id}')" class="text-blue-600 hover:text-blue-900 mr-2" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
                         <button onclick="window.printIndividualContract('${s.id}')" class="text-indigo-600 hover:text-indigo-900 mr-2" title="Contrato"><i class="fa-solid fa-file-contract"></i></button>
@@ -1361,9 +1392,16 @@
             document.getElementById('detail-email').innerText = s.email || '-'; document.getElementById('detail-address').innerText = s.address || '-'; document.getElementById('detail-login').innerText = s.studentLogin || 'Não configurado'; document.getElementById('detail-pass').innerText = s.studentPassword || '---';
             const guardianBox = document.getElementById('detail-guardian-box');
             if (s.guardian && s.guardian.trim() !== "") { document.getElementById('detail-guardian-name').innerText = s.guardian; guardianBox.classList.remove('hidden'); } else guardianBox.classList.add('hidden');
-            const pInfo = window.getPlanInfo(s.plan);
             
-            // Lógica Ficha da Família
+            const pInfo = window.getPlanInfo(s.plan);
+            document.getElementById('detail-plan').innerText = pInfo.long;
+            
+            const titularBox = document.getElementById('detail-titular-box');
+            if (s.titularName && s.titularName.trim() !== "") {
+                document.getElementById('detail-titular-name').innerText = s.titularName;
+                titularBox.classList.remove('hidden');
+            } else titularBox.classList.add('hidden');
+
             const familyBox = document.getElementById('detail-family-box'); familyBox.innerHTML = '';
             if (s.plan === 'dependente' && s.titularId) {
                 const titular = window.students.find(t => t.id === s.titularId); const tName = titular ? titular.name : 'Titular Desconhecido';
@@ -1426,6 +1464,12 @@
         window.handleAdminPlanChange = () => {
             const plan = document.getElementById('reg-plan').value;
             const titularContainer = document.getElementById('admin-reg-titular-container'); const depsContainer = document.getElementById('admin-reg-deps-container'); const dep1 = document.getElementById('admin-reg-dep1'); const dep2 = document.getElementById('admin-reg-dep2');
+            const amountInput = document.getElementById('reg-pay-amount');
+            if (amountInput) {
+                const pInfo = window.getPlanInfo(plan);
+                amountInput.value = (pInfo && pInfo.price > 0) ? pInfo.price : '';
+            }
+            
             titularContainer.classList.add('hidden'); depsContainer.classList.add('hidden'); dep1.classList.add('hidden'); dep2.classList.add('hidden');
             if (plan === 'dependente') titularContainer.classList.remove('hidden');
             else if (plan === 'combo-dupla' || plan === 'combo-casal') { depsContainer.classList.remove('hidden'); dep1.classList.remove('hidden'); } 
@@ -1436,6 +1480,11 @@
         window.closeAdminRegisterModal = () => {
             document.getElementById('admin-register-modal').classList.add('hidden'); document.getElementById('admin-register-modal').classList.remove('flex');
             document.getElementById('reg-name').value = ''; document.getElementById('reg-dob').value = ''; document.getElementById('reg-cpf').value = ''; document.getElementById('reg-email').value = ''; document.getElementById('reg-phone').value = ''; document.getElementById('reg-address').value = ''; document.getElementById('reg-guardian').value = ''; document.getElementById('reg-plan').value = 'infantil-mensal'; document.getElementById('reg-titular').value = ''; document.getElementById('reg-student-login').value = ''; document.getElementById('reg-student-pass').value = ''; document.getElementById('admin-dep1-name').value = ''; document.getElementById('admin-dep1-dob').value = ''; document.getElementById('admin-dep2-name').value = ''; document.getElementById('admin-dep2-dob').value = ''; 
+            
+            if(document.getElementById('reg-payment')) document.getElementById('reg-payment').value = 'Pendente';
+            if(document.getElementById('reg-pay-amount')) document.getElementById('reg-pay-amount').value = '';
+            if(document.getElementById('reg-pay-method')) document.getElementById('reg-pay-method').value = 'Pix';
+            
             window.handleAdminPlanChange();
         };
 
@@ -1448,8 +1497,18 @@
             if(plan.includes('mensal')) endDate.setMonth(endDate.getMonth() + 1); else if(plan.includes('trimestral')) endDate.setMonth(endDate.getMonth() + 3); else if(plan.includes('semestral') || plan.includes('combo') || plan === 'dependente') endDate.setMonth(endDate.getMonth() + 6); else if(plan === 'administracao') endDate.setFullYear(endDate.getFullYear() + 1); else endDate.setMonth(endDate.getMonth() + 1);
             let category = 'Adulto'; if (plan.includes('infantil')) category = 'Infantil'; if (plan.includes('combo')) category = 'Combo Família'; if (plan === 'administracao') category = 'Administração'; if (plan === 'dependente') category = 'Dependente (Combo)';
 
+            let paymentStatus = document.getElementById('reg-payment') ? document.getElementById('reg-payment').value : 'Pendente'; 
+            const payAmount = document.getElementById('reg-pay-amount') ? document.getElementById('reg-pay-amount').value : ''; 
+            const payMethod = document.getElementById('reg-pay-method') ? document.getElementById('reg-pay-method').value : 'Pix';
+
+            let initialPaymentHistory = [];
+            if (payAmount && parseFloat(payAmount) > 0) { 
+                initialPaymentHistory.push({ date: regDate.toISOString().split('T')[0], amount: payAmount, method: payMethod, timestamp: regDate.toISOString() }); 
+                paymentStatus = 'Em dia'; 
+            }
+
             try {
-                const titularDocRef = await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name, dob, cpf, email, phone, address, guardian, plan, titularName: titular, paymentStatus: 'Pendente', enrollmentStatus: 'Ativo', belt: beltStr, category, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: [] });
+                const titularDocRef = await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name, dob, cpf, email, phone, address, guardian, plan, titularName: titular, paymentStatus: paymentStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory });
                 if (plan === 'combo-dupla' || plan === 'combo-casal' || plan === 'combo-familia') {
                     const d1Name = document.getElementById('admin-dep1-name').value;
                     if(d1Name) await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name: d1Name, dob: toISODate(document.getElementById('admin-dep1-dob').value), titularName: name, titularId: titularDocRef.id, parentesco: document.getElementById('admin-dep1-kinship').value, belt: `Faixa ${document.getElementById('admin-dep1-belt').value} - ${document.getElementById('admin-dep1-degree').value}º Grau`, plan: 'dependente', category: 'Dependente', registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [] });
@@ -1537,7 +1596,7 @@
         window.closeGraduationModal = () => { document.getElementById('graduation-modal').classList.add('hidden'); document.getElementById('graduation-modal').classList.remove('flex'); }
         window.saveGraduation = async () => {
             const id = document.getElementById('grad-student-id').value; const color = document.getElementById('grad-belt-color').value; const degree = document.getElementById('grad-belt-degree').value; const newBeltStr = `Faixa ${color} - ${degree}º Grau`;
-            try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { belt: newBeltStr, lastGraduationDate: new Date().toISOString() }); alert(`Aluno graduado para ${newBeltStr}!`); window.closeGraduationModal(); window.loadData(); } catch(e) { alert("Erro ao graduar: " + e.message); }
+            try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { belt: newBeltStr, lastGraduationDate: new Date().toISOString() }); alert(`Aluno graduado para ${newBeltStr}!`); window.closeGraduationModal(); window.loadData(); } catch(e) { alert("Erro ao graduar."); }
         }
 
         window.loadNotices = async () => {
@@ -1644,7 +1703,7 @@
                     await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', expId), { status: newStatus });
                     const exp = window.experimentalList.find(e => e.id === expId); if(exp) exp.status = newStatus;
                     window.updateKanbanCounters();
-                } catch(e) { alert("Erro ao salvar status no banco de dados. " + e.message); window.renderExperimentalTable(); }
+                } catch(e) { alert("Erro ao salvar status no banco de dados."); window.renderExperimentalTable(); }
             }
         };
 
@@ -1696,7 +1755,7 @@
                     <div class="mt-1 flex items-center justify-between border-t border-gray-100 pt-2">
                         <a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-[#25D366] hover:text-[#1ebe5d] text-xs font-bold transition" title="WhatsApp"><i class="fa-brands fa-whatsapp text-sm"></i> Chamar</a>
                         <div class="flex gap-2">
-                            ${exp.status !== 'Matriculado' ? `<button onclick="window.convertToStudent('${exp.id}')" class="text-blue-500 hover:text-blue-700 transition" title="Matricular"><i class="fa-solid fa-user-plus text-xs"></i></button>` : ''}
+                            ${exp.status !== 'Matriculado' ? `<button onclick="window.convertToStudent('${exp.id}')" class="text-blue-500 hover:text-blue-700 transition" title="Matricular como Aluno"><i class="fa-solid fa-user-plus text-xs"></i></button>` : ''}
                             <button onclick="window.openEditExperimentalModal('${exp.id}')" class="text-gray-400 hover:text-gray-700 transition" title="Editar"><i class="fa-solid fa-pen text-xs"></i></button>
                             <button onclick="window.deleteExperimental('${exp.id}')" class="text-red-400 hover:text-red-700 transition" title="Excluir"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>
@@ -1734,7 +1793,7 @@
             const id = document.getElementById('edit-exp-id').value; const name = document.getElementById('edit-exp-name').value; const phone = document.getElementById('edit-exp-phone').value; const dobRaw = document.getElementById('edit-exp-dob').value; const date = document.getElementById('edit-exp-date').value; const time = document.getElementById('edit-exp-time').value;
             if(!name || !date || !time) { alert("Preencha o Nome, Data e Horário."); return; }
             let dobIso = (dobRaw && dobRaw.includes('/')) ? dobRaw.split('/').reverse().join('-') : dobRaw;
-            try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), { name, phone, dob: dobIso, date, time }); alert("Agendamento atualizado!"); window.closeEditExperimentalModal(); window.loadExperimentalData(); } catch(e) { alert("Erro ao atualizar: " + e.message); }
+            try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), { name, phone, dob: dobIso, date, time }); alert("Agendamento atualizado!"); window.closeEditExperimentalModal(); window.loadExperimentalData(); } catch(e) { alert("Erro ao atualizar."); }
         };
 
     </script>
