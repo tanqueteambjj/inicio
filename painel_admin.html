@@ -4,37 +4,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tanque Team | Painel Administrativo</title>
+    
     <link rel="icon" href="https://i.ibb.co/chV1Wv8t/1772237028768.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <!-- Leitor de QR Code HTML5 -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <script>
         tailwind.config = {
-            theme: { extend: { colors: { brand: { red: '#D90429', dark: '#1B1B1B', gray: '#2B2D42', light: '#EDF2F4' } }, fontFamily: { sans: ['Roboto', 'sans-serif'], display: ['Oswald', 'sans-serif'] } } }
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { red: '#D90429', dark: '#1B1B1B', gray: '#2B2D42', light: '#EDF2F4' }
+                    },
+                    fontFamily: {
+                        sans: ['Roboto', 'sans-serif'],
+                        display: ['Oswald', 'sans-serif'],
+                    }
+                }
+            }
         }
     </script>
+
     <style>
+        /* Animações UI */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-        .kanban-col { min-height: 400px; }
-        .kanban-card { cursor: grab; transition: transform 0.2s, box-shadow 0.2s; border-left-width: 4px; }
-        .kanban-card:active { cursor: grabbing; transform: scale(0.98); box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
-        .kanban-card.dragging { opacity: 0.5; }
+
+        /* CSS OTIMIZADO PARA IMPRESSÃO - NORMAS ABNT E MÚLTIPLAS PÁGINAS */
         @media print {
             @page { margin: 2.5cm; size: A4 portrait; }
             body, html { height: auto !important; min-height: auto !important; overflow: visible !important; background: white !important; }
             body > * { display: none !important; }
-            body.printing-contract #printable-contract, body.printing-contract #printable-contract * { display: block !important; visibility: visible !important; }
-            body.printing-report #report-container, body.printing-report #report-container * { display: block !important; visibility: visible !important; background-color: white !important; color: black !important; }
+
+            body.printing-contract #printable-contract { display: block !important; position: relative !important; width: 100% !important; margin: 0 !important; padding: 0 !important; visibility: visible !important; }
+            body.printing-contract #printable-contract * { visibility: visible !important; }
+
+            body.printing-report #report-container { display: block !important; position: relative !important; width: 100% !important; margin: 0 !important; padding: 0 !important; visibility: visible !important; background-color: white !important; color: black !important; }
+            body.printing-report #report-container * { visibility: visible !important; }
+
             body.printing-qr #qr-modal { display: block !important; visibility: hidden !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; }
-            body.printing-qr #printable-qr-card, body.printing-qr #printable-qr-card * { display: flex !important; visibility: visible !important; }
-            body.printing-qr #printable-qr-card { position: absolute !important; left: 50% !important; top: 2cm !important; transform: translateX(-50%) !important; width: 6.5cm !important; height: 10.5cm !important; background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; border: 1px solid #ccc !important; border-radius: 12px !important; box-shadow: none !important; margin: 0 !important; }
-            body.printing-receipt #printable-receipt, body.printing-receipt #printable-receipt * { display: block !important; visibility: visible !important; }
-            body.printing-receipt #printable-receipt { position: absolute !important; left: 50% !important; top: 50px !important; transform: translateX(-50%) !important; width: 14cm !important; height: auto !important; border: 2px dashed #000 !important; padding: 30px !important; background: white !important; }
+            body.printing-qr #printable-qr-card { display: flex !important; position: absolute !important; left: 50% !important; top: 2cm !important; transform: translateX(-50%) !important; width: 6.5cm !important; height: 10.5cm !important; visibility: visible !important; background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; border: 1px solid #ccc !important; border-radius: 12px !important; box-shadow: none !important; margin: 0 !important; }
+            body.printing-qr #printable-qr-card * { visibility: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            
+            body.printing-receipt #printable-receipt { display: block !important; position: absolute !important; left: 50% !important; top: 50px !important; transform: translateX(-50%) !important; width: 14cm !important; height: auto !important; visibility: visible !important; border: 2px dashed #000 !important; padding: 30px !important; background: white !important; }
+            body.printing-receipt #printable-receipt * { visibility: visible !important; }
+
             p { text-align: justify; line-height: 1.6; orphans: 3; widows: 3; margin-bottom: 12px; }
             h1, h2, h3, h4 { page-break-after: avoid; }
+            .page-break-inside-avoid { page-break-inside: avoid; break-inside: avoid; }
+
             table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 15px; page-break-inside: auto; }
             tr { page-break-inside: avoid; page-break-after: auto; }
             th, td { border: 1px solid #ddd; padding: 8px; text-align: left; color: black; }
@@ -44,87 +70,208 @@
     </style>
 </head>
 <body class="bg-gray-100 font-sans antialiased h-screen flex overflow-hidden">
+
+    <!-- Mobile Sidebar Overlay -->
     <div id="mobile-sidebar-overlay" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden backdrop-blur-sm transition-opacity" onclick="window.toggleMobileMenu()"></div>
+
+    <!-- Sidebar -->
     <aside id="sidebar-menu" class="fixed md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 w-64 bg-brand-dark text-white flex flex-col shadow-2xl z-40 transition-transform duration-300 ease-in-out no-print h-full">
         <div class="p-6 flex items-center justify-center border-b border-gray-800 relative">
-            <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" alt="Logo" class="h-10 w-auto mr-3"><span class="font-display font-bold text-lg tracking-wider">ADMIN</span>
-            <button onclick="window.toggleMobileMenu()" class="md:hidden absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-times text-xl"></i></button>
+            <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" alt="Logo" class="h-10 w-auto mr-3">
+            <span class="font-display font-bold text-lg tracking-wider">ADMIN</span>
+            <button onclick="window.toggleMobileMenu()" class="md:hidden absolute top-4 right-4 text-gray-400 hover:text-white focus:outline-none">
+                <i class="fa-solid fa-times text-xl"></i>
+            </button>
         </div>
         <div class="px-4 mt-4">
-            <button onclick="window.openCheckinModal()" class="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg shadow-lg transition-transform transform hover:-translate-y-1"><i class="fa-solid fa-camera"></i> Check-in (Leitor)</button>
+            <button onclick="window.openCheckinModal()" class="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg shadow-lg transition-transform transform hover:-translate-y-1">
+                <i class="fa-solid fa-camera"></i> Check-in (Leitor)
+            </button>
         </div>
         <nav class="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
-            <a href="#" onclick="window.switchMainView('students')" id="nav-students" class="flex items-center px-4 py-3 bg-brand-red text-white rounded-lg shadow-md transition-all"><i class="fa-solid fa-users w-6"></i> <span class="font-bold">Alunos</span></a>
-            <a href="#" onclick="window.switchMainView('financial')" id="nav-financial" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all"><i class="fa-solid fa-file-invoice-dollar w-6"></i> <span class="font-bold">Financeiro</span></a>
-            <a href="#" onclick="window.switchMainView('reports')" id="nav-reports" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all"><i class="fa-solid fa-chart-pie w-6"></i> <span class="font-bold">Relatórios</span></a>
-            <a href="#" onclick="window.switchMainView('experimental')" id="nav-experimental" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all"><i class="fa-solid fa-fire w-6"></i> <span class="font-bold">Aulas Exp. / CRM</span></a>
-            <a href="#" onclick="window.switchMainView('notices')" id="nav-notices" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all"><i class="fa-solid fa-bullhorn w-6"></i> <span class="font-bold">Mural de Avisos</span></a>
+            <a href="#" onclick="window.switchMainView('students')" id="nav-students" class="flex items-center px-4 py-3 bg-brand-red text-white rounded-lg shadow-md transition-all">
+                <i class="fa-solid fa-users w-6"></i> <span class="font-bold">Alunos</span>
+            </a>
+            <a href="#" onclick="window.switchMainView('financial')" id="nav-financial" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
+                <i class="fa-solid fa-file-invoice-dollar w-6"></i> <span class="font-bold">Financeiro</span>
+            </a>
+            <a href="#" onclick="window.switchMainView('reports')" id="nav-reports" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
+                <i class="fa-solid fa-chart-pie w-6"></i> <span class="font-bold">Relatórios</span>
+            </a>
+            <a href="#" onclick="window.switchMainView('experimental')" id="nav-experimental" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
+                <i class="fa-solid fa-fire w-6"></i> <span class="font-bold">Aulas Exp.</span>
+            </a>
+            <a href="#" onclick="window.switchMainView('notices')" id="nav-notices" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
+                <i class="fa-solid fa-bullhorn w-6"></i> <span class="font-bold">Mural de Avisos</span>
+            </a>
         </nav>
         <div class="p-4 border-t border-gray-800">
-            <button onclick="window.handleLogout()" class="flex items-center w-full px-4 py-2 text-red-400 hover:text-red-300 transition"><i class="fa-solid fa-right-from-bracket w-6"></i> <span>Sair</span></button>
+            <button onclick="window.handleLogout()" class="flex items-center w-full px-4 py-2 text-red-400 hover:text-red-300 transition">
+                <i class="fa-solid fa-right-from-bracket w-6"></i> <span>Sair</span>
+            </button>
         </div>
     </aside>
 
+    <!-- Main Content -->
     <div id="admin-dashboard" class="flex-1 flex flex-col h-full overflow-hidden relative w-full">
+        
+        <!-- Topbar -->
         <header class="bg-white shadow-sm h-16 flex items-center justify-between px-4 md:px-6 z-10 no-print shrink-0">
             <div class="flex items-center md:hidden gap-3">
-                <button onclick="window.toggleMobileMenu()" class="text-brand-dark hover:text-brand-red text-2xl transition"><i class="fa-solid fa-bars"></i></button>
+                <button onclick="window.toggleMobileMenu()" class="text-brand-dark hover:text-brand-red focus:outline-none text-2xl transition">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
                 <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" class="h-8 w-auto">
             </div>
+            
             <div class="hidden md:flex relative w-96">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-search"></i></span>
-                <input type="text" id="searchInput" onkeyup="window.filterTable()" placeholder="Buscar..." class="w-full pl-10 pr-4 py-2 border rounded-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-red">
+                <input type="text" id="searchInput" onkeyup="window.filterTable()" placeholder="Buscar..." class="w-full pl-10 pr-4 py-2 border rounded-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent transition">
             </div>
+
             <div class="flex items-center gap-3">
-                <button onclick="window.openCheckinModal()" class="md:hidden w-10 h-10 flex items-center justify-center bg-green-600 text-white rounded-full shadow-lg"><i class="fa-solid fa-camera"></i></button>
-                <button onclick="window.handleLogout()" class="md:hidden w-10 h-10 flex items-center justify-center bg-red-100 text-red-600 rounded-full shadow-sm hover:bg-red-200 transition"><i class="fa-solid fa-right-from-bracket"></i></button>
+                <button onclick="window.openCheckinModal()" class="md:hidden w-10 h-10 flex items-center justify-center bg-green-600 text-white rounded-full shadow-lg">
+                    <i class="fa-solid fa-camera"></i>
+                </button>
+                <button onclick="window.handleLogout()" class="md:hidden w-10 h-10 flex items-center justify-center bg-red-100 text-red-600 rounded-full shadow-sm hover:bg-red-200 transition">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
                 <span class="text-sm text-gray-500 hidden md:block">Administração</span>
                 <div class="hidden md:flex w-8 h-8 rounded-full bg-brand-dark text-white items-center justify-center font-bold">A</div>
             </div>
         </header>
 
+        <!-- Content Area -->
         <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6 relative">
+
             <!-- VIEW: ALUNOS -->
             <div id="view-students">
+                <!-- Stats Row -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 stats-container">
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500"><div class="flex justify-between"><div><p class="text-gray-400 text-xs font-bold uppercase">Total Ativos</p><p class="text-2xl font-bold text-gray-800" id="stat-total">0</p></div><div class="text-blue-500 text-2xl"><i class="fa-solid fa-users"></i></div></div></div>
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-brand-red"><div class="flex justify-between"><div><p class="text-gray-400 text-xs font-bold uppercase">Infantil (Ativos)</p><p class="text-2xl font-bold text-gray-800" id="stat-infantil">0</p></div><div class="text-brand-red text-2xl"><i class="fa-solid fa-child"></i></div></div></div>
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-green-500"><div class="flex justify-between"><div><p class="text-gray-400 text-xs font-bold uppercase">Adulto/Admin (Ativos)</p><p class="text-2xl font-bold text-gray-800" id="stat-adulto">0</p></div><div class="text-green-500 text-2xl"><i class="fa-solid fa-user"></i></div></div></div>
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-gray-500 cursor-pointer hover:bg-gray-50 transition" onclick="window.switchTab('archived')"><div class="flex justify-between"><div><p class="text-gray-400 text-xs font-bold uppercase">Arquivados</p><p class="text-2xl font-bold text-gray-800" id="stat-archived">0</p></div><div class="text-gray-500 text-2xl"><i class="fa-solid fa-box-archive"></i></div></div></div>
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Total Ativos</p>
+                                <p class="text-2xl font-bold text-gray-800" id="stat-total">0</p>
+                            </div>
+                            <div class="text-blue-500 text-2xl"><i class="fa-solid fa-users"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-brand-red">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Infantil (Ativos)</p>
+                                <p class="text-2xl font-bold text-gray-800" id="stat-infantil">0</p>
+                            </div>
+                            <div class="text-brand-red text-2xl"><i class="fa-solid fa-child"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-green-500">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Adulto/Admin (Ativos)</p>
+                                <p class="text-2xl font-bold text-gray-800" id="stat-adulto">0</p>
+                            </div>
+                            <div class="text-green-500 text-2xl"><i class="fa-solid fa-user"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-gray-400 cursor-pointer hover:bg-gray-50 transition" onclick="window.switchTab('inactive')">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Inativos</p>
+                                <p class="text-2xl font-bold text-gray-800" id="stat-inactive">0</p>
+                            </div>
+                            <div class="text-gray-400 text-2xl"><i class="fa-solid fa-user-slash"></i></div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Tabs Container -->
                 <div class="flex flex-wrap mb-0 tabs-container">
-                    <button onclick="window.switchTab('all')" id="tab-all" class="px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative"><i class="fa-solid fa-users mr-2"></i> TODOS</button>
-                    <button onclick="window.switchTab('adults')" id="tab-adults" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1"><i class="fa-solid fa-user mr-2"></i> ADULTOS / FAMÍLIA</button>
-                    <button onclick="window.switchTab('kids')" id="tab-kids" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1"><i class="fa-solid fa-child mr-2"></i> INFANTIL</button>
-                    <button onclick="window.switchTab('inactive')" id="tab-inactive" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1"><i class="fa-solid fa-power-off mr-2"></i> INATIVOS</button>
-                    <button onclick="window.switchTab('archived')" id="tab-archived" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1"><i class="fa-solid fa-box-archive mr-2"></i> ARQUIVO</button>
+                    <button onclick="window.switchTab('all')" id="tab-all" class="px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative">
+                        <i class="fa-solid fa-users mr-2"></i> TODOS
+                    </button>
+                    <button onclick="window.switchTab('adults')" id="tab-adults" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        <i class="fa-solid fa-user mr-2"></i> ADULTOS / FAMÍLIA
+                    </button>
+                    <button onclick="window.switchTab('kids')" id="tab-kids" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        <i class="fa-solid fa-child mr-2"></i> INFANTIL
+                    </button>
+                    <button onclick="window.switchTab('inactive')" id="tab-inactive" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        <i class="fa-solid fa-power-off mr-2"></i> INATIVOS
+                    </button>
                 </div>
+
+                <!-- Student Table -->
                 <div class="bg-white rounded-b-xl rounded-tr-xl shadow overflow-hidden relative top-[-1px] border border-gray-200">
                     <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center no-print flex-wrap gap-2">
                         <div class="flex items-center gap-4">
-                            <h3 class="font-bold text-gray-700 uppercase text-sm flex items-center gap-2"><span id="list-title">Lista de Alunos</span><span class="bg-gray-200 text-gray-600 py-0.5 px-2 rounded-full text-xs" id="list-count">0</span></h3>
-                            <button onclick="window.archiveSelectedStudents()" id="btn-bulk-archive" class="hidden flex items-center gap-1 bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs font-bold hover:bg-gray-300 transition animate-fade-in border border-gray-300"><i class="fa-solid fa-box-archive"></i> Arquivar (<span id="selected-count">0</span>)</button>
-                            <div id="bulk-actions" class="hidden flex items-center gap-2 animate-fade-in"><button onclick="window.addPresenceSelectedStudents()" class="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-bold hover:bg-green-200 transition"><i class="fa-solid fa-check"></i> Dar Presença</button></div>
+                            <h3 class="font-bold text-gray-700 uppercase text-sm flex items-center gap-2">
+                                <span id="list-title">Lista de Alunos</span>
+                                <span class="bg-gray-200 text-gray-600 py-0.5 px-2 rounded-full text-xs" id="list-count">0</span>
+                            </h3>
+                            <button onclick="window.deleteSelectedStudents()" id="btn-bulk-delete" class="hidden flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition animate-fade-in">
+                                <i class="fa-solid fa-trash-can"></i> Excluir Selecionados (<span id="selected-count">0</span>)
+                            </button>
+                            <div id="bulk-actions" class="hidden flex items-center gap-2 animate-fade-in">
+                                <button onclick="window.addPresenceSelectedStudents()" class="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-bold hover:bg-green-200 transition">
+                                    <i class="fa-solid fa-check"></i> Dar Presença Hoje
+                                </button>
+                            </div>
                         </div>
                         <div class="flex gap-2">
                              <button onclick="window.openAdminRegisterModal()" class="bg-brand-red text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-red-700"><i class="fa-solid fa-plus mr-1"></i> NOVO ALUNO</button>
                              <button onclick="window.loadData()" class="text-gray-500 hover:text-black text-sm flex items-center gap-1"><i class="fa-solid fa-rotate" id="icon-refresh"></i></button>
                         </div>
                     </div>
+                    
+                    <!-- Barra de Filtros Inteligentes -->
                     <div class="px-6 py-3 border-b border-gray-200 bg-white flex flex-wrap gap-4 items-center text-sm no-print">
                         <div class="w-full md:hidden relative mb-2">
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-search"></i></span>
-                            <input type="text" id="searchInputMobile1" onkeyup="window.filterTable()" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                            <input type="text" id="searchInputMobile1" onkeyup="window.filterTable()" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-red transition">
                         </div>
+                        
                         <span class="font-bold text-gray-500"><i class="fa-solid fa-filter"></i> Filtros:</span>
-                        <select id="sort-order" onchange="window.filterTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 bg-gray-50"><option value="recent">⏱️ Mais Recentes</option><option value="az">🔤 A-Z</option><option value="za">🔤 Z-A</option></select>
-                        <select id="filter-belt" onchange="window.filterTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 bg-gray-50"><option value="">🥋 Todas as Faixas</option><option value="branca">Branca</option><option value="cinza">Cinza</option><option value="amarela">Amarela</option><option value="laranja">Laranja</option><option value="verde">Verde</option><option value="azul">Azul</option><option value="roxa">Roxa</option><option value="marrom">Marrom</option><option value="preta">Preta</option></select>
-                        <select id="filter-payment-status" onchange="window.filterTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 bg-gray-50"><option value="">💲 Pagamento (Todos)</option><option value="Em dia">Em dia</option><option value="Pendente">Pendente</option><option value="Isento">Isento</option><option value="Expirando">Expirando</option></select>
+                        
+                        <select id="sort-order" onchange="window.filterTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
+                            <option value="recent">⏱️ Mais Recentes</option>
+                            <option value="az">🔤 Ordem Alfabética (A-Z)</option>
+                            <option value="za">🔤 Ordem Alfabética (Z-A)</option>
+                        </select>
+                        
+                        <select id="filter-belt" onchange="window.filterTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
+                            <option value="">🥋 Todas as Faixas</option>
+                            <option value="branca">Branca</option>
+                            <option value="cinza">Cinza</option>
+                            <option value="amarela">Amarela</option>
+                            <option value="laranja">Laranja</option>
+                            <option value="verde">Verde</option>
+                            <option value="azul">Azul</option>
+                            <option value="roxa">Roxa</option>
+                            <option value="marrom">Marrom</option>
+                            <option value="preta">Preta</option>
+                        </select>
+
+                        <select id="filter-payment-status" onchange="window.filterTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
+                            <option value="">💲 Pagamento (Todos)</option>
+                            <option value="Em dia">Em dia</option>
+                            <option value="Pendente">Pendente</option>
+                            <option value="Isento">Isento</option>
+                            <option value="Expirando">Expirando</option>
+                        </select>
                     </div>
+
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
-                            <thead><tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider" id="table-headers"></tr></thead>
-                            <tbody id="students-table-body" class="text-sm text-gray-700 divide-y divide-gray-200"><tr><td colspan="7" class="px-6 py-4 text-center">Carregando...</td></tr></tbody>
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider" id="table-headers">
+                                    <!-- Headers injetados via JS -->
+                                </tr>
+                            </thead>
+                            <tbody id="students-table-body" class="text-sm text-gray-700 divide-y divide-gray-200">
+                                <tr><td colspan="7" class="px-6 py-4 text-center">Carregando dados...</td></tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -132,36 +279,106 @@
 
             <!-- VIEW: FINANCEIRO -->
             <div id="view-financial" class="hidden">
+                 
+                 <!-- ALERTA DE PROMOÇÃO VENCENDO -->
                  <div id="financial-promo-alerts" class="hidden mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-xl shadow-sm animate-fade-in">
                     <div class="flex items-start">
                         <div class="flex-shrink-0"><i class="fa-solid fa-triangle-exclamation text-yellow-500 text-xl"></i></div>
-                        <div class="ml-3"><h3 class="text-sm font-bold text-yellow-800">Atenção: Promoções Vencendo</h3><ul id="promo-alerts-list" class="mt-2 text-xs text-yellow-900 font-bold list-disc pl-4"></ul></div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-bold text-yellow-800">Atenção: Promoções Vencendo (Checar Valores)</h3>
+                            <p class="text-xs text-yellow-700 mt-1">Os seguintes combos completaram (ou estão próximos de) 30 dias de matrícula. Certifique-se de cobrar o valor atualizado no próximo pagamento.</p>
+                            <ul id="promo-alerts-list" class="mt-2 text-xs text-yellow-900 font-bold space-y-1 list-disc pl-4">
+                                <!-- Preenchido via JS -->
+                            </ul>
+                        </div>
                     </div>
                  </div>
+
+                 <!-- Stats Row Financeiro -->
                  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 stats-container">
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500"><div class="flex justify-between"><div><p class="text-gray-400 text-xs font-bold uppercase">Total (Ativos)</p><p class="text-2xl font-bold text-gray-800" id="fin-stat-total">0</p></div><div class="text-blue-500 text-2xl"><i class="fa-solid fa-users"></i></div></div></div>
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-green-500"><div class="flex justify-between"><div><p class="text-gray-400 text-xs font-bold uppercase">Em Dia / Isento</p><p class="text-2xl font-bold text-gray-800" id="fin-stat-active">0</p></div><div class="text-green-500 text-2xl"><i class="fa-solid fa-check-circle"></i></div></div></div>
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-red-500"><div class="flex justify-between"><div><p class="text-gray-400 text-xs font-bold uppercase">Pendente</p><p class="text-2xl font-bold text-gray-800" id="fin-stat-pending">0</p></div><div class="text-red-500 text-2xl"><i class="fa-solid fa-circle-exclamation"></i></div></div></div>
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-yellow-500"><div class="flex justify-between"><div><p class="text-gray-400 text-xs font-bold uppercase">Expirando (7d)</p><p class="text-2xl font-bold text-gray-800" id="fin-stat-expiring">0</p></div><div class="text-yellow-500 text-2xl"><i class="fa-solid fa-hourglass-half"></i></div></div></div>
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Total (Ativos)</p>
+                                <p class="text-2xl font-bold text-gray-800" id="fin-stat-total">0</p>
+                            </div>
+                            <div class="text-blue-500 text-2xl"><i class="fa-solid fa-users"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-green-500">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Em Dia / Isento</p>
+                                <p class="text-2xl font-bold text-gray-800" id="fin-stat-active">0</p>
+                            </div>
+                            <div class="text-green-500 text-2xl"><i class="fa-solid fa-check-circle"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-red-500">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Pendente</p>
+                                <p class="text-2xl font-bold text-gray-800" id="fin-stat-pending">0</p>
+                            </div>
+                            <div class="text-red-500 text-2xl"><i class="fa-solid fa-circle-exclamation"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-yellow-500">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Expirando (7d)</p>
+                                <p class="text-2xl font-bold text-gray-800" id="fin-stat-expiring">0</p>
+                            </div>
+                            <div class="text-yellow-500 text-2xl"><i class="fa-solid fa-hourglass-half"></i></div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Tabs Financeiro -->
                 <div class="flex mb-0 tabs-container">
-                    <button onclick="window.switchFinancialTab('all')" id="fin-tab-all" class="px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative">TODOS</button>
-                    <button onclick="window.switchFinancialTab('active')" id="fin-tab-active" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">EM DIA</button>
-                    <button onclick="window.switchFinancialTab('pending')" id="fin-tab-pending" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">PENDENTE</button>
-                    <button onclick="window.switchFinancialTab('expiring')" id="fin-tab-expiring" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">EXPIRANDO</button>
+                    <button onclick="window.switchFinancialTab('all')" id="fin-tab-all" class="px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative">
+                        TODOS
+                    </button>
+                    <button onclick="window.switchFinancialTab('active')" id="fin-tab-active" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        EM DIA
+                    </button>
+                    <button onclick="window.switchFinancialTab('pending')" id="fin-tab-pending" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        PENDENTE
+                    </button>
+                    <button onclick="window.switchFinancialTab('expiring')" id="fin-tab-expiring" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        EXPIRANDO
+                    </button>
+                    <button onclick="window.switchFinancialTab('inactive')" id="fin-tab-inactive" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        INATIVOS
+                    </button>
                 </div>
+
                 <div class="bg-white rounded-b-xl rounded-tr-xl shadow overflow-hidden border border-gray-200 relative top-[-1px]">
                     <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center no-print">
-                        <div><h3 class="font-bold text-gray-800 uppercase text-lg"><i class="fa-solid fa-coins text-brand-red mr-2"></i> Gestão Financeira</h3><p class="text-xs text-gray-500">Controle de pagamentos e vencimentos</p></div>
+                        <div>
+                            <h3 class="font-bold text-gray-800 uppercase text-lg"><i class="fa-solid fa-coins text-brand-red mr-2"></i> Gestão Financeira</h3>
+                            <p class="text-xs text-gray-500">Controle de pagamentos e vencimentos</p>
+                        </div>
                         <div class="flex gap-2">
-                            <button onclick="window.bulkWhatsAppBilling()" id="btn-bulk-whatsapp" class="hidden bg-[#25D366] hover:bg-[#1ebe5d] text-white text-xs font-bold px-3 py-1.5 rounded shadow flex items-center gap-1 transition"><i class="fa-brands fa-whatsapp text-sm"></i> Cobrar Pendentes</button>
                             <button onclick="window.loadData()" class="text-gray-500 hover:text-black text-sm"><i class="fa-solid fa-rotate"></i></button>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
-                            <thead><tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider"><th class="px-6 py-3 border-b">Aluno</th><th class="px-6 py-3 border-b">Plano / Valor</th><th class="px-6 py-3 border-b">Início Contrato</th><th class="px-6 py-3 border-b text-center">Dia Vencimento</th><th class="px-6 py-3 border-b text-center">Prox. Pagamento</th><th class="px-6 py-3 border-b">Status</th><th class="px-6 py-3 border-b text-center no-print-col">Ações</th></tr></thead>
-                            <tbody id="financial-table-body" class="text-sm text-gray-700 divide-y divide-gray-200"></tbody>
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
+                                    <th class="px-6 py-3 border-b">Aluno</th>
+                                    <th class="px-6 py-3 border-b">Plano / Valor</th>
+                                    <th class="px-6 py-3 border-b">Início Contrato</th>
+                                    <th class="px-6 py-3 border-b text-center">Dia Vencimento</th>
+                                    <th class="px-6 py-3 border-b text-center">Prox. Pagamento</th>
+                                    <th class="px-6 py-3 border-b">Status</th>
+                                    <th class="px-6 py-3 border-b text-center no-print-col">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="financial-table-body" class="text-sm text-gray-700 divide-y divide-gray-200">
+                                <!-- Preenchido via JS -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -171,52 +388,69 @@
             <div id="view-reports" class="hidden">
                 <div class="bg-white rounded-xl shadow p-6 border-t-4 border-gray-800 max-w-4xl mx-auto">
                     <h3 class="font-display text-xl font-bold text-gray-800 mb-2"><i class="fa-solid fa-print mr-2 text-brand-red"></i> Central de Relatórios</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                    <p class="text-sm text-gray-500 mb-6">Gere e imprima relatórios gerenciais da academia rapidamente.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="window.generateReport('ativos')">
-                            <div><h4 class="font-bold text-gray-700"><i class="fa-solid fa-users text-blue-500 mr-1"></i> Alunos Ativos</h4><p class="text-xs text-gray-500 mt-1">Lista de alunos ativos separada por plano e faixa.</p></div>
-                            <button class="mt-4 bg-gray-800 hover:bg-black text-white px-3 py-1.5 rounded text-xs font-bold w-full shadow-sm"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
+                            <div>
+                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-users text-blue-500 mr-1"></i> Alunos Ativos</h4>
+                                <p class="text-xs text-gray-500 mt-1">Lista completa de alunos com contrato ativo, separada por plano e faixa.</p>
+                            </div>
+                            <button class="mt-4 bg-gray-800 hover:bg-black text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
                         </div>
+                        
                         <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="window.generateReport('inadimplentes')">
-                            <div><h4 class="font-bold text-gray-700"><i class="fa-solid fa-circle-exclamation text-red-500 mr-1"></i> Inadimplentes e Próximos</h4><p class="text-xs text-gray-500 mt-1">Pagamentos vencidos ou expirando em 7 dias.</p></div>
-                            <button class="mt-4 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-bold w-full shadow-sm"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
+                            <div>
+                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-circle-exclamation text-red-500 mr-1"></i> Inadimplentes e Próximos</h4>
+                                <p class="text-xs text-gray-500 mt-1">Alunos com pagamentos vencidos ou expirando nos próximos 7 dias.</p>
+                            </div>
+                            <button class="mt-4 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
                         </div>
+                        
                         <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="window.generateReport('financeiro')">
-                            <div><h4 class="font-bold text-gray-700"><i class="fa-solid fa-chart-line text-green-500 mr-1"></i> Resumo Financeiro</h4><p class="text-xs text-gray-500 mt-1">Projeção de recebimentos baseada nos planos ativos.</p></div>
-                            <button class="mt-4 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-bold w-full shadow-sm"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
+                            <div>
+                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-chart-line text-green-500 mr-1"></i> Resumo Financeiro Estimado</h4>
+                                <p class="text-xs text-gray-500 mt-1">Projeção de recebimentos baseada na quantidade de planos ativos cobráveis.</p>
+                            </div>
+                            <button class="mt-4 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
                         </div>
+                        
                         <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="window.generateReport('frequencia')">
-                            <div><h4 class="font-bold text-gray-700"><i class="fa-solid fa-calendar-check text-purple-500 mr-1"></i> Frequência (Top 15)</h4><p class="text-xs text-gray-500 mt-1">Os 15 alunos mais frequentes nos últimos 30 dias.</p></div>
-                            <button class="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-xs font-bold w-full shadow-sm"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
+                            <div>
+                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-calendar-check text-purple-500 mr-1"></i> Frequência (Top 15)</h4>
+                                <p class="text-xs text-gray-500 mt-1">Os 15 alunos mais frequentes e dedicados da academia nos últimos 30 dias.</p>
+                            </div>
+                            <button class="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- VIEW: AULA EXPERIMENTAL (KANBAN CRM) -->
-            <div id="view-experimental" class="hidden h-full flex flex-col">
-                <div class="px-6 py-4 bg-white border-b border-gray-200 shadow-sm flex justify-between items-center rounded-t-xl z-10">
-                    <div><h3 class="font-bold text-gray-800 uppercase text-lg"><i class="fa-solid fa-fire text-yellow-500 mr-2"></i> CRM Aulas Experimentais</h3><p class="text-xs text-gray-500">Arraste os cards para atualizar o status.</p></div>
-                    <button onclick="window.loadExperimentalData()" class="text-gray-500 hover:text-black text-sm bg-gray-100 p-2 rounded-full"><i class="fa-solid fa-rotate"></i></button>
-                </div>
-                <div class="flex-1 overflow-x-auto overflow-y-hidden bg-gray-100 p-4 rounded-b-xl border border-t-0 border-gray-200">
-                    <div class="flex gap-4 h-full min-w-[1000px] items-start">
-                        <!-- Cols -->
-                        <div class="flex-1 min-w-[240px] flex flex-col h-full max-h-[75vh]">
-                            <div class="bg-yellow-500 text-white font-bold py-2 px-4 rounded-t-lg flex justify-between"><span>AGENDADO</span><span id="count-Agendado" class="bg-white/20 px-2 rounded text-xs">0</span></div>
-                            <div class="kanban-col bg-gray-200/60 flex-1 overflow-y-auto p-2 rounded-b-lg space-y-2" id="col-Agendado" ondrop="window.drop(event)" ondragover="window.allowDrop(event)"></div>
+            <!-- VIEW: AULA EXPERIMENTAL -->
+            <div id="view-experimental" class="hidden">
+                <div class="bg-white rounded-xl shadow overflow-hidden border border-gray-200">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center no-print">
+                        <div>
+                            <h3 class="font-bold text-gray-800 uppercase text-lg"><i class="fa-solid fa-fire text-yellow-500 mr-2"></i> Gestão de Aulas Experimentais</h3>
+                            <p class="text-xs text-gray-500">Controle os visitantes que agendaram pelo site</p>
                         </div>
-                        <div class="flex-1 min-w-[240px] flex flex-col h-full max-h-[75vh]">
-                            <div class="bg-green-500 text-white font-bold py-2 px-4 rounded-t-lg flex justify-between"><span>COMPARECEU</span><span id="count-Concluído" class="bg-white/20 px-2 rounded text-xs">0</span></div>
-                            <div class="kanban-col bg-gray-200/60 flex-1 overflow-y-auto p-2 rounded-b-lg space-y-2" id="col-Concluído" ondrop="window.drop(event)" ondragover="window.allowDrop(event)"></div>
-                        </div>
-                        <div class="flex-1 min-w-[240px] flex flex-col h-full max-h-[75vh]">
-                            <div class="bg-blue-600 text-white font-bold py-2 px-4 rounded-t-lg flex justify-between"><span>MATRICULADO</span><span id="count-Matriculado" class="bg-white/20 px-2 rounded text-xs">0</span></div>
-                            <div class="kanban-col bg-gray-200/60 flex-1 overflow-y-auto p-2 rounded-b-lg space-y-2" id="col-Matriculado" ondrop="window.drop(event)" ondragover="window.allowDrop(event)"></div>
-                        </div>
-                        <div class="flex-1 min-w-[240px] flex flex-col h-full max-h-[75vh]">
-                            <div class="bg-red-500 text-white font-bold py-2 px-4 rounded-t-lg flex justify-between"><span>FALTOU / CANC.</span><span id="count-Faltou" class="bg-white/20 px-2 rounded text-xs">0</span></div>
-                            <div class="kanban-col bg-gray-200/60 flex-1 overflow-y-auto p-2 rounded-b-lg space-y-2" id="col-Faltou" ondrop="window.drop(event)" ondragover="window.allowDrop(event)"></div>
-                        </div>
+                        <button onclick="window.loadExperimentalData()" class="text-gray-500 hover:text-black text-sm"><i class="fa-solid fa-rotate"></i></button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
+                                    <th class="px-6 py-3 border-b">Data / Hora</th>
+                                    <th class="px-6 py-3 border-b">Nome do Visitante</th>
+                                    <th class="px-6 py-3 border-b">Contato</th>
+                                    <th class="px-6 py-3 border-b">Status</th>
+                                    <th class="px-6 py-3 border-b text-center no-print-col">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="experimental-table-body" class="text-sm text-gray-700 divide-y divide-gray-200">
+                                <tr><td colspan="5" class="px-6 py-4 text-center">Carregando dados...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -225,233 +459,886 @@
             <div id="view-notices" class="hidden">
                 <div class="bg-white rounded-xl shadow p-6 border-t-4 border-yellow-500 max-w-5xl mx-auto">
                     <div class="flex justify-between items-center mb-6">
-                        <div><h3 class="font-display text-xl font-bold text-gray-800"><i class="fa-solid fa-bullhorn mr-2 text-yellow-500"></i> Mural de Avisos</h3></div>
+                        <div>
+                            <h3 class="font-display text-xl font-bold text-gray-800"><i class="fa-solid fa-bullhorn mr-2 text-yellow-500"></i> Mural de Avisos</h3>
+                            <p class="text-sm text-gray-500">Publique comunicados, feriados ou novidades para todos os alunos verem no painel deles.</p>
+                        </div>
                         <button onclick="window.openNoticeModal()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded text-sm font-bold shadow-sm transition"><i class="fa-solid fa-plus mr-1"></i> Novo Aviso</button>
                     </div>
+
+                    <!-- WIDGET DE ANIVERSARIANTES DO MÊS -->
                     <div id="admin-birthdays-widget" class="mb-6 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-4 shadow-sm hidden">
-                         <h4 class="font-bold text-blue-800 flex items-center gap-2 mb-3"><i class="fa-solid fa-cake-candles text-blue-500"></i> Aniversariantes (<span id="birthday-month-name"></span>)</h4>
-                         <div id="birthday-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+                         <h4 class="font-bold text-blue-800 flex items-center gap-2 mb-3"><i class="fa-solid fa-cake-candles text-blue-500"></i> Aniversariantes do Mês (<span id="birthday-month-name"></span>)</h4>
+                         <div id="birthday-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                             <!-- JS injetará os aniversariantes aqui -->
+                         </div>
                     </div>
-                    <div id="admin-notices-list" class="space-y-4"><div class="text-center py-8 text-gray-400 italic text-sm">Carregando avisos...</div></div>
+                    
+                    <div id="admin-notices-list" class="space-y-4">
+                        <!-- Preenchido via JS -->
+                        <div class="text-center py-8 text-gray-400 italic text-sm">Carregando avisos...</div>
+                    </div>
                 </div>
             </div>
+
         </main>
     </div>
 
-    <!-- MODAIS GLOBAIS -->
+    <!-- PRINTABLE CONTAINERS (FORA DO MAIN UI PARA NÃO CORTAR PÁGINAS) -->
     
-    <!-- Modal Bulk Billing (WhatsApp) -->
-    <div id="bulk-bill-modal" class="fixed inset-0 z-[90] hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div class="bg-[#25D366] px-6 py-4 flex justify-between items-center text-white shrink-0">
-                <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-brands fa-whatsapp text-xl"></i> Disparo de Cobrança</h3>
-                <button onclick="window.closeBulkBillingModal()" class="hover:text-green-200"><i class="fa-solid fa-times text-xl"></i></button>
-            </div>
-            <div class="p-4 bg-green-50 border-b border-green-100 shrink-0">
-                <p class="text-sm text-green-800">Clique no botão enviar ao lado de cada aluno para abrir o seu WhatsApp.</p>
-                <p class="text-xs text-green-600 mt-1 font-bold">Total: <span id="bulk-bill-count">0</span> alunos.</p>
-            </div>
-            <div class="overflow-y-auto p-0 flex-1 bg-gray-50"><ul id="bulk-bill-list" class="divide-y divide-gray-200"></ul></div>
-            <div class="bg-white border-t px-6 py-4 flex justify-end shrink-0"><button onclick="window.closeBulkBillingModal()" class="px-5 py-2 bg-gray-200 text-gray-700 font-bold rounded hover:bg-gray-300">Fechar</button></div>
-        </div>
+    <!-- Relatórios -->
+    <div id="report-container" class="hidden bg-white text-black p-4 font-sans absolute inset-0 z-50">
+        <!-- Preenchido via JS -->
     </div>
 
-    <!-- Relatórios e Impressões (Hidden UI) -->
-    <div id="report-container" class="hidden bg-white text-black p-4 font-sans absolute inset-0 z-50"></div>
-
+    <!-- Printable Contract (Hidden in Web, Visible in Print) -->
     <div id="printable-contract" class="hidden bg-white text-black p-10 font-serif text-[11pt] leading-relaxed absolute inset-0 z-50">
         <div class="header-section text-center mb-6 border-b-2 border-black pb-4">
             <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" alt="Logo" class="h-16 mx-auto mb-2" style="filter: grayscale(100%);">
             <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
-            <p class="text-xs">CNPJ: 00.000.000/0001-00 | Tel: (91) 99819-2610</p>
+            <p class="text-xs">CNPJ: 00.000.000/0001-00</p>
+            <p class="text-xs">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, CEP 66635-110</p>
+            <p class="text-xs">Tel: (91) 99819-2610 | Email: administrativo@tanqueteambjj.com.br</p>
         </div>
         <h2 class="text-center font-bold text-lg mb-6 uppercase underline tracking-wide">Contrato de Prestação de Serviços Esportivos</h2>
+        
         <div class="parties-section mb-6 text-sm text-justify space-y-2 bg-gray-50 p-4 border border-gray-200 rounded">
-            <p><strong>1. CONTRATADA:</strong> <span class="uppercase font-bold">Tanque Team Academia de Artes Marciais LTDA</span>.</p>
-            <p><strong>2. CONTRATANTE:</strong> <span id="printContratante" class="font-bold uppercase"></span>, CPF: <span id="printCPF" class="font-mono font-bold"></span>, Endereço: <span id="printAddress" class="uppercase"></span>, Tel: <span id="printPhone"></span>, E-mail: <span id="printEmail"></span>.</p>
-            <p><strong>3. ALUNO(A):</strong> <span id="printStudent" class="font-bold uppercase"></span>, Nasc: <span id="printDob" class="font-mono"></span>. <span id="printBeltInfo"></span></p>
+            <p><strong>1. CONTRATADA:</strong> <span class="uppercase font-bold">Tanque Team Academia de Artes Marciais LTDA</span>, inscrita no CNPJ sob o nº 00.000.000/0001-00.</p>
+            <p><strong>2. CONTRATANTE (Responsável Financeiro):</strong> <span id="printContratante" class="font-bold uppercase"></span>, inscrito(a) no CPF sob o nº <span id="printCPF" class="font-mono font-bold"></span>, residente e domiciliado(a) em <span id="printAddress" class="uppercase"></span>, Telefone: <span id="printPhone"></span>, E-mail: <span id="printEmail"></span>.</p>
+            <p><strong>3. ALUNO(A) PRINCIPAL:</strong> <span id="printStudent" class="font-bold uppercase"></span>, nascido(a) em <span id="printDob" class="font-mono"></span>. <span id="printBeltInfo"></span></p>
             <div id="printDependentsBlock" class="mt-2 pl-4 border-l-2 border-gray-400"></div>
         </div>
-        <div id="print-clauses-container" class="clauses-section text-sm text-justify mb-6 space-y-3"></div>
+
+        <div id="print-clauses-container" class="clauses-section text-sm text-justify mb-6 space-y-3">
+            <!-- JS Injected Clauses -->
+        </div>
+
         <div class="signatures-section mt-16 page-break-inside-avoid">
             <p class="mb-12 text-right text-sm">Belém-PA, <span id="printContractDate"></span>.</p>
             <div class="flex justify-between gap-12 mt-16 px-8">
-                <div class="w-1/2 text-center"><div class="border-t border-black pt-2"><p class="font-bold uppercase text-xs tracking-wider">Tanque Team BJJ</p></div></div>
-                <div class="w-1/2 text-center"><div class="border-t border-black pt-2"><p class="font-bold text-sm uppercase" id="printSignatureName"></p><p class="font-bold uppercase text-[10px] text-gray-600 tracking-wider">CONTRATANTE</p></div></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="qr-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 text-center max-w-sm w-full animate-fade-in">
-            <h3 class="font-display font-bold text-xl mb-4 uppercase flex items-center justify-center gap-2 dark:text-white"><i class="fa-solid fa-id-card text-brand-red"></i> Carteirinha Digital</h3>
-            <div id="printable-qr-card" class="bg-white dark:bg-gray-100 border-2 border-brand-dark dark:border-gray-600 rounded-xl overflow-hidden relative shadow-2xl mx-auto flex flex-col" style="width: 250px; height: 400px;">
-                <div class="bg-brand-dark text-white p-3 flex items-center justify-center gap-2 shrink-0"><img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" class="h-6"><span class="font-display font-bold text-sm tracking-widest uppercase">Tanque Team</span></div>
-                <div class="p-4 flex flex-col items-center flex-1 relative bg-white">
-                    <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 opacity-5 pointer-events-none">
-                    <div class="w-24 h-24 bg-gray-100 rounded-full border-4 border-gray-200 overflow-hidden mb-3 shadow-md z-10 flex-shrink-0 relative"><img id="qr-photo" src="" class="w-full h-full object-cover hidden"><div id="qr-photo-placeholder" class="w-full h-full flex items-center justify-center text-gray-400 font-bold text-3xl font-display">TT</div></div>
-                    <div class="text-center z-10 w-full mb-2"><h4 class="font-bold text-base text-gray-900 leading-tight uppercase truncate" id="qr-student-name">Aluno</h4><p class="text-xs text-brand-red font-bold uppercase truncate mt-1" id="qr-belt">Faixa Branca</p><p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider truncate mt-1" id="qr-plan">Plano</p></div>
-                    <div id="qr-code-wrapper" class="mt-auto bg-white p-1.5 border border-gray-200 rounded shadow-sm z-10 inline-block"><img id="qr-image" src="" alt="QR Code" class="w-24 h-24"></div>
-                    <div id="qr-blocked-wrapper" class="hidden mt-auto bg-red-50 p-2 border border-red-200 rounded shadow-sm z-10 flex-col items-center justify-center w-24 h-24 text-center"><i class="fa-solid fa-lock text-red-500 text-2xl mb-1"></i><span class="text-[9px] font-bold text-red-700 leading-tight">Pagamento<br>Pendente</span></div>
-                    <p id="qr-footer-text" class="text-[8px] text-gray-400 mt-2 z-10 font-bold uppercase tracking-wider">Apresente no Check-in</p>
+                <div class="w-1/2 text-center">
+                    <div class="border-t border-black pt-2">
+                        <p class="font-bold uppercase text-xs tracking-wider">Tanque Team BJJ (CONTRATADA)</p>
+                    </div>
+                </div>
+                <div class="w-1/2 text-center">
+                    <div class="border-t border-black pt-2">
+                        <p class="font-bold text-sm uppercase" id="printSignatureName"></p>
+                        <p class="font-bold uppercase text-[10px] text-gray-600 tracking-wider">CONTRATANTE / RESPONSÁVEL FINANCEIRO</p>
+                    </div>
                 </div>
             </div>
-            <div class="flex justify-end gap-2 no-print mt-6"><button onclick="window.closeQrModal()" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm font-bold text-gray-700">Fechar</button><button onclick="window.printQrCard()" class="px-4 py-2 bg-brand-dark text-white rounded text-sm font-bold hover:bg-black"><i class="fa-solid fa-print"></i> Imprimir</button></div>
         </div>
     </div>
 
-    <!-- Modal: Leitor de Check-in -->
+    <!-- Modal: Mostrar Cartão QR Code -->
+    <div id="qr-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl p-6 text-center max-w-sm w-full animate-fade-in">
+            <h3 class="font-display font-bold text-xl mb-4 uppercase flex items-center justify-center gap-2">
+                <i class="fa-solid fa-id-card text-brand-red"></i> Cartão de Acesso
+            </h3>
+            
+            <div id="printable-qr-card" class="bg-white border-2 border-brand-dark rounded-xl overflow-hidden relative shadow-2xl mx-auto flex flex-col" style="width: 250px; height: 400px;">
+                <!-- Header -->
+                <div class="bg-brand-dark text-white p-3 flex items-center justify-center gap-2 shrink-0">
+                    <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" class="h-6">
+                    <span class="font-display font-bold text-sm tracking-widest uppercase">Tanque Team</span>
+                </div>
+                
+                <!-- Body -->
+                <div class="p-4 flex flex-col items-center flex-1 relative bg-white">
+                    <!-- Background watermark -->
+                    <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 opacity-5 pointer-events-none">
+                    
+                    <!-- Photo -->
+                    <div class="w-24 h-24 bg-gray-100 rounded-full border-4 border-gray-200 overflow-hidden mb-3 shadow-md z-10 flex-shrink-0 relative">
+                        <img id="qr-photo" src="" class="w-full h-full object-cover hidden">
+                        <div id="qr-photo-placeholder" class="w-full h-full flex items-center justify-center text-gray-400 font-bold text-3xl font-display">TT</div>
+                    </div>
+                    
+                    <!-- Info -->
+                    <div class="text-center z-10 w-full mb-2">
+                        <h4 class="font-bold text-base text-gray-900 leading-tight uppercase truncate" id="qr-student-name">Nome do Aluno</h4>
+                        <p class="text-xs text-brand-red font-bold uppercase truncate mt-1" id="qr-belt">Faixa Branca</p>
+                        <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider truncate mt-1" id="qr-plan">Plano</p>
+                    </div>
+                    
+                    <!-- QR Code -->
+                    <div class="mt-auto bg-white p-1.5 border border-gray-200 rounded shadow-sm z-10 inline-block">
+                        <img id="qr-image" src="" alt="QR Code" class="w-24 h-24">
+                    </div>
+                    <p class="text-[8px] text-gray-400 mt-2 z-10 font-bold uppercase tracking-wider">Apresente no Check-in</p>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 no-print mt-6">
+                <button onclick="window.closeQrModal()" class="px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50 font-bold text-gray-700 transition">Fechar</button>
+                <button onclick="window.printQrCard()" class="px-4 py-2 bg-brand-dark text-white rounded text-sm font-bold hover:bg-black transition shadow-md flex items-center gap-2"><i class="fa-solid fa-print"></i> Imprimir Cartão</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Leitor de Check-in da Câmera -->
     <div id="checkin-modal" class="fixed inset-0 z-[100] hidden bg-brand-dark flex flex-col justify-center items-center p-4">
         <div class="w-full max-w-lg bg-white rounded-xl overflow-hidden shadow-2xl flex flex-col">
-            <div class="bg-green-600 px-6 py-4 flex justify-between items-center text-white shrink-0">
+            <div class="bg-green-600 px-6 py-4 flex justify-between items-center text-white">
                 <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-camera"></i> Leitor de Check-in</h3>
                 <button onclick="window.closeCheckinModal()" class="hover:text-green-200 text-xl"><i class="fa-solid fa-times"></i></button>
             </div>
-            <div class="bg-gray-100 p-4 shrink-0 border-b border-gray-200">
-                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Selecione a Turma Atual</label>
-                <select id="checkin-class-selector" class="w-full border-2 border-green-500 rounded-lg p-3 font-bold text-gray-800 bg-white shadow-sm focus:outline-none">
-                    <option value="Turma Mista (Livre)">Geral / Mista</option>
-                    <option value="Adulto - 10h30">Adulto - 10h30</option>
-                    <option value="Adulto - 12h30">Adulto - 12h30</option>
-                    <option value="Adulto - 18h00">Adulto - 18h00</option>
-                    <option value="Adulto - 21h00">Adulto - 21h00</option>
-                    <option value="Infantil - 15h00">Infantil - 15h00</option>
-                    <option value="Infantil - 16h30">Infantil - 16h30</option>
-                </select>
-            </div>
+            
             <div class="p-6 flex-1 flex flex-col items-center">
+                <!-- Caixa do Leitor da Camera -->
                 <div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-4 border-gray-200 shadow-inner mb-4" style="min-height: 250px;"></div>
+                
+                <!-- Feedback Box -->
                 <div id="checkin-result" class="text-center py-4 w-full rounded-lg bg-gray-50 border border-gray-200 font-medium text-gray-600 min-h-[100px] flex flex-col items-center justify-center">
-                    <i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o QR Code...
+                    <i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i>
+                    Aponte o QR Code do aluno para a câmera...
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Outros Modais (Recibo, Histórico, Edição, Graduação, Aviso) - Reduzidos em estrutura, funções intactas -->
+    <!-- Printable Receipt Container (Hidden by default) -->
     <div id="printable-receipt" class="hidden bg-white text-black p-8 font-sans absolute inset-0 z-50">
-        <h2 class="text-lg font-bold mt-4 uppercase border border-black inline-block px-4 py-1 rounded">Recibo de Pagamento</h2>
-        <div class="space-y-4 text-sm mb-8 mt-4"><p>Recebemos de <strong id="rec-student-name" class="uppercase"></strong>,</p><p>A quantia de <strong id="rec-amount" class="text-lg"></strong>,</p><p>Referente ao plano: <strong id="rec-plan" class="uppercase"></strong>.</p><div class="grid grid-cols-2 gap-4 mt-4 bg-gray-50 p-4 border border-gray-200 rounded"><div><span class="text-xs text-gray-500 block">Data do Pagamento:</span><strong id="rec-date"></strong></div><div><span class="text-xs text-gray-500 block">Forma de Pagamento:</span><strong id="rec-method"></strong></div><div class="col-span-2"><span class="text-xs text-gray-500 block">Válido até:</span><strong id="rec-next-due"></strong></div></div><div id="rec-dependents-list" class="text-xs font-bold text-purple-700 mt-3 bg-purple-50 p-2 rounded border border-purple-200 hidden"></div></div>
+        <div class="text-center mb-6 border-b-2 border-gray-300 pb-4">
+            <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" alt="Logo" class="h-16 mx-auto mb-2" style="filter: grayscale(100%);">
+            <h1 class="text-2xl font-display font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
+            <p class="text-xs text-gray-600">CNPJ: 00.000.000/0001-00</p>
+            <h2 class="text-lg font-bold mt-4 uppercase border border-black inline-block px-4 py-1 rounded">Recibo de Pagamento</h2>
+        </div>
+        <div class="space-y-4 text-sm mb-8">
+            <p>Recebemos de <strong id="rec-student-name" class="uppercase"></strong>,</p>
+            <p>A quantia de <strong id="rec-amount" class="text-lg"></strong>,</p>
+            <p>Referente ao plano: <strong id="rec-plan" class="uppercase"></strong>.</p>
+            <div class="grid grid-cols-2 gap-4 mt-4 bg-gray-50 p-4 border border-gray-200 rounded">
+                <div><span class="text-xs text-gray-500 block">Data do Pagamento:</span><strong id="rec-date"></strong></div>
+                <div><span class="text-xs text-gray-500 block">Forma de Pagamento:</span><strong id="rec-method"></strong></div>
+                <div class="col-span-2"><span class="text-xs text-gray-500 block">Válido até (Próx. Vencimento):</span><strong id="rec-next-due"></strong></div>
+            </div>
+            <!-- NOVO: TEXTO DEPENDENTES RECIBO -->
+            <div id="rec-dependents-list" class="text-xs font-bold text-purple-700 mt-3 bg-purple-50 p-2 rounded border border-purple-200 hidden"></div>
+        </div>
+        <div class="mt-12 pt-4 border-t border-black text-center w-64 mx-auto">
+            <p class="font-bold text-sm uppercase">Tanque Team BJJ</p>
+            <p class="text-[10px] text-gray-500">Assinatura Digital / Administração</p>
+        </div>
     </div>
 
-    <div id="receipt-modal" class="fixed inset-0 z-[110] hidden bg-black/80 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full text-center">
-            <div class="bg-green-600 p-6 text-white"><i class="fa-solid fa-circle-check text-5xl mb-2"></i><h3 class="font-bold text-xl mt-2">Pagamento Confirmado!</h3></div>
+    <!-- Receipt Modal (Ações pós-pagamento) -->
+    <div id="receipt-modal" class="fixed inset-0 z-[110] hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden animate-fade-in text-center">
+            <div class="bg-green-600 p-6 text-white">
+                <i class="fa-solid fa-circle-check text-5xl mb-2"></i>
+                <h3 class="font-bold text-xl mt-2">Pagamento Confirmado!</h3>
+            </div>
             <div class="p-6">
+                <p class="text-sm text-gray-600 mb-6">O que deseja fazer com o recibo de <strong id="rm-student-name"></strong>?</p>
                 <div class="space-y-3">
-                    <button onclick="window.printReceipt()" class="w-full bg-gray-800 text-white font-bold py-3 rounded-lg"><i class="fa-solid fa-file-pdf"></i> Imprimir</button>
-                    <button onclick="window.sendReceiptWhatsApp()" class="w-full bg-green-500 text-white font-bold py-3 rounded-lg"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+                    <button onclick="window.printReceipt()" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-lg transition shadow-md flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-file-pdf text-lg"></i> Imprimir / Gerar PDF
+                    </button>
+                    <button onclick="window.sendReceiptWhatsApp()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg transition shadow-md flex justify-center items-center gap-2">
+                        <i class="fa-brands fa-whatsapp text-lg"></i> Enviar por WhatsApp
+                    </button>
                 </div>
-                <button onclick="window.closeReceiptModal()" class="mt-6 text-sm text-gray-400 font-bold underline">Fechar</button>
+                <button onclick="window.closeReceiptModal()" class="mt-6 text-sm text-gray-400 hover:text-gray-600 font-bold underline">Fechar esta janela</button>
             </div>
         </div>
     </div>
 
-    <div id="attendance-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md flex flex-col max-h-[80vh]">
-            <div class="bg-blue-600 px-6 py-4 flex justify-between text-white"><h3 class="font-bold text-lg">Gerenciar Frequência</h3><button onclick="window.closeAttendanceModal()"><i class="fa-solid fa-times"></i></button></div>
-            <div class="p-4 bg-gray-50 border-b"><h4 class="font-bold text-gray-800" id="att-student-name">--</h4><input type="hidden" id="att-student-id"><div class="mt-3 flex gap-2"><input type="date" id="att-date-input" class="border rounded px-2 py-1 text-sm flex-grow"><button onclick="window.addManualAttendance()" class="bg-green-600 text-white px-3 py-1 rounded font-bold">Add</button></div></div>
-            <div class="overflow-y-auto p-0 flex-1"><div id="att-list" class="divide-y divide-gray-100"></div><div id="att-empty" class="hidden text-center py-8 text-gray-400 italic text-sm">Vazio</div></div>
-            <div class="p-3 border-t text-right"><button onclick="window.closeAttendanceModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded font-bold">Fechar</button></div>
-        </div>
-    </div>
-
-    <div id="payment-modal" class="fixed inset-0 z-[70] hidden bg-black/60 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md">
-            <div class="bg-green-600 px-6 py-4 flex justify-between text-white"><h3 class="font-bold text-lg">Informar Pagamento</h3><button onclick="window.closePaymentModal()"><i class="fa-solid fa-times"></i></button></div>
-            <div class="p-6">
-                <input type="hidden" id="pay-student-id"><p class="text-sm mb-4">Pagamento para: <strong id="pay-student-name">--</strong></p>
-                <div class="space-y-3">
-                    <select id="pay-plan-select" onchange="window.updatePayAmount()" class="w-full border rounded p-2 text-sm bg-gray-50"><option value="infantil-mensal">Infantil Mensal</option><option value="infantil-trimestral">Infantil Trimestral</option><option value="infantil-semestral">Infantil Semestral</option><option value="adulto-mensal">Adulto Mensal</option><option value="adulto-trimestral">Adulto Trimestral</option><option value="adulto-semestral">Adulto Semestral</option><option value="combo-dupla">Combo Dupla</option><option value="combo-familia">Combo Família</option><option value="dependente">Dependente</option><option value="administracao">Administração</option><option value="isento">Isento / Bolsista</option><option value="outros">Outros / Avulso</option></select>
-                    <input type="date" id="pay-date" class="w-full border rounded p-2 text-sm">
-                    <div class="grid grid-cols-2 gap-3"><input type="number" id="pay-amount" class="w-full border rounded p-2 text-sm font-bold" placeholder="0.00" step="0.01"><select id="pay-method" class="w-full border rounded p-2 text-sm"><option value="Pix">Pix</option><option value="Dinheiro">Dinheiro</option><option value="Débito">Débito</option><option value="Crédito à vista">Crédito à vista</option><option value="Crédito 2x">Crédito 2x</option><option value="Crédito 3x">Crédito 3x</option></select></div>
-                    <div class="pt-2 border-t border-gray-100"><label class="block text-xs font-bold text-green-700 mb-1 uppercase">Próximo Vencimento</label><input type="date" id="pay-next-due" class="w-full border border-green-200 bg-green-50 rounded p-2 text-sm font-bold text-green-800"></div>
+    <!-- Attendance Management Modal -->
+    <div id="attendance-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]">
+            <div class="bg-blue-600 px-6 py-4 flex justify-between items-center text-white shrink-0">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-calendar-check mr-2"></i> Gerenciar Frequência</h3>
+                <button onclick="window.closeAttendanceModal()" class="hover:text-gray-200"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-4 bg-gray-50 border-b shrink-0">
+                <h4 class="font-bold text-gray-800" id="att-student-name">--</h4>
+                <input type="hidden" id="att-student-id">
+                
+                <div class="mt-3 flex gap-2">
+                    <input type="date" id="att-date-input" class="border rounded px-2 py-1 text-sm flex-grow">
+                    <button onclick="window.addManualAttendance()" class="bg-green-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-green-700">Adicionar</button>
                 </div>
-                <div class="mt-6 flex justify-end gap-2"><button onclick="window.closePaymentModal()" class="px-4 py-2 border rounded">Cancelar</button><button onclick="window.confirmPayment()" class="px-4 py-2 bg-green-600 text-white rounded font-bold">Confirmar</button></div>
+                <p class="text-[10px] text-gray-500 mt-1">Selecione uma data para adicionar presença retroativa.</p>
+            </div>
+            <div class="overflow-y-auto p-0 flex-1">
+                <div id="att-list" class="divide-y divide-gray-100">
+                    <!-- List populated by JS -->
+                </div>
+                <div id="att-empty" class="hidden text-center py-8 text-gray-400 italic text-sm">Nenhuma presença registrada.</div>
+            </div>
+            <div class="p-3 border-t bg-white shrink-0 text-right">
+                <button onclick="window.closeAttendanceModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded text-sm font-bold hover:bg-gray-300">Fechar</button>
             </div>
         </div>
     </div>
 
-    <div id="history-modal" class="fixed inset-0 z-[70] hidden bg-black/60 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg flex flex-col h-[80vh]">
-            <div class="bg-gray-800 px-6 py-4 flex justify-between text-white shrink-0"><h3 class="font-bold text-lg">Histórico Financeiro</h3><button onclick="window.closeHistoryModal()"><i class="fa-solid fa-times"></i></button></div>
-            <div class="p-4 bg-gray-50 border-b shrink-0"><h4 class="font-bold text-gray-800" id="hist-student-name">--</h4></div>
-            <div class="overflow-y-auto p-4 flex-1"><table class="w-full text-sm text-left"><thead class="text-xs text-gray-500 uppercase bg-gray-100 border-b"><tr><th>Data</th><th>Valor</th><th>Forma</th><th class="text-right">Ação</th></tr></thead><tbody id="history-table-body" class="divide-y divide-gray-100"></tbody></table><div id="history-empty" class="hidden text-center py-8 text-gray-400 italic text-sm">Vazio</div></div>
-            <div class="p-4 border-t bg-white shrink-0 text-right"><button onclick="window.closeHistoryModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded font-bold">Fechar</button></div>
-        </div>
-    </div>
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="fixed inset-0 z-[70] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-fade-in">
+            <div class="bg-green-600 px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-cash-register mr-2"></i> Informar Pagamento</h3>
+                <button onclick="window.closePaymentModal()" class="hover:text-gray-200"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <input type="hidden" id="pay-student-id">
+                <p class="text-sm text-gray-500 mb-4">Registrando pagamento para: <strong id="pay-student-name" class="text-gray-800">--</strong></p>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Referente ao Plano</label>
+                        <select id="pay-plan-select" onchange="window.updatePayAmount()" class="w-full border rounded p-2 text-sm bg-gray-50">
+                            <option value="" disabled selected>Selecione...</option>
+                            <option value="infantil-mensal">Infantil Mensal</option>
+                            <option value="infantil-trimestral">Infantil Trimestral</option>
+                            <option value="infantil-semestral">Infantil Semestral</option>
+                            <option value="adulto-mensal">Adulto Mensal</option>
+                            <option value="adulto-trimestral">Adulto Trimestral</option>
+                            <option value="adulto-semestral">Adulto Semestral</option>
+                            <option value="combo-dupla">Combo Dupla</option>
+                            <option value="combo-familia">Combo Família</option>
+                            <option value="dependente">Dependente</option>
+                            <option value="administracao">Administração</option>
+                            <option value="isento">Isento / Bolsista</option>
+                            <option value="outros">Outros / Avulso</option>
+                        </select>
+                    </div>
 
-    <div id="edit-payment-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm">
-            <div class="bg-blue-600 px-6 py-4 flex justify-between text-white"><h3 class="font-bold text-lg">Editar Pagamento</h3><button onclick="window.closeEditPaymentModal()"><i class="fa-solid fa-times"></i></button></div>
-            <div class="p-6"><input type="hidden" id="edit-pay-student-id"><input type="hidden" id="edit-pay-timestamp"><div class="space-y-3"><input type="date" id="edit-pay-date" class="w-full border rounded p-2"><input type="number" id="edit-pay-amount" class="w-full border rounded p-2"><select id="edit-pay-method" class="w-full border rounded p-2"><option value="Pix">Pix</option><option value="Dinheiro">Dinheiro</option><option value="Débito">Débito</option><option value="Crédito à vista">Crédito</option></select></div><div class="mt-6 flex justify-end gap-2"><button onclick="window.closeEditPaymentModal()" class="px-4 py-2 border rounded">Cancelar</button><button onclick="window.saveEditedPayment()" class="px-4 py-2 bg-blue-600 text-white rounded font-bold">Salvar</button></div></div>
-        </div>
-    </div>
-
-    <div id="edit-exp-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md">
-            <div class="bg-yellow-500 px-6 py-4 flex justify-between text-white"><h3 class="font-bold text-lg">Editar Aula Exp.</h3><button onclick="window.closeEditExperimentalModal()"><i class="fa-solid fa-times"></i></button></div>
-            <div class="p-6 space-y-4"><input type="hidden" id="edit-exp-id"><input type="text" id="edit-exp-name" class="w-full border rounded p-2"><div class="grid grid-cols-2 gap-4"><input type="text" id="edit-exp-phone" class="w-full border rounded p-2"><input type="text" id="edit-exp-dob" class="w-full border rounded p-2"><input type="date" id="edit-exp-date" class="w-full border rounded p-2"><input type="time" id="edit-exp-time" class="w-full border rounded p-2"></div><div class="mt-6 flex justify-end gap-2"><button onclick="window.closeEditExperimentalModal()" class="px-4 py-2 border rounded">Cancelar</button><button onclick="window.saveExperimentalChanges()" class="px-4 py-2 bg-yellow-500 text-white rounded font-bold">Salvar</button></div></div>
-        </div>
-    </div>
-
-    <div id="edit-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
-            <div class="bg-brand-dark px-6 py-4 flex justify-between text-white shrink-0"><h3 class="font-display font-bold text-lg">Gerenciar Aluno</h3><button onclick="window.closeEditModal()"><i class="fa-solid fa-times"></i></button></div>
-            <div class="p-6 overflow-y-auto flex-1">
-                <input type="hidden" id="edit-id">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2 pb-2 border-b mb-2">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input type="text" id="edit-name" class="w-full border rounded p-2" placeholder="Nome">
-                            <select id="edit-plan" class="w-full border rounded p-2"><option value="infantil-mensal">Infantil Mensal</option><option value="infantil-trimestral">Infantil Trimestral</option><option value="infantil-semestral">Infantil Semestral</option><option value="adulto-mensal">Adulto Mensal</option><option value="adulto-trimestral">Adulto Trimestral</option><option value="adulto-semestral">Adulto Semestral</option><option value="combo-dupla">Combo Dupla</option><option value="combo-casal">Combo Casal</option><option value="combo-familia">Combo Família</option><option value="dependente">Dependente</option><option value="administracao">Administração</option></select>
-                            <div class="md:col-span-2"><select id="edit-titular" class="w-full border border-purple-200 rounded p-2 bg-purple-50"><option value="">-- Titular --</option></select></div>
-                            <input type="email" id="edit-email" class="w-full border rounded p-2" placeholder="Email">
-                            <input type="text" id="edit-phone" class="w-full border rounded p-2" placeholder="Telefone">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Data do Pagamento</label>
+                        <input type="date" id="pay-date" class="w-full border rounded p-2 text-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Valor (R$)</label>
+                            <input type="number" id="pay-amount" class="w-full border rounded p-2 text-sm font-bold text-gray-700" placeholder="0.00" step="0.01">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Forma</label>
+                            <select id="pay-method" class="w-full border rounded p-2 text-sm">
+                                <option value="Pix">Pix</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                                <option value="Débito">Débito</option>
+                                <option value="Crédito à vista">Crédito à vista</option>
+                                <option value="Crédito 2x">Crédito 2x</option>
+                                <option value="Crédito 3x">Crédito 3x</option>
+                            </select>
                         </div>
                     </div>
-                    <select id="edit-belt-color" class="w-full border rounded p-2"><option>Branca</option><option>Cinza</option><option>Amarela</option><option>Laranja</option><option>Verde</option><option>Azul</option><option>Roxa</option><option>Marrom</option><option>Preta</option></select>
-                    <select id="edit-belt-degree" class="w-full border rounded p-2"><option value="0">0º</option><option value="1">1º</option><option value="2">2º</option><option value="3">3º</option><option value="4">4º</option></select>
-                    <select id="edit-enrollment-status" class="w-full border rounded p-2 font-bold"><option value="Ativo" class="text-green-600">Ativo</option><option value="Inativo" class="text-red-600">Inativo</option></select>
-                    <select id="edit-payment" class="w-full border rounded p-2"><option value="Pendente">Pendente</option><option value="Em dia">Em dia</option><option value="Isento">Isento</option></select>
-                    <div class="col-span-1 md:col-span-2"><label class="text-xs">Vencimento Contrato</label><input type="date" id="edit-end-date" class="w-full border rounded p-2"></div>
-                    <div class="md:col-span-2 pt-4 mt-2 border-t bg-blue-50 p-4 rounded-lg">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><input type="text" id="edit-login" class="w-full border border-blue-200 rounded p-2" placeholder="Login"><input type="text" id="edit-password" class="w-full border border-blue-200 rounded p-2" placeholder="Senha"></div>
+                    <div class="pt-2 border-t border-gray-100">
+                        <label class="block text-xs font-bold text-green-700 mb-1 uppercase">Definir Próximo Vencimento</label>
+                        <input type="date" id="pay-next-due" class="w-full border border-green-200 bg-green-50 rounded p-2 text-sm font-bold text-green-800">
+                        <p class="text-[10px] text-gray-400 mt-1">O status do aluno ficará "Em dia" até esta data.</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-2">
+                    <button onclick="window.closePaymentModal()" class="px-4 py-2 border rounded text-sm hover:bg-gray-100">Cancelar</button>
+                    <button onclick="window.confirmPayment()" class="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 font-bold">Confirmar Pagamento</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="history-modal" class="fixed inset-0 z-[70] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg overflow-hidden h-[80vh] flex flex-col">
+            <div class="bg-gray-800 px-6 py-4 flex justify-between items-center text-white shrink-0">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-clock-rotate-left mr-2"></i> Histórico Financeiro</h3>
+                <button onclick="window.closeHistoryModal()" class="hover:text-gray-300"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-4 bg-gray-50 border-b shrink-0">
+                <h4 class="font-bold text-gray-800" id="hist-student-name">--</h4>
+                <p class="text-xs text-gray-500">Registros de pagamentos efetuados.</p>
+            </div>
+            <div class="overflow-y-auto p-4 flex-1">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-xs text-gray-500 uppercase bg-gray-100 border-b">
+                        <tr>
+                            <th class="px-3 py-2">Data Pagto</th>
+                            <th class="px-3 py-2">Valor</th>
+                            <th class="px-3 py-2">Forma</th>
+                            <th class="px-3 py-2 text-right">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body" class="divide-y divide-gray-100">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+                <div id="history-empty" class="hidden text-center py-8 text-gray-400 italic text-sm">Nenhum pagamento registrado no histórico.</div>
+            </div>
+            <div class="p-4 border-t bg-white shrink-0 text-right">
+                <button onclick="window.closeHistoryModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded text-sm font-bold hover:bg-gray-300">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Payment Modal -->
+    <div id="edit-payment-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden animate-fade-in">
+            <div class="bg-blue-600 px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-pen mr-2"></i> Editar Pagamento</h3>
+                <button onclick="window.closeEditPaymentModal()" class="hover:text-blue-200"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <input type="hidden" id="edit-pay-student-id">
+                <input type="hidden" id="edit-pay-timestamp">
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Data do Pagamento</label>
+                        <input type="date" id="edit-pay-date" class="w-full border rounded p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Valor (R$)</label>
+                        <input type="number" id="edit-pay-amount" class="w-full border rounded p-2 text-sm font-bold text-gray-700" step="0.01">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Forma</label>
+                        <select id="edit-pay-method" class="w-full border rounded p-2 text-sm">
+                            <option value="Pix">Pix</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="Débito">Débito</option>
+                            <option value="Crédito à vista">Crédito à vista</option>
+                            <option value="Crédito 2x">Crédito 2x</option>
+                            <option value="Crédito 3x">Crédito 3x</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-2">
+                    <button onclick="window.closeEditPaymentModal()" class="px-4 py-2 border rounded text-sm hover:bg-gray-100">Cancelar</button>
+                    <button onclick="window.saveEditedPayment()" class="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 font-bold">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Experimental Modal -->
+    <div id="edit-exp-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-fade-in">
+            <div class="bg-yellow-500 px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-pen mr-2"></i> Editar Aula Exp.</h3>
+                <button onclick="window.closeEditExperimentalModal()" class="hover:text-yellow-200"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="edit-exp-id">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Nome Completo</label>
+                    <input type="text" id="edit-exp-name" class="w-full border rounded p-2 text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Telefone / Whats</label>
+                        <input type="text" id="edit-exp-phone" class="w-full border rounded p-2 text-sm" placeholder="(91) 90000-0000">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Nascimento (Opcional)</label>
+                        <input type="text" id="edit-exp-dob" class="w-full border rounded p-2 text-sm" placeholder="DD/MM/AAAA">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Nova Data</label>
+                        <input type="date" id="edit-exp-date" class="w-full border rounded p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Novo Horário</label>
+                        <input type="time" id="edit-exp-time" class="w-full border rounded p-2 text-sm">
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end gap-2">
+                    <button onclick="window.closeEditExperimentalModal()" class="px-4 py-2 border rounded text-sm hover:bg-gray-100">Cancelar</button>
+                    <button onclick="window.saveExperimentalChanges()" class="px-4 py-2 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600 font-bold">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit/Manage Modal -->
+    <div id="edit-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all">
+            <div class="bg-brand-dark px-6 py-4 flex justify-between items-center">
+                <h3 class="text-white font-display font-bold text-lg">Gerenciar Aluno</h3>
+                <button onclick="window.closeEditModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto max-h-[80vh]">
+                <input type="hidden" id="edit-id">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2 pb-2 border-b border-gray-200 mb-2">
+                        <!-- PHOTO UPLOAD SECTION -->
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="relative w-20 h-20 group cursor-pointer" onclick="document.getElementById('edit-photo').click()">
+                                <img id="edit-photo-preview" src="https://ui-avatars.com/api/?name=User&background=random" class="w-full h-full rounded-full object-cover border-2 border-gray-200 shadow-md">
+                                <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                                    <i class="fa-solid fa-camera text-white"></i>
+                                </div>
+                                <input type="file" id="edit-photo" accept="image/*" class="hidden" onchange="window.previewPhoto(event)">
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-brand-red uppercase">Dados Pessoais</h4>
+                                <p class="text-[10px] text-gray-400">Clique na imagem para alterar a foto.</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Nome Completo</label>
+                                <input type="text" id="edit-name" class="w-full border rounded p-2 focus:ring-brand-red focus:border-brand-red">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Plano</label>
+                                <select id="edit-plan" class="w-full border rounded p-2">
+                                    <option value="infantil-mensal">Infantil Mensal</option>
+                                    <option value="infantil-trimestral">Infantil Trimestral</option>
+                                    <option value="infantil-semestral">Infantil Semestral</option>
+                                    <option value="adulto-mensal">Adulto Mensal</option>
+                                    <option value="adulto-trimestral">Adulto Trimestral</option>
+                                    <option value="adulto-semestral">Adulto Semestral</option>
+                                    <option value="combo-dupla">Combo Dupla (1 Ad + 1 Inf)</option>
+                                    <option value="combo-casal">Combo Casal (2 Adultos)</option>
+                                    <option value="combo-familia">Combo Família (3 Pessoas)</option>
+                                    <option value="dependente">Dependente (Isento)</option>
+                                    <option value="administracao">Administração (Isento)</option>
+                                </select>
+                            </div>
+                            <!-- CAMPO TITULAR (VINCULAÇÃO) -->
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-purple-600 mb-1">Titular do Plano (Preencher caso seja Dependente)</label>
+                                <select id="edit-titular" class="w-full border border-purple-200 rounded p-2 bg-purple-50 focus:ring-purple-500">
+                                    <option value="">-- Selecione o Titular --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Email</label>
+                                <input type="email" id="edit-email" class="w-full border rounded p-2">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Telefone</label>
+                                <input type="text" id="edit-phone" class="w-full border rounded p-2">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Cor da Faixa</label>
+                        <select id="edit-belt-color" class="w-full border rounded p-2">
+                            <option>Branca</option><option>Cinza</option><option>Amarela</option><option>Laranja</option><option>Verde</option><option>Azul</option><option>Roxa</option><option>Marrom</option><option>Preta</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Graus</label>
+                        <select id="edit-belt-degree" class="w-full border rounded p-2">
+                            <option value="0">0º</option><option value="1">1º</option><option value="2">2º</option><option value="3">3º</option><option value="4">4º</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Status Matrícula</label>
+                        <select id="edit-enrollment-status" class="w-full border rounded p-2 font-bold text-gray-700">
+                            <option value="Ativo" class="text-green-600">Ativo</option>
+                            <option value="Inativo" class="text-red-600">Inativo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Status Pagamento</label>
+                        <select id="edit-payment" class="w-full border rounded p-2">
+                            <option value="Pendente">Pendente</option>
+                            <option value="Em dia">Em dia</option>
+                            <option value="Isento">Isento</option>
+                        </select>
+                    </div>
+                    <div class="col-span-1 md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Vencimento Contrato</label>
+                        <input type="date" id="edit-end-date" class="w-full border rounded p-2">
+                    </div>
+
+                    <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 bg-blue-50 p-4 rounded-lg">
+                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-3 flex items-center gap-2"><i class="fa-solid fa-key"></i> Acesso ao Portal do Aluno</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-blue-600 mb-1">Login (Usuário/Email)</label>
+                                <input type="text" id="edit-login" class="w-full border border-blue-200 rounded p-2" placeholder="Ex: joao.silva">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-blue-600 mb-1">Senha de Acesso</label>
+                                <input type="text" id="edit-password" class="w-full border border-blue-200 rounded p-2" placeholder="Senha do aluno">
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                             <button type="button" onclick="window.sendCredsEmail(document.getElementById('edit-name').value, document.getElementById('edit-email').value, document.getElementById('edit-login').value, document.getElementById('edit-password').value, this)" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded flex items-center justify-center gap-2 shadow-sm transition">
+                                <i class="fa-solid fa-envelope"></i> Enviar Acesso por E-mail
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 shrink-0"><button onclick="window.closeEditModal()" class="px-4 py-2 border rounded font-bold">Cancelar</button><button onclick="window.saveStudentChanges()" class="px-6 py-2 bg-brand-red text-white rounded font-bold">Salvar</button></div>
+            
+            <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                <button onclick="window.closeEditModal()" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100 font-bold text-sm">Cancelar</button>
+                <button onclick="window.saveStudentChanges()" class="px-6 py-2 bg-brand-red text-white rounded hover:bg-red-700 font-bold text-sm shadow-md">Salvar Alterações</button>
+            </div>
         </div>
     </div>
 
-    <div id="graduation-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm"><div class="bg-yellow-500 px-6 py-4 flex justify-between text-white"><h3 class="font-bold text-lg">Graduar</h3><button onclick="window.closeGraduationModal()"><i class="fa-solid fa-times"></i></button></div><div class="p-6"><input type="hidden" id="grad-student-id"><div class="space-y-4"><select id="grad-belt-color" class="w-full border rounded p-2"><option value="Branca">Branca</option><option value="Cinza">Cinza</option><option value="Amarela">Amarela</option><option value="Laranja">Laranja</option><option value="Verde">Verde</option><option value="Azul">Azul</option><option value="Roxa">Roxa</option><option value="Marrom">Marrom</option><option value="Preta">Preta</option></select><select id="grad-belt-degree" class="w-full border rounded p-2"><option value="0">0º</option><option value="1">1º</option><option value="2">2º</option><option value="3">3º</option><option value="4">4º</option></select></div><div class="mt-6 flex justify-end gap-2"><button onclick="window.closeGraduationModal()" class="px-4 py-2 border rounded">Cancelar</button><button onclick="window.saveGraduation()" class="px-4 py-2 bg-yellow-500 text-white rounded font-bold">Confirmar</button></div></div></div>
-    </div>
+    <!-- MODAL DE GRADUAÇÃO -->
+    <div id="graduation-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden animate-fade-in">
+            <div class="bg-yellow-500 px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-medal mr-2"></i> Graduar Aluno</h3>
+                <button onclick="window.closeGraduationModal()" class="hover:text-yellow-200"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-gray-500 mb-4">Nova graduação para: <strong id="grad-student-name" class="text-gray-800">--</strong></p>
+                <input type="hidden" id="grad-student-id">
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Nova Cor da Faixa</label>
+                        <select id="grad-belt-color" class="w-full border rounded p-2 text-sm bg-gray-50">
+                            <option value="Branca">Branca</option>
+                            <option value="Cinza">Cinza</option>
+                            <option value="Amarela">Amarela</option>
+                            <option value="Laranja">Laranja</option>
+                            <option value="Verde">Verde</option>
+                            <option value="Azul">Azul</option>
+                            <option value="Roxa">Roxa</option>
+                            <option value="Marrom">Marrom</option>
+                            <option value="Preta">Preta</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Novo Grau</label>
+                        <select id="grad-belt-degree" class="w-full border rounded p-2 text-sm bg-gray-50">
+                            <option value="0">0º</option>
+                            <option value="1">1º</option>
+                            <option value="2">2º</option>
+                            <option value="3">3º</option>
+                            <option value="4">4º</option>
+                        </select>
+                    </div>
+                </div>
 
-    <div id="details-modal" class="fixed inset-0 z-[60] hidden bg-black/70 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto relative"><button onclick="window.closeDetailsModal()" class="absolute top-3 right-3 bg-white/80 w-8 h-8 flex items-center justify-center rounded-full z-20"><i class="fa-solid fa-times"></i></button><div id="detail-header-bg" class="h-24 bg-gray-200 w-full relative"><div class="absolute -bottom-10 left-6 w-20 h-20 bg-white rounded-full p-1"><div class="w-full h-full bg-gray-100 rounded-full flex items-center justify-center text-3xl overflow-hidden"><img id="detail-photo" src="" class="hidden"><i id="detail-icon" class="fa-solid fa-user"></i></div></div></div><div class="pt-12 px-6 pb-6"><h2 class="text-2xl font-bold" id="detail-name">--</h2><p class="text-sm text-gray-500 font-bold uppercase mb-4" id="detail-belt">--</p><div class="space-y-4"><div class="grid grid-cols-2 gap-3 mb-4"><div class="bg-gray-50 p-3 rounded text-center"><p class="text-xs uppercase font-bold">Frequência</p><p class="text-xl font-bold" id="detail-attendance">0</p></div><div class="bg-gray-50 p-3 rounded text-center"><p class="text-xs uppercase font-bold">Status</p><p class="text-sm font-bold mt-1" id="detail-status">--</p></div></div><div><div class="grid grid-cols-2 gap-y-2 text-sm"><div><span class="text-gray-500 block text-xs">CPF</span><span id="detail-cpf">--</span></div><div><span class="text-gray-500 block text-xs">Telefone</span><span id="detail-phone">--</span></div><div class="col-span-2"><span class="text-gray-500 block text-xs">Email</span><span id="detail-email">--</span></div></div></div></div></div></div>
-    </div>
-
-    <div id="admin-register-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
-            <div class="bg-brand-dark px-6 py-4 flex justify-between text-white shrink-0"><h3 class="font-bold text-lg">Nova Matrícula</h3><button onclick="window.closeAdminRegisterModal()"><i class="fa-solid fa-times"></i></button></div>
-            <div class="p-6 overflow-y-auto flex-1">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2 pb-2 border-b mb-2"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><input type="text" id="reg-name" class="w-full border rounded p-2" placeholder="Nome"><input type="text" id="reg-dob" class="w-full border rounded p-2" placeholder="Nascimento"><input type="text" id="reg-cpf" class="w-full border rounded p-2" placeholder="CPF"><input type="text" id="reg-phone" class="w-full border rounded p-2" placeholder="Telefone"></div></div>
-                    <select id="reg-plan" class="w-full border rounded p-2" onchange="window.handleAdminPlanChange()"><option value="infantil-mensal">Infantil Mensal</option><option value="adulto-mensal">Adulto Mensal</option><option value="combo-dupla">Combo Dupla</option><option value="dependente">Dependente</option></select>
-                    <div class="col-span-1 hidden" id="admin-reg-titular-container"><select id="reg-titular" class="w-full border rounded p-2 bg-purple-50"><option value="">-- Titular --</option></select></div>
-                    <select id="reg-belt-color" class="w-full border rounded p-2"><option value="Branca">Branca</option></select>
-                    <select id="reg-belt-degree" class="w-full border rounded p-2"><option value="0">0º</option></select>
-                    <div class="md:col-span-2 pt-4 mt-2 border-t"><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><select id="reg-payment" class="w-full border rounded p-2"><option value="Pendente">Pendente</option><option value="Em dia">Em dia</option></select><input type="number" id="reg-pay-amount" class="w-full border rounded p-2" placeholder="Valor Pago"><select id="reg-pay-method" class="w-full border rounded p-2"><option value="Pix">Pix</option><option value="Dinheiro">Dinheiro</option></select></div></div>
-                    <div class="md:col-span-2 pt-4 border-t bg-blue-50 p-4 rounded-lg"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><input type="text" id="reg-student-login" class="w-full border rounded p-2" placeholder="Login"><input type="text" id="reg-student-pass" class="w-full border rounded p-2" placeholder="Senha"></div></div>
+                <div class="mt-6 flex justify-end gap-2">
+                    <button onclick="window.closeGraduationModal()" class="px-4 py-2 border rounded text-sm hover:bg-gray-100">Cancelar</button>
+                    <button onclick="window.saveGraduation()" class="px-4 py-2 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600 font-bold">Confirmar Graduação</button>
                 </div>
             </div>
-            <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 shrink-0"><button onclick="window.closeAdminRegisterModal()" class="px-4 py-2 border rounded font-bold">Cancelar</button><button onclick="window.saveAdminNewStudent()" class="px-6 py-2 bg-green-600 text-white rounded font-bold">Cadastrar</button></div>
         </div>
     </div>
 
-    <div id="notice-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md"><div class="bg-yellow-500 px-6 py-4 flex justify-between text-white"><h3 class="font-bold text-lg" id="notice-modal-title">Aviso</h3><button onclick="window.closeNoticeModal()"><i class="fa-solid fa-times"></i></button></div><div class="p-6 space-y-4"><input type="hidden" id="notice-id"><input type="text" id="notice-title" class="w-full border rounded p-2" placeholder="Título"><textarea id="notice-text" rows="4" class="w-full border rounded p-2" placeholder="Mensagem"></textarea><div class="grid grid-cols-2 gap-4"><select id="notice-type" class="w-full border rounded p-2"><option value="info">Info</option><option value="alert">Alerta</option><option value="success">Sucesso</option><option value="danger">Urgente</option></select><input type="date" id="notice-expiry" class="w-full border rounded p-2"></div><div class="mt-6 flex justify-end gap-2"><button onclick="window.closeNoticeModal()" class="px-4 py-2 border rounded">Cancelar</button><button onclick="window.saveNotice()" class="px-4 py-2 bg-yellow-500 text-white rounded font-bold">Salvar</button></div></div></div>
+    <!-- DETAILS MODAL (READ ONLY) -->
+    <div id="details-modal" class="fixed inset-0 z-[60] hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto transform transition-all relative">
+            <button onclick="window.closeDetailsModal()" class="absolute top-3 right-3 bg-white/80 hover:bg-white text-gray-600 hover:text-black rounded-full w-8 h-8 flex items-center justify-center z-20 shadow-sm transition"><i class="fa-solid fa-times text-lg"></i></button>
+            
+            <div id="detail-header-bg" class="h-24 bg-gray-200 w-full relative">
+                <!-- User Photo Placeholder -->
+                <div class="absolute -bottom-10 left-6">
+                    <div class="w-20 h-20 bg-white rounded-full p-1 shadow-lg">
+                        <div class="w-full h-full bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-3xl overflow-hidden">
+                            <img id="detail-photo" src="" class="w-full h-full object-cover hidden">
+                            <i id="detail-icon" class="fa-solid fa-user"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-12 px-6 pb-6">
+                <h2 class="text-2xl font-bold text-gray-800 leading-tight" id="detail-name">Nome do Aluno</h2>
+                <p class="text-sm text-gray-500 font-bold uppercase tracking-wide mb-4" id="detail-belt">Faixa Branca</p>
+
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-gray-50 p-3 rounded border border-gray-100 text-center">
+                            <p class="text-xs text-gray-400 uppercase font-bold">Frequência</p>
+                            <p class="text-xl font-bold text-brand-dark" id="detail-attendance">0</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded border border-gray-100 text-center">
+                            <p class="text-xs text-gray-400 uppercase font-bold">Status</p>
+                            <p class="text-sm font-bold mt-1" id="detail-status">--</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-400 uppercase border-b pb-1 mb-2">Informações Pessoais</h4>
+                        <div class="grid grid-cols-2 gap-y-2 text-sm">
+                            <div><span class="text-gray-500 block text-xs">CPF</span><span class="font-medium" id="detail-cpf">--</span></div>
+                            <div><span class="text-gray-500 block text-xs">Telefone</span><span class="font-medium" id="detail-phone">--</span></div>
+                            <div class="col-span-2"><span class="text-gray-500 block text-xs">Email</span><span class="font-medium" id="detail-email">--</span></div>
+                            <div class="col-span-2"><span class="text-gray-500 block text-xs">Endereço</span><span class="font-medium" id="detail-address">--</span></div>
+                            <div><span class="text-gray-500 block text-xs">Idade</span><span class="font-medium" id="detail-age">--</span></div>
+                        </div>
+                    </div>
+
+                    <!-- FINANCIAL INFO -->
+                    <div class="bg-gray-50 p-3 rounded border border-gray-100 relative">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase border-b pb-1 mb-2">Financeiro</h4>
+                        <div class="grid grid-cols-2 gap-y-2 text-sm">
+                            <div class="col-span-2"><span class="text-gray-500 block text-xs">Plano Contratado</span><span class="font-medium font-bold text-brand-dark" id="detail-plan">--</span></div>
+                            <div><span class="text-gray-500 block text-xs">Valor Mensal</span><span class="font-medium" id="detail-value">--</span></div>
+                            <div><span class="text-gray-500 block text-xs">Forma de Pagamento</span><span class="font-medium" id="detail-method">--</span></div>
+                        </div>
+                        <div id="detail-titular-box" class="hidden mt-3 p-2 bg-purple-100 text-purple-800 rounded border border-purple-200 text-xs">
+                            <span class="font-bold">Titular/Pagante:</span> <span id="detail-titular-name">--</span>
+                        </div>
+                    </div>
+
+                    <!-- GUARDIAN INFO SECTION -->
+                    <div id="detail-guardian-box" class="hidden bg-yellow-50 p-3 rounded border border-yellow-100">
+                        <h4 class="text-xs font-bold text-yellow-700 uppercase mb-1 flex items-center gap-1"><i class="fa-solid fa-people-roof"></i> Responsável Legal</h4>
+                        <p class="text-sm font-bold text-yellow-900" id="detail-guardian-name">--</p>
+                        <p class="text-xs text-yellow-800 mt-1">Contato principal para este aluno menor de idade.</p>
+                    </div>
+
+                    <div class="bg-blue-50 p-3 rounded border border-blue-100">
+                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-1">Acesso ao Portal</h4>
+                        <p class="text-sm text-blue-900">
+                            <span class="font-bold">Login:</span> <span id="detail-login">--</span>
+                            <span class="mx-2 text-blue-200">|</span>
+                            <span class="font-bold">Senha:</span> <span id="detail-pass">--</span>
+                        </p>
+                    </div>
+                    
+                    <!-- FAMILY INFO SECTION -->
+                    <div id="detail-family-box" class="hidden mt-3 bg-purple-50 p-3 rounded border border-purple-200">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 px-6 py-3 flex justify-end">
+                <button onclick="window.closeDetailsModal()" class="text-sm font-bold text-gray-600 hover:text-gray-800">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW REGISTER MODAL -->
+    <div id="admin-register-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all">
+            <div class="bg-brand-dark px-6 py-4 flex justify-between items-center">
+                <h3 class="text-white font-display font-bold text-lg">Nova Matrícula</h3>
+                <button onclick="window.closeAdminRegisterModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto max-h-[80vh]">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Dados Pessoais -->
+                    <div class="md:col-span-2 pb-2 border-b border-gray-200 mb-2">
+                        <h4 class="text-xs font-bold text-brand-red uppercase mb-3">Dados do Aluno</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Nome Completo</label>
+                                <input type="text" id="reg-name" class="w-full border rounded p-2">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Data de Nascimento</label>
+                                <input type="text" id="reg-dob" class="w-full border rounded p-2" placeholder="DD/MM/AAAA" maxlength="10">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">CPF</label>
+                                <input type="text" id="reg-cpf" class="w-full border rounded p-2" placeholder="000.000.000-00">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Email</label>
+                                <input type="email" id="reg-email" class="w-full border rounded p-2">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Telefone</label>
+                                <input type="text" id="reg-phone" class="w-full border rounded p-2" placeholder="(00) 00000-0000">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Endereço</label>
+                                <input type="text" id="reg-address" class="w-full border rounded p-2">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Responsável (Se menor)</label>
+                                <input type="text" id="reg-guardian" class="w-full border rounded p-2">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Plano e Faixa -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Plano</label>
+                        <select id="reg-plan" class="w-full border rounded p-2" onchange="window.handleAdminPlanChange()">
+                            <option value="infantil-mensal">Infantil Mensal</option>
+                            <option value="infantil-trimestral">Infantil Trimestral</option>
+                            <option value="infantil-semestral">Infantil Semestral</option>
+                            <option value="adulto-mensal">Adulto Mensal</option>
+                            <option value="adulto-trimestral">Adulto Trimestral</option>
+                            <option value="adulto-semestral">Adulto Semestral</option>
+                            <option value="combo-casal">Combo Casal (2 Adultos)</option>
+                            <option value="combo-dupla">Combo Dupla (1 Ad + 1 Inf)</option>
+                            <option value="combo-familia">Combo Família (3 Pessoas)</option>
+                            <option value="dependente">Dependente (Isento)</option>
+                            <option value="administracao">Administração (Isento)</option>
+                        </select>
+                    </div>
+                    <!-- CAMPO TITULAR (VINCULAÇÃO) -->
+                    <div class="col-span-1 hidden" id="admin-reg-titular-container">
+                        <label class="block text-xs font-bold text-purple-600 mb-1">Titular do Plano (Se Dependente)</label>
+                        <select id="reg-titular" class="w-full border border-purple-200 rounded p-2 bg-purple-50 focus:ring-purple-500">
+                            <option value="">-- Selecione o Titular --</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Faixa</label>
+                        <select id="reg-belt-color" class="w-full border rounded p-2 text-xs">
+                            <option value="Branca">Branca</option><option value="Cinza">Cinza</option><option value="Amarela">Amarela</option><option value="Laranja">Laranja</option><option value="Verde">Verde</option><option value="Azul">Azul</option><option value="Roxa">Roxa</option><option value="Marrom">Marrom</option><option value="Preta">Preta</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Grau</label>
+                        <select id="reg-belt-degree" class="w-full border rounded p-2 text-xs">
+                            <option value="0">0º</option><option value="1">1º</option><option value="2">2º</option><option value="3">3º</option><option value="4">4º</option>
+                        </select>
+                    </div>
+
+                    <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200">
+                        <h4 class="text-sm font-bold text-green-700 uppercase mb-3"><i class="fa-solid fa-cash-register"></i> Primeiro Pagamento (Opcional)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Status Inicial</label>
+                                <select id="reg-payment" class="w-full border rounded p-2 text-sm bg-gray-50">
+                                    <option value="Pendente">Pendente (Paga depois)</option>
+                                    <option value="Em dia">Em dia (Já pagou)</option>
+                                    <option value="Isento">Isento</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Valor Pago (R$)</label>
+                                <input type="number" id="reg-pay-amount" class="w-full border rounded p-2 text-sm font-bold text-gray-700" placeholder="Ex: 189.90" step="0.01">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Forma de Pagamento</label>
+                                <select id="reg-pay-method" class="w-full border rounded p-2 text-sm bg-gray-50">
+                                    <option value="Pix">Pix</option>
+                                    <option value="Dinheiro">Dinheiro</option>
+                                    <option value="Débito">Débito</option>
+                                    <option value="Crédito à vista">Crédito à vista</option>
+                                    <option value="Crédito 2x">Crédito 2x</option>
+                                    <option value="Crédito 3x">Crédito 3x</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-1">Se preencher o Valor Pago, o sistema já registrará o recibo e deixará o aluno "Em dia".</p>
+                    </div>
+
+                    <!-- DEPENDENTES SECTION (Adaptativo) -->
+                    <div id="admin-reg-deps-container" class="md:col-span-2 hidden border-t-2 border-purple-200 pt-4 mt-2">
+                        <h4 class="text-sm font-bold text-purple-700 uppercase mb-3"><i class="fa-solid fa-users"></i> Cadastrar Dependentes do Combo</h4>
+                        
+                        <!-- Dep 1 -->
+                        <div id="admin-reg-dep1" class="hidden bg-purple-50 p-4 rounded-lg border border-purple-100 mb-3 shadow-sm">
+                            <h5 class="font-bold text-xs text-purple-800 mb-2 border-b border-purple-200 pb-1">Dependente 1</h5>
+                            <div class="grid md:grid-cols-3 gap-3 mb-2">
+                                <div class="md:col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Nome Completo</label><input type="text" id="admin-dep1-name" class="w-full border rounded p-2 text-sm"></div>
+                                <div><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Nascimento</label><input type="text" id="admin-dep1-dob" placeholder="DD/MM/AAAA" maxlength="10" class="w-full border rounded p-2 text-sm"></div>
+                                <div><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Parentesco</label>
+                                    <select id="admin-dep1-kinship" class="w-full border rounded p-2 text-sm">
+                                        <option value="Filho(a)">Filho(a)</option><option value="Cônjuge">Cônjuge</option><option value="Irmão/Irmã">Irmão/Irmã</option><option value="Outro">Outro</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid md:grid-cols-2 gap-3">
+                                <div><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Faixa</label><select id="admin-dep1-belt" class="w-full border rounded p-2 text-sm"><option value="Branca">Branca</option><option value="Cinza">Cinza</option><option value="Amarela">Amarela</option><option value="Laranja">Laranja</option><option value="Verde">Verde</option><option value="Azul">Azul</option><option value="Roxa">Roxa</option><option value="Marrom">Marrom</option><option value="Preta">Preta</option></select></div>
+                                <div><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Grau</label><select id="admin-dep1-degree" class="w-full border rounded p-2 text-sm"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Dep 2 -->
+                        <div id="admin-reg-dep2" class="hidden bg-purple-50 p-4 rounded-lg border border-purple-100 mb-3 shadow-sm">
+                            <h5 class="font-bold text-xs text-purple-800 mb-2 border-b border-purple-200 pb-1">Dependente 2</h5>
+                            <div class="grid md:grid-cols-3 gap-3 mb-2">
+                                <div class="md:col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Nome Completo</label><input type="text" id="admin-dep2-name" class="w-full border rounded p-2 text-sm"></div>
+                                <div><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Nascimento</label><input type="text" id="admin-dep2-dob" placeholder="DD/MM/AAAA" maxlength="10" class="w-full border rounded p-2 text-sm"></div>
+                                <div><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Parentesco</label>
+                                    <select id="admin-dep2-kinship" class="w-full border rounded p-2 text-sm">
+                                        <option value="Filho(a)">Filho(a)</option><option value="Cônjuge">Cônjuge</option><option value="Irmão/Irmã">Irmão/Irmã</option><option value="Outro">Outro</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid md:grid-cols-2 gap-3">
+                                <div><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Faixa</label><select id="admin-dep2-belt" class="w-full border rounded p-2 text-sm"><option value="Branca">Branca</option><option value="Cinza">Cinza</option><option value="Amarela">Amarela</option><option value="Laranja">Laranja</option><option value="Verde">Verde</option><option value="Azul">Azul</option><option value="Roxa">Roxa</option><option value="Marrom">Marrom</option><option value="Preta">Preta</option></select></div>
+                                <div><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Grau</label><select id="admin-dep2-degree" class="w-full border rounded p-2 text-sm"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Login -->
+                    <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 bg-blue-50 p-4 rounded-lg">
+                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-3">Definir Acesso do Aluno</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-blue-600 mb-1">Login (Usuário/Email)</label>
+                                <input type="text" id="reg-student-login" class="w-full border border-blue-200 rounded p-2">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-blue-600 mb-1">Senha de Acesso</label>
+                                <input type="text" id="reg-student-pass" class="w-full border border-blue-200 rounded p-2">
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                             <button type="button" onclick="window.sendCredsEmail(document.getElementById('reg-name').value, document.getElementById('reg-email').value, document.getElementById('reg-student-login').value, document.getElementById('reg-student-pass').value, this)" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded flex items-center justify-center gap-2 shadow-sm transition">
+                                <i class="fa-solid fa-envelope"></i> Enviar Acesso por E-mail
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                <button onclick="window.closeAdminRegisterModal()" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100 font-bold text-sm">Cancelar</button>
+                <button onclick="window.saveAdminNewStudent()" class="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-bold text-sm shadow-md">Cadastrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTICE MODAL -->
+    <div id="notice-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-fade-in">
+            <div class="bg-yellow-500 px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="font-bold text-lg" id="notice-modal-title"><i class="fa-solid fa-bullhorn mr-2"></i> Publicar Aviso</h3>
+                <button onclick="window.closeNoticeModal()" class="hover:text-yellow-200"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="notice-id">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Título do Aviso</label>
+                    <input type="text" id="notice-title" class="w-full border rounded p-2 text-sm" placeholder="Ex: Feriado nesta Sexta-feira">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Mensagem</label>
+                    <textarea id="notice-text" rows="4" class="w-full border rounded p-2 text-sm" placeholder="Escreva os detalhes do aviso aqui..."></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Tipo de Aviso</label>
+                        <select id="notice-type" class="w-full border rounded p-2 text-sm">
+                            <option value="info">ℹ️ Informativo (Azul)</option>
+                            <option value="alert">⚠️ Importante (Amarelo)</option>
+                            <option value="success">🎉 Comemoração (Verde)</option>
+                            <option value="danger">🚨 Urgente (Vermelho)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Data de Expiração</label>
+                        <input type="date" id="notice-expiry" class="w-full border rounded p-2 text-sm">
+                    </div>
+                </div>
+                <p class="text-[10px] text-gray-400 -mt-2">Deixe a data em branco se não quiser que o aviso suma automaticamente do painel dos alunos.</p>
+                <div class="mt-6 flex justify-end gap-2">
+                    <button onclick="window.closeNoticeModal()" class="px-4 py-2 border rounded text-sm hover:bg-gray-100">Cancelar</button>
+                    <button onclick="window.saveNotice()" class="px-4 py-2 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600 font-bold">Salvar Aviso</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Firebase Logic -->
@@ -472,7 +1359,12 @@
 
         let app, db, auth, appId;
 
-        window.students = []; window.currentTab = 'all'; window.currentView = 'students'; window.currentFinancialTab = 'all'; window.noticesList = []; window.experimentalList = []; 
+        window.students = []; 
+        window.currentTab = 'all'; 
+        window.currentView = 'students'; 
+        window.currentFinancialTab = 'all';
+        window.noticesList = [];
+        window.experimentalList = []; 
 
         window.PLAN_DICT = {
             'infantil-mensal': { price: 189.90, short: 'Infantil Mensal', long: 'INFANTIL MENSAL' },
@@ -493,14 +1385,20 @@
         window.getPlanInfo = (planKey) => window.PLAN_DICT[planKey] || { price: 0, short: String(planKey||'').toUpperCase(), long: 'NÃO INFORMADO' };
 
         window.getStatusBadge = (student, targetDate, today) => {
-            if (student.archived) return `<span class="px-2 py-1 rounded text-xs font-bold bg-gray-200 text-gray-800"><i class="fa-solid fa-box-archive mr-1"></i> ARQUIVADO</span>`;
             const safePlan = String(student.plan || '').toLowerCase();
             if (safePlan === 'dependente') return `<span class="px-2 py-1 rounded text-xs font-bold bg-purple-100 text-purple-800">DEPENDENTE</span>`;
             if (student.paymentStatus === 'Isento' || safePlan === 'administracao') return `<span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">Isento</span>`;
+
             const diffDays = isNaN(targetDate) ? 0 : Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
-            if (diffDays < 0 && student.paymentStatus !== 'Em dia') return student.paymentStatus === 'Pendente' ? `<span class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>` : `<span class="px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-800">Em dia</span>`;
-            else if (diffDays <= 7 && diffDays >= 0) return `<span class="px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800">Expirando</span>`;
-            return `<span class="px-2 py-1 rounded text-xs font-bold ${student.paymentStatus === 'Em dia' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'}">${student.paymentStatus || 'Pendente'}</span>`;
+            
+            if (diffDays < 0 && student.paymentStatus !== 'Em dia') {
+                return student.paymentStatus === 'Pendente' ? `<span class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>` : `<span class="px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-800">Em dia</span>`;
+            } else if (diffDays <= 7 && diffDays >= 0) {
+                return `<span class="px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800">Expirando</span>`;
+            } else {
+                const statusColor = student.paymentStatus === 'Em dia' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100';
+                return `<span class="px-2 py-1 rounded text-xs font-bold ${statusColor}">${student.paymentStatus || 'Pendente'}</span>`;
+            }
         };
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -511,6 +1409,7 @@
                     if(x) e.target.value = replacement(x);
                 });
             };
+            
             maskInput('reg-cpf', '(\\d{0,3})(\\d{0,3})(\\d{0,3})(\\d{0,2})', x => !x[2] ? x[1] : x[1] + '.' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '-' + x[4] : ''));
             maskInput('reg-phone', '(\\d{0,2})(\\d{0,5})(\\d{0,4})', x => !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : ''));
             maskInput('edit-exp-phone', '(\\d{0,2})(\\d{0,5})(\\d{0,4})', x => !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : ''));
@@ -591,7 +1490,7 @@
         }
 
         window.populateTitularSelects = function() {
-            const comboStudents = window.students.filter(s => s.plan && s.plan.includes('combo') && s.enrollmentStatus !== 'Inativo' && !s.archived);
+            const comboStudents = window.students.filter(s => s.plan && s.plan.includes('combo') && s.enrollmentStatus !== 'Inativo');
             let optionsHtml = '<option value="">-- Selecione o Titular --</option>';
             comboStudents.sort((a, b) => (a.name || '').localeCompare(b.name || '')).forEach(s => optionsHtml += `<option value="${s.name}">${s.name}</option>`);
             if (document.getElementById('reg-titular')) document.getElementById('reg-titular').innerHTML = optionsHtml;
@@ -612,12 +1511,11 @@
         }
 
         function updateStats() {
-            const total = window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).length;
-            const active = window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived && (s.paymentStatus === 'Em dia' || s.paymentStatus === 'Isento')).length;
-            let expiringCount = 0, kidsCount = 0, adultsCount = 0, inactiveCount = 0, archivedCount = 0;
+            const total = window.students.filter(s => s.enrollmentStatus !== 'Inativo').length;
+            const active = window.students.filter(s => s.enrollmentStatus !== 'Inativo' && (s.paymentStatus === 'Em dia' || s.paymentStatus === 'Isento')).length;
+            let expiringCount = 0, kidsCount = 0, adultsCount = 0, inactiveCount = 0;
             const today = new Date();
             window.students.forEach(s => {
-                if (s.archived) { archivedCount++; return; }
                 if (s.enrollmentStatus === 'Inativo') { inactiveCount++; return; }
                 if (isStudentKid(s)) kidsCount++; else adultsCount++;
                 const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
@@ -628,7 +1526,7 @@
             });
             const setText = (id, txt) => { const e = document.getElementById(id); if(e) e.innerText = txt; }
             setText('stat-total', total); setText('stat-infantil', kidsCount); setText('stat-adulto', adultsCount); 
-            setText('stat-inactive', inactiveCount); setText('stat-archived', archivedCount);
+            setText('stat-inactive', inactiveCount);
             setText('fin-stat-total', total); setText('fin-stat-active', active); setText('fin-stat-pending', total - active); setText('fin-stat-expiring', expiringCount);
         }
 
@@ -638,35 +1536,25 @@
             const count = document.querySelectorAll('.student-cb:checked').length;
             const bulkDiv = document.getElementById('bulk-actions');
             const countSpan = document.getElementById('selected-count');
-            const btnBulkArchive = document.getElementById('btn-bulk-archive');
-            if(count > 0) { bulkDiv.classList.remove('hidden'); if(btnBulkArchive) btnBulkArchive.classList.remove('hidden'); countSpan.innerText = count; } 
-            else { bulkDiv.classList.add('hidden'); if(btnBulkArchive) btnBulkArchive.classList.add('hidden'); }
+            const btnBulkDelete = document.getElementById('btn-bulk-delete');
+            if(count > 0) { bulkDiv.classList.remove('hidden'); if(btnBulkDelete) btnBulkDelete.classList.remove('hidden'); countSpan.innerText = count; } 
+            else { bulkDiv.classList.add('hidden'); if(btnBulkDelete) btnBulkDelete.classList.add('hidden'); }
         };
 
-        window.archiveSelectedStudents = async () => {
+        window.deleteSelectedStudents = async () => {
             const ids = Array.from(document.querySelectorAll('.student-cb:checked')).map(cb => cb.value);
             if(ids.length === 0) return;
-            if(confirm(`Tem certeza que deseja ARQUIVAR ${ids.length} alunos selecionados?`)) {
+            if(confirm(`Tem certeza que deseja excluir ${ids.length} alunos selecionados?`)) {
                 try {
-                    await Promise.all(ids.map(id => updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { archived: true })));
+                    await Promise.all(ids.map(id => deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id))));
                     document.getElementById('cb-select-all').checked = false; window.updateBulkActions(); window.loadData();
-                } catch(e) { alert('Erro ao arquivar: ' + e.message); }
+                } catch(e) { alert('Erro ao excluir: ' + e.message); }
             }
         };
 
-        window.archiveStudent = async (id) => {
-            const myDeps = window.students.filter(d => d.titularId === id && !d.archived);
-            if(!confirm("Deseja ARQUIVAR este aluno?" + (myDeps.length > 0 ? " Dependentes também serão arquivados." : ""))) return;
-            try {
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { archived: true });
-                if (myDeps.length > 0) for(let dep of myDeps) await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', dep.id), { archived: true });
-                window.loadData();
-            } catch(e) { alert("Erro ao arquivar: " + e.message); }
-        };
-
-        window.restoreStudent = async (id) => {
-            if(!confirm("Restaurar aluno do arquivo?")) return;
-            try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { archived: false }); window.loadData(); } catch(e) { alert("Erro ao restaurar: " + e.message); }
+        window.deleteStudent = async (id) => {
+            if(!confirm("Tem certeza que deseja excluir este aluno permanentemente?")) return;
+            try { await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id)); window.loadData(); } catch(e) { alert("Erro ao excluir: " + e.message); }
         };
 
         window.addPresenceSelectedStudents = async () => {
@@ -692,8 +1580,7 @@
                 document.getElementById('att-empty').classList.add('hidden');
                 [...s.attendance].sort((a,b) => new Date(b) - new Date(a)).forEach(dateStr => {
                     const formatted = formatDate(dateStr + 'T12:00:00');
-                    let classInfo = (s.attendanceLog && s.attendanceLog.find(l => l.date === dateStr)?.time) ? `<span class="text-[10px] bg-gray-200 px-2 py-0.5 rounded ml-2">${s.attendanceLog.find(l => l.date === dateStr).time}</span>` : '';
-                    list.innerHTML += `<div class="flex justify-between items-center py-2 px-2 hover:bg-gray-50"><span class="text-sm font-medium text-gray-700"><i class="fa-regular fa-calendar-check text-green-600 mr-2"></i> ${formatted} ${classInfo}</span><button onclick="window.removeAttendance('${dateStr}')" class="text-red-400 hover:text-red-600 text-xs"><i class="fa-solid fa-trash"></i></button></div>`;
+                    list.innerHTML += `<div class="flex justify-between items-center py-2 px-2 hover:bg-gray-50"><span class="text-sm font-medium text-gray-700"><i class="fa-regular fa-calendar-check text-green-600 mr-2"></i> ${formatted}</span><button onclick="window.removeAttendance('${dateStr}')" class="text-red-400 hover:text-red-600 text-xs"><i class="fa-solid fa-trash"></i></button></div>`;
                 });
             }
             document.getElementById('attendance-modal').classList.remove('hidden'); document.getElementById('attendance-modal').classList.add('flex');
@@ -754,7 +1641,7 @@
             window.currentTab = tab;
             const activeClass = "px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative";
             const inactiveClass = "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1";
-            ['all', 'adults', 'kids', 'inactive', 'archived'].forEach(t => {
+            ['all', 'adults', 'kids', 'inactive'].forEach(t => {
                 const el = document.getElementById('tab-' + t);
                 if (el) el.className = (t === tab) ? activeClass : inactiveClass;
             });
@@ -833,12 +1720,10 @@
                 
                 const matchesPayment = statusFilter === "" || virtualStatus === statusFilter || s.paymentStatus === statusFilter;
 
-                if (window.currentTab === 'archived') {
-                    return matchesSearch && matchesBelt && matchesPayment && s.archived === true;
-                } else if (window.currentTab === 'inactive') {
-                    return matchesSearch && matchesBelt && matchesPayment && currentEnrollment === 'Inativo' && !s.archived;
+                if (window.currentTab === 'inactive') {
+                    return matchesSearch && matchesBelt && matchesPayment && currentEnrollment === 'Inativo';
                 } else {
-                    if (currentEnrollment === 'Inativo' || s.archived) return false;
+                    if (currentEnrollment === 'Inativo') return false;
                     let matchesTab = false;
                     if(window.currentTab === 'all') matchesTab = true;
                     else {
@@ -854,7 +1739,7 @@
             else filtered.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
 
             document.getElementById('list-count').innerText = filtered.length;
-            document.getElementById('list-title').innerText = (window.currentTab === 'all') ? "Todos (Ativos)" : (window.currentTab === 'adults') ? "Adultos e Família" : (window.currentTab === 'kids') ? "Infantil (Ativos)" : (window.currentTab === 'archived') ? "Alunos Arquivados" : "Alunos Inativos";
+            document.getElementById('list-title').innerText = (window.currentTab === 'all') ? "Todos (Ativos)" : (window.currentTab === 'adults') ? "Adultos e Família" : (window.currentTab === 'kids') ? "Infantil (Ativos)" : "Alunos Inativos";
 
             thead.innerHTML = `
                 <th class="px-6 py-3 border-b w-10 text-center"><input type="checkbox" id="cb-select-all" onclick="window.toggleSelectAll(this)" class="rounded text-brand-red focus:ring-brand-red cursor-pointer"></th>
@@ -887,8 +1772,7 @@
                 if (safePlan.includes('combo') && safePlan !== 'dependente') nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase">Combo</span>`;
                 if (safePlan === 'administracao') nameDisplay += `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-bold uppercase">Admin</span>`;
                 if (safePlan === 'dependente') nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase" title="Dependente"><i class="fa-solid fa-link"></i> DEP</span>`;
-                if (s.archived) nameDisplay += `<span class="ml-2 text-[10px] text-gray-800 bg-gray-300 px-1.5 py-0.5 rounded border border-gray-400 font-bold uppercase">ARQUIVADO</span>`;
-                else if (s.enrollmentStatus === 'Inativo') nameDisplay += `<span class="ml-2 text-[10px] text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded border border-gray-300 font-bold">INATIVO</span>`;
+                if (s.enrollmentStatus === 'Inativo') nameDisplay += `<span class="ml-2 text-[10px] text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded border border-gray-300 font-bold">INATIVO</span>`;
 
                 const myFilteredDeps = filtered.filter(d => d.plan === 'dependente' && d.titularId === s.id);
                 if (!isDepRow && myFilteredDeps.length > 0) {
@@ -901,10 +1785,7 @@
                 const guardianCell = (window.currentTab === 'kids' || window.currentTab === 'all') ? `<td class="px-6 py-4 align-middle text-sm text-gray-700"><i class="fa-solid fa-user-shield text-gray-400 mr-1"></i> ${relName}</td>` : '';
                 
                 let toggleBtn = s.enrollmentStatus === 'Inativo' ? `<button onclick="window.toggleStudentStatus('${s.id}', 'Inativo')" class="text-green-600 hover:text-green-900 mr-2" title="Reativar Aluno"><i class="fa-solid fa-power-off"></i></button>` : `<button onclick="window.toggleStudentStatus('${s.id}', 'Ativo')" class="text-gray-400 hover:text-red-600 mr-2" title="Inativar Aluno"><i class="fa-solid fa-power-off"></i></button>`;
-                let deleteOrRestoreBtn = s.archived 
-                    ? `<button onclick="window.restoreStudent('${s.id}')" class="text-green-600 hover:text-green-900" title="Restaurar Aluno"><i class="fa-solid fa-box-open"></i></button>`
-                    : `<button onclick="window.archiveStudent('${s.id}')" class="text-gray-500 hover:text-gray-800" title="Arquivar Aluno"><i class="fa-solid fa-box-archive"></i></button>`;
-
+                
                 let displayPlanName = window.getPlanInfo(s.plan).short;
 
                 const tr = document.createElement('tr');
@@ -923,7 +1804,7 @@
                         <button onclick="window.openQrModal('${s.id}')" class="text-gray-800 hover:text-black mr-2" title="Cartão QR Code"><i class="fa-solid fa-qrcode"></i></button>
                         <button onclick="window.openEditModal('${s.id}')" class="text-blue-600 hover:text-blue-900 mr-2" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
                         <button onclick="window.printIndividualContract('${s.id}')" class="text-indigo-600 hover:text-indigo-900 mr-2" title="Imprimir Contrato"><i class="fa-solid fa-file-contract"></i></button>
-                        ${deleteOrRestoreBtn}
+                        <button onclick="window.deleteStudent('${s.id}')" class="text-red-600 hover:text-red-900" title="Excluir"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -945,7 +1826,7 @@
                 alertsList.innerHTML = '';
                 const today = new Date();
                 let expiredPromos = window.students.filter(s => {
-                    if (s.enrollmentStatus === 'Inativo' || s.archived) return false;
+                    if (s.enrollmentStatus === 'Inativo') return false;
                     if (s.plan && s.plan.includes('combo') && s.registrationDate) {
                         const regDate = new Date(s.registrationDate);
                         const diffTime = Math.abs(today - regDate);
@@ -967,72 +1848,15 @@
             }
         }
 
-        window.bulkWhatsAppBilling = () => {
-            const tableRows = document.querySelectorAll('#financial-table-body tr');
-            if(tableRows.length === 0 || (tableRows.length === 1 && tableRows[0].innerText.includes('Nenhum registro'))) {
-                alert("Não há alunos nesta lista para cobrar."); return;
-            }
-
-            const visiblePendingStudents = [];
-            
-            tableRows.forEach(row => {
-                const nameCell = row.querySelector('td:nth-child(1)');
-                if(!nameCell) return;
-                const studentName = nameCell.innerText;
-                const s = window.students.find(st => st.name === studentName);
-                if(s && s.phone && s.phone.trim() !== '') visiblePendingStudents.push(s);
-            });
-
-            if(visiblePendingStudents.length === 0) { alert("Os alunos filtrados não possuem número de telefone cadastrado."); return; }
-
-            document.getElementById('bulk-bill-count').innerText = visiblePendingStudents.length;
-            const listUl = document.getElementById('bulk-bill-list');
-            listUl.innerHTML = '';
-
-            visiblePendingStudents.forEach(s => {
-                const cleanPhone = s.phone.replace(/\D/g, '');
-                const firstName = s.name.split(' ')[0];
-                const msg = `Olá ${firstName}, tudo bem? Aqui é da recepção da Tanque Team BJJ 🥋. Notamos que sua mensalidade encontra-se em aberto. Caso precise da chave PIX ou já tenha efetuado o pagamento, por favor nos envie o comprovante por aqui. Oss!`;
-                const encodedMsg = encodeURIComponent(msg);
-                const waLink = `https://wa.me/55${cleanPhone}?text=${encodedMsg}`;
-
-                const li = document.createElement('li');
-                li.className = "flex justify-between items-center p-4 hover:bg-green-50 transition";
-                li.innerHTML = `
-                    <div>
-                        <p class="font-bold text-gray-800">${s.name}</p>
-                        <p class="text-xs text-gray-500">${s.phone} • Plano: ${window.getPlanInfo(s.plan).short}</p>
-                    </div>
-                    <a href="${waLink}" target="_blank" onclick="this.classList.add('opacity-50', 'pointer-events-none'); this.innerHTML='<i class=\\'fa-solid fa-check\\'></i> Enviado'" class="bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-2 px-4 rounded shadow transition text-xs whitespace-nowrap">
-                        <i class="fa-brands fa-whatsapp text-sm"></i> Enviar Cobrança
-                    </a>
-                `;
-                listUl.appendChild(li);
-            });
-
-            document.getElementById('bulk-bill-modal').classList.remove('hidden');
-            document.getElementById('bulk-bill-modal').classList.add('flex');
-        };
-
-        window.closeBulkBillingModal = () => {
-            document.getElementById('bulk-bill-modal').classList.add('hidden');
-            document.getElementById('bulk-bill-modal').classList.remove('flex');
-        };
-
         window.renderFinancialTable = function() {
             checkPromoExpirations(); 
             const tbody = document.getElementById('financial-table-body');
             const search = (document.getElementById('searchInput')?.value || "").toLowerCase();
-            const btnBulkWA = document.getElementById('btn-bulk-whatsapp');
             
             if(!tbody) return;
             tbody.innerHTML = '';
 
-            if (window.currentFinancialTab === 'pending' || window.currentFinancialTab === 'expiring') btnBulkWA.classList.remove('hidden');
-            else btnBulkWA.classList.add('hidden');
-
             const filtered = window.students.filter(s => {
-                if (s.archived) return false; 
                 const matchesSearch = String(s.name || '').toLowerCase().includes(search);
                 const currentEnrollment = s.enrollmentStatus || 'Ativo';
                 
@@ -1835,20 +2659,12 @@
             resDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-4xl text-blue-500 mb-2"></i><span class="text-blue-500 font-bold">Registrando...</span>`;
             
             try {
-                const classSelector = document.getElementById('checkin-class-selector');
-                const classTime = classSelector ? classSelector.value : 'Não informada';
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', student.id), { 
-                    attendance: arrayUnion(todayISO),
-                    attendanceLog: arrayUnion({ date: todayISO, time: classTime, timestamp: new Date().toISOString() }) 
-                });
-                
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', student.id), { attendance: arrayUnion(todayISO) });
                 if(!student.attendance) student.attendance = []; student.attendance.push(todayISO);
-                if(!student.attendanceLog) student.attendanceLog = []; student.attendanceLog.push({ date: todayISO, time: classTime, timestamp: new Date().toISOString() });
-                
                 if(window.currentView === 'students') window.renderTable(); 
 
                 resDiv.className = 'text-center py-4 w-full rounded-lg bg-green-50 border border-green-200 min-h-[100px] flex flex-col items-center justify-center';
-                resDiv.innerHTML = `<i class="fa-solid fa-circle-check text-5xl text-green-500 mb-2"></i><span class="text-green-600 font-bold text-2xl">Check-in Concluído!</span><span class="text-green-800 font-medium text-lg mt-1">${student.name}</span><span class="text-[10px] bg-green-200 px-2 py-1 rounded text-green-800 mt-2 font-bold">${classTime}</span>`;
+                resDiv.innerHTML = `<i class="fa-solid fa-circle-check text-5xl text-green-500 mb-2"></i><span class="text-green-600 font-bold text-2xl">Check-in Concluído!</span><span class="text-green-800 font-medium text-lg mt-1">${student.name}</span>`;
                 try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(800, ctx.currentTime); osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.1); } catch(e) {}
             } catch(e) {
                 resDiv.className = 'text-center py-4 w-full rounded-lg bg-red-50 border border-red-200 min-h-[100px] flex flex-col items-center justify-center';
@@ -1869,6 +2685,157 @@
             const newBeltStr = `Faixa ${color} - ${degree}º Grau`;
             try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { belt: newBeltStr, lastGraduationDate: new Date().toISOString() }); alert(`Aluno graduado para ${newBeltStr}!`); window.closeGraduationModal(); window.loadData(); } catch(e) { alert("Erro ao graduar: " + e.message); }
         }
+
+        window.loadExperimentalData = async () => {
+            try {
+                const q = query(collection(window.db, 'artifacts', appId, 'public', 'data', 'experimental'));
+                const snap = await getDocs(q);
+                window.experimentalList = [];
+                snap.forEach((doc) => window.experimentalList.push({ id: doc.id, ...doc.data() }));
+                window.renderExperimentalTable();
+            } catch (error) { console.error("Erro ao carregar experimentais:", error); }
+        };
+
+        window.renderExperimentalTable = () => {
+            const tbody = document.getElementById('experimental-table-body');
+            const search = (document.getElementById('searchInput')?.value || "").toLowerCase();
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            let filtered = window.experimentalList.filter(e => (e.name || '').toLowerCase().includes(search) || (e.phone || '').includes(search));
+            filtered.sort((a,b) => new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00')));
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">Nenhum agendamento encontrado.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(exp => {
+                const age = getAge(exp.dob);
+                const isMinor = age !== null && age < 18;
+                const cleanPhone = (exp.phone || '').replace(/\D/g, '');
+                let dateFormatted = exp.date ? new Date(exp.date + 'T12:00:00').toLocaleDateString('pt-BR') : '--';
+                
+                let statusColor = 'bg-gray-100 text-gray-800';
+                if(exp.status === 'Agendado') statusColor = 'bg-yellow-100 text-yellow-800';
+                else if(exp.status === 'Concluído') statusColor = 'bg-green-100 text-green-800';
+                else if(exp.status === 'Matriculado') statusColor = 'bg-blue-100 text-blue-800';
+                else if(exp.status === 'Cancelado' || exp.status === 'Faltou') statusColor = 'bg-red-100 text-red-800';
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-gray-50 transition";
+                tr.innerHTML = `
+                    <td class="px-6 py-4 align-middle">
+                        <div class="font-bold text-gray-800">${dateFormatted}</div>
+                        <div class="text-xs text-brand-red font-bold"><i class="fa-regular fa-clock"></i> ${exp.time || '--'}</div>
+                    </td>
+                    <td class="px-6 py-4 align-middle">
+                        <div class="font-bold text-gray-900">${exp.name} <span class="text-xs font-normal text-gray-500">(${age}a)</span></div>
+                        ${isMinor && exp.guardian ? `<div class="text-xs text-gray-500"><i class="fa-solid fa-user-shield text-gray-400"></i> Resp: ${exp.guardian}</div>` : ''}
+                    </td>
+                    <td class="px-6 py-4 align-middle">
+                        <a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${exp.phone}</a>
+                    </td>
+                    <td class="px-6 py-4 align-middle">
+                        <select onchange="window.changeExpStatus('${exp.id}', this.value)" class="border rounded px-2 py-1 text-xs font-bold ${statusColor} outline-none cursor-pointer">
+                            <option value="Agendado" ${exp.status === 'Agendado' ? 'selected' : ''}>Agendado</option>
+                            <option value="Concluído" ${exp.status === 'Concluído' ? 'selected' : ''}>Compareceu</option>
+                            <option value="Matriculado" ${exp.status === 'Matriculado' ? 'selected' : ''}>Matriculado</option>
+                            <option value="Faltou" ${exp.status === 'Faltou' ? 'selected' : ''}>Faltou</option>
+                            <option value="Cancelado" ${exp.status === 'Cancelado' ? 'selected' : ''}>Cancelou</option>
+                        </select>
+                    </td>
+                    <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
+                        <button onclick="window.convertToStudent('${exp.id}')" class="text-blue-500 hover:text-blue-700 p-2 rounded transition" title="Matricular como Aluno"><i class="fa-solid fa-user-plus"></i></button>
+                        <button onclick="window.openEditExperimentalModal('${exp.id}')" class="text-gray-500 hover:text-gray-700 p-2 rounded transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="window.deleteExperimental('${exp.id}')" class="text-red-500 hover:text-red-700 p-2 rounded transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        window.changeExpStatus = async (id, newStatus) => {
+            try {
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), { status: newStatus });
+                const exp = window.experimentalList.find(e => e.id === id);
+                if(exp) exp.status = newStatus;
+                window.renderExperimentalTable();
+            } catch(e) { alert("Erro ao atualizar status: " + e.message); }
+        };
+
+        window.deleteExperimental = async (id) => {
+            if(!confirm("Excluir este agendamento permanentemente?")) return;
+            try {
+                await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id));
+                window.experimentalList = window.experimentalList.filter(e => e.id !== id);
+                window.renderExperimentalTable();
+            } catch(e) { alert("Erro ao excluir: " + e.message); }
+        };
+
+        window.convertToStudent = (id) => {
+            const exp = window.experimentalList.find(e => e.id === id);
+            if(!exp) return;
+            
+            window.openAdminRegisterModal();
+            document.getElementById('reg-name').value = exp.name || '';
+            if (exp.dob && exp.dob.includes('-')) {
+                const [y, m, d] = exp.dob.split('-');
+                document.getElementById('reg-dob').value = `${d}/${m}/${y}`;
+            } else document.getElementById('reg-dob').value = exp.dob || '';
+            
+            document.getElementById('reg-email').value = exp.email || '';
+            document.getElementById('reg-phone').value = exp.phone || '';
+            document.getElementById('reg-guardian').value = exp.guardian ? exp.guardian + (exp.guardianKinship ? ` (${exp.guardianKinship})` : '') : '';
+            
+            updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), { status: 'Matriculado' }).then(() => {
+                exp.status = 'Matriculado';
+                window.renderExperimentalTable();
+            });
+        };
+
+        window.openEditExperimentalModal = (id) => {
+            const exp = window.experimentalList.find(e => e.id === id);
+            if(!exp) return;
+
+            document.getElementById('edit-exp-id').value = id;
+            document.getElementById('edit-exp-name').value = exp.name || '';
+            document.getElementById('edit-exp-phone').value = exp.phone || '';
+            if (exp.dob && exp.dob.includes('-')) {
+                const [y, m, d] = exp.dob.split('-');
+                document.getElementById('edit-exp-dob').value = `${d}/${m}/${y}`;
+            } else document.getElementById('edit-exp-dob').value = exp.dob || '';
+            document.getElementById('edit-exp-date').value = exp.date || '';
+            document.getElementById('edit-exp-time').value = exp.time || '';
+
+            document.getElementById('edit-exp-modal').classList.remove('hidden');
+            document.getElementById('edit-exp-modal').classList.add('flex');
+        };
+
+        window.closeEditExperimentalModal = () => {
+            document.getElementById('edit-exp-modal').classList.add('hidden');
+            document.getElementById('edit-exp-modal').classList.remove('flex');
+        };
+
+        window.saveExperimentalChanges = async () => {
+            const id = document.getElementById('edit-exp-id').value;
+            const name = document.getElementById('edit-exp-name').value;
+            const phone = document.getElementById('edit-exp-phone').value;
+            const dobRaw = document.getElementById('edit-exp-dob').value;
+            const date = document.getElementById('edit-exp-date').value;
+            const time = document.getElementById('edit-exp-time').value;
+
+            if(!name || !date || !time) { alert("Preencha o Nome, Data e Horário."); return; }
+            let dobIso = (dobRaw && dobRaw.includes('/')) ? dobRaw.split('/').reverse().join('-') : dobRaw;
+
+            try {
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), { name, phone, dob: dobIso, date, time });
+                alert("Agendamento atualizado com sucesso!");
+                window.closeEditExperimentalModal();
+                window.loadExperimentalData();
+            } catch(e) { alert("Erro ao atualizar: " + e.message); }
+        };
+
     </script>
 </body>
 </html>
