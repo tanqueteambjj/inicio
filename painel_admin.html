@@ -3179,6 +3179,50 @@
             try {
                 await emailjs.send("service_2twa33d", "template_few5bna", { from_name: "Tanque Team BJJ", from_email: "administrativo@tanqueteambjj.com.br", to_name: name, to_email: email, subject: "Seu Acesso ao Portal + QR Code de Check-in", message: messageContent, reply_to: "administrativo@tanqueteambjj.com.br" });
                 alert("E-mail com credenciais enviado com sucesso!");
+            } catch (error) { alert("Erro ao enviar e-mail."); } finally { btn.disabled = false; btn.innerHTML = originalText; }
+        };
+
+        window.sendCredsEmail = async (name, email, login, pass, btnElement) => {
+            if(!email) { alert("Preencha o e-mail do aluno antes de enviar."); return; }
+            if(!login || !pass) { alert("Preencha o login e senha antes de enviar."); return; }
+
+            const originalText = btnElement.innerHTML;
+            btnElement.disabled = true;
+            btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+
+            const messageContent = `
+                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                    <div style="background-color: #D90429; color: white; padding: 20px; text-align: center;">
+                        <h2 style="margin: 0; text-transform: uppercase; letter-spacing: 1px;">Bem-vindo(a) à Tanque Team! 🥋</h2>
+                    </div>
+                    <div style="padding: 25px;">
+                        <p style="font-size: 16px;">Fala, <strong>${name.split(' ')[0]}</strong>! Oss!</p>
+                        <p style="font-size: 14px; line-height: 1.5;">O seu acesso ao nosso <strong>Portal do Aluno</strong> acabou de ser liberado. Através dele você pode acompanhar o seu histórico de treinos, evolução de faixas, pagamentos e o nosso ranking mensal da academia!</p>
+                        
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #D90429; margin: 25px 0;">
+                            <p style="margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; color: #777; font-weight: bold;">Suas credenciais de acesso:</p>
+                            <p style="margin: 5px 0; font-size: 16px;"><strong>Login:</strong> ${login}</p>
+                            <p style="margin: 5px 0; font-size: 16px;"><strong>Senha:</strong> ${pass}</p>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="https://www.tanqueteambjj.com.br/login.html" style="background-color: #D90429; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Acessar Portal do Aluno</a>
+                        </div>
+
+                        <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; border-left: 4px solid #2e7d32; margin: 25px 0;">
+                            <p style="margin: 0 0 10px 0; color: #2e7d32; font-size: 16px;"><strong>📱 NOVIDADE: Check-in por QR Code!</strong></p>
+                            <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #1b5e20;">Dentro do seu painel, você encontrará o seu <strong>Meu Cartão QR Code</strong>. Lembre-se de apresentá-lo na recepção antes de cada treino para registrar sua presença automaticamente, subir no ranking e desbloquear as suas conquistas!</p>
+                        </div>
+
+                        <p style="margin-top: 30px; font-size: 12px; color: #666;"><em>Dica: Você pode alterar sua senha a qualquer momento na aba "Meus Dados".</em></p>
+                        <p style="font-size: 14px; margin-top: 20px;">Nos vemos no tatame!</p>
+                        <p style="font-size: 14px; font-weight: bold; color: #D90429;">Equipe Tanque Team BJJ</p>
+                    </div>
+                </div>
+            `;
+            try {
+                await emailjs.send("service_2twa33d", "template_few5bna", { from_name: "Tanque Team BJJ", from_email: "administrativo@tanqueteambjj.com.br", to_name: name, to_email: email, subject: "Seu Acesso ao Portal + QR Code de Check-in", message: messageContent, reply_to: "administrativo@tanqueteambjj.com.br" });
+                alert("E-mail com credenciais enviado com sucesso!");
             } catch (error) { console.error(error); alert("Erro ao enviar e-mail. Verifique a configuração."); } finally { btnElement.disabled = false; btnElement.innerHTML = originalText; }
         };
 
@@ -3699,4 +3743,278 @@
                         <div>
                             <h4 class="font-bold text-gray-800 flex items-center gap-2">${icon} ${notice.title}</h4>
                             <p class="text-sm text-gray-600 mt-1 whitespace-pre-wrap">${notice.text}</p>
-                            <p class="text-[10px] text-gray-500 mt-2 font-medium">
+                            <p class="text-[10px] text-gray-500 mt-2 font-medium">Publicado em: ${d} ${expiryHtml}</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="editNotice('${notice.id}')" class="text-blue-400 hover:text-blue-600 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteNotice('${notice.id}')" class="text-red-400 hover:text-red-600 transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+        };
+
+        window.openNoticeModal = () => {
+            document.getElementById('notice-id').value = '';
+            document.getElementById('notice-title').value = '';
+            document.getElementById('notice-text').value = '';
+            document.getElementById('notice-type').value = 'info';
+            document.getElementById('notice-expiry').value = '';
+            document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-bullhorn mr-2"></i> Publicar Aviso';
+            document.getElementById('notice-modal').classList.remove('hidden');
+            document.getElementById('notice-modal').classList.add('flex');
+        };
+
+        window.editNotice = (id) => {
+            const notice = window.noticesList.find(n => n.id === id);
+            if (!notice) return;
+            document.getElementById('notice-id').value = notice.id;
+            document.getElementById('notice-title').value = notice.title;
+            document.getElementById('notice-text').value = notice.text;
+            document.getElementById('notice-type').value = notice.type || 'info';
+            if (notice.expiresAt) {
+                document.getElementById('notice-expiry').value = notice.expiresAt.split('T')[0];
+            } else {
+                document.getElementById('notice-expiry').value = '';
+            }
+            document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-pen mr-2"></i> Editar Aviso';
+            document.getElementById('notice-modal').classList.remove('hidden');
+            document.getElementById('notice-modal').classList.add('flex');
+        };
+
+        window.closeNoticeModal = () => {
+            document.getElementById('notice-modal').classList.add('hidden');
+            document.getElementById('notice-modal').classList.remove('flex');
+        };
+
+        window.saveNotice = async () => {
+            const id = document.getElementById('notice-id').value;
+            const title = document.getElementById('notice-title').value;
+            const text = document.getElementById('notice-text').value;
+            const type = document.getElementById('notice-type').value;
+            const expiryRaw = document.getElementById('notice-expiry').value;
+            
+            if(!title || !text) { alert("Preencha título e mensagem."); return; }
+            
+            let expiryIso = null;
+            if (expiryRaw) {
+                expiryIso = new Date(expiryRaw + 'T23:59:59').toISOString();
+            }
+
+            const noticeData = {
+                title: title,
+                text: text,
+                type: type,
+                expiresAt: expiryIso
+            };
+            
+            try {
+                if (id) {
+                    await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', id), noticeData);
+                    alert("Aviso atualizado com sucesso!");
+                } else {
+                    noticeData.date = new Date().toISOString();
+                    await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'), noticeData);
+                    alert("Aviso publicado com sucesso!");
+                }
+                window.closeNoticeModal();
+                window.loadNotices();
+            } catch(e) { alert("Erro ao salvar aviso: " + e.message); }
+        };
+
+        window.deleteNotice = async (id) => {
+            if(!confirm("Tem certeza que deseja excluir este aviso permanentemente? Ele vai sumir do painel de todos os alunos.")) return;
+            try {
+                await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', id));
+                window.loadNotices();
+            } catch(e) { alert("Erro ao excluir: " + e.message); }
+        };
+
+        // --- SISTEMA DE AULA EXPERIMENTAL ---
+        window.loadExperimentalData = async () => {
+            try {
+                const q = query(collection(window.db, 'artifacts', appId, 'public', 'data', 'experimental'));
+                const querySnapshot = await getDocs(q);
+                window.experimentalList = [];
+                querySnapshot.forEach((doc) => {
+                    window.experimentalList.push({ id: doc.id, ...doc.data() });
+                });
+                window.renderExperimentalTable();
+            } catch (error) { console.error("Erro ao carregar experimentais:", error); }
+        };
+
+        window.renderExperimentalTable = () => {
+            const tbody = document.getElementById('experimental-table-body');
+            const search = (document.getElementById('searchInput')?.value || "").toLowerCase();
+            tbody.innerHTML = '';
+
+            let filtered = window.experimentalList.filter(e => {
+                return (e.name || '').toLowerCase().includes(search) || (e.phone || '').includes(search);
+            });
+
+            // Sort by date DESC
+            filtered.sort((a,b) => {
+                const dateA = new Date(a.date + 'T' + (a.time || '00:00'));
+                const dateB = new Date(b.date + 'T' + (b.time || '00:00'));
+                return dateB - dateA;
+            });
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">Nenhum agendamento encontrado.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(exp => {
+                const age = getAge(exp.dob);
+                const isMinor = age !== null && age < 18;
+                const cleanPhone = (exp.phone || '').replace(/\D/g, '');
+                
+                let dateFormatted = exp.date ? new Date(exp.date + 'T12:00:00').toLocaleDateString('pt-BR') : '--';
+                
+                let statusColor = 'bg-gray-100 text-gray-800';
+                if(exp.status === 'Agendado') statusColor = 'bg-yellow-100 text-yellow-800';
+                else if(exp.status === 'Concluído') statusColor = 'bg-green-100 text-green-800';
+                else if(exp.status === 'Matriculado') statusColor = 'bg-blue-100 text-blue-800';
+                else if(exp.status === 'Cancelado' || exp.status === 'Faltou') statusColor = 'bg-red-100 text-red-800';
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-gray-50 transition";
+                tr.innerHTML = `
+                    <td class="px-6 py-4 align-middle">
+                        <div class="font-bold text-gray-800">${dateFormatted}</div>
+                        <div class="text-xs text-brand-red font-bold"><i class="fa-regular fa-clock"></i> ${exp.time || '--'}</div>
+                    </td>
+                    <td class="px-6 py-4 align-middle">
+                        <div class="font-bold text-gray-900">${exp.name} <span class="text-xs font-normal text-gray-500">(${age} anos)</span></div>
+                        ${isMinor && exp.guardian ? `<div class="text-xs text-gray-500"><i class="fa-solid fa-user-shield text-gray-400"></i> Resp: ${exp.guardian}</div>` : ''}
+                    </td>
+                    <td class="px-6 py-4 align-middle">
+                        <a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${exp.phone}</a>
+                    </td>
+                    <td class="px-6 py-4 align-middle">
+                        <select onchange="changeExpStatus('${exp.id}', this.value)" class="border rounded px-2 py-1 text-xs font-bold ${statusColor} outline-none cursor-pointer">
+                            <option value="Agendado" ${exp.status === 'Agendado' ? 'selected' : ''}>Agendado</option>
+                            <option value="Concluído" ${exp.status === 'Concluído' ? 'selected' : ''}>Compareceu</option>
+                            <option value="Matriculado" ${exp.status === 'Matriculado' ? 'selected' : ''}>Matriculado</option>
+                            <option value="Faltou" ${exp.status === 'Faltou' ? 'selected' : ''}>Faltou</option>
+                            <option value="Cancelado" ${exp.status === 'Cancelado' ? 'selected' : ''}>Cancelou</option>
+                        </select>
+                    </td>
+                    <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
+                        <button onclick="convertToStudent('${exp.id}')" class="text-blue-500 hover:text-blue-700 p-2 rounded transition" title="Matricular como Aluno"><i class="fa-solid fa-user-plus"></i></button>
+                        <button onclick="openEditExperimentalModal('${exp.id}')" class="text-gray-500 hover:text-gray-700 p-2 rounded transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteExperimental('${exp.id}')" class="text-red-500 hover:text-red-700 p-2 rounded transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        window.changeExpStatus = async (id, newStatus) => {
+            try {
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), { status: newStatus });
+                const exp = window.experimentalList.find(e => e.id === id);
+                if(exp) exp.status = newStatus;
+                window.renderExperimentalTable();
+            } catch(e) { alert("Erro ao atualizar status: " + e.message); }
+        };
+
+        window.deleteExperimental = async (id) => {
+            if(!confirm("Excluir este agendamento permanentemente?")) return;
+            try {
+                await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id));
+                window.experimentalList = window.experimentalList.filter(e => e.id !== id);
+                window.renderExperimentalTable();
+            } catch(e) { alert("Erro ao excluir: " + e.message); }
+        };
+
+        window.convertToStudent = (id) => {
+            const exp = window.experimentalList.find(e => e.id === id);
+            if(!exp) return;
+            
+            // Abre o modal de matrícula
+            window.openAdminRegisterModal();
+            
+            // Preenche os dados
+            document.getElementById('reg-name').value = exp.name || '';
+            
+            // Formata DD/MM/AAAA para o input se estiver em formato ISO
+            if (exp.dob && exp.dob.includes('-')) {
+                const [y, m, d] = exp.dob.split('-');
+                document.getElementById('reg-dob').value = `${d}/${m}/${y}`;
+            } else {
+                document.getElementById('reg-dob').value = exp.dob || '';
+            }
+            
+            document.getElementById('reg-email').value = exp.email || '';
+            document.getElementById('reg-phone').value = exp.phone || '';
+            
+            if (exp.guardian) {
+                document.getElementById('reg-guardian').value = exp.guardian + (exp.guardianKinship ? ` (${exp.guardianKinship})` : '');
+            } else {
+                document.getElementById('reg-guardian').value = '';
+            }
+            
+            // Altera o status da experimental para matriculado
+            window.changeExpStatus(id, 'Matriculado');
+        };
+
+        window.openEditExperimentalModal = (id) => {
+            const exp = window.experimentalList.find(e => e.id === id);
+            if(!exp) return;
+
+            document.getElementById('edit-exp-id').value = id;
+            document.getElementById('edit-exp-name').value = exp.name || '';
+            document.getElementById('edit-exp-phone').value = exp.phone || '';
+            
+            // Formata a data de nascimento para exibição no Modal
+            if (exp.dob && exp.dob.includes('-')) {
+                const [y, m, d] = exp.dob.split('-');
+                document.getElementById('edit-exp-dob').value = `${d}/${m}/${y}`;
+            } else {
+                document.getElementById('edit-exp-dob').value = exp.dob || '';
+            }
+            
+            document.getElementById('edit-exp-date').value = exp.date || '';
+            document.getElementById('edit-exp-time').value = exp.time || '';
+
+            document.getElementById('edit-exp-modal').classList.remove('hidden');
+            document.getElementById('edit-exp-modal').classList.add('flex');
+        };
+
+        window.closeEditExperimentalModal = () => {
+            document.getElementById('edit-exp-modal').classList.add('hidden');
+            document.getElementById('edit-exp-modal').classList.remove('flex');
+        };
+
+        window.saveExperimentalChanges = async () => {
+            const id = document.getElementById('edit-exp-id').value;
+            const name = document.getElementById('edit-exp-name').value;
+            const phone = document.getElementById('edit-exp-phone').value;
+            const dobRaw = document.getElementById('edit-exp-dob').value;
+            const date = document.getElementById('edit-exp-date').value;
+            const time = document.getElementById('edit-exp-time').value;
+
+            if(!name || !date || !time) { alert("Preencha o Nome, Data e Horário."); return; }
+            
+            // Converte a data formatada em BR de volta para padrão do banco
+            let dobIso = dobRaw;
+            if(dobRaw && dobRaw.includes('/')) {
+                dobIso = dobRaw.split('/').reverse().join('-');
+            }
+
+            try {
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), {
+                    name, phone, dob: dobIso, date, time
+                });
+                alert("Agendamento atualizado com sucesso!");
+                window.closeEditExperimentalModal();
+                window.loadExperimentalData();
+            } catch(e) { 
+                alert("Erro ao atualizar: " + e.message); 
+            }
+        };
+
+    </script>
+</body>
+</html>
