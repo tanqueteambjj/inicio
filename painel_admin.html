@@ -37,6 +37,12 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
 
+        /* KANBAN STYLES */
+        .kanban-col { min-height: 400px; }
+        .kanban-card { cursor: grab; transition: transform 0.2s, box-shadow 0.2s; border-left-width: 4px; }
+        .kanban-card:active { cursor: grabbing; transform: scale(0.98); box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .kanban-card.dragging { opacity: 0.5; }
+
         /* CSS OTIMIZADO PARA IMPRESSÃO */
         @media print {
             @page { margin: 2.5cm; size: A4 portrait; }
@@ -168,13 +174,13 @@
                             <div class="text-green-500 text-2xl"><i class="fa-solid fa-user"></i></div>
                         </div>
                     </div>
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-gray-500 cursor-pointer hover:bg-gray-50 transition" onclick="window.switchTab('archived')">
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-gray-500 cursor-pointer hover:bg-gray-50 transition" onclick="window.switchTab('inactive')">
                         <div class="flex justify-between">
                             <div>
-                                <p class="text-gray-400 text-xs font-bold uppercase">Arquivados</p>
-                                <p class="text-2xl font-bold text-gray-800" id="stat-archived">0</p>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Inativos</p>
+                                <p class="text-2xl font-bold text-gray-800" id="stat-inactive">0</p>
                             </div>
-                            <div class="text-gray-500 text-2xl"><i class="fa-solid fa-box-archive"></i></div>
+                            <div class="text-gray-500 text-2xl"><i class="fa-solid fa-user-slash"></i></div>
                         </div>
                     </div>
                 </div>
@@ -261,6 +267,40 @@
                                 <tr><td colspan="7" class="px-6 py-4 text-center">Carregando dados...</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: RELATÓRIOS -->
+            <div id="view-reports" class="hidden animate-fade-in">
+                <div class="bg-white rounded-xl shadow p-6 border-t-4 border-gray-800 max-w-4xl mx-auto">
+                    <h3 class="font-display text-xl font-bold text-gray-800 mb-2"><i class="fa-solid fa-print mr-2 text-brand-red"></i> Relatórios Administrativos</h3>
+                    <p class="text-sm text-gray-500 mb-6">Gere e imprima relatórios dos alunos da academia rapidamente.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="window.generateReport('ativos')">
+                            <div>
+                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-users text-blue-500 mr-1"></i> Alunos Ativos</h4>
+                                <p class="text-xs text-gray-500 mt-1">Lista completa de alunos matriculados, separada por plano e faixa.</p>
+                            </div>
+                            <button class="mt-4 bg-gray-800 hover:bg-black text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
+                        </div>
+                        
+                        <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="window.generateReport('frequencia')">
+                            <div>
+                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-calendar-check text-purple-500 mr-1"></i> Frequência (Top 15)</h4>
+                                <p class="text-xs text-gray-500 mt-1">Os 15 alunos mais frequentes e dedicados da academia nos últimos 30 dias.</p>
+                            </div>
+                            <button class="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
+                        </div>
+
+                        <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="window.generateReport('experimental')">
+                            <div>
+                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-fire text-yellow-500 mr-1"></i> Aulas Experimentais</h4>
+                                <p class="text-xs text-gray-500 mt-1">Relatório de visitantes agendados, presentes e já matriculados.</p>
+                            </div>
+                            <button class="mt-4 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -744,36 +784,6 @@
                         </div>
                     </div>
 
-                    <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200">
-                        <h4 class="text-sm font-bold text-green-700 uppercase mb-3"><i class="fa-solid fa-cash-register"></i> Primeiro Pagamento (Opcional)</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Status Inicial</label>
-                                <select id="reg-payment" class="w-full border rounded p-2 text-sm bg-gray-50 focus:outline-none focus:border-green-500">
-                                    <option value="Pendente">Pendente (Paga depois)</option>
-                                    <option value="Em dia">Em dia (Já pagou)</option>
-                                    <option value="Isento">Isento</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Valor Pago (R$)</label>
-                                <input type="number" id="reg-pay-amount" class="w-full border rounded p-2 text-sm font-bold text-gray-700 focus:outline-none focus:border-green-500" placeholder="Ex: 189.90" step="0.01">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Forma de Pagamento</label>
-                                <select id="reg-pay-method" class="w-full border rounded p-2 text-sm bg-gray-50 focus:outline-none focus:border-green-500">
-                                    <option value="Pix">Pix</option>
-                                    <option value="Dinheiro">Dinheiro</option>
-                                    <option value="Débito">Débito</option>
-                                    <option value="Crédito à vista">Crédito à vista</option>
-                                    <option value="Crédito 2x">Crédito 2x</option>
-                                    <option value="Crédito 3x">Crédito 3x</option>
-                                </select>
-                            </div>
-                        </div>
-                        <p class="text-[10px] text-gray-400 mt-1">Se preencher o Valor Pago, o sistema já registrará o recibo inicial e deixará o aluno "Em dia".</p>
-                    </div>
-
                     <div id="admin-reg-deps-container" class="md:col-span-2 hidden border-t-2 border-purple-200 pt-4 mt-2">
                         <h4 class="text-sm font-bold text-purple-700 uppercase mb-3"><i class="fa-solid fa-users"></i> Cadastrar Dependentes Simultaneamente</h4>
                         <p class="text-xs text-gray-500 mb-3">Como selecionou um Plano Família, pode adicionar os dependentes agora para criar o vínculo automático.</p>
@@ -1224,7 +1234,7 @@
                     <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
                         ${toggleBtn}
                         <button onclick="window.openAttendanceModal('${s.id}')" class="text-gray-500 hover:text-black mr-2" title="Frequência"><i class="fa-solid fa-list-check"></i></button>
-                        <button onclick="window.openGraduationModal('${s.id}', '${s.name || ''}')" class="text-yellow-500 hover:text-yellow-700 mr-2" title="Graduar"><i class="fa-solid fa-medal"></i></button>
+                        <button onclick="window.openGraduationModal('${s.id}')" class="text-yellow-500 hover:text-yellow-700 mr-2" title="Graduar"><i class="fa-solid fa-medal"></i></button>
                         <button onclick="window.openQrModal('${s.id}')" class="text-gray-800 hover:text-black mr-2" title="QR Code"><i class="fa-solid fa-qrcode"></i></button>
                         <button onclick="window.openEditModal('${s.id}')" class="text-blue-600 hover:text-blue-900 mr-2" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
                         <button onclick="window.printIndividualContract('${s.id}')" class="text-indigo-600 hover:text-indigo-900 mr-2" title="Contrato"><i class="fa-solid fa-file-contract"></i></button>
@@ -1241,7 +1251,7 @@
             });
         };
 
-        // GERAÇÃO DE RELATÓRIOS (Sem Filtros Financeiros)
+        // GERAÇÃO DE RELATÓRIOS
         window.generateReport = (type) => {
             const container = document.getElementById('report-container'); container.classList.remove('hidden');
             let html = `<div class="text-center mb-6 border-b pb-4"><h2 class="text-2xl font-bold uppercase tracking-wider">TANQUE TEAM BJJ</h2><h3 class="text-lg text-gray-600 uppercase mt-1">Relatório Administrativo</h3><p class="text-xs text-gray-500 mt-2">Gerado em: ${new Date().toLocaleString('pt-BR')}</p></div>`;
@@ -1255,6 +1265,15 @@
                 html += `<h3 class="font-bold text-lg mb-4 text-purple-600">FREQUÊNCIA - TOP 15 ALUNOS (Últimos 30 dias)</h3><table><thead><tr><th>Posição</th><th>Nome</th><th>Aulas nos últimos 30 dias</th><th>Faixa</th></tr></thead><tbody>`;
                 const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
                 window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).map(s => ({ name: s.name, belt: s.belt, classes: s.attendance ? s.attendance.filter(d => new Date(d) >= thirtyDaysAgo).length : 0 })).sort((a,b) => b.classes - a.classes).slice(0, 15).forEach((d, i) => { tableRows += `<tr><td>#${i+1}</td><td class="font-bold">${d.name}</td><td class="text-center">${d.classes}</td><td>${d.belt||'-'}</td></tr>`; });
+                html += tableRows + `</tbody></table>`;
+            } else if (type === 'experimental') {
+                html += `<h3 class="font-bold text-lg mb-4 text-yellow-600">RELATÓRIO DE AULAS EXPERIMENTAIS</h3><table><thead><tr><th>Data/Hora</th><th>Nome</th><th>Contato</th><th>Status</th></tr></thead><tbody>`;
+                let expSorted = [...window.experimentalList].sort((a,b) => new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00')));
+                if (expSorted.length === 0) tableRows += `<tr><td colspan="4" class="text-center">Nenhum registro encontrado.</td></tr>`;
+                expSorted.forEach(e => {
+                    let dateFormatted = e.date ? new Date(e.date + 'T12:00:00').toLocaleDateString('pt-BR') : '--';
+                    tableRows += `<tr><td>${dateFormatted} às ${e.time || '--'}</td><td class="font-bold">${e.name}</td><td>${e.phone || '-'}</td><td class="uppercase">${e.status || 'Agendado'}</td></tr>`;
+                });
                 html += tableRows + `</tbody></table>`;
             }
 
@@ -1644,7 +1663,6 @@
 
             let filtered = window.experimentalList.filter(e => (e.name || '').toLowerCase().includes(search) || (e.phone || '').includes(search));
             
-            // Reordenar: Agendados/Compareceu primeiro, depois Matriculado/Faltou, e por fim ordem de data.
             filtered.sort((a,b) => {
                 const wA = (a.status === 'Matriculado' || a.status === 'Faltou' || a.status === 'Cancelado') ? 2 : 1;
                 const wB = (b.status === 'Matriculado' || b.status === 'Faltou' || b.status === 'Cancelado') ? 2 : 1;
