@@ -89,13 +89,10 @@
                 <i class="fa-solid fa-users w-6"></i> <span class="font-bold">Alunos</span>
             </a>
             <a href="#" onclick="window.switchMainView('experimental')" id="nav-experimental" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
-                <i class="fa-solid fa-fire w-6"></i> <span class="font-bold">Aulas Exp. / CRM</span>
+                <i class="fa-solid fa-fire w-6"></i> <span class="font-bold">Aulas Exp.</span>
             </a>
             <a href="#" onclick="window.switchMainView('reports')" id="nav-reports" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
                 <i class="fa-solid fa-chart-pie w-6"></i> <span class="font-bold">Relatórios</span>
-            </a>
-            <a href="#" onclick="window.switchMainView('experimental')" id="nav-experimental" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
-                <i class="fa-solid fa-fire w-6"></i> <span class="font-bold">Aulas Exp.</span>
             </a>
             <a href="#" onclick="window.switchMainView('notices')" id="nav-notices" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
                 <i class="fa-solid fa-bullhorn w-6"></i> <span class="font-bold">Mural de Avisos</span>
@@ -1646,12 +1643,22 @@
             tbody.innerHTML = '';
 
             let filtered = window.experimentalList.filter(e => (e.name || '').toLowerCase().includes(search) || (e.phone || '').includes(search));
-            filtered.sort((a,b) => new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00')));
+            
+            // Reordenar: Agendados/Compareceu primeiro, depois Matriculado/Faltou, e por fim ordem de data.
+            filtered.sort((a,b) => {
+                const wA = (a.status === 'Matriculado' || a.status === 'Faltou' || a.status === 'Cancelado') ? 2 : 1;
+                const wB = (b.status === 'Matriculado' || b.status === 'Faltou' || b.status === 'Cancelado') ? 2 : 1;
+                if (wA !== wB) return wA - wB;
+                return new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00'));
+            });
 
             if(filtered.length === 0) { 
                 tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">Nenhum agendamento encontrado.</td></tr>`; 
                 return; 
             }
+
+            const t = new Date();
+            const todayLocal = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
 
             filtered.forEach(exp => {
                 const age = getAge(exp.dob); const isMinor = age !== null && age < 18; const cleanPhone = (exp.phone || '').replace(/\D/g, '');
@@ -1663,15 +1670,36 @@
                 else if(exp.status === 'Matriculado') statusColor = 'bg-blue-100 text-blue-800'; 
                 else if(exp.status === 'Cancelado' || exp.status === 'Faltou') statusColor = 'bg-red-100 text-red-800';
 
+                const isInactive = (exp.status === 'Matriculado' || exp.status === 'Faltou' || exp.status === 'Cancelado');
+
                 const tr = document.createElement('tr'); 
-                tr.className = "border-b hover:bg-gray-50 transition";
+                
+                if (isInactive) {
+                    tr.className = "border-b bg-gray-50 opacity-60 transition";
+                } else if (exp.date === todayLocal) {
+                    tr.className = "border-b bg-yellow-50 hover:bg-yellow-100 transition";
+                } else {
+                    tr.className = "border-b hover:bg-gray-50 transition";
+                }
+
+                let actionsHtml = '';
+                if (isInactive) {
+                    actionsHtml = `<button onclick="window.deleteExperimental('${exp.id}')" class="text-red-400 hover:text-red-700 p-2 rounded transition" title="Excluir Registro"><i class="fa-solid fa-trash"></i></button>`;
+                } else {
+                    actionsHtml = `
+                        <button onclick="window.convertToStudent('${exp.id}')" class="text-blue-500 hover:text-blue-700 p-2 rounded transition" title="Matricular como Aluno"><i class="fa-solid fa-user-plus"></i></button>
+                        <button onclick="window.openEditExperimentalModal('${exp.id}')" class="text-gray-500 hover:text-gray-700 p-2 rounded transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="window.deleteExperimental('${exp.id}')" class="text-red-500 hover:text-red-700 p-2 rounded transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                    `;
+                }
+
                 tr.innerHTML = `
                     <td class="px-6 py-4 align-middle">
-                        <div class="font-bold text-gray-800">${dateFormatted}</div>
+                        <div class="font-bold text-gray-800">${dateFormatted} ${exp.date === todayLocal && !isInactive ? '<span class="ml-1 text-[9px] bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Hoje</span>' : ''}</div>
                         <div class="text-xs text-brand-red font-bold"><i class="fa-regular fa-clock"></i> ${exp.time || '--'}</div>
                     </td>
                     <td class="px-6 py-4 align-middle">
-                        <div class="font-bold text-gray-900">${exp.name} <span class="text-xs font-normal text-gray-500">(${age}a)</span></div>
+                        <div class="font-bold text-gray-900">${exp.name} <span class="text-xs font-normal text-gray-500">(${age !== null ? age + 'a' : '-'})</span></div>
                         ${isMinor && exp.guardian ? `<div class="text-xs text-gray-500"><i class="fa-solid fa-user-shield text-gray-400"></i> Resp: ${exp.guardian}</div>` : ''}
                     </td>
                     <td class="px-6 py-4 align-middle">
@@ -1687,9 +1715,7 @@
                         </select>
                     </td>
                     <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
-                        <button onclick="window.convertToStudent('${exp.id}')" class="text-blue-500 hover:text-blue-700 p-2 rounded transition" title="Matricular como Aluno"><i class="fa-solid fa-user-plus"></i></button>
-                        <button onclick="window.openEditExperimentalModal('${exp.id}')" class="text-gray-500 hover:text-gray-700 p-2 rounded transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="window.deleteExperimental('${exp.id}')" class="text-red-500 hover:text-red-700 p-2 rounded transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                        ${actionsHtml}
                     </td>
                 `;
                 tbody.appendChild(tr);
