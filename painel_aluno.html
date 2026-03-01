@@ -343,7 +343,7 @@
                         <!-- CONQUISTAS (BADGES) -->
                         <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-500 flex flex-col" id="achievements-section">
                             <h3 class="font-display text-xl font-bold text-gray-700 mb-2 flex items-center gap-2"><i class="fa-solid fa-trophy text-yellow-500"></i> As Minhas Conquistas</h3>
-                            <p class="text-xs text-gray-500 mb-6">Acompanhe a sua evolução no tatame. Desbloqueie medalhas à medida que atinge novos marcos de presença!</p>
+                            <p class="text-xs text-gray-500 mb-6">Acompanhe a sua evolução no tatame. Partilhe as suas vitórias com a turma no mural!</p>
                             
                             <!-- GRID ATUALIZADA PARA ACOMODAR MAIS BADGES -->
                             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 gap-4 overflow-y-auto max-h-[400px] pr-2 pb-2" id="badges-container">
@@ -678,7 +678,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, getDocs, collection, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, getDocs, collection, query, where, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase Configuration
         const manualConfig = {
@@ -850,6 +850,36 @@
             }
         }
 
+        function calculateMaxStreak(attendanceList) {
+            if (!attendanceList || attendanceList.length === 0) return 0;
+            
+            // Remover duplicados e ordenar
+            const uniqueDates = [...new Set(attendanceList)].sort((a, b) => new Date(a) - new Date(b));
+            if (uniqueDates.length === 0) return 0;
+
+            let maxStreak = 1;
+            let currentStreak = 1;
+
+            for (let i = 1; i < uniqueDates.length; i++) {
+                const prevDate = new Date(uniqueDates[i - 1]);
+                const currDate = new Date(uniqueDates[i]);
+                
+                // Diferença em dias
+                const diffTime = Math.abs(currDate - prevDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+                if (diffDays === 1) {
+                    currentStreak++;
+                    if (currentStreak > maxStreak) {
+                        maxStreak = currentStreak;
+                    }
+                } else {
+                    currentStreak = 1;
+                }
+            }
+            return maxStreak;
+        }
+
         function renderDashboard(data, isDependent = false) {
             try {
                 const safeName = data.name || "Aluno";
@@ -938,7 +968,7 @@
                 document.getElementById('total-attendance-count').innerText = attendanceCount;
 
                 // Renderizar Conquistas
-                renderAchievements(attendanceCount);
+                renderAchievements(attendanceCount, data.attendance);
 
                 const beltStr = data.belt || "Faixa Branca - 0º Grau";
                 document.getElementById('belt-text').innerText = beltStr;
@@ -999,50 +1029,125 @@
             }
         }
 
-        function renderAchievements(count) {
+        function renderAchievements(count, attendanceList) {
             const container = document.getElementById('badges-container');
             if (!container) return;
             
+            const maxStreak = calculateMaxStreak(attendanceList);
+
             const badges = [
-                { id: 1, name: "Primeiro Passo", desc: "1º Treino", target: 1, icon: "fa-shoe-prints", color: "text-blue-500", bg: "bg-blue-100" },
-                { id: 2, name: "Semente", desc: "5 Treinos", target: 5, icon: "fa-seedling", color: "text-emerald-500", bg: "bg-emerald-100" },
-                { id: 3, name: "Consistente", desc: "10 Treinos", target: 10, icon: "fa-fire", color: "text-orange-500", bg: "bg-orange-100" },
-                { id: 4, name: "Focado", desc: "25 Treinos", target: 25, icon: "fa-bullseye", color: "text-indigo-500", bg: "bg-indigo-100" },
-                { id: 5, name: "Guerreiro", desc: "50 Treinos", target: 50, icon: "fa-shield-halved", color: "text-purple-500", bg: "bg-purple-100" },
-                { id: 6, name: "Centurião", desc: "100 Treinos", target: 100, icon: "fa-bolt", color: "text-red-500", bg: "bg-red-100" },
-                { id: 7, name: "Veterano", desc: "150 Treinos", target: 150, icon: "fa-medal", color: "text-amber-500", bg: "bg-amber-100" },
-                { id: 8, name: "Casca Grossa", desc: "200 Treinos", target: 200, icon: "fa-dragon", color: "text-yellow-600", bg: "bg-yellow-100" },
-                { id: 9, name: "Mestre", desc: "300 Treinos", target: 300, icon: "fa-crown", color: "text-yellow-400", bg: "bg-gray-800" },
-                { id: 10, name: "Lenda Viva", desc: "500 Treinos", target: 500, icon: "fa-mountain-sun", color: "text-slate-800", bg: "bg-slate-200" }
+                { id: 1, name: "Primeiro Passo", desc: "1º Treino", target: 1, icon: "fa-shoe-prints", color: "text-blue-500", bg: "bg-blue-100", type: 'count' },
+                { id: 2, name: "Semente", desc: "5 Treinos", target: 5, icon: "fa-seedling", color: "text-emerald-500", bg: "bg-emerald-100", type: 'count' },
+                { id: 3, name: "Consistente", desc: "10 Treinos", target: 10, icon: "fa-calendar-check", color: "text-orange-500", bg: "bg-orange-100", type: 'count' },
+                { id: 11, name: "Seq. de Fogo", desc: "5 Dias Seguidos", target: 5, icon: "fa-fire", color: "text-red-500", bg: "bg-orange-100", type: 'streak' },
+                { id: 4, name: "Focado", desc: "25 Treinos", target: 25, icon: "fa-bullseye", color: "text-indigo-500", bg: "bg-indigo-100", type: 'count' },
+                { id: 5, name: "Guerreiro", desc: "50 Treinos", target: 50, icon: "fa-shield-halved", color: "text-purple-500", bg: "bg-purple-100", type: 'count' },
+                { id: 6, name: "Centurião", desc: "100 Treinos", target: 100, icon: "fa-bolt", color: "text-red-500", bg: "bg-red-100", type: 'count' },
+                { id: 7, name: "Veterano", desc: "150 Treinos", target: 150, icon: "fa-medal", color: "text-amber-500", bg: "bg-amber-100", type: 'count' },
+                { id: 8, name: "Casca Grossa", desc: "200 Treinos", target: 200, icon: "fa-dragon", color: "text-yellow-600", bg: "bg-yellow-100", type: 'count' },
+                { id: 9, name: "Mestre", desc: "300 Treinos", target: 300, icon: "fa-crown", color: "text-yellow-400", bg: "bg-gray-800", type: 'count' },
+                { id: 10, name: "Lenda Viva", desc: "500 Treinos", target: 500, icon: "fa-mountain-sun", color: "text-slate-800", bg: "bg-slate-200", type: 'count' }
             ];
 
             container.innerHTML = '';
             
             badges.forEach(b => {
-                const isUnlocked = count >= b.target;
+                let isUnlocked = false;
+                let currentProgress = 0;
+
+                if (b.type === 'count') {
+                    isUnlocked = count >= b.target;
+                    currentProgress = count;
+                } else if (b.type === 'streak') {
+                    isUnlocked = maxStreak >= b.target;
+                    currentProgress = maxStreak;
+                }
+
                 const cardClass = isUnlocked ? "border-green-200 bg-white shadow-sm ring-1 ring-green-100" : "border-gray-200 bg-gray-50 opacity-70 grayscale";
                 const iconColor = isUnlocked ? b.color : "text-gray-400";
                 const iconBg = isUnlocked ? b.bg : "bg-gray-200";
                 const lockIcon = isUnlocked ? "" : `<div class="absolute top-2 right-2 text-gray-400 text-xs" title="Bloqueado"><i class="fa-solid fa-lock"></i></div>`;
-                const progressPercentage = Math.min((count / b.target) * 100, 100);
+                const progressPercentage = Math.min((currentProgress / b.target) * 100, 100);
                 const progressColor = isUnlocked ? "bg-green-500" : "bg-brand-red";
 
+                const shareBtn = isUnlocked 
+                    ? `<button onclick="shareAchievement('${b.name}', '${b.icon}')" class="mt-3 w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-1.5 px-2 rounded text-[10px] transition shadow-sm flex justify-center items-center gap-1 border border-indigo-200"><i class="fa-solid fa-share-nodes"></i> Compartilhar</button>` 
+                    : `<button disabled class="mt-3 w-full bg-gray-100 text-gray-400 font-bold py-1.5 px-2 rounded text-[10px] cursor-not-allowed flex justify-center items-center gap-1 border border-gray-200"><i class="fa-solid fa-lock"></i> Bloqueado</button>`;
+
                 container.innerHTML += `
-                    <div class="border rounded-xl p-4 text-center relative transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${cardClass}">
+                    <div class="border rounded-xl p-4 text-center relative transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${cardClass} flex flex-col">
                         ${lockIcon}
-                        <div class="w-12 h-12 mx-auto rounded-full flex items-center justify-center text-xl mb-3 shadow-inner ${iconBg} ${iconColor}">
+                        <div class="w-12 h-12 mx-auto rounded-full flex items-center justify-center text-xl mb-3 shadow-inner shrink-0 ${iconBg} ${iconColor}">
                             <i class="fa-solid ${b.icon}"></i>
                         </div>
                         <h4 class="font-bold text-sm text-gray-800 leading-tight mb-1">${b.name}</h4>
                         <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-2">${b.desc}</p>
-                        <div class="w-full bg-gray-200 rounded-full h-1.5 mb-1 overflow-hidden">
+                        <div class="w-full bg-gray-200 rounded-full h-1.5 mb-1 overflow-hidden mt-auto">
                             <div class="${progressColor} h-1.5 rounded-full transition-all duration-1000" style="width: ${progressPercentage}%"></div>
                         </div>
-                        <p class="text-[9px] text-gray-400 font-bold">${count} / ${b.target}</p>
+                        <p class="text-[9px] text-gray-400 font-bold">${currentProgress} / ${b.target}</p>
+                        ${shareBtn}
                     </div>
                 `;
             });
         }
+
+        window.shareAchievement = async (achievementName, iconClass) => {
+            const student = window.currentStudentData;
+            if (!student) return;
+
+            const studentFirstName = student.name.split(' ')[0];
+            const title = `🏆 Nova Conquista: ${studentFirstName}!`;
+            const text = `O aluno ${student.name} acabou de desbloquear a conquista "${achievementName}" no tatame! Parabéns pela dedicação! Oss 🥋`;
+
+            // Calculate expiration (24 hours from now)
+            const now = new Date();
+            const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+
+            try {
+                // Prevenção de Spam (Verifica se já partilhou nas últimas 24h)
+                const q = query(
+                    collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'),
+                    where('studentId', '==', student.id),
+                    where('type', '==', 'achievement')
+                );
+                
+                const snap = await getDocs(q);
+                let alreadyShared = false;
+                
+                snap.forEach(d => {
+                    const noticeData = d.data();
+                    if (noticeData.achievementName === achievementName && new Date(noticeData.expiresAt) > now) {
+                        alreadyShared = true;
+                    }
+                });
+
+                if (alreadyShared) {
+                    alert("Você já compartilhou esta conquista nas últimas 24 horas! Ela ainda está visível no mural.");
+                    return;
+                }
+
+                if(!confirm(`Deseja exibir sua conquista "${achievementName}" no mural da academia para todos verem por 24 horas?`)) return;
+
+                await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'), {
+                    title: title,
+                    text: text,
+                    type: 'achievement',
+                    icon: iconClass,
+                    date: now.toISOString(),
+                    expiresAt: expiresAt,
+                    studentId: student.id,
+                    achievementName: achievementName,
+                    reactions: [] // Inicializa a lista de reações
+                });
+
+                alert("Sua conquista foi compartilhada no mural com sucesso!");
+                window.loadStudentNotices(); // Atualiza para ver a nova postagem
+            } catch (error) {
+                console.error("Erro ao compartilhar:", error);
+                alert("Não foi possível compartilhar a conquista no momento.");
+            }
+        };
 
         window.loadRanking = async () => {
             try {
@@ -1583,9 +1688,21 @@
                 const q = query(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'));
                 const querySnapshot = await getDocs(q);
                 window.noticesList = [];
+                const now = new Date();
+
                 querySnapshot.forEach((doc) => {
-                    window.noticesList.push({ id: doc.id, ...doc.data() });
+                    const noticeData = doc.data();
+                    
+                    // Valida se o aviso de conquista já expirou (24h)
+                    if (noticeData.expiresAt) {
+                        const expiryDate = new Date(noticeData.expiresAt);
+                        if (now > expiryDate) {
+                            return; // Ignora avisos expirados
+                        }
+                    }
+                    window.noticesList.push({ id: doc.id, ...noticeData });
                 });
+                
                 window.noticesList.sort((a, b) => new Date(b.date) - new Date(a.date));
                 renderStudentNotices();
             } catch (error) { console.error("Erro ao carregar avisos:", error); }
@@ -1603,29 +1720,100 @@
             container.classList.remove('hidden');
             list.innerHTML = '';
             
-            const recentNotices = window.noticesList.slice(0, 3);
+            // Agora mostra até 5 avisos recentes para acomodar as conquistas
+            const recentNotices = window.noticesList.slice(0, 5);
             
             recentNotices.forEach(notice => {
                 const d = new Date(notice.date).toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
                 let bg = 'bg-blue-50 border-blue-200 text-blue-900'; let icon = '<i class="fa-solid fa-circle-info text-blue-500"></i>';
+                
                 if(notice.type === 'alert') { bg = 'bg-yellow-50 border-yellow-200 text-yellow-900'; icon = '<i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>'; }
                 if(notice.type === 'success') { bg = 'bg-green-50 border-green-200 text-green-900'; icon = '<i class="fa-solid fa-check-circle text-green-500"></i>'; }
                 if(notice.type === 'danger') { bg = 'bg-red-50 border-red-200 text-red-900'; icon = '<i class="fa-solid fa-circle-xmark text-red-500"></i>'; }
+                if(notice.type === 'achievement') { 
+                    bg = 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200 text-indigo-900'; 
+                    icon = `<i class="fa-solid ${notice.icon || 'fa-trophy'} text-indigo-500"></i>`; 
+                }
+                
+                // Lógica de Reações ("Oss!")
+                const reactions = notice.reactions || [];
+                const currentUserId = window.currentStudentData ? window.currentStudentData.id : null;
+                const hasReacted = currentUserId && reactions.includes(currentUserId);
+                const reactionCount = reactions.length;
+
+                let reactionBtnHtml = '';
+                // Mostramos o botão interativo apenas nas postagens de conquistas
+                if (notice.type === 'achievement') {
+                    const btnClass = hasReacted 
+                        ? 'bg-brand-red text-white border-brand-red' 
+                        : 'bg-white text-indigo-500 border-indigo-200 hover:bg-indigo-50';
+
+                    reactionBtnHtml = `
+                        <div class="mt-3 pt-3 border-t border-indigo-100 flex justify-end">
+                            <button onclick="toggleNoticeReaction('${notice.id}')" class="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-full border shadow-sm transition-colors ${btnClass}">
+                                🥋 Oss! <span class="bg-black/10 px-1.5 py-0.5 rounded-full">${reactionCount}</span>
+                            </button>
+                        </div>
+                    `;
+                }
                 
                 list.innerHTML += `
-                    <div class="p-4 border rounded-lg shadow-sm ${bg} flex gap-3 items-start">
-                        <div class="mt-1 text-lg">${icon}</div>
-                        <div class="flex-1">
-                            <div class="flex justify-between items-start">
-                                <h4 class="font-bold text-sm mb-1">${notice.title}</h4>
-                                <span class="text-[10px] uppercase font-bold opacity-60 ml-2 whitespace-nowrap">${d}</span>
+                    <div class="p-4 border rounded-lg shadow-sm ${bg} flex flex-col">
+                        <div class="flex gap-3 items-start">
+                            <div class="mt-1 text-lg">${icon}</div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <h4 class="font-bold text-sm mb-1">${notice.title}</h4>
+                                    <span class="text-[10px] uppercase font-bold opacity-60 ml-2 whitespace-nowrap">${d}</span>
+                                </div>
+                                <p class="text-xs opacity-90 whitespace-pre-wrap">${notice.text}</p>
                             </div>
-                            <p class="text-xs opacity-90 whitespace-pre-wrap">${notice.text}</p>
                         </div>
+                        ${reactionBtnHtml}
                     </div>
                 `;
             });
         }
+
+        window.toggleNoticeReaction = async (noticeId) => {
+            const student = window.currentStudentData;
+            if (!student) return;
+
+            // Procurar a notificação na lista local
+            const noticeIndex = window.noticesList.findIndex(n => n.id === noticeId);
+            if (noticeIndex === -1) return;
+
+            const notice = window.noticesList[noticeIndex];
+            const reactions = notice.reactions || [];
+            const hasReacted = reactions.includes(student.id);
+
+            // Atualização Otimista na Interface (muda na hora sem esperar o servidor)
+            if (hasReacted) {
+                notice.reactions = reactions.filter(id => id !== student.id);
+            } else {
+                notice.reactions = [...reactions, student.id];
+            }
+            renderStudentNotices(); // Atualiza a tela
+
+            // Atualiza no Firebase em background
+            try {
+                const docRef = doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', noticeId);
+                if (hasReacted) {
+                    await updateDoc(docRef, { reactions: arrayRemove(student.id) });
+                } else {
+                    await updateDoc(docRef, { reactions: arrayUnion(student.id) });
+                }
+            } catch (e) {
+                console.error("Erro ao registrar a reação:", e);
+                // Se der erro, desfazemos a ação na interface
+                if (hasReacted) {
+                    notice.reactions.push(student.id);
+                } else {
+                    notice.reactions = notice.reactions.filter(id => id !== student.id);
+                }
+                renderStudentNotices();
+            }
+        };
 
         function renderBeltSVG(beltStr) {
             if (!beltStr) return '';
