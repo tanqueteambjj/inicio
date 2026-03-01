@@ -38,149 +38,40 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
 
+        /* KANBAN STYLES */
+        .kanban-col { min-height: 400px; }
+        .kanban-card { cursor: grab; transition: transform 0.2s, box-shadow 0.2s; border-left-width: 4px; }
+        .kanban-card:active { cursor: grabbing; transform: scale(0.98); box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .kanban-card.dragging { opacity: 0.5; }
+
         /* CSS OTIMIZADO PARA IMPRESSÃO - NORMAS ABNT E MÚLTIPLAS PÁGINAS */
         @media print {
-            @page { 
-                margin: 2.5cm; /* Margem segura ABNT */
-                size: A4 portrait; 
-            }
+            @page { margin: 2.5cm; size: A4 portrait; }
+            body, html { height: auto !important; min-height: auto !important; overflow: visible !important; background: white !important; }
+            body > * { display: none !important; }
+
+            body.printing-contract #printable-contract { display: block !important; position: relative !important; width: 100% !important; margin: 0 !important; padding: 0 !important; visibility: visible !important; }
+            body.printing-contract #printable-contract * { visibility: visible !important; }
+
+            body.printing-report #report-container { display: block !important; position: relative !important; width: 100% !important; margin: 0 !important; padding: 0 !important; visibility: visible !important; background-color: white !important; color: black !important; }
+            body.printing-report #report-container * { visibility: visible !important; }
+
+            body.printing-qr #qr-modal { display: block !important; visibility: hidden !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; }
+            body.printing-qr #printable-qr-card { display: flex !important; position: absolute !important; left: 50% !important; top: 2cm !important; transform: translateX(-50%) !important; width: 6.5cm !important; height: 10.5cm !important; visibility: visible !important; background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; border: 1px solid #ccc !important; border-radius: 12px !important; box-shadow: none !important; margin: 0 !important; }
+            body.printing-qr #printable-qr-card * { visibility: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             
-            /* Destrava a rolagem do site para permitir a quebra de página */
-            body, html { 
-                height: auto !important; 
-                min-height: auto !important;
-                overflow: visible !important; 
-                background: white !important; 
-            }
-            
-            /* Ocultar a Interface do Sistema e Modais por padrão */
-            body > * { 
-                display: none !important; 
-            }
+            body.printing-receipt #printable-receipt { display: block !important; position: absolute !important; left: 50% !important; top: 50px !important; transform: translateX(-50%) !important; width: 14cm !important; height: auto !important; visibility: visible !important; border: 2px dashed #000 !important; padding: 30px !important; background: white !important; }
+            body.printing-receipt #printable-receipt * { visibility: visible !important; }
 
-            /* ===== MODO CONTRATO ===== */
-            body.printing-contract #printable-contract {
-                display: block !important;
-                position: relative !important; 
-                width: 100% !important; 
-                margin: 0 !important; 
-                padding: 0 !important;
-                visibility: visible !important;
-            }
-            body.printing-contract #printable-contract * {
-                visibility: visible !important;
-            }
+            p { text-align: justify; line-height: 1.6; orphans: 3; widows: 3; margin-bottom: 12px; }
+            h1, h2, h3, h4 { page-break-after: avoid; }
+            .page-break-inside-avoid { page-break-inside: avoid; break-inside: avoid; }
 
-            /* ===== MODO RELATÓRIO ===== */
-            body.printing-report #report-container {
-                display: block !important;
-                position: relative !important;
-                width: 100% !important; 
-                margin: 0 !important; 
-                padding: 0 !important;
-                visibility: visible !important;
-                background-color: white !important;
-                color: black !important;
-            }
-            body.printing-report #report-container * {
-                visibility: visible !important;
-            }
-
-            /* ===== MODO QR CODE CARD (CARTEIRINHA) ===== */
-            body.printing-qr #qr-modal {
-                display: block !important;
-                visibility: hidden !important;
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                height: 100% !important;
-            }
-            body.printing-qr #printable-qr-card {
-                display: flex !important;
-                position: absolute !important;
-                left: 50% !important;
-                top: 2cm !important;
-                transform: translateX(-50%) !important;
-                width: 6.5cm !important;
-                height: 10.5cm !important;
-                visibility: visible !important;
-                background: white !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                border: 1px solid #ccc !important;
-                border-radius: 12px !important;
-                box-shadow: none !important;
-                margin: 0 !important;
-            }
-            body.printing-qr #printable-qr-card * {
-                visibility: visible !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            
-            /* ===== MODO RECIBO ===== */
-            body.printing-receipt #printable-receipt {
-                display: block !important;
-                position: absolute !important;
-                left: 50% !important;
-                top: 50px !important;
-                transform: translateX(-50%) !important;
-                width: 14cm !important;
-                height: auto !important;
-                visibility: visible !important;
-                border: 2px dashed #000 !important;
-                padding: 30px !important;
-                background: white !important;
-            }
-            body.printing-receipt #printable-receipt * {
-                visibility: visible !important;
-            }
-
-            /* Tipografia ABNT para Textos e Cláusulas */
-            p { 
-                text-align: justify; 
-                line-height: 1.6; 
-                orphans: 3; 
-                widows: 3; 
-                margin-bottom: 12px;
-            }
-            h1, h2, h3, h4 { 
-                page-break-after: avoid; 
-            }
-            .page-break-inside-avoid { 
-                page-break-inside: avoid; 
-                break-inside: avoid;
-            }
-
-            /* Estilização das Tabelas no Relatório */
-            table { 
-                width: 100%; 
-                border-collapse: collapse; 
-                font-size: 10pt; 
-                margin-top: 15px; 
-                page-break-inside: auto; 
-            }
+            table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 15px; page-break-inside: auto; }
             tr { page-break-inside: avoid; page-break-after: auto; }
-            th, td { 
-                border: 1px solid #ddd; 
-                padding: 8px; 
-                text-align: left; 
-                color: black; 
-            }
-            th { 
-                background-color: #f3f3f3 !important; 
-                font-weight: bold; 
-                border-bottom: 2px solid #000; 
-                -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact; 
-            }
-            tfoot th { 
-                background-color: #eee !important; 
-                border-top: 2px solid #000; 
-                -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact; 
-            }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; color: black; }
+            th { background-color: #f3f3f3 !important; font-weight: bold; border-bottom: 2px solid #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            tfoot th { background-color: #eee !important; border-top: 2px solid #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
 </head>
@@ -194,7 +85,6 @@
         <div class="p-6 flex items-center justify-center border-b border-gray-800 relative">
             <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" alt="Logo" class="h-10 w-auto mr-3">
             <span class="font-display font-bold text-lg tracking-wider">ADMIN</span>
-            <!-- Botão Fechar Menu Mobile -->
             <button onclick="toggleMobileMenu()" class="md:hidden absolute top-4 right-4 text-gray-400 hover:text-white focus:outline-none">
                 <i class="fa-solid fa-times text-xl"></i>
             </button>
@@ -215,7 +105,7 @@
                 <i class="fa-solid fa-chart-pie w-6"></i> <span class="font-bold">Relatórios</span>
             </a>
             <a href="#" onclick="switchMainView('experimental')" id="nav-experimental" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
-                <i class="fa-solid fa-fire w-6"></i> <span class="font-bold">Aulas Exp.</span>
+                <i class="fa-solid fa-fire w-6"></i> <span class="font-bold">Aulas Exp. / CRM</span>
             </a>
             <a href="#" onclick="switchMainView('notices')" id="nav-notices" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
                 <i class="fa-solid fa-bullhorn w-6"></i> <span class="font-bold">Mural de Avisos</span>
@@ -249,7 +139,6 @@
                 <button onclick="openCheckinModal()" class="md:hidden w-10 h-10 flex items-center justify-center bg-green-600 text-white rounded-full shadow-lg">
                     <i class="fa-solid fa-camera"></i>
                 </button>
-                <!-- Botão de Sair Mobile -->
                 <button onclick="handleLogout()" class="md:hidden w-10 h-10 flex items-center justify-center bg-red-100 text-red-600 rounded-full shadow-sm hover:bg-red-200 transition">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
@@ -261,7 +150,7 @@
         <!-- Content Area -->
         <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6 relative">
 
-            <!-- VIEW: ALUNOS (DEFAULT) -->
+            <!-- VIEW: ALUNOS -->
             <div id="view-students">
                 <!-- Stats Row -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 stats-container">
@@ -292,13 +181,13 @@
                             <div class="text-green-500 text-2xl"><i class="fa-solid fa-user"></i></div>
                         </div>
                     </div>
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-gray-400 cursor-pointer hover:bg-gray-50 transition" onclick="switchTab('inactive')">
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-gray-500 cursor-pointer hover:bg-gray-50 transition" onclick="switchTab('archived')">
                         <div class="flex justify-between">
                             <div>
-                                <p class="text-gray-400 text-xs font-bold uppercase">Inativos</p>
-                                <p class="text-2xl font-bold text-gray-800" id="stat-inactive">0</p>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Arquivados</p>
+                                <p class="text-2xl font-bold text-gray-800" id="stat-archived">0</p>
                             </div>
-                            <div class="text-gray-400 text-2xl"><i class="fa-solid fa-user-slash"></i></div>
+                            <div class="text-gray-500 text-2xl"><i class="fa-solid fa-box-archive"></i></div>
                         </div>
                     </div>
                 </div>
@@ -315,20 +204,23 @@
                         <i class="fa-solid fa-child mr-2"></i> INFANTIL
                     </button>
                     <button onclick="switchTab('inactive')" id="tab-inactive" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
-                        <i class="fa-solid fa-user-slash mr-2"></i> INATIVOS
+                        <i class="fa-solid fa-power-off mr-2"></i> INATIVOS
+                    </button>
+                    <button onclick="switchTab('archived')" id="tab-archived" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
+                        <i class="fa-solid fa-box-archive mr-2"></i> ARQUIVO
                     </button>
                 </div>
 
                 <!-- Student Table -->
                 <div class="bg-white rounded-b-xl rounded-tr-xl shadow overflow-hidden relative top-[-1px] border border-gray-200">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center no-print">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center no-print flex-wrap gap-2">
                         <div class="flex items-center gap-4">
                             <h3 class="font-bold text-gray-700 uppercase text-sm flex items-center gap-2">
                                 <span id="list-title">Lista de Alunos</span>
                                 <span class="bg-gray-200 text-gray-600 py-0.5 px-2 rounded-full text-xs" id="list-count">0</span>
                             </h3>
-                            <button onclick="deleteSelectedStudents()" id="btn-bulk-delete" class="hidden flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition animate-fade-in">
-                                <i class="fa-solid fa-trash-can"></i> Excluir Selecionados (<span id="selected-count">0</span>)
+                            <button onclick="archiveSelectedStudents()" id="btn-bulk-archive" class="hidden flex items-center gap-1 bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs font-bold hover:bg-gray-300 transition animate-fade-in border border-gray-300">
+                                <i class="fa-solid fa-box-archive"></i> Arquivar Selecionados (<span id="selected-count">0</span>)
                             </button>
                             <div id="bulk-actions" class="hidden flex items-center gap-2 animate-fade-in">
                                 <button onclick="addPresenceSelectedStudents()" class="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-bold hover:bg-green-200 transition">
@@ -344,7 +236,6 @@
                     
                     <!-- Barra de Filtros Inteligentes -->
                     <div class="px-6 py-3 border-b border-gray-200 bg-white flex flex-wrap gap-4 items-center text-sm no-print">
-                        <!-- Busca Mobile Integrada -->
                         <div class="w-full md:hidden relative mb-2">
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-search"></i></span>
                             <input type="text" id="searchInputMobile1" onkeyup="filterTable()" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-red transition">
@@ -398,7 +289,7 @@
             <!-- VIEW: FINANCEIRO -->
             <div id="view-financial" class="hidden">
                  
-                 <!-- ALERTA DE PROMOÇÃO VENCENDO (DICA 5) -->
+                 <!-- ALERTA DE PROMOÇÃO VENCENDO -->
                  <div id="financial-promo-alerts" class="hidden mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-xl shadow-sm animate-fade-in">
                     <div class="flex items-start">
                         <div class="flex-shrink-0"><i class="fa-solid fa-triangle-exclamation text-yellow-500 text-xl"></i></div>
@@ -466,9 +357,6 @@
                     <button onclick="switchFinancialTab('expiring')" id="fin-tab-expiring" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
                         EXPIRANDO
                     </button>
-                    <button onclick="switchFinancialTab('inactive')" id="fin-tab-inactive" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
-                        INATIVOS
-                    </button>
                 </div>
 
                 <div class="bg-white rounded-b-xl rounded-tr-xl shadow overflow-hidden border border-gray-200 relative top-[-1px]">
@@ -477,7 +365,12 @@
                             <h3 class="font-bold text-gray-800 uppercase text-lg"><i class="fa-solid fa-coins text-brand-red mr-2"></i> Gestão Financeira</h3>
                             <p class="text-xs text-gray-500">Controle de pagamentos e vencimentos</p>
                         </div>
-                        <button onclick="loadData()" class="text-gray-500 hover:text-black text-sm"><i class="fa-solid fa-rotate"></i></button>
+                        <div class="flex gap-2">
+                            <button onclick="bulkWhatsAppBilling()" id="btn-bulk-whatsapp" class="hidden bg-[#25D366] hover:bg-[#1ebe5d] text-white text-xs font-bold px-3 py-1.5 rounded shadow flex items-center gap-1 transition">
+                                <i class="fa-brands fa-whatsapp text-sm"></i> Cobrar Pendentes (Visíveis)
+                            </button>
+                            <button onclick="loadData()" class="text-gray-500 hover:text-black text-sm"><i class="fa-solid fa-rotate"></i></button>
+                        </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
@@ -542,31 +435,61 @@
                 </div>
             </div>
 
-            <!-- VIEW: AULA EXPERIMENTAL -->
-            <div id="view-experimental" class="hidden">
-                <div class="bg-white rounded-xl shadow overflow-hidden border border-gray-200">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center no-print">
-                        <div>
-                            <h3 class="font-bold text-gray-800 uppercase text-lg"><i class="fa-solid fa-fire text-yellow-500 mr-2"></i> Gestão de Aulas Experimentais</h3>
-                            <p class="text-xs text-gray-500">Controle os visitantes que agendaram pelo site</p>
-                        </div>
-                        <button onclick="loadExperimentalData()" class="text-gray-500 hover:text-black text-sm"><i class="fa-solid fa-rotate"></i></button>
+            <!-- VIEW: AULA EXPERIMENTAL (KANBAN CRM) -->
+            <div id="view-experimental" class="hidden h-full flex flex-col">
+                <div class="px-6 py-4 bg-white border-b border-gray-200 shadow-sm flex justify-between items-center rounded-t-xl z-10">
+                    <div>
+                        <h3 class="font-bold text-gray-800 uppercase text-lg"><i class="fa-solid fa-fire text-yellow-500 mr-2"></i> CRM Aulas Experimentais</h3>
+                        <p class="text-xs text-gray-500">Arraste os cards para atualizar o status do visitante.</p>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
-                                    <th class="px-6 py-3 border-b">Data / Hora</th>
-                                    <th class="px-6 py-3 border-b">Nome do Visitante</th>
-                                    <th class="px-6 py-3 border-b">Contato</th>
-                                    <th class="px-6 py-3 border-b">Status</th>
-                                    <th class="px-6 py-3 border-b text-center no-print-col">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="experimental-table-body" class="text-sm text-gray-700 divide-y divide-gray-200">
-                                <tr><td colspan="5" class="px-6 py-4 text-center">Carregando dados...</td></tr>
-                            </tbody>
-                        </table>
+                    <button onclick="loadExperimentalData()" class="text-gray-500 hover:text-black text-sm bg-gray-100 p-2 rounded-full"><i class="fa-solid fa-rotate"></i></button>
+                </div>
+                
+                <!-- Kanban Board -->
+                <div class="flex-1 overflow-x-auto overflow-y-hidden bg-gray-100 p-4 rounded-b-xl border border-t-0 border-gray-200">
+                    <div class="flex gap-4 h-full min-w-[1000px] items-start">
+                        
+                        <!-- Coluna 1: Agendado -->
+                        <div class="flex-1 min-w-[240px] flex flex-col h-full max-h-[75vh]">
+                            <div class="bg-yellow-500 text-white font-bold py-2 px-4 rounded-t-lg shadow-sm flex justify-between items-center shrink-0">
+                                <span>AGENDADO</span>
+                                <span class="bg-white/20 px-2 rounded text-xs" id="count-Agendado">0</span>
+                            </div>
+                            <div class="kanban-col bg-gray-200/60 flex-1 overflow-y-auto p-2 rounded-b-lg border border-gray-200 space-y-2" id="col-Agendado" ondrop="drop(event)" ondragover="allowDrop(event)">
+                                <!-- Cards -->
+                            </div>
+                        </div>
+
+                        <!-- Coluna 2: Concluído (Compareceu) -->
+                        <div class="flex-1 min-w-[240px] flex flex-col h-full max-h-[75vh]">
+                            <div class="bg-green-500 text-white font-bold py-2 px-4 rounded-t-lg shadow-sm flex justify-between items-center shrink-0">
+                                <span>COMPARECEU</span>
+                                <span class="bg-white/20 px-2 rounded text-xs" id="count-Concluído">0</span>
+                            </div>
+                            <div class="kanban-col bg-gray-200/60 flex-1 overflow-y-auto p-2 rounded-b-lg border border-gray-200 space-y-2" id="col-Concluído" ondrop="drop(event)" ondragover="allowDrop(event)">
+                            </div>
+                        </div>
+
+                        <!-- Coluna 3: Matriculado -->
+                        <div class="flex-1 min-w-[240px] flex flex-col h-full max-h-[75vh]">
+                            <div class="bg-blue-600 text-white font-bold py-2 px-4 rounded-t-lg shadow-sm flex justify-between items-center shrink-0">
+                                <span>MATRICULADO</span>
+                                <span class="bg-white/20 px-2 rounded text-xs" id="count-Matriculado">0</span>
+                            </div>
+                            <div class="kanban-col bg-gray-200/60 flex-1 overflow-y-auto p-2 rounded-b-lg border border-gray-200 space-y-2" id="col-Matriculado" ondrop="drop(event)" ondragover="allowDrop(event)">
+                            </div>
+                        </div>
+
+                        <!-- Coluna 4: Faltou / Cancelou -->
+                        <div class="flex-1 min-w-[240px] flex flex-col h-full max-h-[75vh]">
+                            <div class="bg-red-500 text-white font-bold py-2 px-4 rounded-t-lg shadow-sm flex justify-between items-center shrink-0">
+                                <span>FALTOU / CANCELADO</span>
+                                <span class="bg-white/20 px-2 rounded text-xs" id="count-Faltou">0</span>
+                            </div>
+                            <div class="kanban-col bg-gray-200/60 flex-1 overflow-y-auto p-2 rounded-b-lg border border-gray-200 space-y-2" id="col-Faltou" ondrop="drop(event)" ondragover="allowDrop(event)">
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -600,8 +523,30 @@
         </main>
     </div>
 
-    <!-- PRINTABLE CONTAINERS (FORA DO MAIN UI PARA NÃO CORTAR PÁGINAS) -->
+    <!-- MODAIS E COMPONENTES OCULTOS -->
     
+    <!-- Modal Bulk Billing (WhatsApp) -->
+    <div id="bulk-bill-modal" class="fixed inset-0 z-[90] hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col transform transition-all">
+            <div class="bg-[#25D366] px-6 py-4 flex justify-between items-center text-white shrink-0">
+                <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-brands fa-whatsapp text-xl"></i> Disparo de Cobrança</h3>
+                <button onclick="closeBulkBillingModal()" class="hover:text-green-200 transition"><i class="fa-solid fa-times text-xl"></i></button>
+            </div>
+            <div class="p-4 bg-green-50 border-b border-green-100 shrink-0">
+                <p class="text-sm text-green-800">Clique no botão enviar ao lado de cada aluno para abrir o seu WhatsApp com a mensagem pronta de cobrança.</p>
+                <p class="text-xs text-green-600 mt-1 font-bold">Total na lista: <span id="bulk-bill-count">0</span> alunos.</p>
+            </div>
+            <div class="overflow-y-auto p-0 flex-1 bg-gray-50">
+                <ul id="bulk-bill-list" class="divide-y divide-gray-200">
+                    <!-- Gerado via JS -->
+                </ul>
+            </div>
+            <div class="bg-white border-t px-6 py-4 flex justify-end shrink-0">
+                <button onclick="closeBulkBillingModal()" class="px-5 py-2 bg-gray-200 text-gray-700 font-bold rounded hover:bg-gray-300 transition">Fechar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Relatórios -->
     <div id="report-container" class="hidden bg-white text-black p-4 font-sans absolute inset-0 z-50">
         <!-- Preenchido via JS -->
@@ -647,7 +592,6 @@
         </div>
     </div>
 
-    <!-- QR Code / Check-in Modals -->
     <!-- Modal: Mostrar Cartão QR Code -->
     <div id="qr-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl p-6 text-center max-w-sm w-full animate-fade-in">
@@ -656,31 +600,25 @@
             </h3>
             
             <div id="printable-qr-card" class="bg-white border-2 border-brand-dark rounded-xl overflow-hidden relative shadow-2xl mx-auto flex flex-col" style="width: 250px; height: 400px;">
-                <!-- Header -->
                 <div class="bg-brand-dark text-white p-3 flex items-center justify-center gap-2 shrink-0">
                     <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" class="h-6">
                     <span class="font-display font-bold text-sm tracking-widest uppercase">Tanque Team</span>
                 </div>
                 
-                <!-- Body -->
                 <div class="p-4 flex flex-col items-center flex-1 relative bg-white">
-                    <!-- Background watermark -->
                     <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 opacity-5 pointer-events-none">
                     
-                    <!-- Photo -->
                     <div class="w-24 h-24 bg-gray-100 rounded-full border-4 border-gray-200 overflow-hidden mb-3 shadow-md z-10 flex-shrink-0 relative">
                         <img id="qr-photo" src="" class="w-full h-full object-cover hidden">
                         <div id="qr-photo-placeholder" class="w-full h-full flex items-center justify-center text-gray-400 font-bold text-3xl font-display">TT</div>
                     </div>
                     
-                    <!-- Info -->
                     <div class="text-center z-10 w-full mb-2">
                         <h4 class="font-bold text-base text-gray-900 leading-tight uppercase truncate" id="qr-student-name">Nome do Aluno</h4>
                         <p class="text-xs text-brand-red font-bold uppercase truncate mt-1" id="qr-belt">Faixa Branca</p>
                         <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider truncate mt-1" id="qr-plan">Plano</p>
                     </div>
                     
-                    <!-- QR Code -->
                     <div class="mt-auto bg-white p-1.5 border border-gray-200 rounded shadow-sm z-10 inline-block">
                         <img id="qr-image" src="" alt="QR Code" class="w-24 h-24">
                     </div>
@@ -698,11 +636,25 @@
     <!-- Modal: Leitor de Check-in da Câmera -->
     <div id="checkin-modal" class="fixed inset-0 z-[100] hidden bg-brand-dark flex flex-col justify-center items-center p-4">
         <div class="w-full max-w-lg bg-white rounded-xl overflow-hidden shadow-2xl flex flex-col">
-            <div class="bg-green-600 px-6 py-4 flex justify-between items-center text-white">
+            <div class="bg-green-600 px-6 py-4 flex justify-between items-center text-white shrink-0">
                 <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-camera"></i> Leitor de Check-in</h3>
                 <button onclick="closeCheckinModal()" class="hover:text-green-200 text-xl"><i class="fa-solid fa-times"></i></button>
             </div>
             
+            <div class="bg-gray-100 p-4 shrink-0 border-b border-gray-200">
+                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Selecione a Turma Atual</label>
+                <select id="checkin-class-selector" class="w-full border-2 border-green-500 rounded-lg p-3 font-bold text-gray-800 bg-white shadow-sm focus:outline-none">
+                    <option value="Turma Mista (Livre)">Geral / Mista</option>
+                    <option value="Adulto - 10h30">Adulto - 10h30</option>
+                    <option value="Adulto - 12h30">Adulto - 12h30</option>
+                    <option value="Adulto - 18h00">Adulto - 18h00</option>
+                    <option value="Adulto - 21h00">Adulto - 21h00</option>
+                    <option value="Infantil - 15h00">Infantil - 15h00</option>
+                    <option value="Infantil - 16h30">Infantil - 16h30</option>
+                </select>
+                <p class="text-[10px] text-gray-500 mt-1"><i class="fa-solid fa-circle-info"></i> Esta informação fica guardada no histórico do aluno para gestão de turmas.</p>
+            </div>
+
             <div class="p-6 flex-1 flex flex-col items-center">
                 <!-- Caixa do Leitor da Camera -->
                 <div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-4 border-gray-200 shadow-inner mb-4" style="min-height: 250px;"></div>
@@ -716,7 +668,7 @@
         </div>
     </div>
 
-    <!-- Printable Receipt Container (Hidden by default) -->
+    <!-- Printable Receipt Container -->
     <div id="printable-receipt" class="hidden bg-white text-black p-8 font-sans absolute inset-0 z-50">
         <div class="text-center mb-6 border-b-2 border-gray-300 pb-4">
             <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" alt="Logo" class="h-16 mx-auto mb-2" style="filter: grayscale(100%);">
@@ -733,7 +685,6 @@
                 <div><span class="text-xs text-gray-500 block">Forma de Pagamento:</span><strong id="rec-method"></strong></div>
                 <div class="col-span-2"><span class="text-xs text-gray-500 block">Válido até (Próx. Vencimento):</span><strong id="rec-next-due"></strong></div>
             </div>
-            <!-- NOVO: TEXTO DEPENDENTES RECIBO -->
             <div id="rec-dependents-list" class="text-xs font-bold text-purple-700 mt-3 bg-purple-50 p-2 rounded border border-purple-200 hidden"></div>
         </div>
         <div class="mt-12 pt-4 border-t border-black text-center w-64 mx-auto">
@@ -742,7 +693,7 @@
         </div>
     </div>
 
-    <!-- Receipt Modal (Ações pós-pagamento) -->
+    <!-- Receipt Modal -->
     <div id="receipt-modal" class="fixed inset-0 z-[110] hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden animate-fade-in text-center">
             <div class="bg-green-600 p-6 text-white">
@@ -1464,7 +1415,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
@@ -1485,7 +1436,6 @@
         window.noticesList = [];
         window.experimentalList = []; 
 
-        // CENTRAL DE PREÇOS E PLANOS OTIMIZADA
         window.PLAN_DICT = {
             'infantil-mensal': { price: 189.90, short: 'Infantil Mensal', long: 'INFANTIL MENSAL' },
             'infantil-trimestral': { price: 168.90, short: 'Infantil Trimestral', long: 'INFANTIL TRIMESTRAL' },
@@ -1502,11 +1452,11 @@
             'outros': { price: 0.00, short: 'Outros / Avulso', long: 'OUTROS / AVULSO' }
         };
 
-        window.getPlanInfo = (planKey) => {
-            return window.PLAN_DICT[planKey] || { price: 0, short: String(planKey||'').toUpperCase(), long: 'NÃO INFORMADO' };
-        };
+        window.getPlanInfo = (planKey) => window.PLAN_DICT[planKey] || { price: 0, short: String(planKey||'').toUpperCase(), long: 'NÃO INFORMADO' };
 
         window.getStatusBadge = (student, targetDate, today) => {
+            if (student.archived) return `<span class="px-2 py-1 rounded text-xs font-bold bg-gray-200 text-gray-800"><i class="fa-solid fa-box-archive mr-1"></i> ARQUIVADO</span>`;
+            
             const safePlan = String(student.plan || '').toLowerCase();
             if (safePlan === 'dependente') return `<span class="px-2 py-1 rounded text-xs font-bold bg-purple-100 text-purple-800">DEPENDENTE</span>`;
             if (student.paymentStatus === 'Isento' || safePlan === 'administracao') return `<span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">Isento</span>`;
@@ -1524,46 +1474,32 @@
         };
 
         document.addEventListener('DOMContentLoaded', function() {
-            const cpfInput = document.getElementById('reg-cpf');
-            const phoneInput = document.getElementById('reg-phone');
-            const editExpPhoneInput = document.getElementById('edit-exp-phone');
-            
-            if(cpfInput) {
-                cpfInput.addEventListener('input', function(e) {
-                    let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,3})(\d{0,2})/);
-                    e.target.value = !x[2] ? x[1] : x[1] + '.' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '-' + x[4] : '');
-                });
-            }
-            if(phoneInput) {
-                phoneInput.addEventListener('input', function(e) {
-                    let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
-                    e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
-                });
-            }
-            if(editExpPhoneInput) {
-                editExpPhoneInput.addEventListener('input', function(e) {
-                    let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
-                    e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
-                });
-            }
-            
-            // Mascara unificada de data para múltiplos campos
-            const dobInputs = ['reg-dob', 'admin-dep1-dob', 'admin-dep2-dob'];
-            dobInputs.forEach(id => {
+            const maskInput = (id, regexStr, replacement) => {
                 const el = document.getElementById(id);
-                if(el) {
-                    el.addEventListener('input', function(e) {
-                        let value = e.target.value.replace(/\D/g, '');
-                        if (value.length > 8) value = value.slice(0, 8);
-                        if (value.length > 4) value = value.replace(/^(\d{2})(\d{2})(\d{4}).*/, '$1/$2/$3');
-                        else if (value.length > 2) value = value.replace(/^(\d{2})(\d{0,2}).*/, '$1/$2');
-                        e.target.value = value;
-                    });
-                }
+                if(el) el.addEventListener('input', e => {
+                    let v = e.target.value.replace(/\D/g, '');
+                    const r = new RegExp(regexStr);
+                    let x = v.match(r);
+                    if(x) e.target.value = replacement(x);
+                });
+            };
+            
+            maskInput('reg-cpf', '(\\d{0,3})(\\d{0,3})(\\d{0,3})(\\d{0,2})', x => !x[2] ? x[1] : x[1] + '.' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '-' + x[4] : ''));
+            maskInput('reg-phone', '(\\d{0,2})(\\d{0,5})(\\d{0,4})', x => !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : ''));
+            maskInput('edit-exp-phone', '(\\d{0,2})(\\d{0,5})(\\d{0,4})', x => !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : ''));
+            
+            ['reg-dob', 'admin-dep1-dob', 'admin-dep2-dob'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.addEventListener('input', e => {
+                    let v = e.target.value.replace(/\D/g, '');
+                    if (v.length > 8) v = v.slice(0, 8);
+                    if (v.length > 4) v = v.replace(/^(\d{2})(\d{2})(\d{4}).*/, '$1/$2/$3');
+                    else if (v.length > 2) v = v.replace(/^(\d{2})(\d{0,2}).*/, '$1/$2');
+                    e.target.value = v;
+                });
             });
         });
 
-        // Auth Check FIRST
         const session = localStorage.getItem('tanque_user_session');
         if (!session) {
             window.location.href = "https://www.tanqueteambjj.com.br/login.html";
@@ -1582,26 +1518,20 @@
                     
                     const initAuth = async () => {
                         try {
-                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                                await signInWithCustomToken(auth, __initial_auth_token);
-                            } else {
-                                await signInAnonymously(auth);
-                            }
+                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+                            else await signInAnonymously(auth);
                             window.loadData();
                             window.loadNotices();
                         } catch (e) {
                             console.error("Erro na autenticação Firebase:", e);
-                            alert("Não foi possível conectar ao banco de dados. Verifique as permissões.");
+                            alert("Não foi possível conectar ao banco de dados.");
                         }
                     };
                     initAuth();
-                } catch(e) {
-                    console.error("Firebase init error", e);
-                }
+                } catch(e) { console.error("Firebase init error", e); }
             }
         }
 
-        // EmailJS Initialization
         (function(){ emailjs.init("joP6USyQXdqGI3GN5"); })();
 
         window.handleLogout = () => {
@@ -1623,33 +1553,21 @@
             }
             if (isNaN(dobDate)) return null;
             const diff_ms = Date.now() - dobDate.getTime();
-            const age_dt = new Date(diff_ms);
-            return Math.abs(age_dt.getUTCFullYear() - 1970);
+            return Math.abs(new Date(diff_ms).getUTCFullYear() - 1970);
         }
 
         function toISODate(ptBrDate) {
             if(!ptBrDate) return ptBrDate;
-            if(ptBrDate.includes('/')) {
-                return ptBrDate.split('/').reverse().join('-');
-            }
+            if(ptBrDate.includes('/')) return ptBrDate.split('/').reverse().join('-');
             return ptBrDate;
         }
 
         window.populateTitularSelects = function() {
-            const comboStudents = window.students.filter(s => 
-                s.plan && s.plan.includes('combo') && s.enrollmentStatus !== 'Inativo'
-            );
-
+            const comboStudents = window.students.filter(s => s.plan && s.plan.includes('combo') && s.enrollmentStatus !== 'Inativo' && !s.archived);
             const regTitularSelect = document.getElementById('reg-titular');
             const editTitularSelect = document.getElementById('edit-titular');
-
             let optionsHtml = '<option value="">-- Selecione o Titular --</option>';
-            comboStudents.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-
-            comboStudents.forEach(s => {
-                optionsHtml += `<option value="${s.name}">${s.name}</option>`;
-            });
-
+            comboStudents.sort((a, b) => (a.name || '').localeCompare(b.name || '')).forEach(s => optionsHtml += `<option value="${s.name}">${s.name}</option>`);
             if (regTitularSelect) regTitularSelect.innerHTML = optionsHtml;
             if (editTitularSelect) editTitularSelect.innerHTML = optionsHtml;
         }
@@ -1659,27 +1577,19 @@
                 if(!window.db) throw new Error("Database not initialized");
                 const querySnapshot = await getDocs(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'));
                 window.students = [];
-                querySnapshot.forEach((doc) => {
-                    window.students.push({ id: doc.id, ...doc.data() });
-                });
-                
+                querySnapshot.forEach(doc => window.students.push({ id: doc.id, ...doc.data() }));
                 window.students.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
                 window.populateTitularSelects();
                 updateStats();
-                
                 if(window.currentView === 'students') window.renderTable();
                 else if(window.currentView === 'financial') window.renderFinancialTable();
-            } catch (error) {
-                console.error("Erro ao carregar dados do Firebase:", error);
-            }
+            } catch (error) { console.error("Erro ao carregar dados do Firebase:", error); }
         }
 
         function isStudentKid(s) {
             const cat = s.category ? String(s.category).toLowerCase() : '';
             const plan = s.plan ? String(s.plan).toLowerCase() : '';
-            
             if (cat === 'administração' || plan === 'administracao') return false; 
-            
             const age = getAge(s.dob);
             if (age !== null && age < 12) return true;
             if (cat.includes('infantil') || plan.includes('infantil')) return true;
@@ -1687,45 +1597,34 @@
         }
 
         function updateStats() {
-            const total = window.students.filter(s => s.enrollmentStatus !== 'Inativo').length;
-            const active = window.students.filter(s => s.enrollmentStatus !== 'Inativo' && (s.paymentStatus === 'Em dia' || s.paymentStatus === 'Isento')).length;
-            const pending = total - active;
+            const total = window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).length;
+            const active = window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived && (s.paymentStatus === 'Em dia' || s.paymentStatus === 'Isento')).length;
             
+            let expiringCount = 0, kidsCount = 0, adultsCount = 0, inactiveCount = 0, archivedCount = 0;
             const today = new Date();
-            let expiringCount = 0;
-            window.students.forEach(s => {
-                if(s.enrollmentStatus === 'Inativo') return;
-                const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
-                if (isNaN(targetDate)) return;
-                const diffTime = targetDate - today;
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                if (diffDays >= 0 && diffDays <= 7) expiringCount++;
-            });
-            
-            let kidsCount = 0; let adultsCount = 0; let inactiveCount = 0;
 
             window.students.forEach(s => {
-                if (s.enrollmentStatus === 'Inativo') inactiveCount++;
-                else {
-                    if (isStudentKid(s)) kidsCount++;
-                    else adultsCount++;
+                if (s.archived) { archivedCount++; return; }
+                if (s.enrollmentStatus === 'Inativo') { inactiveCount++; return; }
+                
+                if (isStudentKid(s)) kidsCount++; else adultsCount++;
+                
+                const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
+                if (!isNaN(targetDate)) {
+                    const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+                    if (diffDays >= 0 && diffDays <= 7) expiringCount++;
                 }
             });
 
-            if (document.getElementById('stat-total')) document.getElementById('stat-total').innerText = total;
-            if (document.getElementById('stat-infantil')) document.getElementById('stat-infantil').innerText = kidsCount;
-            if (document.getElementById('stat-adulto')) document.getElementById('stat-adulto').innerText = adultsCount;
-            if (document.getElementById('stat-inactive')) document.getElementById('stat-inactive').innerText = inactiveCount;
-            
-            if (document.getElementById('fin-stat-total')) document.getElementById('fin-stat-total').innerText = total;
-            if (document.getElementById('fin-stat-active')) document.getElementById('fin-stat-active').innerText = active;
-            if (document.getElementById('fin-stat-pending')) document.getElementById('fin-stat-pending').innerText = pending;
-            if (document.getElementById('fin-stat-expiring')) document.getElementById('fin-stat-expiring').innerText = expiringCount;
+            const setText = (id, txt) => { const e = document.getElementById(id); if(e) e.innerText = txt; }
+            setText('stat-total', total); setText('stat-infantil', kidsCount); setText('stat-adulto', adultsCount); 
+            setText('stat-inactive', inactiveCount); setText('stat-archived', archivedCount);
+            setText('fin-stat-total', total); setText('fin-stat-active', active); 
+            setText('fin-stat-pending', total - active); setText('fin-stat-expiring', expiringCount);
         }
 
         window.toggleSelectAll = (source) => {
-            const checkboxes = document.querySelectorAll('.student-cb');
-            checkboxes.forEach(cb => cb.checked = source.checked);
+            document.querySelectorAll('.student-cb').forEach(cb => cb.checked = source.checked);
             window.updateBulkActions();
         };
 
@@ -1733,35 +1632,60 @@
             const count = document.querySelectorAll('.student-cb:checked').length;
             const bulkDiv = document.getElementById('bulk-actions');
             const countSpan = document.getElementById('selected-count');
-            const btnBulkDelete = document.getElementById('btn-bulk-delete');
+            const btnBulkArchive = document.getElementById('btn-bulk-archive');
             
             if(count > 0) {
                 bulkDiv.classList.remove('hidden');
-                if(btnBulkDelete) btnBulkDelete.classList.remove('hidden');
+                if(btnBulkArchive) btnBulkArchive.classList.remove('hidden');
                 countSpan.innerText = count;
             } else {
                 bulkDiv.classList.add('hidden');
-                if(btnBulkDelete) btnBulkDelete.classList.add('hidden');
+                if(btnBulkArchive) btnBulkArchive.classList.add('hidden');
             }
         };
 
-        window.deleteSelectedStudents = async () => {
+        // IMPLEMENTAÇÃO 1: ARQUIVAMENTO EM MASSA E INDIVIDUAL
+        window.archiveSelectedStudents = async () => {
             const checkboxes = document.querySelectorAll('.student-cb:checked');
             const ids = Array.from(checkboxes).map(cb => cb.value);
             if(ids.length === 0) return;
-            if(confirm(`Tem certeza que deseja excluir ${ids.length} alunos selecionados? Esta ação é irreversível.`)) {
+            if(confirm(`Tem certeza que deseja ARQUIVAR ${ids.length} alunos selecionados? O histórico financeiro será mantido.`)) {
                 try {
-                    const deletePromises = ids.map(id => deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id)));
-                    await Promise.all(deletePromises);
-                    alert('Alunos excluídos com sucesso!');
+                    const archivePromises = ids.map(id => updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { archived: true }));
+                    await Promise.all(archivePromises);
+                    alert('Alunos arquivados com sucesso!');
                     document.getElementById('cb-select-all').checked = false;
                     window.updateBulkActions();
                     window.loadData();
-                } catch(e) {
-                    alert('Erro ao excluir: ' + e.message);
-                    window.loadData();
-                }
+                } catch(e) { alert('Erro ao arquivar: ' + e.message); }
             }
+        };
+
+        window.archiveStudent = async (id) => {
+            const s = window.students.find(st => st.id === id);
+            if(!s) return;
+            const myDeps = window.students.filter(d => d.titularId === id && !d.archived);
+            let extraWarn = myDeps.length > 0 ? `\n\n⚠️ AVISO: Este aluno possui ${myDeps.length} dependente(s). Deseja arquivá-los também?` : "";
+            
+            if(!confirm("Deseja ARQUIVAR este aluno? O histórico financeiro não será perdido, mas ele não aparecerá nas listas ativas." + (myDeps.length > 0 ? " Clique em OK para arquivar o Titular e os Dependentes." : ""))) return;
+            
+            try {
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { archived: true });
+                if (myDeps.length > 0) {
+                    for(let dep of myDeps) await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', dep.id), { archived: true });
+                }
+                alert("Aluno arquivado.");
+                window.loadData();
+            } catch(e) { alert("Erro ao arquivar: " + e.message); }
+        };
+
+        window.restoreStudent = async (id) => {
+            if(!confirm("Restaurar aluno do arquivo?")) return;
+            try {
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { archived: false });
+                alert("Aluno restaurado.");
+                window.loadData();
+            } catch(e) { alert("Erro ao restaurar: " + e.message); }
         };
 
         window.addPresenceSelectedStudents = async () => {
@@ -1780,9 +1704,7 @@
                     document.getElementById('cb-select-all').checked = false;
                     window.updateBulkActions();
                     window.loadData();
-                } catch(e) {
-                    alert('Erro ao registrar presenças: ' + e.message);
-                }
+                } catch(e) { alert('Erro ao registrar presenças: ' + e.message); }
             }
         };
 
@@ -1803,13 +1725,20 @@
                 sortedDates.forEach(dateStr => {
                     const d = new Date(dateStr + 'T12:00:00');
                     const formatted = !isNaN(d) ? d.toLocaleDateString('pt-BR') : dateStr;
-                    const div = document.createElement('div');
-                    div.className = "flex justify-between items-center py-2 px-2 hover:bg-gray-50";
-                    div.innerHTML = `
-                        <span class="text-sm font-medium text-gray-700"><i class="fa-regular fa-calendar-check text-green-600 mr-2"></i> ${formatted}</span>
-                        <button onclick="removeAttendance('${dateStr}')" class="text-red-400 hover:text-red-600 text-xs" title="Remover Presença"><i class="fa-solid fa-trash"></i></button>
+                    
+                    // Display class time if stored in log
+                    let classInfo = '';
+                    if (s.attendanceLog) {
+                        const logEntry = s.attendanceLog.find(l => l.date === dateStr);
+                        if (logEntry && logEntry.time) classInfo = `<span class="text-[10px] bg-gray-200 px-2 py-0.5 rounded ml-2">${logEntry.time}</span>`;
+                    }
+
+                    list.innerHTML += `
+                        <div class="flex justify-between items-center py-2 px-2 hover:bg-gray-50">
+                            <span class="text-sm font-medium text-gray-700"><i class="fa-regular fa-calendar-check text-green-600 mr-2"></i> ${formatted} ${classInfo}</span>
+                            <button onclick="removeAttendance('${dateStr}')" class="text-red-400 hover:text-red-600 text-xs" title="Remover Presença"><i class="fa-solid fa-trash"></i></button>
+                        </div>
                     `;
-                    list.appendChild(div);
                 });
             }
             document.getElementById('attendance-modal').classList.remove('hidden');
@@ -1845,9 +1774,7 @@
                 const docRef = doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id);
                 await updateDoc(docRef, { attendance: arrayRemove(dateStr) });
                 const s = window.students.find(st => st.id === id);
-                if(s && s.attendance) {
-                    s.attendance = s.attendance.filter(d => d !== dateStr);
-                }
+                if(s && s.attendance) s.attendance = s.attendance.filter(d => d !== dateStr);
                 window.openAttendanceModal(id);
                 window.loadData();
             } catch(e) { alert("Erro: " + e.message); }
@@ -1868,56 +1795,28 @@
             } catch(e) { console.error(e); alert("Erro ao confirmar presença."); }
         };
         
-        // --- DICA 2: BLOQUEIO EM CASCATA ---
         window.toggleStudentStatus = async (id, currentStatus) => {
             const newStatus = (currentStatus === 'Inativo') ? 'Ativo' : 'Inativo';
             const confirmMsg = (newStatus === 'Inativo') ? "Deseja inativar este aluno?" : "Deseja reativar este aluno?";
-            
             if(!confirm(confirmMsg)) return;
-            
             try {
                 const docRef = doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id);
                 await updateDoc(docRef, { enrollmentStatus: newStatus });
                 
-                // Lógica em Cascata para Dependentes
                 if (newStatus === 'Inativo') {
                     const myDeps = window.students.filter(d => d.titularId === id && d.enrollmentStatus !== 'Inativo');
-                    if (myDeps.length > 0) {
-                        if (confirm(`💡 DICA: Este titular possui ${myDeps.length} dependente(s) ativo(s) no combo. Deseja inativar o acesso deles também?`)) {
-                            for(let dep of myDeps) {
-                                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', dep.id), { enrollmentStatus: 'Inativo' });
-                            }
-                        }
+                    if (myDeps.length > 0 && confirm(`💡 DICA: Este titular possui ${myDeps.length} dependente(s) ativo(s). Deseja inativar o acesso deles também?`)) {
+                        for(let dep of myDeps) await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', dep.id), { enrollmentStatus: 'Inativo' });
                     }
                 } else if (newStatus === 'Ativo') {
                     const myDeps = window.students.filter(d => d.titularId === id && d.enrollmentStatus === 'Inativo');
-                    if (myDeps.length > 0) {
-                        if (confirm(`💡 DICA: Deseja reativar também os ${myDeps.length} dependente(s) inativo(s) vinculados a este titular?`)) {
-                            for(let dep of myDeps) {
-                                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', dep.id), { enrollmentStatus: 'Ativo' });
-                            }
-                        }
+                    if (myDeps.length > 0 && confirm(`💡 DICA: Deseja reativar também os ${myDeps.length} dependente(s) vinculados?`)) {
+                        for(let dep of myDeps) await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', dep.id), { enrollmentStatus: 'Ativo' });
                     }
                 }
-
                 window.loadData();
                 alert(`Status atualizado!`);
             } catch(e) { alert("Erro ao alterar status: " + e.message); }
-        };
-
-        window.deleteStudent = async (id) => {
-            const s = window.students.find(st => st.id === id);
-            if(!s) return;
-            
-            const myDeps = window.students.filter(d => d.titularId === id);
-            let extraWarn = myDeps.length > 0 ? `\n\n⚠️ AVISO: Este aluno possui ${myDeps.length} dependente(s) vinculado(s). Você deverá excluir ou atualizar os dependentes manualmente depois.` : "";
-            
-            if(!confirm("Excluir aluno permanentemente? Esta ação é irreversível." + extraWarn)) return;
-            try {
-                await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id));
-                alert("Aluno excluído.");
-                window.loadData();
-            } catch(e) { alert("Erro ao excluir: " + e.message); }
         };
 
         window.toggleMobileMenu = () => {
@@ -1930,9 +1829,7 @@
         window.switchMainView = (viewName) => {
             if(window.innerWidth < 768) {
                 const sidebar = document.getElementById('sidebar-menu');
-                if(sidebar && !sidebar.classList.contains('-translate-x-full')) {
-                    window.toggleMobileMenu();
-                }
+                if(sidebar && !sidebar.classList.contains('-translate-x-full')) window.toggleMobileMenu();
             }
 
             window.currentView = viewName;
@@ -1945,13 +1842,8 @@
             ['students', 'financial', 'reports', 'notices', 'experimental'].forEach(v => {
                 const nav = document.getElementById('nav-' + v);
                 if(nav) {
-                    if (v === viewName) {
-                        nav.classList.add('bg-brand-red', 'text-white');
-                        nav.classList.remove('text-gray-400', 'hover:bg-gray-800');
-                    } else {
-                        nav.classList.remove('bg-brand-red', 'text-white');
-                        nav.classList.add('text-gray-400', 'hover:bg-gray-800');
-                    }
+                    if (v === viewName) { nav.classList.add('bg-brand-red', 'text-white'); nav.classList.remove('text-gray-400', 'hover:bg-gray-800'); } 
+                    else { nav.classList.remove('bg-brand-red', 'text-white'); nav.classList.add('text-gray-400', 'hover:bg-gray-800'); }
                 }
             });
 
@@ -1964,12 +1856,13 @@
         window.switchTab = (tab) => {
             window.currentTab = tab;
             const activeClass = "px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative";
-            const inactiveClass = "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100";
+            const inactiveClass = "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1";
 
-            document.getElementById('tab-all').className = (tab === 'all') ? activeClass : inactiveClass + " ml-1";
-            document.getElementById('tab-adults').className = (tab === 'adults') ? activeClass + " ml-1" : inactiveClass + " ml-1";
-            document.getElementById('tab-kids').className = (tab === 'kids') ? activeClass + " ml-1" : inactiveClass + " ml-1";
-            document.getElementById('tab-inactive').className = (tab === 'inactive') ? activeClass + " ml-1" : inactiveClass + " ml-1";
+            document.getElementById('tab-all').className = (tab === 'all') ? activeClass : inactiveClass;
+            document.getElementById('tab-adults').className = (tab === 'adults') ? activeClass : inactiveClass;
+            document.getElementById('tab-kids').className = (tab === 'kids') ? activeClass : inactiveClass;
+            document.getElementById('tab-inactive').className = (tab === 'inactive') ? activeClass : inactiveClass;
+            document.getElementById('tab-archived').className = (tab === 'archived') ? activeClass : inactiveClass;
 
             window.renderTable();
         };
@@ -1978,22 +1871,16 @@
             window.currentFinancialTab = tab;
             ['all', 'active', 'pending', 'expiring', 'inactive'].forEach(t => {
                 const btn = document.getElementById(`fin-tab-${t}`);
-                if (t === tab) btn.className = "px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative ml-1";
-                else btn.className = "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1";
+                if(btn) btn.className = (t === tab) ? "px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative ml-1" : "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1";
             });
             window.renderFinancialTable();
         };
 
         window.filterTable = () => {
-            // Sincronizar os inputs de busca entre Mobile e Desktop
             const desktopSearch = document.getElementById('searchInput');
             const mobileSearch1 = document.getElementById('searchInputMobile1');
-            
-            if (document.activeElement === mobileSearch1 && desktopSearch) {
-                desktopSearch.value = mobileSearch1.value;
-            } else if (document.activeElement === desktopSearch && mobileSearch1) {
-                mobileSearch1.value = desktopSearch.value;
-            }
+            if (document.activeElement === mobileSearch1 && desktopSearch) desktopSearch.value = mobileSearch1.value;
+            else if (document.activeElement === desktopSearch && mobileSearch1) mobileSearch1.value = desktopSearch.value;
 
             if(window.currentView === 'students') window.renderTable();
             else if(window.currentView === 'financial') window.renderFinancialTable();
@@ -2002,27 +1889,16 @@
 
         function formatDate(isoStr) {
             if(!isoStr) return '--';
-            try {
-                const d = new Date(isoStr);
-                if (isNaN(d)) return '--';
-                return d.toLocaleDateString('pt-BR');
-            } catch (e) { return '--'; }
+            try { const d = new Date(isoStr); return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR'); } catch (e) { return '--'; }
         }
         
         function renderBeltSVG(beltStr) {
             if (!beltStr) return '';
             const safeBeltStr = String(beltStr);
-            const colors = {
-                'Branca': '#ffffff', 'Cinza': '#9ca3af', 'Amarela': '#fbbf24', 
-                'Laranja': '#f97316', 'Verde': '#10b981', 'Azul': '#3b82f6', 
-                'Roxa': '#8b5cf6', 'Marrom': '#78350f', 'Preta': '#000000'
-            };
+            const colors = { 'Branca': '#ffffff', 'Cinza': '#9ca3af', 'Amarela': '#fbbf24', 'Laranja': '#f97316', 'Verde': '#10b981', 'Azul': '#3b82f6', 'Roxa': '#8b5cf6', 'Marrom': '#78350f', 'Preta': '#000000' };
             let color = '#ffffff'; let degree = 0; let colorName = 'Branca';
-            for (const [name, hex] of Object.entries(colors)) {
-                if (safeBeltStr.includes(name)) { color = hex; colorName = name; break; }
-            }
-            const degreeMatch = safeBeltStr.match(/(\d)º/);
-            if (degreeMatch) degree = parseInt(degreeMatch[1]);
+            for (const [name, hex] of Object.entries(colors)) { if (safeBeltStr.includes(name)) { color = hex; colorName = name; break; } }
+            const degreeMatch = safeBeltStr.match(/(\d)º/); if (degreeMatch) degree = parseInt(degreeMatch[1]);
             const width = 100; const height = 24; const tipWidth = 25; const stripeWidth = 4; const stripeGap = 3;
             let stripesSVG = ''; const barColor = (colorName === 'Preta') ? '#dc2626' : '#000000'; const stripeColor = '#ffffff';
             for (let i = 0; i < degree; i++) {
@@ -2032,7 +1908,6 @@
             return `<svg width="${width}" height="${height}" class="shadow-sm rounded" style="border:1px solid #ddd"><rect x="0" y="0" width="${width}" height="${height}" fill="${color}" /><rect x="${width - tipWidth}" y="0" width="${tipWidth}" height="${height}" fill="${barColor}" />${stripesSVG}</svg>`;
         }
 
-        // --- DICA 1: ÁRVORE DE DEPENDENTES (TABLE RENDER) ---
         window.toggleDepRows = (titularId) => {
             const rows = document.querySelectorAll(`.dep-row-${titularId}`);
             const icon = document.getElementById(`icon-dep-${titularId}`);
@@ -2041,9 +1916,7 @@
                 if(r.classList.contains('hidden')) { r.classList.remove('hidden'); isHidden = true; }
                 else { r.classList.add('hidden'); isHidden = false; }
             });
-            if(icon) {
-                icon.className = isHidden ? "fa-solid fa-minus text-[10px]" : "fa-solid fa-plus text-[10px]";
-            }
+            if(icon) icon.className = isHidden ? "fa-solid fa-minus text-[10px]" : "fa-solid fa-plus text-[10px]";
         };
 
         window.renderTable = function() {
@@ -2075,14 +1948,15 @@
                 
                 const matchesPayment = statusFilter === "" || virtualStatus === statusFilter || s.paymentStatus === statusFilter;
 
-                if (window.currentTab === 'inactive') {
-                    return matchesSearch && matchesBelt && matchesPayment && currentEnrollment === 'Inativo';
+                if (window.currentTab === 'archived') {
+                    return matchesSearch && matchesBelt && matchesPayment && s.archived === true;
+                } else if (window.currentTab === 'inactive') {
+                    return matchesSearch && matchesBelt && matchesPayment && currentEnrollment === 'Inativo' && !s.archived;
                 } else {
-                    if (currentEnrollment === 'Inativo') return false;
+                    if (currentEnrollment === 'Inativo' || s.archived) return false;
                     let matchesTab = false;
-                    if(window.currentTab === 'all') {
-                        matchesTab = true;
-                    } else {
+                    if(window.currentTab === 'all') matchesTab = true;
+                    else {
                         let isKid = isStudentKid(s);
                         matchesTab = (window.currentTab === 'kids' && isKid) || (window.currentTab === 'adults' && !isKid);
                     }
@@ -2100,6 +1974,7 @@
             if (window.currentTab === 'all') listTitle = "Todos (Ativos)";
             else if (window.currentTab === 'adults') listTitle = "Adultos e Família";
             else if (window.currentTab === 'kids') listTitle = "Infantil (Ativos)";
+            else if (window.currentTab === 'archived') listTitle = "Alunos Arquivados";
             else listTitle = "Alunos Inativos";
             document.getElementById('list-title').innerText = listTitle;
 
@@ -2118,7 +1993,6 @@
                 return;
             }
 
-            // Agrupamento para Árvore de Dependentes
             const renderRow = (s, isDepRow = false, parentId = null) => {
                 const attendanceCount = s.attendance ? s.attendance.length : 0;
                 const hasLogin = (s.studentLogin && s.studentPassword) ? '<span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-lock"></i> OK</span>' : '<span class="text-gray-400 text-xs italic">--</span>';
@@ -2128,21 +2002,17 @@
                 const age = getAge(s.dob);
                 
                 let nameHtml = s.name || 'Sem Nome';
-                if (isDepRow) {
-                    nameHtml = `<i class="fa-solid fa-level-up-alt fa-rotate-90 text-purple-300 mr-2 text-xs"></i>${s.name}`;
-                }
+                if (isDepRow) nameHtml = `<i class="fa-solid fa-level-up-alt fa-rotate-90 text-purple-300 mr-2 text-xs"></i>${s.name}`;
 
                 let nameDisplay = `<div onclick="viewStudentDetails('${s.id}')" class="font-medium text-gray-900 flex items-center cursor-pointer hover:text-brand-red transition ${isDepRow ? 'pl-4 border-l-2 border-purple-200' : ''}" title="Ver Detalhes do Aluno">${nameHtml}`;
                 
                 if ((window.currentTab === 'adults' || window.currentTab === 'all') && age !== null && age < 18 && !isStudentKid(s)) nameDisplay += `<span class="ml-2 text-[10px] text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200 font-bold" title="Menor de idade em turma adulta">Menor (${age})</span>`;
-                
                 if (safePlan.includes('combo') && safePlan !== 'dependente') nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase">Combo</span>`;
                 if (safePlan === 'administracao') nameDisplay += `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-bold uppercase">Admin</span>`;
                 if (safePlan === 'dependente') nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase" title="Dependente"><i class="fa-solid fa-link"></i> DEP</span>`;
-                
-                if (s.enrollmentStatus === 'Inativo') nameDisplay += `<span class="ml-2 text-[10px] text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded border border-gray-300 font-bold">INATIVO</span>`;
+                if (s.archived) nameDisplay += `<span class="ml-2 text-[10px] text-gray-800 bg-gray-300 px-1.5 py-0.5 rounded border border-gray-400 font-bold uppercase">ARQUIVADO</span>`;
+                else if (s.enrollmentStatus === 'Inativo') nameDisplay += `<span class="ml-2 text-[10px] text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded border border-gray-300 font-bold">INATIVO</span>`;
 
-                // Adiciona botão Expande/Recolhe SE tiver dependentes e for Titular
                 const myFilteredDeps = filtered.filter(d => d.plan === 'dependente' && d.titularId === s.id);
                 if (!isDepRow && myFilteredDeps.length > 0) {
                     nameDisplay += `<button onclick="event.stopPropagation(); toggleDepRows('${s.id}')" class="ml-2 bg-purple-100 text-purple-700 w-5 h-5 rounded flex items-center justify-center shadow-sm hover:bg-purple-200 transition" title="Expandir/Recolher Dependentes"><i id="icon-dep-${s.id}" class="fa-solid fa-plus text-[10px]"></i></button>`;
@@ -2152,7 +2022,13 @@
                 const beltSVG = renderBeltSVG(s.belt || 'Faixa Branca - 0º Grau');
                 let relName = s.guardian || s.titularName || '-';
                 const guardianCell = (window.currentTab === 'kids' || window.currentTab === 'all') ? `<td class="px-6 py-4 align-middle text-sm text-gray-700"><i class="fa-solid fa-user-shield text-gray-400 mr-1"></i> ${relName}</td>` : '';
+                
                 let toggleBtn = s.enrollmentStatus === 'Inativo' ? `<button onclick="toggleStudentStatus('${s.id}', 'Inativo')" class="text-green-600 hover:text-green-900 mr-2" title="Reativar Aluno"><i class="fa-solid fa-power-off"></i></button>` : `<button onclick="toggleStudentStatus('${s.id}', 'Ativo')" class="text-gray-400 hover:text-red-600 mr-2" title="Inativar Aluno"><i class="fa-solid fa-power-off"></i></button>`;
+                
+                let deleteOrRestoreBtn = s.archived 
+                    ? `<button onclick="restoreStudent('${s.id}')" class="text-green-600 hover:text-green-900" title="Restaurar Aluno"><i class="fa-solid fa-box-open"></i></button>`
+                    : `<button onclick="archiveStudent('${s.id}')" class="text-gray-500 hover:text-gray-800" title="Arquivar Aluno"><i class="fa-solid fa-box-archive"></i></button>`;
+
                 let displayPlanName = window.getPlanInfo(s.plan).short;
 
                 const tr = document.createElement('tr');
@@ -2171,7 +2047,7 @@
                         <button onclick="openQrModal('${s.id}')" class="text-gray-800 hover:text-black mr-2" title="Cartão QR Code"><i class="fa-solid fa-qrcode"></i></button>
                         <button onclick="openEditModal('${s.id}')" class="text-blue-600 hover:text-blue-900 mr-2" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
                         <button onclick="printIndividualContract('${s.id}')" class="text-indigo-600 hover:text-indigo-900 mr-2" title="Imprimir Contrato"><i class="fa-solid fa-file-contract"></i></button>
-                        <button onclick="deleteStudent('${s.id}')" class="text-red-600 hover:text-red-900" title="Excluir Definitivamente"><i class="fa-solid fa-trash"></i></button>
+                        ${deleteOrRestoreBtn}
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -2179,18 +2055,13 @@
 
             filtered.forEach(s => {
                 const titularInList = s.plan === 'dependente' && filtered.some(t => t.id === s.titularId);
-                if (titularInList) return; // Só renderiza depois (como sub-item) se o titular estiver na lista
-
+                if (titularInList) return; 
                 renderRow(s, false);
-                
                 const myFilteredDeps = filtered.filter(d => d.plan === 'dependente' && d.titularId === s.id);
-                myFilteredDeps.forEach(dep => {
-                    renderRow(dep, true, s.id);
-                });
+                myFilteredDeps.forEach(dep => renderRow(dep, true, s.id));
             });
         };
 
-        // --- DICA 5: ALERTA DE PROMOÇÃO ---
         function checkPromoExpirations() {
             const alertsContainer = document.getElementById('financial-promo-alerts');
             const alertsList = document.getElementById('promo-alerts-list');
@@ -2198,12 +2069,12 @@
                 alertsList.innerHTML = '';
                 const today = new Date();
                 let expiredPromos = window.students.filter(s => {
-                    if (s.enrollmentStatus === 'Inativo') return false;
+                    if (s.enrollmentStatus === 'Inativo' || s.archived) return false;
                     if (s.plan && s.plan.includes('combo') && s.registrationDate) {
                         const regDate = new Date(s.registrationDate);
                         const diffTime = Math.abs(today - regDate);
                         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                        return diffDays >= 25 && diffDays <= 45; // Mostra aviso entre 25 e 45 dias
+                        return diffDays >= 25 && diffDays <= 45;
                     }
                     return false;
                 });
@@ -2220,14 +2091,80 @@
             }
         }
 
+        // IMPLEMENTAÇÃO 2: DISPARO DE COBRANÇA EM MASSA
+        window.bulkWhatsAppBilling = () => {
+            const tableRows = document.querySelectorAll('#financial-table-body tr');
+            if(tableRows.length === 0 || (tableRows.length === 1 && tableRows[0].innerText.includes('Nenhum registro'))) {
+                alert("Não há alunos nesta lista para cobrar."); return;
+            }
+
+            const visiblePendingStudents = [];
+            
+            tableRows.forEach(row => {
+                const nameCell = row.querySelector('td:nth-child(1)');
+                if(!nameCell) return;
+                const studentName = nameCell.innerText;
+                const s = window.students.find(st => st.name === studentName);
+                if(s && s.phone && s.phone.trim() !== '') {
+                    visiblePendingStudents.push(s);
+                }
+            });
+
+            if(visiblePendingStudents.length === 0) {
+                alert("Os alunos filtrados não possuem número de telefone cadastrado."); return;
+            }
+
+            document.getElementById('bulk-bill-count').innerText = visiblePendingStudents.length;
+            const listUl = document.getElementById('bulk-bill-list');
+            listUl.innerHTML = '';
+
+            visiblePendingStudents.forEach(s => {
+                const cleanPhone = s.phone.replace(/\D/g, '');
+                const firstName = s.name.split(' ')[0];
+                const msg = `Olá ${firstName}, tudo bem? Aqui é da recepção da Tanque Team BJJ 🥋. Notamos que sua mensalidade encontra-se em aberto. Caso precise da chave PIX ou já tenha efetuado o pagamento, por favor nos envie o comprovante por aqui. Oss!`;
+                const encodedMsg = encodeURIComponent(msg);
+                const waLink = `https://wa.me/55${cleanPhone}?text=${encodedMsg}`;
+
+                const li = document.createElement('li');
+                li.className = "flex justify-between items-center p-4 hover:bg-green-50 transition";
+                li.innerHTML = `
+                    <div>
+                        <p class="font-bold text-gray-800">${s.name}</p>
+                        <p class="text-xs text-gray-500">${s.phone} • Plano: ${window.getPlanInfo(s.plan).short}</p>
+                    </div>
+                    <a href="${waLink}" target="_blank" onclick="this.classList.add('opacity-50', 'pointer-events-none'); this.innerHTML='<i class=\\'fa-solid fa-check\\'></i> Enviado'" class="bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-2 px-4 rounded shadow transition text-xs whitespace-nowrap">
+                        <i class="fa-brands fa-whatsapp text-sm"></i> Enviar Cobrança
+                    </a>
+                `;
+                listUl.appendChild(li);
+            });
+
+            document.getElementById('bulk-bill-modal').classList.remove('hidden');
+            document.getElementById('bulk-bill-modal').classList.add('flex');
+        };
+
+        window.closeBulkBillingModal = () => {
+            document.getElementById('bulk-bill-modal').classList.add('hidden');
+            document.getElementById('bulk-bill-modal').classList.remove('flex');
+        };
+
         window.renderFinancialTable = function() {
-            checkPromoExpirations(); // Chamada do Alerta
+            checkPromoExpirations(); 
 
             const tbody = document.getElementById('financial-table-body');
             const search = (document.getElementById('searchInput')?.value || "").toLowerCase();
+            const btnBulkWA = document.getElementById('btn-bulk-whatsapp');
+            
             tbody.innerHTML = '';
 
+            if (window.currentFinancialTab === 'pending' || window.currentFinancialTab === 'expiring') {
+                btnBulkWA.classList.remove('hidden');
+            } else {
+                btnBulkWA.classList.add('hidden');
+            }
+
             const filtered = window.students.filter(s => {
+                if (s.archived) return false; // Hide archived from financial
                 const matchesSearch = String(s.name || '').toLowerCase().includes(search);
                 const currentEnrollment = s.enrollmentStatus || 'Ativo';
                 
@@ -2276,7 +2213,7 @@
                         <td class="px-6 py-4 align-middle text-center font-bold text-gray-700">Dia ${regDay}</td>
                         <td class="px-6 py-4 align-middle text-center text-sm font-mono text-blue-700">${nextDue}</td>
                         <td class="px-6 py-4 align-middle">${statusHtml}</td>
-                        <td class="px-6 py-4 align-middle text-center">
+                        <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
                             <button onclick="openPaymentModal('${s.id}')" class="bg-green-600 text-white w-8 h-8 rounded-full hover:bg-green-700 mr-2 shadow" title="Informar Pagamento"><i class="fa-solid fa-dollar-sign"></i></button>
                             <button onclick="viewHistory('${s.id}')" class="bg-gray-200 text-gray-600 w-8 h-8 rounded-full hover:bg-gray-300 shadow" title="Histórico de Pagamentos"><i class="fa-solid fa-clock-rotate-left"></i></button>
                         </td>
@@ -2325,7 +2262,6 @@
 
         window.currentReceiptData = null; 
 
-        // --- DICA 4: RECIBO UNIFICADO ---
         window.confirmPayment = async () => {
             const id = document.getElementById('pay-student-id').value;
             const date = document.getElementById('pay-date').value;
@@ -2356,7 +2292,6 @@
                 const planSelect = document.getElementById('pay-plan-select');
                 const planText = planSelect.options[planSelect.selectedIndex].text;
                 
-                // Buscar Dependentes para Recibo Unificado
                 const myDeps = window.students.filter(d => d.titularId === id && d.plan === 'dependente');
                 let depText = '';
                 if(myDeps.length > 0) {
@@ -2365,14 +2300,9 @@
                 }
                 
                 window.currentReceiptData = {
-                    name: student.name,
-                    phone: student.phone,
-                    amount: amount,
-                    plan: planText,
-                    date: date ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR') : '-',
-                    method: method,
-                    nextDue: nextDue ? new Date(nextDue + 'T12:00:00').toLocaleDateString('pt-BR') : 'Não definido',
-                    dependentsText: depText
+                    name: student.name, phone: student.phone, amount: amount, plan: planText,
+                    date: date ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR') : '-', method: method,
+                    nextDue: nextDue ? new Date(nextDue + 'T12:00:00').toLocaleDateString('pt-BR') : 'Não definido', dependentsText: depText
                 };
 
                 document.getElementById('rec-student-name').innerText = window.currentReceiptData.name;
@@ -2392,11 +2322,8 @@
 
                 window.closePaymentModal();
                 window.loadData();
-                
-                // Abrir Modal de Opções de Recibo
                 document.getElementById('receipt-modal').classList.remove('hidden');
                 document.getElementById('receipt-modal').classList.add('flex');
-                
             } catch(e) { console.error(e); alert("Erro ao registrar pagamento."); }
         };
         
@@ -2407,30 +2334,17 @@
 
         window.printReceipt = () => {
             document.body.classList.add('printing-receipt');
-            setTimeout(() => {
-                window.print();
-                setTimeout(() => {
-                    document.body.classList.remove('printing-receipt');
-                }, 2000);
-            }, 500);
+            setTimeout(() => { window.print(); setTimeout(() => { document.body.classList.remove('printing-receipt'); }, 2000); }, 500);
         };
 
         window.sendReceiptWhatsApp = () => {
             const data = window.currentReceiptData;
             if(!data) return;
-            
-            if(!data.phone || data.phone.trim() === "") {
-                alert("Este aluno não possui um número de telefone cadastrado.");
-                return;
-            }
-            
+            if(!data.phone || data.phone.trim() === "") { alert("Este aluno não possui um número de telefone cadastrado."); return; }
             const cleanPhone = data.phone.replace(/\D/g, '');
             const depStr = data.dependentsText ? `\n🔹 ${data.dependentsText}` : '';
-            
             const message = `🥊 *TANQUE TEAM BJJ* 🥊\n*RECIBO DE PAGAMENTO*\n\nOlá, *${data.name.split(' ')[0]}*!\nConfirmamos o recebimento do seu pagamento. Muito obrigado e bons treinos! Oss 🥋\n\n*Detalhes do Pagamento:*\n🔹 Plano: ${data.plan}\n🔹 Valor: R$ ${data.amount}\n🔹 Forma: ${data.method}\n🔹 Data: ${data.date}\n🔹 Próx. Vencimento: ${data.nextDue}${depStr}\n\nAcesse o Portal do Aluno para o seu histórico completo.`;
-            
-            const encodedMessage = encodeURIComponent(message);
-            window.open(`https://wa.me/55${cleanPhone}?text=${encodedMessage}`, '_blank');
+            window.open(`https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank');
         };
 
         window.viewHistory = (id) => {
@@ -2462,11 +2376,8 @@
             if(!s) return;
             const payment = s.paymentHistory.find(p => p.timestamp === timestamp);
             if(!payment) return;
-            
             try {
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), {
-                    paymentHistory: arrayRemove(payment)
-                });
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), { paymentHistory: arrayRemove(payment) });
                 alert("Pagamento excluído com sucesso.");
                 await window.loadData();
                 window.viewHistory(studentId);
@@ -2478,13 +2389,11 @@
             if(!s) return;
             const payment = s.paymentHistory.find(p => p.timestamp === timestamp);
             if(!payment) return;
-
             document.getElementById('edit-pay-student-id').value = studentId;
             document.getElementById('edit-pay-timestamp').value = timestamp;
             document.getElementById('edit-pay-date').value = payment.date || '';
             document.getElementById('edit-pay-amount').value = payment.amount || '';
             document.getElementById('edit-pay-method').value = payment.method || 'Pix';
-
             document.getElementById('edit-payment-modal').classList.remove('hidden');
             document.getElementById('edit-payment-modal').classList.add('flex');
         };
@@ -2502,7 +2411,6 @@
             const newMethod = document.getElementById('edit-pay-method').value;
 
             if(!newAmount && newAmount !== "0") { alert("Informe o valor."); return; }
-
             const s = window.students.find(st => st.id === studentId);
             if(!s) return;
 
@@ -2516,16 +2424,12 @@
             }
 
             try {
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), {
-                    paymentHistory: updatedHistory
-                });
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), { paymentHistory: updatedHistory });
                 alert("Pagamento atualizado com sucesso!");
                 window.closeEditPaymentModal();
                 await window.loadData();
                 window.viewHistory(studentId); 
-            } catch(e) {
-                alert("Erro ao atualizar pagamento: " + e.message);
-            }
+            } catch(e) { alert("Erro ao atualizar pagamento: " + e.message); }
         };
 
         window.closeHistoryModal = () => {
@@ -2537,19 +2441,13 @@
             try {
                 const s = window.students.find(st => st.id === id);
                 if (!s) { alert("Aluno não encontrado no sistema."); return; }
-                
                 const contractContainer = document.getElementById('printable-contract');
                 contractContainer.classList.remove('hidden'); 
-                
                 window.populateContractDOM(s);
                 document.body.classList.add('printing-contract'); 
-                
                 setTimeout(() => {
                     window.print();
-                    setTimeout(() => {
-                        contractContainer.classList.add('hidden'); 
-                        document.body.classList.remove('printing-contract'); 
-                    }, 2000);
+                    setTimeout(() => { contractContainer.classList.add('hidden'); document.body.classList.remove('printing-contract'); }, 2000);
                 }, 500);
             } catch (e) {
                 console.error("Erro na impressão: ", e);
@@ -2566,36 +2464,21 @@
             let displayName = pInfo.long || "NÃO INFORMADO";
             
             let promoNote = "";
-            if (safePlan.includes('semestral') && !safePlan.includes('combo')) {
-                promoNote = "OBS: Promoção de Inauguração aplicada. A 1ª Mensalidade terá o valor reduzido de R$ 29,90.";
-            } else if (safePlan === 'combo-dupla') {
-                promoNote = "OBS: Promoção de Inauguração aplicada. A 1ª Mensalidade terá o valor reduzido de R$ 59,90.";
-            } else if (safePlan === 'combo-familia') {
-                promoNote = "OBS: Promoção de Inauguração aplicada. A 1ª Mensalidade terá o valor reduzido de R$ 89,90.";
-            }
+            if (safePlan.includes('semestral') && !safePlan.includes('combo')) promoNote = "OBS: Promoção de Inauguração aplicada. A 1ª Mensalidade terá o valor reduzido de R$ 29,90.";
+            else if (safePlan === 'combo-dupla') promoNote = "OBS: Promoção de Inauguração aplicada. A 1ª Mensalidade terá o valor reduzido de R$ 59,90.";
+            else if (safePlan === 'combo-familia') promoNote = "OBS: Promoção de Inauguração aplicada. A 1ª Mensalidade terá o valor reduzido de R$ 89,90.";
 
             let formattedDob = '--/--/----';
             if (s.dob) {
                 const dobStr = String(s.dob);
-                if (dobStr.includes('/')) {
-                    formattedDob = dobStr;
-                } else if (dobStr.includes('T')) {
-                    const dObj = new Date(dobStr);
-                    if (!isNaN(dObj)) formattedDob = dObj.toLocaleDateString('pt-BR');
-                } else {
-                    const parts = dobStr.split('-');
-                    if (parts.length === 3) {
-                        formattedDob = `${parts[2].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[0]}`;
-                    }
-                }
+                if (dobStr.includes('/')) formattedDob = dobStr;
+                else if (dobStr.includes('T')) { const dObj = new Date(dobStr); if (!isNaN(dObj)) formattedDob = dObj.toLocaleDateString('pt-BR'); } 
+                else { const parts = dobStr.split('-'); if (parts.length === 3) formattedDob = `${parts[2].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[0]}`; }
             }
             
             let contratanteText = s.name || "NÃO INFORMADO";
-            if (s.guardian && String(s.guardian).trim() !== "") {
-                contratanteText = `${s.guardian} (Responsável Legal: ${s.guardianKinship || 'Não informado'})`;
-            } else if (s.titularName && String(s.titularName).trim() !== "") {
-                contratanteText = `${s.titularName} (Titular do Plano)`;
-            }
+            if (s.guardian && String(s.guardian).trim() !== "") contratanteText = `${s.guardian} (Responsável Legal: ${s.guardianKinship || 'Não informado'})`;
+            else if (s.titularName && String(s.titularName).trim() !== "") contratanteText = `${s.titularName} (Titular do Plano)`;
 
             document.getElementById('printContratante').innerText = contratanteText;
             document.getElementById('printStudent').innerText = s.name || "NÃO INFORMADO";
@@ -2607,32 +2490,21 @@
             
             let beltInfo = "";
             const safeBelt = String(s.belt || "");
-            if(safeBelt && !safeBelt.includes("Branca - 0º Grau") && !safeBelt.includes("Iniciante")) {
-                beltInfo = `| Graduação Atual: ${safeBelt}`;
-            }
+            if(safeBelt && !safeBelt.includes("Branca - 0º Grau") && !safeBelt.includes("Iniciante")) beltInfo = `| Graduação Atual: ${safeBelt}`;
             document.getElementById('printBeltInfo').innerText = beltInfo;
             
             let regDate = new Date();
-            if (s.registrationDate) {
-                const parsed = new Date(s.registrationDate);
-                if (!isNaN(parsed)) regDate = parsed;
-            }
-            const options = { day: 'numeric', month: 'long', year: 'numeric' };
-            document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', options);
+            if (s.registrationDate) { const parsed = new Date(s.registrationDate); if (!isNaN(parsed)) regDate = parsed; }
+            document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
 
             const isCombo = safePlan.includes('combo');
             const isFidelity = safePlan.includes('semestral') || safePlan.includes('trimestral') || isCombo;
 
             let clausesHtml = `<p><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
-
             clausesHtml += `<p><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong class="uppercase underline">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong class="bg-yellow-100 px-1">${price}</strong>. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.</p>`;
-
-            if (promoNote) {
-                 clausesHtml += `<p class="italic text-xs font-bold mb-3">${promoNote}</p>`;
-            }
+            if (promoNote) clausesHtml += `<p class="italic text-xs font-bold mb-3">${promoNote}</p>`;
 
             let clauseNum = 3;
-
             if (isFidelity) {
                 clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade correspondente à sua nomenclatura (Trimestral ou Semestral). O cancelamento exige aviso prévio de 30 dias por escrito. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>`;
                 clauseNum++;
@@ -2648,13 +2520,10 @@
 
             clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA INADIMPLÊNCIA:</strong> O atraso superior a 30 dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e cobrança dos valores devidos acrescidos de multa de 2% e juros de mora legais.</p>`;
             clauseNum++;
-
             clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA SAÚDE E APTIDÃO FÍSICA:</strong> O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate, isentando a CONTRATADA de qualquer responsabilidade sobre moléstias pré-existentes não declaradas formalmente no ato desta matrícula.</p>`;
             clauseNum++;
-
             clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DE CONDUTA (DOJO KUN):</strong> É obrigatório o uso de uniforme (Kimono) estipulado pela academia, limpo e conservado. Atos de indisciplina, desrespeito à hierarquia, agressão fora do contexto do treino esportivo ou falta de higiene poderão acarretar na suspensão ou rescisão unilateral deste contrato por parte da CONTRATADA, sem devolução de valores.</p>`;
             clauseNum++;
-
             clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO DIREITO DE IMAGEM:</strong> O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da academia ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.</p>`;
 
             document.getElementById('print-clauses-container').innerHTML = clausesHtml;
@@ -2662,9 +2531,7 @@
             let dependentsHtml = '';
             if (isCombo) {
                 let deps = [];
-                if (window.students) {
-                    deps = window.students.filter(d => d.titularId === s.id);
-                }
+                if (window.students) deps = window.students.filter(d => d.titularId === s.id && !d.archived);
                 
                 if (deps.length > 0) {
                     dependentsHtml = `<p class="mt-2 text-sm"><strong>DEPENDENTES VINCULADOS AO PLANO:</strong></p><ul class="list-disc pl-5 mt-1 text-xs">`;
@@ -2672,28 +2539,17 @@
                         let dDob = '--/--/----';
                         if (d.dob) {
                             const dobDStr = String(d.dob);
-                            if (dobDStr.includes('/')) {
-                                dDob = dobDStr;
-                            } else if (dobDStr.includes('T')) {
-                                const dObj = new Date(dobDStr);
-                                if (!isNaN(dObj)) dDob = dObj.toLocaleDateString('pt-BR');
-                            } else {
-                                const parts = dobDStr.split('-');
-                                if (parts.length === 3) {
-                                    dDob = `${parts[2].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[0]}`;
-                                }
-                            }
+                            if (dobDStr.includes('/')) dDob = dobDStr;
+                            else if (dobDStr.includes('T')) { const dObj = new Date(dobDStr); if (!isNaN(dObj)) dDob = dObj.toLocaleDateString('pt-BR'); } 
+                            else { const parts = dobDStr.split('-'); if (parts.length === 3) dDob = `${parts[2].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[0]}`; }
                         }
                         dependentsHtml += `<li><strong>${d.name}</strong> - Nasc: ${dDob} | Parentesco: ${d.parentesco || '-'} | Graduação: ${d.belt || 'Branca'}</li>`;
                     });
                     dependentsHtml += `</ul>`;
-                } else {
-                    dependentsHtml = `<p class="mt-2 text-xs italic text-gray-500">Nenhum dependente vinculado no sistema no momento.</p>`;
-                }
+                } else dependentsHtml = `<p class="mt-2 text-xs italic text-gray-500">Nenhum dependente vinculado no sistema no momento.</p>`;
             }
             document.getElementById('printDependentsBlock').innerHTML = dependentsHtml;
 
-            // SIGNATURE NAME
             const signName = s.guardian || s.titularName || s.name || "CONTRATANTE";
             document.getElementById('printSignatureName').innerText = signName;
         };
@@ -2703,9 +2559,7 @@
             if(!s) return;
             document.getElementById('detail-name').innerText = s.name;
             const age = getAge(s.dob);
-            if (age !== null) document.getElementById('detail-age').innerText = `${age} anos`;
-            else document.getElementById('detail-age').innerText = '--';
-
+            document.getElementById('detail-age').innerText = age !== null ? `${age} anos` : '--';
             document.getElementById('detail-belt').innerText = s.belt || "Faixa Branca";
             
             const photoImg = document.getElementById('detail-photo');
@@ -2732,8 +2586,8 @@
 
             document.getElementById('detail-attendance').innerText = (s.attendance ? s.attendance.length : 0) + " aulas";
             const statusEl = document.getElementById('detail-status');
-            statusEl.innerText = s.paymentStatus || 'Pendente';
-            statusEl.className = s.paymentStatus === 'Em dia' ? 'text-sm font-bold mt-1 text-green-600' : 'text-sm font-bold mt-1 text-red-600';
+            statusEl.innerText = s.archived ? 'Arquivado' : (s.paymentStatus || 'Pendente');
+            statusEl.className = (s.paymentStatus === 'Em dia' && !s.archived) ? 'text-sm font-bold mt-1 text-green-600' : 'text-sm font-bold mt-1 text-red-600';
 
             document.getElementById('detail-cpf').innerText = s.cpf || '-';
             
@@ -2741,9 +2595,7 @@
             if (s.phone && s.phone.trim() !== "") {
                 const cleanPhone = s.phone.replace(/\D/g, '');
                 phoneDisplay.innerHTML = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold transition inline-flex items-center gap-1" title="Chamar no WhatsApp"><i class="fa-brands fa-whatsapp text-lg"></i> ${s.phone}</a>`;
-            } else {
-                phoneDisplay.innerText = '-';
-            }
+            } else phoneDisplay.innerText = '-';
             
             document.getElementById('detail-email').innerText = s.email || '-';
             document.getElementById('detail-address').innerText = s.address || '-';
@@ -2754,7 +2606,7 @@
             if (s.guardian && s.guardian.trim() !== "") {
                 document.getElementById('detail-guardian-name').innerText = s.guardian;
                 guardianBox.classList.remove('hidden');
-            } else { guardianBox.classList.add('hidden'); }
+            } else guardianBox.classList.add('hidden');
 
             const pInfo = window.getPlanInfo(s.plan);
             const planValue = pInfo.price > 0 ? "R$ " + pInfo.price.toFixed(2).replace('.', ',') : (s.plan === 'dependente' || s.plan === 'administracao' ? "Isento (R$ 0,00)" : 'Sob Consulta');
@@ -2767,9 +2619,8 @@
             if (s.titularName && s.titularName.trim() !== "") {
                 document.getElementById('detail-titular-name').innerText = s.titularName;
                 titularBox.classList.remove('hidden');
-            } else { titularBox.classList.add('hidden'); }
+            } else titularBox.classList.add('hidden');
 
-            // Lógica Ficha da Família
             const familyBox = document.getElementById('detail-family-box');
             familyBox.innerHTML = '';
             
@@ -2783,29 +2634,21 @@
                 `;
                 familyBox.classList.remove('hidden');
             } else {
-                const deps = window.students.filter(d => d.titularId === s.id && d.plan === 'dependente');
+                const deps = window.students.filter(d => d.titularId === s.id && d.plan === 'dependente' && !d.archived);
                 if (deps.length > 0) {
-                    let html = `
-                        <h4 class="text-xs font-bold text-purple-700 uppercase mb-2"><i class="fa-solid fa-users"></i> Dependentes Vinculados (${deps.length})</h4>
-                        <ul class="space-y-2">`;
+                    let html = `<h4 class="text-xs font-bold text-purple-700 uppercase mb-2"><i class="fa-solid fa-users"></i> Dependentes Vinculados (${deps.length})</h4><ul class="space-y-2">`;
                     deps.forEach(d => {
                         const attCount = d.attendance ? d.attendance.length : 0;
                         html += `<li class="flex justify-between items-center bg-white p-2 rounded shadow-sm border border-purple-100">
-                            <div>
-                                <p class="font-bold text-xs text-purple-900 cursor-pointer hover:text-brand-red" onclick="closeDetailsModal(); setTimeout(() => viewStudentDetails('${d.id}'), 300)">${d.name}</p>
-                                <p class="text-[10px] text-purple-600">${d.belt || 'Branca'} • Freq: ${attCount}</p>
-                            </div>
-                            <button onclick="closeDetailsModal(); setTimeout(() => viewStudentDetails('${d.id}'), 300)" class="text-purple-500 hover:text-purple-700 text-xs px-2 py-1 bg-purple-50 rounded" title="Abrir Ficha"><i class="fa-solid fa-eye"></i></button>
-                        </li>`;
+                            <div><p class="font-bold text-xs text-purple-900 cursor-pointer hover:text-brand-red" onclick="closeDetailsModal(); setTimeout(() => viewStudentDetails('${d.id}'), 300)">${d.name}</p>
+                            <p class="text-[10px] text-purple-600">${d.belt || 'Branca'} • Freq: ${attCount}</p></div>
+                            <button onclick="closeDetailsModal(); setTimeout(() => viewStudentDetails('${d.id}'), 300)" class="text-purple-500 hover:text-purple-700 text-xs px-2 py-1 bg-purple-50 rounded" title="Abrir Ficha"><i class="fa-solid fa-eye"></i></button></li>`;
                     });
                     html += `</ul>`;
                     familyBox.innerHTML = html;
                     familyBox.classList.remove('hidden');
-                } else {
-                    familyBox.classList.add('hidden');
-                }
+                } else familyBox.classList.add('hidden');
             }
-
             document.getElementById('details-modal').classList.remove('hidden');
             document.getElementById('details-modal').classList.add('flex');
         };
@@ -2901,7 +2744,6 @@
             } catch(e) { console.error(e); alert("Erro ao salvar."); }
         };
 
-        // UI Adaptativa do Novo Aluno
         window.handleAdminPlanChange = () => {
             const plan = document.getElementById('reg-plan').value;
             const titularContainer = document.getElementById('admin-reg-titular-container');
@@ -2910,62 +2752,37 @@
             const dep2 = document.getElementById('admin-reg-dep2');
             const amountInput = document.getElementById('reg-pay-amount');
 
-            // Auto-fill price
             const pInfo = window.getPlanInfo(plan);
-            if (pInfo && pInfo.price > 0) {
-                amountInput.value = pInfo.price;
-            } else {
-                amountInput.value = '';
-            }
+            amountInput.value = (pInfo && pInfo.price > 0) ? pInfo.price : '';
 
-            // Reseta UI
             titularContainer.classList.add('hidden');
             depsContainer.classList.add('hidden');
             dep1.classList.add('hidden');
             dep2.classList.add('hidden');
 
-            if (plan === 'dependente') {
-                titularContainer.classList.remove('hidden');
-            } else if (plan === 'combo-dupla' || plan === 'combo-casal') {
-                depsContainer.classList.remove('hidden');
-                dep1.classList.remove('hidden');
-            } else if (plan === 'combo-familia') {
-                depsContainer.classList.remove('hidden');
-                dep1.classList.remove('hidden');
-                dep2.classList.remove('hidden');
-            }
+            if (plan === 'dependente') titularContainer.classList.remove('hidden');
+            else if (plan === 'combo-dupla' || plan === 'combo-casal') { depsContainer.classList.remove('hidden'); dep1.classList.remove('hidden'); } 
+            else if (plan === 'combo-familia') { depsContainer.classList.remove('hidden'); dep1.classList.remove('hidden'); dep2.classList.remove('hidden'); }
         };
 
         window.openAdminRegisterModal = () => {
             document.getElementById('admin-register-modal').classList.remove('hidden');
             document.getElementById('admin-register-modal').classList.add('flex');
-            window.handleAdminPlanChange(); // Garante o formato correto ao abrir
+            window.handleAdminPlanChange(); 
         };
         window.closeAdminRegisterModal = () => {
             document.getElementById('admin-register-modal').classList.add('hidden');
             document.getElementById('admin-register-modal').classList.remove('flex');
             
-            // Limpar formulário de forma segura
-            document.getElementById('reg-name').value = '';
-            document.getElementById('reg-dob').value = '';
-            document.getElementById('reg-cpf').value = '';
-            document.getElementById('reg-email').value = '';
-            document.getElementById('reg-phone').value = '';
-            document.getElementById('reg-address').value = '';
-            document.getElementById('reg-guardian').value = '';
-            document.getElementById('reg-plan').value = 'infantil-mensal';
-            document.getElementById('reg-titular').value = '';
-            document.getElementById('reg-student-login').value = '';
-            document.getElementById('reg-student-pass').value = '';
-            document.getElementById('admin-dep1-name').value = '';
-            document.getElementById('admin-dep1-dob').value = '';
-            document.getElementById('admin-dep2-name').value = '';
-            document.getElementById('admin-dep2-dob').value = '';
-            
-            document.getElementById('reg-payment').value = 'Pendente';
-            document.getElementById('reg-pay-amount').value = '';
-            document.getElementById('reg-pay-method').value = 'Pix';
-            
+            document.getElementById('reg-name').value = ''; document.getElementById('reg-dob').value = '';
+            document.getElementById('reg-cpf').value = ''; document.getElementById('reg-email').value = '';
+            document.getElementById('reg-phone').value = ''; document.getElementById('reg-address').value = '';
+            document.getElementById('reg-guardian').value = ''; document.getElementById('reg-plan').value = 'infantil-mensal';
+            document.getElementById('reg-titular').value = ''; document.getElementById('reg-student-login').value = '';
+            document.getElementById('reg-student-pass').value = ''; document.getElementById('admin-dep1-name').value = '';
+            document.getElementById('admin-dep1-dob').value = ''; document.getElementById('admin-dep2-name').value = '';
+            document.getElementById('admin-dep2-dob').value = ''; document.getElementById('reg-payment').value = 'Pendente';
+            document.getElementById('reg-pay-amount').value = ''; document.getElementById('reg-pay-method').value = 'Pix';
             window.handleAdminPlanChange();
         };
 
@@ -3010,68 +2827,37 @@
 
             let initialPaymentHistory = [];
             if (payAmount && parseFloat(payAmount) > 0) {
-                initialPaymentHistory.push({
-                    date: regDate.toISOString().split('T')[0],
-                    amount: payAmount,
-                    method: payMethod,
-                    timestamp: regDate.toISOString()
-                });
+                initialPaymentHistory.push({ date: regDate.toISOString().split('T')[0], amount: payAmount, method: payMethod, timestamp: regDate.toISOString() });
                 paymentStatus = 'Em dia'; 
             }
 
             try {
-                // Guarda o Titular
                 const titularDocRef = await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), {
-                    name: name, dob: dob, cpf: cpf, email: email, phone: phone, address: address,
-                    guardian: guardian, plan: plan, titularName: titular, paymentStatus: paymentStatus,
-                    enrollmentStatus: 'Ativo', belt: beltStr, category: category,
-                    registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(),
-                    studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory
+                    name, dob, cpf, email, phone, address, guardian, plan, titularName: titular, paymentStatus,
+                    enrollmentStatus: 'Ativo', belt: beltStr, category, registrationDate: regDate.toISOString(), 
+                    contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory
                 });
 
-                // Auto-cadastra os Dependentes (se aplicável ao plano)
                 if (plan === 'combo-dupla' || plan === 'combo-casal' || plan === 'combo-familia') {
                     const d1Name = document.getElementById('admin-dep1-name').value;
-                    const d1Dob = document.getElementById('admin-dep1-dob').value;
                     if(d1Name) {
                         await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), {
-                            name: d1Name,
-                            dob: toISODate(d1Dob),
-                            titularName: name,
-                            titularId: titularDocRef.id,
-                            parentesco: document.getElementById('admin-dep1-kinship').value,
-                            belt: `Faixa ${document.getElementById('admin-dep1-belt').value} - ${document.getElementById('admin-dep1-degree').value}º Grau`,
-                            plan: 'dependente',
-                            category: 'Dependente',
-                            registrationDate: regDate.toISOString(),
-                            contractEndDate: endDate.toISOString(),
-                            paymentStatus: 'Isento',
-                            email: email, 
-                            phone: phone,
-                            attendance: [], paymentHistory: []
+                            name: d1Name, dob: toISODate(document.getElementById('admin-dep1-dob').value), titularName: name, titularId: titularDocRef.id,
+                            parentesco: document.getElementById('admin-dep1-kinship').value, belt: `Faixa ${document.getElementById('admin-dep1-belt').value} - ${document.getElementById('admin-dep1-degree').value}º Grau`,
+                            plan: 'dependente', category: 'Dependente', registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(),
+                            paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: []
                         });
                     }
                 }
 
                 if (plan === 'combo-familia') {
                     const d2Name = document.getElementById('admin-dep2-name').value;
-                    const d2Dob = document.getElementById('admin-dep2-dob').value;
                     if(d2Name) {
                         await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), {
-                            name: d2Name,
-                            dob: toISODate(d2Dob),
-                            titularName: name,
-                            titularId: titularDocRef.id,
-                            parentesco: document.getElementById('admin-dep2-kinship').value,
-                            belt: `Faixa ${document.getElementById('admin-dep2-belt').value} - ${document.getElementById('admin-dep2-degree').value}º Grau`,
-                            plan: 'dependente',
-                            category: 'Dependente',
-                            registrationDate: regDate.toISOString(),
-                            contractEndDate: endDate.toISOString(),
-                            paymentStatus: 'Isento',
-                            email: email, 
-                            phone: phone,
-                            attendance: [], paymentHistory: []
+                            name: d2Name, dob: toISODate(document.getElementById('admin-dep2-dob').value), titularName: name, titularId: titularDocRef.id,
+                            parentesco: document.getElementById('admin-dep2-kinship').value, belt: `Faixa ${document.getElementById('admin-dep2-belt').value} - ${document.getElementById('admin-dep2-degree').value}º Grau`,
+                            plan: 'dependente', category: 'Dependente', registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(),
+                            paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: []
                         });
                     }
                 }
@@ -3082,248 +2868,27 @@
             } catch(e) { console.error(e); alert("Erro ao cadastrar."); }
         };
         
-        window.sendNewStudentAccessEmail = async () => {
-            const name = document.getElementById('reg-name').value;
-            const email = document.getElementById('reg-email').value;
-            const login = document.getElementById('reg-student-login').value;
-            const pass = document.getElementById('reg-student-pass').value;
-
-            if(!email) { alert("Preencha o e-mail do aluno antes de enviar."); return; }
-            if(!login || !pass) { alert("Preencha o login e senha antes de enviar."); return; }
-
-            const btn = event.currentTarget; 
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
-
-            const messageContent = `
-                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
-                    <div style="background-color: #D90429; color: white; padding: 20px; text-align: center;">
-                        <h2 style="margin: 0; text-transform: uppercase; letter-spacing: 1px;">Bem-vindo(a) à Tanque Team! 🥋</h2>
-                    </div>
-                    <div style="padding: 25px;">
-                        <p style="font-size: 16px;">Fala, <strong>${name.split(' ')[0]}</strong>! Oss!</p>
-                        <p style="font-size: 14px; line-height: 1.5;">O seu acesso ao nosso <strong>Portal do Aluno</strong> acabou de ser liberado. Através dele você pode acompanhar o seu histórico de treinos, evolução de faixas, pagamentos e o nosso ranking mensal da academia!</p>
-                        
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #D90429; margin: 25px 0;">
-                            <p style="margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; color: #777; font-weight: bold;">Suas credenciais de acesso:</p>
-                            <p style="margin: 5px 0; font-size: 16px;"><strong>Login:</strong> ${login}</p>
-                            <p style="margin: 5px 0; font-size: 16px;"><strong>Senha:</strong> ${pass}</p>
-                        </div>
-                        
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="https://www.tanqueteambjj.com.br/login.html" style="background-color: #D90429; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Acessar Portal do Aluno</a>
-                        </div>
-
-                        <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; border-left: 4px solid #2e7d32; margin: 25px 0;">
-                            <p style="margin: 0 0 10px 0; color: #2e7d32; font-size: 16px;"><strong>📱 NOVIDADE: Check-in por QR Code!</strong></p>
-                            <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #1b5e20;">Dentro do seu painel, você encontrará o seu <strong>Meu Cartão QR Code</strong>. Lembre-se de apresentá-lo na recepção antes de cada treino para registrar sua presença automaticamente, subir no ranking e desbloquear as suas conquistas!</p>
-                        </div>
-
-                        <p style="margin-top: 30px; font-size: 12px; color: #666;"><em>Dica: Você pode alterar sua senha a qualquer momento na aba "Meus Dados".</em></p>
-                        <p style="font-size: 14px; margin-top: 20px;">Nos vemos no tatame!</p>
-                        <p style="font-size: 14px; font-weight: bold; color: #D90429;">Equipe Tanque Team BJJ</p>
-                    </div>
-                </div>
-            `;
-            try {
-                await emailjs.send("service_2twa33d", "template_few5bna", { from_name: "Tanque Team BJJ", from_email: "administrativo@tanqueteambjj.com.br", to_name: name, to_email: email, subject: "Seu Acesso ao Portal + QR Code de Check-in", message: messageContent, reply_to: "administrativo@tanqueteambjj.com.br" });
-                alert("E-mail com credenciais enviado com sucesso!");
-            } catch (error) { alert("Erro ao enviar e-mail."); } finally { btn.disabled = false; btn.innerHTML = originalText; }
-        };
-
-        window.sendAccessEmail = async () => {
-            const name = document.getElementById('edit-name').value;
-            const email = document.getElementById('edit-email').value;
-            const login = document.getElementById('edit-login').value;
-            const pass = document.getElementById('edit-password').value;
-
-            if(!email) { alert("O aluno precisa ter um email cadastrado."); return; }
-            if(!login || !pass) { alert("Defina login e senha antes de enviar."); return; }
-
-            const btn = event.currentTarget; 
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
-
-            const messageContent = `
-                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
-                    <div style="background-color: #D90429; color: white; padding: 20px; text-align: center;">
-                        <h2 style="margin: 0; text-transform: uppercase; letter-spacing: 1px;">Bem-vindo(a) à Tanque Team! 🥋</h2>
-                    </div>
-                    <div style="padding: 25px;">
-                        <p style="font-size: 16px;">Fala, <strong>${name.split(' ')[0]}</strong>! Oss!</p>
-                        <p style="font-size: 14px; line-height: 1.5;">O seu acesso ao nosso <strong>Portal do Aluno</strong> acabou de ser liberado. Através dele você pode acompanhar o seu histórico de treinos, evolução de faixas, pagamentos e o nosso ranking mensal da academia!</p>
-                        
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #D90429; margin: 25px 0;">
-                            <p style="margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; color: #777; font-weight: bold;">Suas credenciais de acesso:</p>
-                            <p style="margin: 5px 0; font-size: 16px;"><strong>Login:</strong> ${login}</p>
-                            <p style="margin: 5px 0; font-size: 16px;"><strong>Senha:</strong> ${pass}</p>
-                        </div>
-                        
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="https://www.tanqueteambjj.com.br/login.html" style="background-color: #D90429; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Acessar Portal do Aluno</a>
-                        </div>
-
-                        <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; border-left: 4px solid #2e7d32; margin: 25px 0;">
-                            <p style="margin: 0 0 10px 0; color: #2e7d32; font-size: 16px;"><strong>📱 NOVIDADE: Check-in por QR Code!</strong></p>
-                            <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #1b5e20;">Dentro do seu painel, você encontrará o seu <strong>Meu Cartão QR Code</strong>. Lembre-se de apresentá-lo na recepção antes de cada treino para registrar sua presença automaticamente, subir no ranking e desbloquear as suas conquistas!</p>
-                        </div>
-
-                        <p style="margin-top: 30px; font-size: 12px; color: #666;"><em>Dica: Você pode alterar sua senha a qualquer momento na aba "Meus Dados".</em></p>
-                        <p style="font-size: 14px; margin-top: 20px;">Nos vemos no tatame!</p>
-                        <p style="font-size: 14px; font-weight: bold; color: #D90429;">Equipe Tanque Team BJJ</p>
-                    </div>
-                </div>
-            `;
-            try {
-                await emailjs.send("service_2twa33d", "template_few5bna", { from_name: "Tanque Team BJJ", from_email: "administrativo@tanqueteambjj.com.br", to_name: name, to_email: email, subject: "Seu Acesso ao Portal + QR Code de Check-in", message: messageContent, reply_to: "administrativo@tanqueteambjj.com.br" });
-                alert("E-mail com credenciais enviado com sucesso!");
-            } catch (error) { alert("Erro ao enviar e-mail."); } finally { btn.disabled = false; btn.innerHTML = originalText; }
-        };
-
-        window.sendCredsEmail = async (name, email, login, pass, btnElement) => {
-            if(!email) { alert("Preencha o e-mail do aluno antes de enviar."); return; }
-            if(!login || !pass) { alert("Preencha o login e senha antes de enviar."); return; }
-
-            const originalText = btnElement.innerHTML;
-            btnElement.disabled = true;
-            btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
-
-            const messageContent = `
-                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
-                    <div style="background-color: #D90429; color: white; padding: 20px; text-align: center;">
-                        <h2 style="margin: 0; text-transform: uppercase; letter-spacing: 1px;">Bem-vindo(a) à Tanque Team! 🥋</h2>
-                    </div>
-                    <div style="padding: 25px;">
-                        <p style="font-size: 16px;">Fala, <strong>${name.split(' ')[0]}</strong>! Oss!</p>
-                        <p style="font-size: 14px; line-height: 1.5;">O seu acesso ao nosso <strong>Portal do Aluno</strong> acabou de ser liberado. Através dele você pode acompanhar o seu histórico de treinos, evolução de faixas, pagamentos e o nosso ranking mensal da academia!</p>
-                        
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #D90429; margin: 25px 0;">
-                            <p style="margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; color: #777; font-weight: bold;">Suas credenciais de acesso:</p>
-                            <p style="margin: 5px 0; font-size: 16px;"><strong>Login:</strong> ${login}</p>
-                            <p style="margin: 5px 0; font-size: 16px;"><strong>Senha:</strong> ${pass}</p>
-                        </div>
-                        
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="https://www.tanqueteambjj.com.br/login.html" style="background-color: #D90429; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Acessar Portal do Aluno</a>
-                        </div>
-
-                        <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; border-left: 4px solid #2e7d32; margin: 25px 0;">
-                            <p style="margin: 0 0 10px 0; color: #2e7d32; font-size: 16px;"><strong>📱 NOVIDADE: Check-in por QR Code!</strong></p>
-                            <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #1b5e20;">Dentro do seu painel, você encontrará o seu <strong>Meu Cartão QR Code</strong>. Lembre-se de apresentá-lo na recepção antes de cada treino para registrar sua presença automaticamente, subir no ranking e desbloquear as suas conquistas!</p>
-                        </div>
-
-                        <p style="margin-top: 30px; font-size: 12px; color: #666;"><em>Dica: Você pode alterar sua senha a qualquer momento na aba "Meus Dados".</em></p>
-                        <p style="font-size: 14px; margin-top: 20px;">Nos vemos no tatame!</p>
-                        <p style="font-size: 14px; font-weight: bold; color: #D90429;">Equipe Tanque Team BJJ</p>
-                    </div>
-                </div>
-            `;
-            try {
-                await emailjs.send("service_2twa33d", "template_few5bna", { from_name: "Tanque Team BJJ", from_email: "administrativo@tanqueteambjj.com.br", to_name: name, to_email: email, subject: "Seu Acesso ao Portal + QR Code de Check-in", message: messageContent, reply_to: "administrativo@tanqueteambjj.com.br" });
-                alert("E-mail com credenciais enviado com sucesso!");
-            } catch (error) { console.error(error); alert("Erro ao enviar e-mail. Verifique a configuração."); } finally { btnElement.disabled = false; btnElement.innerHTML = originalText; }
-        };
-
-        // --- SISTEMA DE QR CODE E CHECK-IN ---
-        window.openQrModal = (id) => {
-            const s = window.students.find(st => st.id === id);
-            if(!s) return;
-            
-            document.getElementById('qr-student-name').innerText = s.name || "Aluno";
-            document.getElementById('qr-belt').innerText = s.belt || "Faixa Branca";
-            
-            const pInfo = window.getPlanInfo(s.plan);
-            document.getElementById('qr-plan').innerText = pInfo.short;
-
-            const photoImg = document.getElementById('qr-photo');
-            const photoPlaceholder = document.getElementById('qr-photo-placeholder');
-            
-            if (s.photoBase64) {
-                photoImg.src = s.photoBase64;
-                photoImg.classList.remove('hidden');
-                photoPlaceholder.classList.add('hidden');
-            } else {
-                photoImg.classList.add('hidden');
-                photoPlaceholder.classList.remove('hidden');
-                photoPlaceholder.innerText = (s.name || '?').charAt(0).toUpperCase();
-            }
-
-            // Gera QR Code online dinamicamente baseado no ID do aluno
-            document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${id}`;
-            
-            document.getElementById('qr-modal').classList.remove('hidden');
-            document.getElementById('qr-modal').classList.add('flex');
-        };
-
-        window.closeQrModal = () => {
-            document.getElementById('qr-modal').classList.add('hidden');
-            document.getElementById('qr-modal').classList.remove('flex');
-        };
-
-        window.printQrCard = () => {
-            document.body.classList.add('printing-qr');
-            setTimeout(() => {
-                window.print();
-                setTimeout(() => {
-                    document.body.classList.remove('printing-qr');
-                }, 2000);
-            }, 500);
-        };
-
-        let html5QrCode = null;
-        let isScanning = false;
-
-        window.openCheckinModal = () => {
-            document.getElementById('checkin-modal').classList.remove('hidden');
-            document.getElementById('checkin-modal').classList.add('flex');
-            
+        // Função auxiliar interna para check-in (Modo Admin)
+        window.onScanSuccess = async function(decodedText) {
+            if(window.isScanning) return;
+            window.isScanning = true;
             const resDiv = document.getElementById('checkin-result');
-            resDiv.innerHTML = '<i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o QR Code do aluno para a câmera...';
-            resDiv.className = 'text-center py-4 w-full rounded-lg bg-gray-50 border border-gray-200 font-medium text-gray-600 min-h-[100px] flex flex-col items-center justify-center';
-
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-            }
-            
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
-            .catch(err => {
-                console.error("Erro ao iniciar câmera", err);
-                resDiv.innerHTML = '<span class="text-red-500 font-bold">Erro ao acessar a câmera. Verifique as permissões do navegador.</span>';
-            });
-        };
-
-        window.closeCheckinModal = () => {
-            if(html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    html5QrCode.clear();
-                }).catch(err => console.error(err));
-            }
-            document.getElementById('checkin-modal').classList.add('hidden');
-            document.getElementById('checkin-modal').classList.remove('flex');
-        };
-
-        async function onScanSuccess(decodedText) {
-            if(isScanning) return;
-            isScanning = true;
-
-            const resDiv = document.getElementById('checkin-result');
-            
             const student = window.students.find(s => s.id === decodedText);
+            
             if(!student) {
                 resDiv.className = 'text-center py-4 w-full rounded-lg bg-red-50 border border-red-200 min-h-[100px] flex flex-col items-center justify-center';
                 resDiv.innerHTML = '<i class="fa-solid fa-circle-xmark text-4xl text-red-500 mb-2"></i><span class="text-red-500 font-bold text-xl">QR Code Inválido!</span>';
-                setTimeout(() => { 
-                    isScanning = false; 
-                    resDiv.className = 'text-center py-4 w-full rounded-lg bg-gray-50 border border-gray-200 font-medium text-gray-600 min-h-[100px] flex flex-col items-center justify-center';
-                    resDiv.innerHTML = '<i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o QR Code do aluno para a câmera...'; 
-                }, 2500);
+                setTimeout(() => { window.isScanning = false; resDiv.className = 'text-center py-4 w-full rounded-lg bg-gray-50 border border-gray-200 font-medium text-gray-600 min-h-[100px] flex flex-col items-center justify-center'; resDiv.innerHTML = '<i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o QR Code do aluno para a câmera...'; }, 2500);
                 return;
             }
 
-            // --- INÍCIO: BLOQUEIO FINANCEIRO ---
+            if(student.archived) {
+                resDiv.className = 'text-center py-6 w-full rounded-lg bg-gray-600 border-2 border-gray-800 min-h-[100px] flex flex-col items-center justify-center text-white shadow-xl';
+                resDiv.innerHTML = `<i class="fa-solid fa-box-archive text-5xl mb-2 text-white"></i><span class="font-bold text-xl mb-1">${student.name}</span><span class="font-display font-bold text-xl uppercase tracking-widest mt-1 text-white">Aluno Arquivado</span>`;
+                setTimeout(() => { window.isScanning = false; resDiv.className = 'text-center py-4 w-full rounded-lg bg-gray-50 border border-gray-200 font-medium text-gray-600 min-h-[100px] flex flex-col items-center justify-center'; resDiv.innerHTML = '<i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o próximo QR Code...'; }, 3500);
+                return;
+            }
+
             const todayDate = new Date();
             const targetDate = student.nextDueDate ? new Date(student.nextDueDate) : (student.contractEndDate ? new Date(student.contractEndDate) : new Date(0));
             const diffDays = isNaN(targetDate) ? 0 : Math.ceil((targetDate - todayDate) / (1000 * 60 * 60 * 24));
@@ -3331,44 +2896,22 @@
             
             let isBlocked = false;
             if (safePlan !== 'dependente' && safePlan !== 'administracao' && student.paymentStatus !== 'Isento') {
-                if (diffDays < 0 || student.paymentStatus === 'Pendente') {
-                    isBlocked = true;
-                }
+                if (diffDays < 0 || student.paymentStatus === 'Pendente') isBlocked = true;
             }
 
             if (isBlocked) {
                 resDiv.className = 'text-center py-6 w-full rounded-lg bg-red-600 border-2 border-red-800 min-h-[100px] flex flex-col items-center justify-center text-white shadow-xl animate-pulse';
                 resDiv.innerHTML = `<i class="fa-solid fa-lock text-5xl mb-2 text-white"></i><span class="font-bold text-xl mb-1">${student.name}</span><span class="font-display font-bold text-2xl uppercase tracking-widest mt-1 text-white">Acesso Bloqueado</span><span class="text-sm mt-2 bg-red-800 px-3 py-1 rounded shadow-inner font-bold">Mensalidade Pendente/Vencida</span>`;
-                
-                // Som de erro (Buzzer)
-                try {
-                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    const osc = ctx.createOscillator();
-                    osc.type = 'sawtooth'; // Som mais agressivo
-                    osc.frequency.setValueAtTime(150, ctx.currentTime);
-                    osc.connect(ctx.destination);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.3);
-                } catch(e) {}
-
-                setTimeout(() => { 
-                    isScanning = false; 
-                    resDiv.className = 'text-center py-4 w-full rounded-lg bg-gray-50 border border-gray-200 font-medium text-gray-600 min-h-[100px] flex flex-col items-center justify-center';
-                    resDiv.innerHTML = '<i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o próximo QR Code...'; 
-                }, 3500); // 3.5 segundos para o recepcionista ler a mensagem
+                try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, ctx.currentTime); osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.3); } catch(e) {}
+                setTimeout(() => { window.isScanning = false; resDiv.className = 'text-center py-4 w-full rounded-lg bg-gray-50 border border-gray-200 font-medium text-gray-600 min-h-[100px] flex flex-col items-center justify-center'; resDiv.innerHTML = '<i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o próximo QR Code...'; }, 3500); 
                 return;
             }
-            // --- FIM: BLOQUEIO FINANCEIRO ---
 
             const todayISO = new Date().toISOString().split('T')[0];
             if(student.attendance && student.attendance.includes(todayISO)) {
                 resDiv.className = 'text-center py-4 w-full rounded-lg bg-yellow-50 border border-yellow-200 min-h-[100px] flex flex-col items-center justify-center';
                 resDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-4xl text-yellow-500 mb-2"></i><span class="text-yellow-600 font-bold text-xl">${student.name}</span><span class="text-yellow-700">Já realizou check-in hoje!</span>`;
-                setTimeout(() => { 
-                    isScanning = false; 
-                    resDiv.className = 'text-center py-4 w-full rounded-lg bg-gray-50 border border-gray-200 font-medium text-gray-600 min-h-[100px] flex flex-col items-center justify-center';
-                    resDiv.innerHTML = '<i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o próximo QR Code...'; 
-                }, 2500);
+                setTimeout(() => { window.isScanning = false; resDiv.className = 'text-center py-4 w-full rounded-lg bg-gray-50 border border-gray-200 font-medium text-gray-600 min-h-[100px] flex flex-col items-center justify-center'; resDiv.innerHTML = '<i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o próximo QR Code...'; }, 2500);
                 return;
             }
 
@@ -3376,547 +2919,137 @@
             resDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-4xl text-blue-500 mb-2"></i><span class="text-blue-500 font-bold">Registrando...</span>`;
             
             try {
+                // Captura a turma selecionada (IMPLEMENTAÇÃO 3)
+                const classSelector = document.getElementById('checkin-class-selector');
+                const classTime = classSelector ? classSelector.value : 'Não informada';
+
                 const docRef = doc(window.db, 'artifacts', appId, 'public', 'data', 'students', student.id);
-                await updateDoc(docRef, { attendance: arrayUnion(todayISO) });
+                
+                // Salva o dia exato E o log da turma
+                await updateDoc(docRef, { 
+                    attendance: arrayUnion(todayISO),
+                    attendanceLog: arrayUnion({ date: todayISO, time: classTime, timestamp: new Date().toISOString() }) 
+                });
                 
                 if(!student.attendance) student.attendance = [];
                 student.attendance.push(todayISO);
+                if(!student.attendanceLog) student.attendanceLog = [];
+                student.attendanceLog.push({ date: todayISO, time: classTime, timestamp: new Date().toISOString() });
                 
-                window.renderTable(); 
+                if(window.currentView === 'students') window.renderTable(); 
 
                 resDiv.className = 'text-center py-4 w-full rounded-lg bg-green-50 border border-green-200 min-h-[100px] flex flex-col items-center justify-center';
-                resDiv.innerHTML = `<i class="fa-solid fa-circle-check text-5xl text-green-500 mb-2"></i><span class="text-green-600 font-bold text-2xl">Check-in Concluído!</span><span class="text-green-800 font-medium text-lg mt-1">${student.name}</span>`;
+                resDiv.innerHTML = `<i class="fa-solid fa-circle-check text-5xl text-green-500 mb-2"></i><span class="text-green-600 font-bold text-2xl">Check-in Concluído!</span><span class="text-green-800 font-medium text-lg mt-1">${student.name}</span><span class="text-[10px] bg-green-200 px-2 py-1 rounded text-green-800 mt-2 font-bold">${classTime}</span>`;
                 
-                playBeep();
-
+                try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(800, ctx.currentTime); osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.1); } catch(e) {}
             } catch(e) {
                 resDiv.className = 'text-center py-4 w-full rounded-lg bg-red-50 border border-red-200 min-h-[100px] flex flex-col items-center justify-center';
                 resDiv.innerHTML = `<span class="text-red-500 font-bold">Erro ao salvar: ${e.message}</span>`;
             }
 
-            setTimeout(() => { 
-                isScanning = false; 
-                resDiv.className = 'text-center py-4 w-full rounded-lg bg-gray-50 border border-gray-200 font-medium text-gray-600 min-h-[100px] flex flex-col items-center justify-center';
-                resDiv.innerHTML = '<i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o próximo QR Code...'; 
-            }, 3000);
-        }
+            setTimeout(() => { window.isScanning = false; resDiv.className = 'text-center py-4 w-full rounded-lg bg-gray-50 border border-gray-200 font-medium text-gray-600 min-h-[100px] flex flex-col items-center justify-center'; resDiv.innerHTML = '<i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o próximo QR Code...'; }, 3000);
+        };
 
-        function playBeep() {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(800, ctx.currentTime);
-                osc.connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.1);
-            } catch(e) { console.log("Áudio não suportado", e); }
-        }
-
-        // --- FIM SISTEMA DE QR CODE ---
-
-        window.openGraduationModal = (id, name) => {
-            document.getElementById('grad-student-id').value = id;
-            document.getElementById('grad-student-name').innerText = name;
-            document.getElementById('graduation-modal').classList.remove('hidden');
-            document.getElementById('graduation-modal').classList.add('flex');
-        }
-        window.closeGraduationModal = () => {
-            document.getElementById('graduation-modal').classList.add('hidden');
-            document.getElementById('graduation-modal').classList.remove('flex');
-        }
-        window.saveGraduation = async () => {
-            const id = document.getElementById('grad-student-id').value;
-            const color = document.getElementById('grad-belt-color').value;
-            const degree = document.getElementById('grad-belt-degree').value;
-            const newBeltStr = `Faixa ${color} - ${degree}º Grau`;
-            const today = new Date().toISOString();
-            try {
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { belt: newBeltStr, lastGraduationDate: today });
-                alert(`Aluno graduado para ${newBeltStr}!`);
-                window.closeGraduationModal();
-                window.loadData();
-            } catch(e) { alert("Erro ao graduar: " + e.message); }
-        }
+        // KANBAN LOGIC (IMPLEMENTAÇÃO 4)
+        window.allowDrop = (ev) => ev.preventDefault();
         
-        window.generateReport = (type) => {
-            const container = document.getElementById('report-container');
+        window.drag = (ev) => {
+            ev.dataTransfer.setData("text", ev.target.id);
+            ev.target.classList.add('dragging');
+        };
+
+        window.dragEnd = (ev) => {
+            ev.target.classList.remove('dragging');
+        };
+
+        window.drop = async (ev) => {
+            ev.preventDefault();
+            const data = ev.dataTransfer.getData("text");
+            const draggedEl = document.getElementById(data);
+            const dropzone = ev.target.closest('.kanban-col');
             
-            // Remove a classe hidden ANTES da impressão
-            container.classList.remove('hidden');
-
-            let html = `<div class="text-center mb-6 border-b pb-4">
-                <h2 class="text-2xl font-bold uppercase tracking-wider">TANQUE TEAM BJJ</h2>
-                <h3 class="text-lg text-gray-600 uppercase mt-1">Relatório Gerencial</h3>
-                <p class="text-xs text-gray-500 mt-2">Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
-            </div>`;
-
-            let tableRows = '';
-            
-            if (type === 'ativos') {
-                html += `<h3 class="font-bold text-lg mb-4">ALUNOS ATIVOS</h3>`;
-                html += `<table><thead><tr><th>Nome</th><th>Plano</th><th>Faixa</th><th>Status Pagto</th></tr></thead><tbody>`;
-                const ativos = window.students.filter(s => s.enrollmentStatus !== 'Inativo');
-                ativos.sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(s => {
-                    tableRows += `<tr><td>${s.name}</td><td class="uppercase">${(s.plan||'-').replace('-',' ')}</td><td>${s.belt||'Branca'}</td><td>${s.paymentStatus||'-'}</td></tr>`;
-                });
-                html += tableRows + `</tbody></table>`;
-            } 
-            else if (type === 'inadimplentes') {
-                html += `<h3 class="font-bold text-lg mb-4 text-red-600">INADIMPLENTES E VENCIMENTOS PRÓXIMOS</h3>`;
-                html += `<table><thead><tr><th>Nome</th><th>Plano</th><th>Telefone</th><th>Status Virtual</th><th>Vencimento</th></tr></thead><tbody>`;
+            if (draggedEl && dropzone) {
+                dropzone.appendChild(draggedEl);
+                const newStatus = dropzone.id.replace('col-', '');
+                const expId = data.replace('exp-card-', '');
                 
-                const today = new Date();
-                const problematics = window.students.filter(s => {
-                    if (s.enrollmentStatus === 'Inativo' || s.paymentStatus === 'Isento' || s.plan === 'administracao' || s.plan === 'dependente') return false;
-                    const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
-                    if (isNaN(targetDate)) return false;
-                    const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
-                    return diffDays <= 7 || s.paymentStatus === 'Pendente';
-                });
-
-                problematics.sort((a,b) => {
-                    const d1 = a.nextDueDate ? new Date(a.nextDueDate) : new Date(0);
-                    const d2 = b.nextDueDate ? new Date(b.nextDueDate) : new Date(0);
-                    return d1 - d2;
-                }).forEach(s => {
-                    const targetDate = s.nextDueDate ? new Date(s.nextDueDate) : (s.contractEndDate ? new Date(s.contractEndDate) : new Date(0));
-                    let status = 'EXPIRANDO';
-                    if (!isNaN(targetDate)) {
-                        const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
-                        if (diffDays < 0 || s.paymentStatus === 'Pendente') status = 'VENCIDO';
-                    }
-                    
-                    tableRows += `<tr><td>${s.name}</td><td class="uppercase">${(s.plan||'-').replace('-',' ')}</td><td>${s.phone||'-'}</td><td class="font-bold ${status==='VENCIDO'?'text-red-600':''}">${status}</td><td>${formatDate(targetDate.toISOString())}</td></tr>`;
-                });
-                html += tableRows + `</tbody></table>`;
-            }
-            else if (type === 'financeiro') {
-                const now = new Date();
-                const currentMonth = now.getMonth();
-                const currentYear = now.getFullYear();
-                const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-                
-                html += `<h3 class="font-bold text-lg mb-4 text-green-600">RESUMO FINANCEIRO ESTIMADO - REFERÊNCIA: ${monthNames[currentMonth].toUpperCase()}/${currentYear}</h3>`;
-                html += `<table><thead><tr><th>Plano / Categoria</th><th>Qtd Alunos (Titulares)</th><th>Valor Unit. Estimado</th><th>Subtotal Mensal</th></tr></thead><tbody>`;
-                
-                let sumMap = {};
-                let totalExpected = 0;
-                
-                window.students.forEach(s => {
-                    if (s.enrollmentStatus === 'Inativo') return;
-                    
-                    let pName = s.plan || 'outros';
-                    let pInfo = window.getPlanInfo(pName);
-                    
-                    // Trata Isentos, Dependentes e Administração separadamente
-                    if (s.paymentStatus === 'Isento' || pName === 'administracao' || pName === 'dependente') {
-                        if (!sumMap['isento']) sumMap['isento'] = { name: 'Isentos / Dependentes / Admin', count: 0, price: 0, subtotal: 0 };
-                        sumMap['isento'].count++;
-                        return;
-                    }
-
-                    // Verifica se a matrícula foi feita no mês vigente
-                    let isNewThisMonth = false;
-                    if (s.registrationDate) {
-                        const rDate = new Date(s.registrationDate);
-                        if (rDate.getMonth() === currentMonth && rDate.getFullYear() === currentYear) {
-                            isNewThisMonth = true;
-                        }
-                    }
-
-                    let price = pInfo.price;
-                    let isPromo = false;
-                    if (isNewThisMonth) {
-                        if (pName.includes('semestral') && !pName.includes('combo')) { price = 29.90; isPromo = true; }
-                        else if (pName === 'combo-dupla') { price = 59.90; isPromo = true; }
-                        else if (pName === 'combo-familia') { price = 89.90; isPromo = true; }
-                    }
-
-                    let mapKey = isPromo ? pName + '_promo' : pName;
-                    let displayName = pInfo.short + (isPromo ? ' <span class="text-brand-red text-xs font-bold">(Promo 1º Mês)</span>' : '');
-
-                    if (!sumMap[mapKey]) {
-                        sumMap[mapKey] = { name: displayName, count: 0, price: price, subtotal: 0 };
-                    }
-                    
-                    sumMap[mapKey].count++;
-                    sumMap[mapKey].subtotal += price;
-                    totalExpected += price;
-                });
-
-                for (const [key, data] of Object.entries(sumMap)) {
-                    tableRows += `<tr><td class="uppercase">${data.name}</td><td class="text-center">${data.count}</td><td>R$ ${data.price.toFixed(2).replace('.', ',')}</td><td class="font-bold">R$ ${data.subtotal.toFixed(2).replace('.', ',')}</td></tr>`;
+                try {
+                    await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', expId), { status: newStatus });
+                    const exp = window.experimentalList.find(e => e.id === expId);
+                    if(exp) exp.status = newStatus;
+                    updateKanbanCounters();
+                } catch(e) {
+                    alert("Erro ao salvar status no banco de dados. " + e.message);
+                    window.renderExperimentalTable(); // Reverts UI on fail
                 }
-                
-                html += tableRows + `</tbody><tfoot><tr><th colspan="3" class="text-right">TOTAL ESTIMADO PARA ESTE MÊS:</th><th class="text-green-700 text-lg">R$ ${totalExpected.toFixed(2).replace('.', ',')}</th></tr></tfoot></table>`;
-                html += `<p class="text-xs text-gray-500 mt-2">* Obs: Valores calculados dinamicamente baseados nos planos ativos, isenções e alunos matriculados com promoção no mês corrente (${monthNames[currentMonth]}).</p>`;
             }
-            else if (type === 'frequencia') {
-                html += `<h3 class="font-bold text-lg mb-4 text-purple-600">FREQUÊNCIA - TOP 15 ALUNOS (Últimos 30 dias)</h3>`;
-                html += `<table><thead><tr><th>Posição</th><th>Nome</th><th>Aulas nos últimos 30 dias</th><th>Faixa</th></tr></thead><tbody>`;
-                
-                const thirtyDaysAgo = new Date();
-                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                
-                let freqData = window.students.filter(s => s.enrollmentStatus !== 'Inativo').map(s => {
-                    let recentClasses = 0;
-                    if (s.attendance) {
-                        recentClasses = s.attendance.filter(d => new Date(d) >= thirtyDaysAgo).length;
-                    }
-                    return { name: s.name, belt: s.belt, classes: recentClasses };
-                });
-
-                freqData.sort((a,b) => b.classes - a.classes);
-                freqData.slice(0, 15).forEach((d, i) => {
-                    tableRows += `<tr><td>#${i+1}</td><td class="font-bold">${d.name}</td><td class="text-center">${d.classes}</td><td>${d.belt||'-'}</td></tr>`;
-                });
-                
-                html += tableRows + `</tbody></table>`;
-            }
-
-            container.innerHTML = html;
-            
-            document.body.classList.add('printing-report');
-            setTimeout(() => {
-                window.print();
-                setTimeout(() => {
-                    document.body.classList.remove('printing-report');
-                    container.classList.add('hidden'); // Retorna a tela ao normal
-                }, 2000);
-            }, 800); // Delay extra para forçar o render em celulares lentos antes de imprimir
         };
 
-        window.loadNotices = async () => {
-            try {
-                const q = query(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'));
-                const querySnapshot = await getDocs(q);
-                window.noticesList = [];
-                const now = new Date();
-
-                querySnapshot.forEach((doc) => {
-                    const noticeData = doc.data();
-                    
-                    // Valida se o aviso de conquista já expirou (24h)
-                    if (noticeData.expiresAt) {
-                        const expiryDate = new Date(noticeData.expiresAt);
-                        if (now > expiryDate) {
-                            return; // Ignora avisos expirados
-                        }
-                    }
-                    window.noticesList.push({ id: doc.id, ...noticeData });
-                });
-                
-                window.noticesList.sort((a, b) => new Date(b.date) - new Date(a.date));
-                if (window.currentView === 'notices') { window.renderAdminNotices(); window.renderBirthdays(); }
-            } catch (error) { console.error("Erro ao carregar avisos:", error); }
-        };
-
-        window.sendBirthdayWhatsApp = (name, phone) => {
-            if(!phone || phone.trim() === "") {
-                alert("Este aluno não possui um número de telefone cadastrado.");
-                return;
-            }
-            const firstName = name.split(' ')[0];
-            const message = `Fala ${firstName}! Aqui é da equipe Tanque Team BJJ. Passando para te desejar um Feliz Aniversário! 🎉🥋\n\nQue você tenha muita saúde, paz e que continue evoluindo sempre, com muita resiliência dentro e fora dos tatames. Aproveite o seu dia! Oss! 👊`;
-            const encodedMessage = encodeURIComponent(message);
-            window.open(`https://wa.me/55${phone}?text=${encodedMessage}`, '_blank');
-        };
-
-        window.publishBirthdayNotice = async (name) => {
-            if(!confirm(`Deseja publicar uma homenagem no mural para ${name}?`)) return;
-            const firstName = name.split(' ')[0];
-            const title = `🎉 Parabéns, ${firstName}! 🥋`;
-            const text = `Hoje é o aniversário do nosso colega de tatame ${name}! Desejamos muita saúde, vitórias, resiliência e que a evolução seja constante dentro e fora dos tatames. Parabéns! Oss! 👊`;
-            
-            try {
-                await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'), {
-                    title: title, text: text, type: 'success', date: new Date().toISOString()
-                });
-                alert("Homenagem publicada no mural com sucesso!");
-                window.loadNotices();
-            } catch(e) { alert("Erro ao publicar homenagem: " + e.message); }
-        };
-
-        window.renderBirthdays = () => {
-            const currentMonth = new Date().getMonth();
-            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            document.getElementById('birthday-month-name').innerText = monthNames[currentMonth];
-
-            const birthdays = window.students.filter(s => {
-                if (!s.dob || s.enrollmentStatus === 'Inativo') return false;
-                let dobDate;
-                if (s.dob.includes('/')) {
-                    const [day, month, year] = s.dob.split('/');
-                    dobDate = new Date(year, month - 1, day);
-                } else if (s.dob.includes('T')) {
-                    dobDate = new Date(s.dob);
-                } else {
-                    const [y, m, d] = s.dob.split('-').map(Number);
-                    dobDate = new Date(y, m - 1, d);
-                }
-                if(isNaN(dobDate)) return false;
-                return dobDate.getMonth() === currentMonth;
+        window.updateKanbanCounters = () => {
+            ['Agendado', 'Concluído', 'Matriculado', 'Faltou'].forEach(status => {
+                const col = document.getElementById('col-' + status);
+                const countBadge = document.getElementById('count-' + status);
+                if(col && countBadge) countBadge.innerText = col.querySelectorAll('.kanban-card').length;
             });
-
-            const container = document.getElementById('admin-birthdays-widget');
-            const list = document.getElementById('birthday-list');
-            list.innerHTML = '';
-
-            if (birthdays.length === 0) {
-                container.classList.add('hidden');
-            } else {
-                container.classList.remove('hidden');
-                
-                // Ordenar pelo dia do mês (crescente)
-                birthdays.sort((a, b) => {
-                    const getDay = (dob) => {
-                        if (dob.includes('/')) return Number(dob.split('/')[0]);
-                        if (dob.includes('T')) return new Date(dob).getDate();
-                        return Number(dob.split('-')[2]);
-                    };
-                    return getDay(a.dob) - getDay(b.dob);
-                });
-
-                birthdays.forEach(s => {
-                    let day = 1;
-                    if (s.dob.includes('/')) day = Number(s.dob.split('/')[0]);
-                    else if (s.dob.includes('T')) day = new Date(s.dob).getDate();
-                    else day = Number(s.dob.split('-')[2]);
-                    
-                    const cleanPhone = (s.phone || '').replace(/\D/g, '');
-                    
-                    const wppBtn = cleanPhone ? `<button onclick="sendBirthdayWhatsApp('${s.name}', '${cleanPhone}')" class="text-green-500 hover:text-green-700 p-1" title="Enviar Parabéns no WhatsApp"><i class="fa-brands fa-whatsapp text-lg"></i></button>` : '';
-                    const muralBtn = `<button onclick="publishBirthdayNotice('${s.name}')" class="text-blue-500 hover:text-blue-700 p-1" title="Publicar Parabéns no Mural"><i class="fa-solid fa-bullhorn text-lg"></i></button>`;
-
-                    list.innerHTML += `
-                        <div class="bg-white p-2 rounded shadow-sm flex items-center gap-3 border-l-4 border-blue-400">
-                            <div class="bg-blue-100 text-blue-800 font-bold w-10 h-10 rounded flex flex-col items-center justify-center leading-tight shrink-0">
-                                <span class="text-[10px] font-normal uppercase">Dia</span>
-                                <span>${day}</span>
-                            </div>
-                            <div class="flex-1 truncate">
-                                <p class="font-bold text-sm text-gray-800 truncate" title="${s.name}">${s.name.split(' ')[0]} ${s.name.split(' ').length > 1 ? s.name.split(' ').pop() : ''}</p>
-                                <p class="text-[10px] text-gray-500 uppercase truncate">${(s.plan || 'Sem plano').replace('-', ' ')}</p>
-                            </div>
-                            <div class="flex items-center gap-1 border-l border-gray-100 pl-2">
-                                ${wppBtn}
-                                ${muralBtn}
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-        };
-
-        window.renderAdminNotices = () => {
-            const list = document.getElementById('admin-notices-list');
-            list.innerHTML = '';
-            if (window.noticesList.length === 0) {
-                list.innerHTML = '<div class="text-center py-8 text-gray-400 italic text-sm">Nenhum aviso publicado.</div>';
-                return;
-            }
-            window.noticesList.forEach(notice => {
-                const d = new Date(notice.date).toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
-                let bg = 'bg-blue-50 border-blue-200'; let icon = '<i class="fa-solid fa-circle-info text-blue-500"></i>';
-                if(notice.type === 'alert') { bg = 'bg-yellow-50 border-yellow-200'; icon = '<i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>'; }
-                if(notice.type === 'success') { bg = 'bg-green-50 border-green-200'; icon = '<i class="fa-solid fa-check-circle text-green-500"></i>'; }
-                if(notice.type === 'danger') { bg = 'bg-red-50 border-red-200'; icon = '<i class="fa-solid fa-circle-xmark text-red-500"></i>'; }
-                if(notice.type === 'achievement') { 
-                    bg = 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200 text-indigo-900'; 
-                    icon = `<i class="fa-solid ${notice.icon || 'fa-trophy'} text-indigo-500"></i>`; 
-                }
-
-                let expiryHtml = '';
-                if (notice.expiresAt) {
-                    const expDate = new Date(notice.expiresAt);
-                    const now = new Date();
-                    if (now > expDate) {
-                        expiryHtml = `<span class="text-red-500 font-bold ml-2">(Expirado)</span>`;
-                    } else {
-                        expiryHtml = `<span class="text-orange-500 font-bold ml-2">(Expira em: ${expDate.toLocaleDateString('pt-BR')})</span>`;
-                    }
-                }
-                
-                list.innerHTML += `
-                    <div class="p-4 border rounded-lg ${bg} flex justify-between items-start">
-                        <div>
-                            <h4 class="font-bold text-gray-800 flex items-center gap-2">${icon} ${notice.title}</h4>
-                            <p class="text-sm text-gray-600 mt-1 whitespace-pre-wrap">${notice.text}</p>
-                            <p class="text-[10px] text-gray-500 mt-2 font-medium">Publicado em: ${d} ${expiryHtml}</p>
-                        </div>
-                        <div class="flex gap-3">
-                            <button onclick="editNotice('${notice.id}')" class="text-blue-400 hover:text-blue-600 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="deleteNotice('${notice.id}')" class="text-red-400 hover:text-red-600 transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                `;
-            });
-        };
-
-        window.openNoticeModal = () => {
-            document.getElementById('notice-id').value = '';
-            document.getElementById('notice-title').value = '';
-            document.getElementById('notice-text').value = '';
-            document.getElementById('notice-type').value = 'info';
-            document.getElementById('notice-expiry').value = '';
-            document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-bullhorn mr-2"></i> Publicar Aviso';
-            document.getElementById('notice-modal').classList.remove('hidden');
-            document.getElementById('notice-modal').classList.add('flex');
-        };
-
-        window.editNotice = (id) => {
-            const notice = window.noticesList.find(n => n.id === id);
-            if (!notice) return;
-            document.getElementById('notice-id').value = notice.id;
-            document.getElementById('notice-title').value = notice.title;
-            document.getElementById('notice-text').value = notice.text;
-            document.getElementById('notice-type').value = notice.type || 'info';
-            if (notice.expiresAt) {
-                document.getElementById('notice-expiry').value = notice.expiresAt.split('T')[0];
-            } else {
-                document.getElementById('notice-expiry').value = '';
-            }
-            document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-pen mr-2"></i> Editar Aviso';
-            document.getElementById('notice-modal').classList.remove('hidden');
-            document.getElementById('notice-modal').classList.add('flex');
-        };
-
-        window.closeNoticeModal = () => {
-            document.getElementById('notice-modal').classList.add('hidden');
-            document.getElementById('notice-modal').classList.remove('flex');
-        };
-
-        window.saveNotice = async () => {
-            const id = document.getElementById('notice-id').value;
-            const title = document.getElementById('notice-title').value;
-            const text = document.getElementById('notice-text').value;
-            const type = document.getElementById('notice-type').value;
-            const expiryRaw = document.getElementById('notice-expiry').value;
-            
-            if(!title || !text) { alert("Preencha título e mensagem."); return; }
-            
-            let expiryIso = null;
-            if (expiryRaw) {
-                expiryIso = new Date(expiryRaw + 'T23:59:59').toISOString();
-            }
-
-            const noticeData = {
-                title: title,
-                text: text,
-                type: type,
-                expiresAt: expiryIso
-            };
-            
-            try {
-                if (id) {
-                    await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', id), noticeData);
-                    alert("Aviso atualizado com sucesso!");
-                } else {
-                    noticeData.date = new Date().toISOString();
-                    await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'), noticeData);
-                    alert("Aviso publicado com sucesso!");
-                }
-                window.closeNoticeModal();
-                window.loadNotices();
-            } catch(e) { alert("Erro ao salvar aviso: " + e.message); }
-        };
-
-        window.deleteNotice = async (id) => {
-            if(!confirm("Tem certeza que deseja excluir este aviso permanentemente? Ele vai sumir do painel de todos os alunos.")) return;
-            try {
-                await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', id));
-                window.loadNotices();
-            } catch(e) { alert("Erro ao excluir: " + e.message); }
-        };
-
-        // --- SISTEMA DE AULA EXPERIMENTAL ---
-        window.loadExperimentalData = async () => {
-            try {
-                const q = query(collection(window.db, 'artifacts', appId, 'public', 'data', 'experimental'));
-                const querySnapshot = await getDocs(q);
-                window.experimentalList = [];
-                querySnapshot.forEach((doc) => {
-                    window.experimentalList.push({ id: doc.id, ...doc.data() });
-                });
-                window.renderExperimentalTable();
-            } catch (error) { console.error("Erro ao carregar experimentais:", error); }
         };
 
         window.renderExperimentalTable = () => {
-            const tbody = document.getElementById('experimental-table-body');
             const search = (document.getElementById('searchInput')?.value || "").toLowerCase();
-            tbody.innerHTML = '';
-
-            let filtered = window.experimentalList.filter(e => {
-                return (e.name || '').toLowerCase().includes(search) || (e.phone || '').includes(search);
+            
+            // Clear columns
+            ['Agendado', 'Concluído', 'Matriculado', 'Faltou'].forEach(status => {
+                const col = document.getElementById('col-' + status);
+                if(col) col.innerHTML = '';
             });
 
-            // Sort by date DESC
-            filtered.sort((a,b) => {
-                const dateA = new Date(a.date + 'T' + (a.time || '00:00'));
-                const dateB = new Date(b.date + 'T' + (b.time || '00:00'));
-                return dateB - dateA;
-            });
-
-            if(filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">Nenhum agendamento encontrado.</td></tr>`;
-                return;
-            }
+            let filtered = window.experimentalList.filter(e => (e.name || '').toLowerCase().includes(search) || (e.phone || '').includes(search));
+            filtered.sort((a,b) => new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00')));
 
             filtered.forEach(exp => {
                 const age = getAge(exp.dob);
-                const isMinor = age !== null && age < 18;
                 const cleanPhone = (exp.phone || '').replace(/\D/g, '');
-                
                 let dateFormatted = exp.date ? new Date(exp.date + 'T12:00:00').toLocaleDateString('pt-BR') : '--';
                 
-                let statusColor = 'bg-gray-100 text-gray-800';
-                if(exp.status === 'Agendado') statusColor = 'bg-yellow-100 text-yellow-800';
-                else if(exp.status === 'Concluído') statusColor = 'bg-green-100 text-green-800';
-                else if(exp.status === 'Matriculado') statusColor = 'bg-blue-100 text-blue-800';
-                else if(exp.status === 'Cancelado' || exp.status === 'Faltou') statusColor = 'bg-red-100 text-red-800';
+                let statusColId = 'col-Agendado';
+                if(exp.status === 'Concluído') statusColId = 'col-Concluído';
+                else if(exp.status === 'Matriculado') statusColId = 'col-Matriculado';
+                else if(exp.status === 'Faltou' || exp.status === 'Cancelado') statusColId = 'col-Faltou';
 
-                const tr = document.createElement('tr');
-                tr.className = "border-b hover:bg-gray-50 transition";
-                tr.innerHTML = `
-                    <td class="px-6 py-4 align-middle">
-                        <div class="font-bold text-gray-800">${dateFormatted}</div>
-                        <div class="text-xs text-brand-red font-bold"><i class="fa-regular fa-clock"></i> ${exp.time || '--'}</div>
-                    </td>
-                    <td class="px-6 py-4 align-middle">
-                        <div class="font-bold text-gray-900">${exp.name} <span class="text-xs font-normal text-gray-500">(${age} anos)</span></div>
-                        ${isMinor && exp.guardian ? `<div class="text-xs text-gray-500"><i class="fa-solid fa-user-shield text-gray-400"></i> Resp: ${exp.guardian}</div>` : ''}
-                    </td>
-                    <td class="px-6 py-4 align-middle">
-                        <a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${exp.phone}</a>
-                    </td>
-                    <td class="px-6 py-4 align-middle">
-                        <select onchange="changeExpStatus('${exp.id}', this.value)" class="border rounded px-2 py-1 text-xs font-bold ${statusColor} outline-none cursor-pointer">
-                            <option value="Agendado" ${exp.status === 'Agendado' ? 'selected' : ''}>Agendado</option>
-                            <option value="Concluído" ${exp.status === 'Concluído' ? 'selected' : ''}>Compareceu</option>
-                            <option value="Matriculado" ${exp.status === 'Matriculado' ? 'selected' : ''}>Matriculado</option>
-                            <option value="Faltou" ${exp.status === 'Faltou' ? 'selected' : ''}>Faltou</option>
-                            <option value="Cancelado" ${exp.status === 'Cancelado' ? 'selected' : ''}>Cancelou</option>
-                        </select>
-                    </td>
-                    <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
-                        <button onclick="convertToStudent('${exp.id}')" class="text-blue-500 hover:text-blue-700 p-2 rounded transition" title="Matricular como Aluno"><i class="fa-solid fa-user-plus"></i></button>
-                        <button onclick="openEditExperimentalModal('${exp.id}')" class="text-gray-500 hover:text-gray-700 p-2 rounded transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="deleteExperimental('${exp.id}')" class="text-red-500 hover:text-red-700 p-2 rounded transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>
-                    </td>
+                const card = document.createElement('div');
+                card.className = "kanban-card bg-white p-3 rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-brand-red flex flex-col gap-2 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow relative";
+                card.id = `exp-card-${exp.id}`;
+                card.draggable = true;
+                card.addEventListener('dragstart', window.drag);
+                card.addEventListener('dragend', window.dragEnd);
+
+                let badgeColor = 'bg-yellow-100 text-yellow-800';
+                if(exp.status === 'Concluído') badgeColor = 'bg-green-100 text-green-800';
+                else if(exp.status === 'Matriculado') badgeColor = 'bg-blue-100 text-blue-800';
+                else if(exp.status === 'Faltou' || exp.status === 'Cancelado') badgeColor = 'bg-red-100 text-red-800';
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${badgeColor}">${exp.time || '--:--'}</span>
+                        <div class="text-[10px] text-gray-400 font-bold">${dateFormatted}</div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-800 text-sm leading-tight">${exp.name} <span class="text-xs font-normal text-gray-500">(${age}a)</span></h4>
+                        ${exp.guardian ? `<p class="text-[10px] text-gray-500 mt-1"><i class="fa-solid fa-user-shield"></i> Resp: ${exp.guardian}</p>` : ''}
+                    </div>
+                    <div class="mt-1 flex items-center justify-between border-t border-gray-100 pt-2">
+                        <a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-[#25D366] hover:text-[#1ebe5d] text-xs font-bold transition" title="WhatsApp"><i class="fa-brands fa-whatsapp text-sm"></i> Chamar</a>
+                        <div class="flex gap-2">
+                            ${exp.status !== 'Matriculado' ? `<button onclick="convertToStudent('${exp.id}')" class="text-blue-500 hover:text-blue-700 transition" title="Matricular"><i class="fa-solid fa-user-plus text-xs"></i></button>` : ''}
+                            <button onclick="openEditExperimentalModal('${exp.id}')" class="text-gray-400 hover:text-gray-700 transition" title="Editar"><i class="fa-solid fa-pen text-xs"></i></button>
+                            <button onclick="deleteExperimental('${exp.id}')" class="text-red-400 hover:text-red-700 transition" title="Excluir"><i class="fa-solid fa-trash text-xs"></i></button>
+                        </div>
+                    </div>
                 `;
-                tbody.appendChild(tr);
+                const col = document.getElementById(statusColId);
+                if(col) col.appendChild(card);
             });
-        };
 
-        window.changeExpStatus = async (id, newStatus) => {
-            try {
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), { status: newStatus });
-                const exp = window.experimentalList.find(e => e.id === id);
-                if(exp) exp.status = newStatus;
-                window.renderExperimentalTable();
-            } catch(e) { alert("Erro ao atualizar status: " + e.message); }
+            window.updateKanbanCounters();
         };
 
         window.deleteExperimental = async (id) => {
@@ -3932,31 +3065,21 @@
             const exp = window.experimentalList.find(e => e.id === id);
             if(!exp) return;
             
-            // Abre o modal de matrícula
             window.openAdminRegisterModal();
-            
-            // Preenche os dados
             document.getElementById('reg-name').value = exp.name || '';
-            
-            // Formata DD/MM/AAAA para o input se estiver em formato ISO
             if (exp.dob && exp.dob.includes('-')) {
                 const [y, m, d] = exp.dob.split('-');
                 document.getElementById('reg-dob').value = `${d}/${m}/${y}`;
-            } else {
-                document.getElementById('reg-dob').value = exp.dob || '';
-            }
+            } else document.getElementById('reg-dob').value = exp.dob || '';
             
             document.getElementById('reg-email').value = exp.email || '';
             document.getElementById('reg-phone').value = exp.phone || '';
+            document.getElementById('reg-guardian').value = exp.guardian ? exp.guardian + (exp.guardianKinship ? ` (${exp.guardianKinship})` : '') : '';
             
-            if (exp.guardian) {
-                document.getElementById('reg-guardian').value = exp.guardian + (exp.guardianKinship ? ` (${exp.guardianKinship})` : '');
-            } else {
-                document.getElementById('reg-guardian').value = '';
-            }
-            
-            // Altera o status da experimental para matriculado
-            window.changeExpStatus(id, 'Matriculado');
+            updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), { status: 'Matriculado' }).then(() => {
+                exp.status = 'Matriculado';
+                window.renderExperimentalTable();
+            });
         };
 
         window.openEditExperimentalModal = (id) => {
@@ -3966,15 +3089,10 @@
             document.getElementById('edit-exp-id').value = id;
             document.getElementById('edit-exp-name').value = exp.name || '';
             document.getElementById('edit-exp-phone').value = exp.phone || '';
-            
-            // Formata a data de nascimento para exibição no Modal
             if (exp.dob && exp.dob.includes('-')) {
                 const [y, m, d] = exp.dob.split('-');
                 document.getElementById('edit-exp-dob').value = `${d}/${m}/${y}`;
-            } else {
-                document.getElementById('edit-exp-dob').value = exp.dob || '';
-            }
-            
+            } else document.getElementById('edit-exp-dob').value = exp.dob || '';
             document.getElementById('edit-exp-date').value = exp.date || '';
             document.getElementById('edit-exp-time').value = exp.time || '';
 
@@ -3996,23 +3114,14 @@
             const time = document.getElementById('edit-exp-time').value;
 
             if(!name || !date || !time) { alert("Preencha o Nome, Data e Horário."); return; }
-            
-            // Converte a data formatada em BR de volta para padrão do banco
-            let dobIso = dobRaw;
-            if(dobRaw && dobRaw.includes('/')) {
-                dobIso = dobRaw.split('/').reverse().join('-');
-            }
+            let dobIso = (dobRaw && dobRaw.includes('/')) ? dobRaw.split('/').reverse().join('-') : dobRaw;
 
             try {
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), {
-                    name, phone, dob: dobIso, date, time
-                });
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), { name, phone, dob: dobIso, date, time });
                 alert("Agendamento atualizado com sucesso!");
                 window.closeEditExperimentalModal();
                 window.loadExperimentalData();
-            } catch(e) { 
-                alert("Erro ao atualizar: " + e.message); 
-            }
+            } catch(e) { alert("Erro ao atualizar: " + e.message); }
         };
 
     </script>
