@@ -147,11 +147,30 @@
                         </div>
                     </div>
                     
-                    <div class="w-full md:hidden px-6 py-3 border-b border-gray-200 bg-white">
-                        <div class="relative">
+                    <div class="w-full px-6 py-3 border-b border-gray-200 bg-white flex flex-wrap gap-4 items-center text-sm no-print">
+                        <div class="w-full md:hidden relative mb-2">
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-search"></i></span>
                             <input type="text" id="searchInputMobile" onkeyup="document.getElementById('searchInput').value = this.value; window.renderFinancialTable();" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600">
                         </div>
+
+                        <span class="font-bold text-gray-500 hidden md:inline-block"><i class="fa-solid fa-filter"></i> Filtros:</span>
+                        
+                        <select id="sort-order" onchange="window.renderFinancialTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 bg-gray-50 font-medium focus:outline-none focus:border-green-600">
+                            <option value="az">🔤 Ordem Alfabética (A-Z)</option>
+                            <option value="za">🔤 Ordem Alfabética (Z-A)</option>
+                            <option value="venc-prox">⚠️ Vencimento Mais Próximo</option>
+                            <option value="venc-dist">📅 Vencimento Mais Distante</option>
+                        </select>
+                        
+                        <select id="filter-plan-type" onchange="window.renderFinancialTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 bg-gray-50 font-medium focus:outline-none focus:border-green-600">
+                            <option value="">🏷️ Todos os Planos</option>
+                            <option value="mensal">Mensal</option>
+                            <option value="trimestral">Trimestral</option>
+                            <option value="semestral">Semestral</option>
+                            <option value="combo">Combos / Família</option>
+                            <option value="dependente">Dependentes</option>
+                            <option value="administracao">Administração / Isento</option>
+                        </select>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -160,6 +179,7 @@
                                 <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
                                     <th class="px-6 py-3 border-b">Aluno</th>
                                     <th class="px-6 py-3 border-b">Plano / Valor Base</th>
+                                    <th class="px-6 py-3 border-b">Início Contrato</th>
                                     <th class="px-6 py-3 border-b text-center">Dia Venc.</th>
                                     <th class="px-6 py-3 border-b text-center">Prox. Pagamento</th>
                                     <th class="px-6 py-3 border-b">Status</th>
@@ -167,7 +187,7 @@
                                 </tr>
                             </thead>
                             <tbody id="financial-table-body" class="text-sm text-gray-700 divide-y divide-gray-200">
-                                <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Carregando dados financeiros...</td></tr>
+                                <tr><td colspan="7" class="px-6 py-8 text-center text-gray-400">Carregando dados financeiros...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -342,6 +362,41 @@
         </div>
     </div>
 
+    <!-- Adjust Financial Status Modal -->
+    <div id="adjust-modal" class="fixed inset-0 z-[70] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-fade-in border-t-4 border-orange-500">
+            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b">
+                <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-sliders text-orange-500 mr-2"></i> Ajustar Status/Vencimento</h3>
+                <button onclick="window.closeAdjustModal()" class="text-gray-400 hover:text-gray-800"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <input type="hidden" id="adj-student-id">
+                <p class="text-sm text-gray-500 mb-4 bg-orange-50 p-2 rounded border border-orange-100">Ajuste manual para: <strong id="adj-student-name" class="text-orange-900">--</strong></p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Status Virtual do Pagamento</label>
+                        <select id="adj-status" class="w-full border rounded p-2 text-sm focus:border-orange-500 focus:ring-orange-500 font-bold">
+                            <option value="Em dia" class="text-green-600">Em dia</option>
+                            <option value="Pendente" class="text-red-600">Pendente</option>
+                            <option value="Isento" class="text-blue-600">Isento</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Data do Próximo Vencimento</label>
+                        <input type="date" id="adj-next-due" class="w-full border rounded p-2 text-sm focus:border-orange-500 focus:ring-orange-500">
+                        <p class="text-[10px] text-gray-400 mt-1"><i class="fa-solid fa-circle-info"></i> Deixe em branco caso o plano não possua vencimento programado.</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-2">
+                    <button onclick="window.closeAdjustModal()" class="px-4 py-2 border rounded text-sm hover:bg-gray-100 font-bold text-gray-600">Cancelar</button>
+                    <button onclick="window.saveAdjustments()" class="px-5 py-2 bg-orange-500 text-white rounded text-sm hover:bg-orange-600 font-bold shadow-md">Salvar Ajustes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- History Modal -->
     <div id="history-modal" class="fixed inset-0 z-[70] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg overflow-hidden h-[80vh] flex flex-col">
@@ -375,7 +430,7 @@
         </div>
     </div>
 
-    <!-- Edit Payment Modal -->
+    <!-- Edit Specific Payment Modal -->
     <div id="edit-payment-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden animate-fade-in border-t-4 border-blue-600">
             <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b">
@@ -410,7 +465,7 @@
 
                 <div class="mt-6 flex justify-end gap-2">
                     <button onclick="window.closeEditPaymentModal()" class="px-4 py-2 border rounded text-sm hover:bg-gray-100 font-bold text-gray-600">Cancelar</button>
-                    <button onclick="window.saveEditedPayment()" class="px-5 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 font-bold shadow-md">Salvar</button>
+                    <button onclick="window.saveEditedPayment()" class="px-5 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 font-bold shadow-md">Salvar Erro no Recibo</button>
                 </div>
             </div>
         </div>
@@ -420,7 +475,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
@@ -513,7 +568,6 @@
                 const querySnapshot = await getDocs(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'));
                 window.students = [];
                 querySnapshot.forEach(doc => window.students.push({ id: doc.id, ...doc.data() }));
-                window.students.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
                 updateStats();
                 window.renderFinancialTable();
             } catch (error) { console.error(error); }
@@ -608,6 +662,8 @@
             checkPromoExpirations(); 
             const tbody = document.getElementById('financial-table-body');
             const search = (document.getElementById('searchInput')?.value || "").toLowerCase();
+            const planTypeFilter = document.getElementById('filter-plan-type')?.value || "";
+            const sortOrder = document.getElementById('sort-order')?.value || "az";
             const btnBulkWA = document.getElementById('btn-bulk-whatsapp');
             
             if(!tbody) return;
@@ -632,7 +688,26 @@
                 
                 if (window.currentFinancialTab === 'inactive') return matchesSearch && currentEnrollment === 'Inativo';
                 if (currentEnrollment === 'Inativo') return false;
-                return matchesSearch && ((window.currentFinancialTab === 'all') || (window.currentFinancialTab === status));
+
+                let matchesPlanType = true;
+                if (planTypeFilter === 'mensal') matchesPlanType = safePlan.includes('mensal');
+                else if (planTypeFilter === 'trimestral') matchesPlanType = safePlan.includes('trimestral');
+                else if (planTypeFilter === 'semestral') matchesPlanType = safePlan.includes('semestral');
+                else if (planTypeFilter === 'combo') matchesPlanType = safePlan.includes('combo');
+                else if (planTypeFilter === 'dependente') matchesPlanType = safePlan === 'dependente';
+                else if (planTypeFilter === 'administracao') matchesPlanType = safePlan === 'administracao' || s.paymentStatus === 'Isento';
+                
+                return matchesSearch && matchesPlanType && ((window.currentFinancialTab === 'all') || (window.currentFinancialTab === status));
+            });
+
+            filtered.sort((a, b) => {
+                if (sortOrder === 'az') return (a.name || '').localeCompare(b.name || '');
+                if (sortOrder === 'za') return (b.name || '').localeCompare(a.name || '');
+                const d1 = a.nextDueDate ? new Date(a.nextDueDate).getTime() : 0;
+                const d2 = b.nextDueDate ? new Date(b.nextDueDate).getTime() : 0;
+                if (sortOrder === 'venc-prox') return d1 - d2;
+                if (sortOrder === 'venc-dist') return d2 - d1;
+                return 0;
             });
 
             if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-gray-400">Nenhum registro encontrado.</td></tr>`; return; }
@@ -645,21 +720,64 @@
 
                 tbody.innerHTML += `
                     <tr class="border-b hover:bg-gray-50 transition">
-                        <td class="px-6 py-4 align-middle font-medium cursor-pointer hover:text-green-700">${s.name || 'Sem Nome'}</td>
+                        <td class="px-6 py-4 align-middle font-bold text-gray-800">${s.name || 'Sem Nome'}</td>
                         <td class="px-6 py-4 align-middle text-xs text-gray-500">${window.getPlanInfo(s.plan).short}</td>
                         <td class="px-6 py-4 align-middle text-sm">${formatDate(s.registrationDate)}</td>
                         <td class="px-6 py-4 align-middle text-center font-bold text-gray-700">Dia ${regDay}</td>
                         <td class="px-6 py-4 align-middle text-center text-sm font-mono text-blue-700">${nextDue}</td>
                         <td class="px-6 py-4 align-middle">${statusHtml}</td>
                         <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
-                            <button onclick="window.openPaymentModal('${s.id}')" class="bg-green-600 text-white w-8 h-8 rounded-full hover:bg-green-700 mr-2 shadow" title="Informar Pagamento"><i class="fa-solid fa-dollar-sign"></i></button>
-                            <button onclick="window.viewHistory('${s.id}')" class="bg-gray-200 text-gray-600 w-8 h-8 rounded-full hover:bg-gray-300 shadow" title="Histórico de Pagamentos"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                            <button onclick="window.openPaymentModal('${s.id}')" class="bg-green-600 text-white w-8 h-8 rounded-full hover:bg-green-700 mr-1 shadow" title="Informar Pagamento Novo"><i class="fa-solid fa-dollar-sign"></i></button>
+                            <button onclick="window.viewHistory('${s.id}')" class="bg-gray-200 text-gray-600 w-8 h-8 rounded-full hover:bg-gray-300 shadow mr-1" title="Ver Histórico / Editar Recibo"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                            <button onclick="window.openAdjustModal('${s.id}')" class="bg-orange-100 text-orange-600 w-8 h-8 rounded-full hover:bg-orange-200 shadow" title="Ajustar Status Manualmente"><i class="fa-solid fa-sliders"></i></button>
                         </td>
                     </tr>
                 `;
             });
         };
 
+        // --- AJUSTE MANUAL (NOVO) ---
+        window.openAdjustModal = (id) => {
+            const s = window.students.find(st => st.id === id); if(!s) return;
+            document.getElementById('adj-student-id').value = id;
+            document.getElementById('adj-student-name').innerText = s.name;
+            document.getElementById('adj-status').value = s.paymentStatus || 'Pendente';
+            document.getElementById('adj-next-due').value = s.nextDueDate ? s.nextDueDate.split('T')[0] : '';
+            
+            document.getElementById('adjust-modal').classList.remove('hidden');
+            document.getElementById('adjust-modal').classList.add('flex');
+        };
+
+        window.closeAdjustModal = () => {
+            document.getElementById('adjust-modal').classList.add('hidden');
+            document.getElementById('adjust-modal').classList.remove('flex');
+        };
+
+        window.saveAdjustments = async () => {
+            const id = document.getElementById('adj-student-id').value;
+            const newStatus = document.getElementById('adj-status').value;
+            const nextDue = document.getElementById('adj-next-due').value;
+
+            let nextDueISO = null; 
+            if(nextDue) { 
+                const [y, m, d] = nextDue.split('-').map(Number); 
+                nextDueISO = new Date(y, m - 1, d, 12, 0, 0).toISOString(); 
+            }
+
+            try {
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), {
+                    paymentStatus: newStatus,
+                    nextDueDate: nextDueISO
+                });
+                alert("Ajustes salvos com sucesso.");
+                window.closeAdjustModal();
+                window.loadData();
+            } catch(e) {
+                alert("Erro ao ajustar.");
+            }
+        };
+
+        // --- PAGAMENTO E RECIBOS ---
         window.openPaymentModal = (id) => {
             const s = window.students.find(st => st.id === id);
             if(!s) return;
@@ -725,7 +843,17 @@
                 document.getElementById('history-empty').classList.add('hidden');
                 [...s.paymentHistory].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(p => {
                     const d = p.date ? new Date(p.date + 'T12:00:00').toLocaleDateString('pt-BR') : '-';
-                    tbody.innerHTML += `<tr class="border-b"><td class="px-3 py-2 font-medium">${d}</td><td class="px-3 py-2 text-green-700 font-bold">R$ ${p.amount}</td><td class="px-3 py-2">${p.method}</td><td class="px-3 py-2 text-right whitespace-nowrap"><button onclick="window.openEditPaymentModal('${id}', '${p.timestamp}')" class="text-blue-500 hover:text-blue-700 p-1 rounded mr-2" title="Editar"><i class="fa-solid fa-pen"></i></button><button onclick="window.deletePaymentRecord('${id}', '${p.timestamp}')" class="text-red-500 hover:text-red-700 p-1 rounded" title="Excluir"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                    tbody.innerHTML += `
+                        <tr class="border-b">
+                            <td class="px-3 py-2 font-medium">${d}</td>
+                            <td class="px-3 py-2 text-green-700 font-bold">R$ ${p.amount}</td>
+                            <td class="px-3 py-2">${p.method}</td>
+                            <td class="px-3 py-2 text-right whitespace-nowrap">
+                                <button onclick="window.openEditPaymentModal('${id}', '${p.timestamp}')" class="text-blue-500 hover:text-blue-700 p-1 rounded mr-2" title="Editar Info Deste Recibo"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="window.deletePaymentRecord('${id}', '${p.timestamp}')" class="text-red-500 hover:text-red-700 p-1 rounded" title="Excluir Pagamento"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
                 });
             }
             document.getElementById('history-modal').classList.remove('hidden'); document.getElementById('history-modal').classList.add('flex');
@@ -734,11 +862,20 @@
         window.closeHistoryModal = () => { document.getElementById('history-modal').classList.add('hidden'); document.getElementById('history-modal').classList.remove('flex'); };
 
         window.deletePaymentRecord = async (studentId, timestamp) => {
-            if(!confirm("Excluir este pagamento?")) return;
+            if(!confirm("Tem certeza que deseja excluir este recibo do histórico? A ação não pode ser desfeita.")) return;
             const s = window.students.find(st => st.id === studentId);
             const payment = s ? s.paymentHistory.find(p => p.timestamp === timestamp) : null;
             if(!payment) return;
-            try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), { paymentHistory: arrayRemove(payment) }); window.loadData(); window.viewHistory(studentId); } catch(e) { alert("Erro."); }
+            
+            const askRevert = confirm("Deseja reverter o status deste aluno para 'Pendente' automaticamente?");
+            
+            try { 
+                let updates = { paymentHistory: arrayRemove(payment) };
+                if (askRevert) updates.paymentStatus = 'Pendente';
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), updates); 
+                window.loadData(); 
+                window.viewHistory(studentId); 
+            } catch(e) { alert("Erro ao excluir."); }
         };
 
         window.openEditPaymentModal = (studentId, timestamp) => {
@@ -760,6 +897,7 @@
             try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), { paymentHistory: updatedHistory }); window.closeEditPaymentModal(); window.loadData(); window.viewHistory(studentId); } catch(e) { alert("Erro."); }
         };
 
+        // --- RELATÓRIOS ---
         window.generateReport = (type) => {
             const container = document.getElementById('report-container');
             container.classList.remove('hidden');
@@ -807,11 +945,6 @@
                 });
                 for (const [key, data] of Object.entries(sumMap)) tableRows += `<tr><td class="uppercase">${data.name}</td><td class="text-center">${data.count}</td><td>R$ ${data.price.toFixed(2).replace('.', ',')}</td><td class="font-bold">R$ ${data.subtotal.toFixed(2).replace('.', ',')}</td></tr>`;
                 html += tableRows + `</tbody><tfoot><tr><th colspan="3" class="text-right">TOTAL ESTIMADO PARA ESTE MÊS:</th><th class="text-green-700 text-lg">R$ ${totalExpected.toFixed(2).replace('.', ',')}</th></tr></tfoot></table>`;
-            } else if (type === 'frequencia') {
-                html += `<h3 class="font-bold text-lg mb-4 text-purple-600">FREQUÊNCIA - TOP 15 ALUNOS (Últimos 30 dias)</h3><table><thead><tr><th>Posição</th><th>Nome</th><th>Aulas nos últimos 30 dias</th><th>Faixa</th></tr></thead><tbody>`;
-                const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).map(s => ({ name: s.name, belt: s.belt, classes: s.attendance ? s.attendance.filter(d => new Date(d) >= thirtyDaysAgo).length : 0 })).sort((a,b) => b.classes - a.classes).slice(0, 15).forEach((d, i) => { tableRows += `<tr><td>#${i+1}</td><td class="font-bold">${d.name}</td><td class="text-center">${d.classes}</td><td>${d.belt||'-'}</td></tr>`; });
-                html += tableRows + `</tbody></table>`;
             }
 
             container.innerHTML = html;
