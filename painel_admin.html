@@ -37,12 +37,6 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
 
-        /* KANBAN STYLES */
-        .kanban-col { min-height: 400px; }
-        .kanban-card { cursor: grab; transition: transform 0.2s, box-shadow 0.2s; border-left-width: 4px; }
-        .kanban-card:active { cursor: grabbing; transform: scale(0.98); box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
-        .kanban-card.dragging { opacity: 0.5; }
-
         /* CSS OTIMIZADO PARA IMPRESSÃO */
         @media print {
             @page { margin: 2.5cm; size: A4 portrait; }
@@ -99,6 +93,9 @@
             </a>
             <a href="#" onclick="window.switchMainView('reports')" id="nav-reports" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
                 <i class="fa-solid fa-chart-pie w-6"></i> <span class="font-bold">Relatórios</span>
+            </a>
+            <a href="#" onclick="window.switchMainView('experimental')" id="nav-experimental" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
+                <i class="fa-solid fa-fire w-6"></i> <span class="font-bold">Aulas Exp.</span>
             </a>
             <a href="#" onclick="window.switchMainView('notices')" id="nav-notices" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
                 <i class="fa-solid fa-bullhorn w-6"></i> <span class="font-bold">Mural de Avisos</span>
@@ -271,87 +268,31 @@
                 </div>
             </div>
 
-            <!-- VIEW: RELATÓRIOS -->
-            <div id="view-reports" class="hidden animate-fade-in">
-                <div class="bg-white rounded-xl shadow p-6 border-t-4 border-gray-800 max-w-4xl mx-auto">
-                    <h3 class="font-display text-xl font-bold text-gray-800 mb-2"><i class="fa-solid fa-print mr-2 text-brand-red"></i> Relatórios Administrativos</h3>
-                    <p class="text-sm text-gray-500 mb-6">Gere e imprima relatórios dos alunos da academia rapidamente.</p>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="window.generateReport('ativos')">
-                            <div>
-                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-users text-blue-500 mr-1"></i> Alunos Ativos</h4>
-                                <p class="text-xs text-gray-500 mt-1">Lista completa de alunos matriculados, separada por plano e faixa.</p>
-                            </div>
-                            <button class="mt-4 bg-gray-800 hover:bg-black text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
+            <!-- VIEW: AULA EXPERIMENTAL -->
+            <div id="view-experimental" class="hidden animate-fade-in">
+                <div class="bg-white rounded-xl shadow overflow-hidden border border-gray-200">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center no-print">
+                        <div>
+                            <h3 class="font-bold text-gray-800 uppercase text-lg"><i class="fa-solid fa-fire text-yellow-500 mr-2"></i> Gestão de Aulas Experimentais</h3>
+                            <p class="text-xs text-gray-500">Controle os visitantes que agendaram pelo site</p>
                         </div>
-                        
-                        <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="window.generateReport('frequencia')">
-                            <div>
-                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-calendar-check text-purple-500 mr-1"></i> Frequência (Top 15)</h4>
-                                <p class="text-xs text-gray-500 mt-1">Os 15 alunos mais frequentes e dedicados da academia nos últimos 30 dias.</p>
-                            </div>
-                            <button class="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
-                        </div>
+                        <button onclick="window.loadExperimentalData()" class="text-gray-500 hover:text-black text-sm bg-white border px-3 py-1.5 rounded shadow-sm"><i class="fa-solid fa-rotate"></i> Atualizar</button>
                     </div>
-                </div>
-            </div>
-
-            <!-- VIEW: AULA EXPERIMENTAL (KANBAN CRM) -->
-            <div id="view-experimental" class="hidden h-full flex flex-col animate-fade-in">
-                <div class="px-6 py-4 bg-white border-b border-gray-200 shadow-sm flex justify-between items-center rounded-t-xl z-10">
-                    <div>
-                        <h3 class="font-bold text-gray-800 uppercase text-lg"><i class="fa-solid fa-fire text-yellow-500 mr-2"></i> CRM Aulas Experimentais</h3>
-                        <p class="text-xs text-gray-500">Arraste os cards para atualizar o status do visitante.</p>
-                    </div>
-                    <button onclick="window.loadExperimentalData()" class="text-gray-500 hover:text-black text-sm bg-gray-100 p-2 rounded-full"><i class="fa-solid fa-rotate"></i></button>
-                </div>
-                
-                <!-- Kanban Board -->
-                <div class="flex-1 overflow-x-auto overflow-y-hidden bg-gray-100 p-4 rounded-b-xl border border-t-0 border-gray-200">
-                    <div class="flex gap-4 h-full min-w-[1000px] items-start">
-                        
-                        <!-- Coluna 1: Agendado -->
-                        <div class="flex-1 min-w-[240px] flex flex-col h-full max-h-[75vh]">
-                            <div class="bg-yellow-500 text-white font-bold py-2 px-4 rounded-t-lg shadow-sm flex justify-between items-center shrink-0">
-                                <span>AGENDADO</span>
-                                <span class="bg-white/20 px-2 rounded text-xs" id="count-Agendado">0</span>
-                            </div>
-                            <div class="kanban-col bg-gray-200/60 flex-1 overflow-y-auto p-2 rounded-b-lg border border-gray-200 space-y-2" id="col-Agendado" ondrop="window.drop(event)" ondragover="window.allowDrop(event)">
-                                <!-- Cards Injetados via JS -->
-                            </div>
-                        </div>
-
-                        <!-- Coluna 2: Concluído (Compareceu) -->
-                        <div class="flex-1 min-w-[240px] flex flex-col h-full max-h-[75vh]">
-                            <div class="bg-green-500 text-white font-bold py-2 px-4 rounded-t-lg shadow-sm flex justify-between items-center shrink-0">
-                                <span>COMPARECEU</span>
-                                <span class="bg-white/20 px-2 rounded text-xs" id="count-Concluído">0</span>
-                            </div>
-                            <div class="kanban-col bg-gray-200/60 flex-1 overflow-y-auto p-2 rounded-b-lg border border-gray-200 space-y-2" id="col-Concluído" ondrop="window.drop(event)" ondragover="window.allowDrop(event)">
-                            </div>
-                        </div>
-
-                        <!-- Coluna 3: Matriculado -->
-                        <div class="flex-1 min-w-[240px] flex flex-col h-full max-h-[75vh]">
-                            <div class="bg-blue-600 text-white font-bold py-2 px-4 rounded-t-lg shadow-sm flex justify-between items-center shrink-0">
-                                <span>MATRICULADO</span>
-                                <span class="bg-white/20 px-2 rounded text-xs" id="count-Matriculado">0</span>
-                            </div>
-                            <div class="kanban-col bg-gray-200/60 flex-1 overflow-y-auto p-2 rounded-b-lg border border-gray-200 space-y-2" id="col-Matriculado" ondrop="window.drop(event)" ondragover="window.allowDrop(event)">
-                            </div>
-                        </div>
-
-                        <!-- Coluna 4: Faltou / Cancelou -->
-                        <div class="flex-1 min-w-[240px] flex flex-col h-full max-h-[75vh]">
-                            <div class="bg-red-500 text-white font-bold py-2 px-4 rounded-t-lg shadow-sm flex justify-between items-center shrink-0">
-                                <span>FALTOU / CANCELADO</span>
-                                <span class="bg-white/20 px-2 rounded text-xs" id="count-Faltou">0</span>
-                            </div>
-                            <div class="kanban-col bg-gray-200/60 flex-1 overflow-y-auto p-2 rounded-b-lg border border-gray-200 space-y-2" id="col-Faltou" ondrop="window.drop(event)" ondragover="window.allowDrop(event)">
-                            </div>
-                        </div>
-
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
+                                    <th class="px-6 py-3 border-b">Data / Hora</th>
+                                    <th class="px-6 py-3 border-b">Nome do Visitante</th>
+                                    <th class="px-6 py-3 border-b">Contato</th>
+                                    <th class="px-6 py-3 border-b">Status</th>
+                                    <th class="px-6 py-3 border-b text-center no-print-col">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="experimental-table-body" class="text-sm text-gray-700 divide-y divide-gray-200">
+                                <tr><td colspan="5" class="px-6 py-4 text-center">Carregando dados...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1688,32 +1629,7 @@
             try { await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', id)); window.loadNotices(); } catch(e) { alert("Erro ao excluir: " + e.message); }
         };
 
-        // KANBAN CRM E AULAS EXPERIMENTAIS
-        window.allowDrop = (ev) => ev.preventDefault();
-        window.drag = (ev) => { ev.dataTransfer.setData("text", ev.target.id); ev.target.classList.add('dragging'); };
-        window.dragEnd = (ev) => ev.target.classList.remove('dragging');
-        
-        window.drop = async (ev) => {
-            ev.preventDefault();
-            const data = ev.dataTransfer.getData("text"); const draggedEl = document.getElementById(data); const dropzone = ev.target.closest('.kanban-col');
-            if (draggedEl && dropzone) {
-                dropzone.appendChild(draggedEl);
-                const newStatus = dropzone.id.replace('col-', ''); const expId = data.replace('exp-card-', '');
-                try {
-                    await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', expId), { status: newStatus });
-                    const exp = window.experimentalList.find(e => e.id === expId); if(exp) exp.status = newStatus;
-                    window.updateKanbanCounters();
-                } catch(e) { alert("Erro ao salvar status no banco de dados."); window.renderExperimentalTable(); }
-            }
-        };
-
-        window.updateKanbanCounters = () => {
-            ['Agendado', 'Concluído', 'Matriculado', 'Faltou'].forEach(status => {
-                const col = document.getElementById('col-' + status); const countBadge = document.getElementById('count-' + status);
-                if(col && countBadge) countBadge.innerText = col.querySelectorAll('.kanban-card').length;
-            });
-        };
-
+        // --- AULAS EXPERIMENTAIS ---
         window.loadExperimentalData = async () => {
             try {
                 const q = query(collection(window.db, 'artifacts', appId, 'public', 'data', 'experimental'));
@@ -1724,46 +1640,69 @@
         };
 
         window.renderExperimentalTable = () => {
+            const tbody = document.getElementById('experimental-table-body');
             const search = (document.getElementById('searchInput')?.value || "").toLowerCase();
-            ['Agendado', 'Concluído', 'Matriculado', 'Faltou'].forEach(status => { const col = document.getElementById('col-' + status); if(col) col.innerHTML = ''; });
+            if(!tbody) return;
+            tbody.innerHTML = '';
 
             let filtered = window.experimentalList.filter(e => (e.name || '').toLowerCase().includes(search) || (e.phone || '').includes(search));
             filtered.sort((a,b) => new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00')));
 
+            if(filtered.length === 0) { 
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">Nenhum agendamento encontrado.</td></tr>`; 
+                return; 
+            }
+
             filtered.forEach(exp => {
-                const age = getAge(exp.dob); const cleanPhone = (exp.phone || '').replace(/\D/g, '');
+                const age = getAge(exp.dob); const isMinor = age !== null && age < 18; const cleanPhone = (exp.phone || '').replace(/\D/g, '');
                 let dateFormatted = exp.date ? new Date(exp.date + 'T12:00:00').toLocaleDateString('pt-BR') : '--';
                 
-                let statusColId = 'col-Agendado';
-                if(exp.status === 'Concluído') statusColId = 'col-Concluído';
-                else if(exp.status === 'Matriculado') statusColId = 'col-Matriculado';
-                else if(exp.status === 'Faltou' || exp.status === 'Cancelado') statusColId = 'col-Faltou';
+                let statusColor = 'bg-gray-100 text-gray-800'; 
+                if(exp.status === 'Agendado') statusColor = 'bg-yellow-100 text-yellow-800'; 
+                else if(exp.status === 'Concluído') statusColor = 'bg-green-100 text-green-800'; 
+                else if(exp.status === 'Matriculado') statusColor = 'bg-blue-100 text-blue-800'; 
+                else if(exp.status === 'Cancelado' || exp.status === 'Faltou') statusColor = 'bg-red-100 text-red-800';
 
-                let badgeColor = 'bg-yellow-100 text-yellow-800';
-                if(exp.status === 'Concluído') badgeColor = 'bg-green-100 text-green-800';
-                else if(exp.status === 'Matriculado') badgeColor = 'bg-blue-100 text-blue-800';
-                else if(exp.status === 'Faltou' || exp.status === 'Cancelado') badgeColor = 'bg-red-100 text-red-800';
-
-                const card = document.createElement('div');
-                card.className = "kanban-card bg-white p-3 rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-brand-red flex flex-col gap-2 hover:shadow-md transition-shadow relative";
-                card.id = `exp-card-${exp.id}`; card.draggable = true;
-                card.addEventListener('dragstart', window.drag); card.addEventListener('dragend', window.dragEnd);
-
-                card.innerHTML = `
-                    <div class="flex justify-between items-start"><span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${badgeColor}">${exp.time || '--:--'}</span><div class="text-[10px] text-gray-400 font-bold">${dateFormatted}</div></div>
-                    <div><h4 class="font-bold text-gray-800 text-sm leading-tight">${exp.name} <span class="text-xs font-normal text-gray-500">(${age}a)</span></h4>${exp.guardian ? `<p class="text-[10px] text-gray-500 mt-1"><i class="fa-solid fa-user-shield"></i> Resp: ${exp.guardian}</p>` : ''}</div>
-                    <div class="mt-1 flex items-center justify-between border-t border-gray-100 pt-2">
-                        <a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-[#25D366] hover:text-[#1ebe5d] text-xs font-bold transition" title="WhatsApp"><i class="fa-brands fa-whatsapp text-sm"></i> Chamar</a>
-                        <div class="flex gap-2">
-                            ${exp.status !== 'Matriculado' ? `<button onclick="window.convertToStudent('${exp.id}')" class="text-blue-500 hover:text-blue-700 transition" title="Matricular como Aluno"><i class="fa-solid fa-user-plus text-xs"></i></button>` : ''}
-                            <button onclick="window.openEditExperimentalModal('${exp.id}')" class="text-gray-400 hover:text-gray-700 transition" title="Editar"><i class="fa-solid fa-pen text-xs"></i></button>
-                            <button onclick="window.deleteExperimental('${exp.id}')" class="text-red-400 hover:text-red-700 transition" title="Excluir"><i class="fa-solid fa-trash text-xs"></i></button>
-                        </div>
-                    </div>
+                const tr = document.createElement('tr'); 
+                tr.className = "border-b hover:bg-gray-50 transition";
+                tr.innerHTML = `
+                    <td class="px-6 py-4 align-middle">
+                        <div class="font-bold text-gray-800">${dateFormatted}</div>
+                        <div class="text-xs text-brand-red font-bold"><i class="fa-regular fa-clock"></i> ${exp.time || '--'}</div>
+                    </td>
+                    <td class="px-6 py-4 align-middle">
+                        <div class="font-bold text-gray-900">${exp.name} <span class="text-xs font-normal text-gray-500">(${age}a)</span></div>
+                        ${isMinor && exp.guardian ? `<div class="text-xs text-gray-500"><i class="fa-solid fa-user-shield text-gray-400"></i> Resp: ${exp.guardian}</div>` : ''}
+                    </td>
+                    <td class="px-6 py-4 align-middle">
+                        <a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${exp.phone}</a>
+                    </td>
+                    <td class="px-6 py-4 align-middle">
+                        <select onchange="window.changeExpStatus('${exp.id}', this.value)" class="border rounded px-2 py-1 text-xs font-bold ${statusColor} outline-none cursor-pointer">
+                            <option value="Agendado" ${exp.status === 'Agendado' ? 'selected' : ''}>Agendado</option>
+                            <option value="Concluído" ${exp.status === 'Concluído' ? 'selected' : ''}>Compareceu</option>
+                            <option value="Matriculado" ${exp.status === 'Matriculado' ? 'selected' : ''}>Matriculado</option>
+                            <option value="Faltou" ${exp.status === 'Faltou' ? 'selected' : ''}>Faltou</option>
+                            <option value="Cancelado" ${exp.status === 'Cancelado' ? 'selected' : ''}>Cancelou</option>
+                        </select>
+                    </td>
+                    <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
+                        <button onclick="window.convertToStudent('${exp.id}')" class="text-blue-500 hover:text-blue-700 p-2 rounded transition" title="Matricular como Aluno"><i class="fa-solid fa-user-plus"></i></button>
+                        <button onclick="window.openEditExperimentalModal('${exp.id}')" class="text-gray-500 hover:text-gray-700 p-2 rounded transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="window.deleteExperimental('${exp.id}')" class="text-red-500 hover:text-red-700 p-2 rounded transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                    </td>
                 `;
-                const col = document.getElementById(statusColId); if(col) col.appendChild(card);
+                tbody.appendChild(tr);
             });
-            window.updateKanbanCounters();
+        };
+
+        window.changeExpStatus = async (id, newStatus) => { 
+            try { 
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), { status: newStatus }); 
+                const exp = window.experimentalList.find(e => e.id === id); 
+                if(exp) exp.status = newStatus; 
+                window.renderExperimentalTable(); 
+            } catch(e) { alert("Erro ao atualizar status: " + e.message); } 
         };
 
         window.deleteExperimental = async (id) => {
