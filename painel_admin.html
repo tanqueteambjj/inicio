@@ -1557,14 +1557,24 @@
         });
 
         // Auth Check FIRST
-        const session = localStorage.getItem('tanque_user_session');
+        const isCanvasPreview = typeof __app_id !== 'undefined';
+        let session = localStorage.getItem('tanque_user_session');
+        
+        // Se estiver no ambiente de testes do Canvas, cria uma sessão mockada automaticamente
+        if (!session && isCanvasPreview) {
+            const mockAdmin = { role: 'admin', name: 'Administrador (Preview)' };
+            localStorage.setItem('tanque_user_session', JSON.stringify(mockAdmin));
+            session = JSON.stringify(mockAdmin);
+            console.log("Modo Preview: Injetando sessão de Admin mockada para evitar loop.");
+        }
+
         if (!session) {
-            window.location.href = "https://www.tanqueteambjj.com.br/login.html";
+            window.location.href = "login_aluno.html";
         } else {
             const user = JSON.parse(session);
-            if(user.role !== 'admin') {
+            if(user.role !== 'admin' && !isCanvasPreview) {
                 alert("Acesso negado.");
-                window.location.href = "https://www.tanqueteambjj.com.br/login.html";
+                window.location.href = "login_aluno.html";
             } else {
                 try {
                     app = initializeApp(firebaseConfig);
@@ -1599,7 +1609,7 @@
 
         window.handleLogout = () => {
             localStorage.removeItem('tanque_user_session');
-            window.location.href = "https://www.tanqueteambjj.com.br/login.html";
+            window.location.href = "login_aluno.html";
         }
 
         function getAge(dobStr) {
