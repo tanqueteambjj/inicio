@@ -190,13 +190,13 @@
                             <div class="text-green-500 text-2xl"><i class="fa-solid fa-user"></i></div>
                         </div>
                     </div>
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-gray-500 cursor-pointer hover:bg-gray-50 transition" onclick="window.switchTab('inactive')">
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-gray-500 cursor-pointer hover:bg-gray-50 transition" onclick="window.switchTab('archived')">
                         <div class="flex justify-between">
                             <div>
-                                <p class="text-gray-400 text-xs font-bold uppercase">Inativos</p>
-                                <p class="text-2xl font-bold text-gray-800" id="stat-inactive">0</p>
+                                <p class="text-gray-400 text-xs font-bold uppercase">Arquivo</p>
+                                <p class="text-2xl font-bold text-gray-800" id="stat-archived">0</p>
                             </div>
-                            <div class="text-gray-500 text-2xl"><i class="fa-solid fa-user-slash"></i></div>
+                            <div class="text-gray-500 text-2xl"><i class="fa-solid fa-box-archive"></i></div>
                         </div>
                     </div>
                 </div>
@@ -212,9 +212,6 @@
                     <button onclick="window.switchTab('kids')" id="tab-kids" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
                         <i class="fa-solid fa-child mr-2"></i> INFANTIL
                     </button>
-                    <button onclick="window.switchTab('inactive')" id="tab-inactive" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
-                        <i class="fa-solid fa-power-off mr-2"></i> INATIVOS
-                    </button>
                     <button onclick="window.switchTab('archived')" id="tab-archived" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
                         <i class="fa-solid fa-box-archive mr-2"></i> ARQUIVO
                     </button>
@@ -228,12 +225,15 @@
                                 <span id="list-title">Lista de Alunos</span>
                                 <span class="bg-gray-200 text-gray-600 py-0.5 px-2 rounded-full text-xs" id="list-count">0</span>
                             </h3>
-                            <button onclick="window.archiveSelectedStudents()" id="btn-bulk-archive" class="hidden flex items-center gap-1 bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs font-bold hover:bg-gray-300 transition animate-fade-in border border-gray-300">
-                                <i class="fa-solid fa-box-archive"></i> Arquivar (<span id="selected-count">0</span>)
-                            </button>
                             <div id="bulk-actions" class="hidden flex items-center gap-2 animate-fade-in">
-                                <button onclick="window.addPresenceSelectedStudents()" class="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-bold hover:bg-green-200 transition">
-                                    <i class="fa-solid fa-check"></i> Dar Presença Hoje
+                                <button onclick="window.archiveSelectedStudents()" id="btn-bulk-archive" class="flex items-center gap-1 bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs font-bold hover:bg-gray-300 transition border border-gray-300">
+                                    <i class="fa-solid fa-box-archive"></i> Arquivar (<span id="selected-count-archive">0</span>)
+                                </button>
+                                <button onclick="window.deleteSelectedStudents()" id="btn-bulk-delete" class="hidden flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition border border-red-300">
+                                    <i class="fa-solid fa-trash"></i> Excluir (<span id="selected-count-delete">0</span>)
+                                </button>
+                                <button onclick="window.addPresenceSelectedStudents()" id="btn-add-presence-bulk" class="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-bold hover:bg-green-200 transition border border-green-300">
+                                    <i class="fa-solid fa-check"></i> Dar Presença
                                 </button>
                             </div>
                         </div>
@@ -666,12 +666,6 @@
                         </select>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Status da Matrícula</label>
-                        <select id="edit-enrollment-status" class="w-full border rounded p-2 font-bold text-gray-700 focus:outline-none">
-                            <option value="Ativo" class="text-green-600">Ativo</option><option value="Inativo" class="text-red-600">Inativo</option>
-                        </select>
-                    </div>
                     <div class="col-span-1 md:col-span-2">
                         <label class="block text-xs font-bold text-gray-500 mb-1">Vencimento Contrato (Fidelidade)</label>
                         <input type="date" id="edit-end-date" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none">
@@ -1177,17 +1171,16 @@
         }
 
         function updateStats() {
-            const total = window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).length;
-            let kidsCount = 0, adultsCount = 0, inactiveCount = 0, archivedCount = 0;
+            const total = window.students.filter(s => !s.archived).length;
+            let kidsCount = 0, adultsCount = 0, archivedCount = 0;
             
             window.students.forEach(s => {
                 if (s.archived) { archivedCount++; return; }
-                if (s.enrollmentStatus === 'Inativo') { inactiveCount++; return; }
                 if (isStudentKid(s)) kidsCount++; else adultsCount++;
             });
             const setText = (id, txt) => { const e = document.getElementById(id); if(e) e.innerText = txt; }
             setText('stat-total', total); setText('stat-infantil', kidsCount); setText('stat-adulto', adultsCount); 
-            setText('stat-inactive', inactiveCount); setText('stat-archived', archivedCount);
+            setText('stat-archived', archivedCount);
         }
 
         // PROGRESSO, ANOTAÇÕES & PRESENÇAS
@@ -1359,9 +1352,28 @@
 
         window.updateBulkActions = () => {
             const count = document.querySelectorAll('.student-cb:checked').length;
-            const bulkDiv = document.getElementById('bulk-actions'); const countSpan = document.getElementById('selected-count'); const btnBulkArchive = document.getElementById('btn-bulk-archive');
-            if(count > 0) { bulkDiv.classList.remove('hidden'); if(btnBulkArchive) btnBulkArchive.classList.remove('hidden'); countSpan.innerText = count; } 
-            else { bulkDiv.classList.add('hidden'); if(btnBulkArchive) btnBulkArchive.classList.add('hidden'); }
+            const bulkDiv = document.getElementById('bulk-actions'); 
+            const btnBulkArchive = document.getElementById('btn-bulk-archive');
+            const btnBulkDelete = document.getElementById('btn-bulk-delete');
+            const btnAddPresence = document.getElementById('btn-add-presence-bulk');
+            
+            if(count > 0) { 
+                bulkDiv.classList.remove('hidden'); 
+                if (window.currentTab === 'archived') {
+                    if(btnBulkDelete) { btnBulkDelete.classList.remove('hidden'); document.getElementById('selected-count-delete').innerText = count; }
+                    if(btnBulkArchive) btnBulkArchive.classList.add('hidden');
+                    if(btnAddPresence) btnAddPresence.classList.add('hidden');
+                } else {
+                    if(btnBulkArchive) { btnBulkArchive.classList.remove('hidden'); document.getElementById('selected-count-archive').innerText = count; }
+                    if(btnBulkDelete) btnBulkDelete.classList.add('hidden');
+                    if(btnAddPresence) btnAddPresence.classList.remove('hidden');
+                }
+            } 
+            else { 
+                bulkDiv.classList.add('hidden'); 
+                if(btnBulkArchive) btnBulkArchive.classList.add('hidden');
+                if(btnBulkDelete) btnBulkDelete.classList.add('hidden');
+            }
         };
 
         window.archiveSelectedStudents = async () => {
@@ -1449,14 +1461,8 @@
         };
         
         window.toggleStudentStatus = async (id, currentStatus) => {
-            const newStatus = (currentStatus === 'Inativo') ? 'Ativo' : 'Inativo';
-            if(!confirm((newStatus === 'Inativo') ? "Deseja inativar este aluno?" : "Deseja reativar este aluno?")) return;
-            try {
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { enrollmentStatus: newStatus });
-                const myDeps = window.students.filter(d => d.titularId === id && d.enrollmentStatus === currentStatus);
-                if (myDeps.length > 0 && confirm(`Atualizar o status de ${myDeps.length} dependente(s)?`)) for(let dep of myDeps) await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', dep.id), { enrollmentStatus: newStatus });
-                window.loadData();
-            } catch(e) { alert("Erro ao alterar status."); }
+            // Função obsoleta com a nova lógica de Arquivo, mantida por segurança caso seja chamada de algum local antigo.
+            console.log('Use archiveStudent/restoreStudent instead.');
         };
 
         // NAVEGAÇÃO
@@ -1477,7 +1483,7 @@
             window.currentTab = tab;
             const activeClass = "px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative";
             const inactiveClass = "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1";
-            ['all', 'adults', 'kids', 'inactive', 'archived'].forEach(t => { const el = document.getElementById('tab-' + t); if (el) el.className = (t === tab) ? activeClass : inactiveClass; });
+            ['all', 'adults', 'kids', 'archived'].forEach(t => { const el = document.getElementById('tab-' + t); if (el) el.className = (t === tab) ? activeClass : inactiveClass; });
             window.renderTable();
         };
 
@@ -1513,15 +1519,14 @@
             if(!tbody) return; tbody.innerHTML = '';
 
             let filtered = window.students.filter(s => {
-                const matchesSearch = String(s.name || '').toLowerCase().includes(search); const currentEnrollment = s.enrollmentStatus || 'Ativo'; const matchesBelt = beltFilter === "" || (s.belt && s.belt.toLowerCase().includes(beltFilter));
+                const matchesSearch = String(s.name || '').toLowerCase().includes(search); const matchesBelt = beltFilter === "" || (s.belt && s.belt.toLowerCase().includes(beltFilter));
                 if (window.currentTab === 'archived') return matchesSearch && matchesBelt && s.archived === true;
-                else if (window.currentTab === 'inactive') return matchesSearch && matchesBelt && currentEnrollment === 'Inativo' && !s.archived;
-                else { if (currentEnrollment === 'Inativo' || s.archived) return false; let matchesTab = false; if(window.currentTab === 'all') matchesTab = true; else { let isKid = isStudentKid(s); matchesTab = (window.currentTab === 'kids' && isKid) || (window.currentTab === 'adults' && !isKid); } return matchesTab && matchesSearch && matchesBelt; }
+                else { if (s.archived) return false; let matchesTab = false; if(window.currentTab === 'all') matchesTab = true; else { let isKid = isStudentKid(s); matchesTab = (window.currentTab === 'kids' && isKid) || (window.currentTab === 'adults' && !isKid); } return matchesTab && matchesSearch && matchesBelt; }
             });
 
             if (sortOrder === 'az') filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '')); else if (sortOrder === 'za') filtered.sort((a, b) => (b.name || '').localeCompare(a.name || '')); else filtered.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
             document.getElementById('list-count').innerText = filtered.length;
-            document.getElementById('list-title').innerText = (window.currentTab === 'all') ? "Todos (Ativos)" : (window.currentTab === 'adults') ? "Adultos e Família" : (window.currentTab === 'kids') ? "Infantil (Ativos)" : (window.currentTab === 'archived') ? "Alunos Arquivados" : "Alunos Inativos";
+            document.getElementById('list-title').innerText = (window.currentTab === 'all') ? "Todos (Ativos)" : (window.currentTab === 'adults') ? "Adultos e Família" : (window.currentTab === 'kids') ? "Infantil (Ativos)" : "Arquivo de Alunos";
 
             thead.innerHTML = `<th class="px-6 py-3 border-b w-10 text-center"><input type="checkbox" id="cb-select-all" onclick="window.toggleSelectAll(this)" class="rounded text-brand-red cursor-pointer"></th><th class="px-6 py-3 border-b">Aluno</th>${window.currentTab === 'kids' || window.currentTab === 'all' ? '<th class="px-6 py-3 border-b">Responsável/Titular</th>' : ''}<th class="px-6 py-3 border-b">Faixa</th><th class="px-6 py-3 border-b">Frequência</th><th class="px-6 py-3 border-b text-center">Acesso</th><th class="px-6 py-3 border-b text-center">Ações</th>`;
             if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="${window.currentTab === 'kids' || window.currentTab === 'all' ? 7 : 6}" class="px-6 py-8 text-center text-gray-400 italic">Nenhum aluno encontrado.</td></tr>`; return; }
@@ -1536,7 +1541,6 @@
                 if (safePlan === 'administracao') nameDisplay += `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-bold uppercase">Admin</span>`;
                 if (safePlan === 'dependente') nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase" title="Dependente"><i class="fa-solid fa-link"></i> DEP</span>`;
                 if (s.archived) nameDisplay += `<span class="ml-2 text-[10px] text-gray-800 bg-gray-300 px-1.5 py-0.5 rounded border border-gray-400 font-bold uppercase">ARQUIVADO</span>`;
-                else if (s.enrollmentStatus === 'Inativo') nameDisplay += `<span class="ml-2 text-[10px] text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded border border-gray-300 font-bold">INATIVO</span>`;
 
                 const myFilteredDeps = filtered.filter(d => d.plan === 'dependente' && d.titularId === s.id);
                 if (!isDepRow && myFilteredDeps.length > 0) {
@@ -1546,8 +1550,27 @@
 
                 const beltSVG = renderBeltSVG(s.belt || 'Faixa Branca - 0º Grau');
                 const guardianCell = (window.currentTab === 'kids' || window.currentTab === 'all') ? `<td class="px-6 py-4 align-middle text-sm text-gray-700"><i class="fa-solid fa-user-shield text-gray-400 mr-1"></i> ${s.guardian || s.titularName || '-'}</td>` : '';
-                let toggleBtn = s.enrollmentStatus === 'Inativo' ? `<button onclick="window.toggleStudentStatus('${s.id}', 'Inativo')" class="text-green-600 hover:text-green-900 mr-2" title="Reativar Aluno"><i class="fa-solid fa-power-off"></i></button>` : `<button onclick="window.toggleStudentStatus('${s.id}', 'Ativo')" class="text-gray-400 hover:text-red-600 mr-2" title="Inativar Aluno"><i class="fa-solid fa-power-off"></i></button>`;
-                let deleteOrRestoreBtn = s.archived ? `<button onclick="window.restoreStudent('${s.id}')" class="text-green-600 hover:text-green-900" title="Restaurar Aluno"><i class="fa-solid fa-box-open"></i></button>` : `<button onclick="window.archiveStudent('${s.id}')" class="text-gray-500 hover:text-gray-800" title="Arquivar Aluno"><i class="fa-solid fa-box-archive"></i></button>`;
+                
+                let actionsHtml = '';
+                if (s.archived) {
+                    actionsHtml = `
+                        <button onclick="window.restoreStudent('${s.id}')" class="text-green-600 hover:text-green-900 mr-3" title="Reativar Aluno"><i class="fa-solid fa-box-open"></i></button>
+                        <button onclick="window.viewStudentDetails('${s.id}')" class="text-blue-500 hover:text-blue-700 mr-3" title="Visualizar Dados"><i class="fa-solid fa-eye"></i></button>
+                        <button onclick="window.deleteStudent('${s.id}')" class="text-red-600 hover:text-red-900" title="Excluir Permanentemente"><i class="fa-solid fa-trash"></i></button>
+                    `;
+                } else {
+                    actionsHtml = `
+                        <button onclick="window.openProgressModal('${s.id}')" class="text-teal-600 hover:text-teal-900 mr-2" title="Evolução e Histórico"><i class="fa-solid fa-book-journal-whills"></i></button>
+                        <button onclick="window.openAttendanceModal('${s.id}')" class="text-gray-500 hover:text-black mr-2" title="Frequência"><i class="fa-solid fa-list-check"></i></button>
+                        <button onclick="window.openGraduationModal('${s.id}', '${s.name || ''}')" class="text-yellow-500 hover:text-yellow-700 mr-2" title="Graduar"><i class="fa-solid fa-medal"></i></button>
+                        <button onclick="window.openQrModal('${s.id}')" class="text-gray-800 hover:text-black mr-2" title="QR Code"><i class="fa-solid fa-qrcode"></i></button>
+                        <button onclick="window.openEditModal('${s.id}')" class="text-blue-600 hover:text-blue-900 mr-2" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="window.printIndividualContract('${s.id}')" class="text-indigo-600 hover:text-indigo-900 mr-2" title="Contrato"><i class="fa-solid fa-file-contract"></i></button>
+                        <button onclick="window.archiveStudent('${s.id}')" class="text-gray-500 hover:text-gray-800" title="Arquivar Aluno"><i class="fa-solid fa-box-archive"></i></button>
+                    `;
+                }
+
+                let attendanceBtnHtml = s.archived ? `<span class="text-gray-400 text-xs italic">--</span>` : `<div class="flex items-center gap-2"><span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded w-16 text-center">${attendanceCount} aulas</span><button onclick="window.addPresence('${s.id}')" class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow"><i class="fa-solid fa-plus text-xs"></i></button></div>`;
 
                 const tr = document.createElement('tr'); tr.className = isDepRow ? `hidden dep-row-${parentId} bg-purple-50/40 hover:bg-purple-50 transition border-b border-purple-100` : `border-b hover:bg-gray-50 transition`;
                 tr.innerHTML = `
@@ -1555,17 +1578,10 @@
                     <td class="px-6 py-4 align-middle"><div class="flex items-center">${avatarHtml}<div>${nameDisplay}<div class="text-xs text-gray-500">${window.getPlanInfo(s.plan).short}</div></div></div></td>
                     ${guardianCell}
                     <td class="px-6 py-4 align-middle"><div class="w-32 h-8 flex items-center">${beltSVG}</div><div class="text-xs text-gray-400 mt-1">${s.belt || 'Branca'}</div></td>
-                    <td class="px-6 py-4 align-middle"><div class="flex items-center gap-2"><span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded w-16 text-center">${attendanceCount} aulas</span><button onclick="window.addPresence('${s.id}')" class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow"><i class="fa-solid fa-plus text-xs"></i></button></div></td>
+                    <td class="px-6 py-4 align-middle">${attendanceBtnHtml}</td>
                     <td class="px-6 py-4 align-middle text-center">${hasLogin}</td>
                     <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
-                        ${toggleBtn}
-                        <button onclick="window.openProgressModal('${s.id}')" class="text-teal-600 hover:text-teal-900 mr-2" title="Evolução e Anotações"><i class="fa-solid fa-book-journal-whills"></i></button>
-                        <button onclick="window.openAttendanceModal('${s.id}')" class="text-gray-500 hover:text-black mr-2" title="Frequência"><i class="fa-solid fa-list-check"></i></button>
-                        <button onclick="window.openGraduationModal('${s.id}', '${s.name || ''}')" class="text-yellow-500 hover:text-yellow-700 mr-2" title="Graduar"><i class="fa-solid fa-medal"></i></button>
-                        <button onclick="window.openQrModal('${s.id}')" class="text-gray-800 hover:text-black mr-2" title="QR Code"><i class="fa-solid fa-qrcode"></i></button>
-                        <button onclick="window.openEditModal('${s.id}')" class="text-blue-600 hover:text-blue-900 mr-2" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <button onclick="window.printIndividualContract('${s.id}')" class="text-indigo-600 hover:text-indigo-900 mr-2" title="Contrato"><i class="fa-solid fa-file-contract"></i></button>
-                        ${deleteOrRestoreBtn}
+                        ${actionsHtml}
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -1668,8 +1684,8 @@
             document.getElementById('detail-header-bg').className = `h-24 w-full relative ${headerColor}`;
             document.getElementById('detail-attendance').innerText = (s.attendance ? s.attendance.length : 0) + " aulas";
             const statusEl = document.getElementById('detail-status');
-            statusEl.innerText = s.archived ? 'Arquivado' : (s.enrollmentStatus || 'Ativo');
-            statusEl.className = (s.enrollmentStatus === 'Ativo' && !s.archived) ? 'text-sm font-bold mt-1 text-green-600' : 'text-sm font-bold mt-1 text-red-600';
+            statusEl.innerText = s.archived ? 'Arquivado' : 'Ativo';
+            statusEl.className = (!s.archived) ? 'text-sm font-bold mt-1 text-green-600' : 'text-sm font-bold mt-1 text-gray-500';
             document.getElementById('detail-cpf').innerText = s.cpf || '-';
             const phoneDisplay = document.getElementById('detail-phone');
             if (s.phone && s.phone.trim() !== "") { const cleanPhone = s.phone.replace(/\D/g, ''); phoneDisplay.innerHTML = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold transition inline-flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${s.phone}</a>`; } else phoneDisplay.innerText = '-';
@@ -1717,7 +1733,7 @@
             const selColor = document.getElementById('edit-belt-color'); for(let i=0; i<selColor.options.length; i++) { if(selColor.options[i].text === color) selColor.selectedIndex = i; }
             document.getElementById('edit-belt-degree').value = degree;
             if(s.contractEndDate) document.getElementById('edit-end-date').value = s.contractEndDate.split('T')[0];
-            document.getElementById('edit-login').value = s.studentLogin || ''; document.getElementById('edit-password').value = s.studentPassword || ''; document.getElementById('edit-enrollment-status').value = s.enrollmentStatus || 'Ativo';
+            document.getElementById('edit-login').value = s.studentLogin || ''; document.getElementById('edit-password').value = s.studentPassword || '';
             document.getElementById('edit-modal').classList.remove('hidden'); document.getElementById('edit-modal').classList.add('flex');
         };
         
@@ -1729,7 +1745,7 @@
         };
 
         window.saveStudentChanges = async () => {
-            const id = document.getElementById('edit-id').value; const name = document.getElementById('edit-name').value; const plan = document.getElementById('edit-plan').value; const titular = document.getElementById('edit-titular').value; const email = document.getElementById('edit-email').value; const phone = document.getElementById('edit-phone').value; const color = document.getElementById('edit-belt-color').value; const degree = document.getElementById('edit-belt-degree').value; const beltStr = `Faixa ${color} - ${degree}º Grau`; const dateStr = document.getElementById('edit-end-date').value; const login = document.getElementById('edit-login').value; const pass = document.getElementById('edit-password').value; const status = document.getElementById('edit-enrollment-status').value;
+            const id = document.getElementById('edit-id').value; const name = document.getElementById('edit-name').value; const plan = document.getElementById('edit-plan').value; const titular = document.getElementById('edit-titular').value; const email = document.getElementById('edit-email').value; const phone = document.getElementById('edit-phone').value; const color = document.getElementById('edit-belt-color').value; const degree = document.getElementById('edit-belt-degree').value; const beltStr = `Faixa ${color} - ${degree}º Grau`; const dateStr = document.getElementById('edit-end-date').value; const login = document.getElementById('edit-login').value; const pass = document.getElementById('edit-password').value;
             let dateObj = new Date().toISOString(); if(dateStr) { const [y, m, d] = dateStr.split('-').map(Number); dateObj = new Date(y, m - 1, d, 12, 0, 0).toISOString(); }
             let newCategory = 'Adulto'; if (plan.includes('infantil')) newCategory = 'Infantil'; if (plan.includes('combo')) newCategory = 'Combo Família'; if (plan === 'administracao') newCategory = 'Administração'; if (plan === 'dependente') newCategory = 'Dependente (Combo)';
             const photoInput = document.getElementById('edit-photo'); let photoBase64 = null;
@@ -1738,7 +1754,7 @@
                  photoBase64 = await new Promise((resolve) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result); reader.readAsDataURL(file); });
             }
             try {
-                const updateData = { name: name, plan: plan, titularName: titular, category: newCategory, enrollmentStatus: status, belt: beltStr, contractEndDate: dateObj, studentLogin: login, studentPassword: pass, email: email, phone: phone };
+                const updateData = { name: name, plan: plan, titularName: titular, category: newCategory, belt: beltStr, contractEndDate: dateObj, studentLogin: login, studentPassword: pass, email: email, phone: phone };
                 if(photoBase64) updateData.photoBase64 = photoBase64;
                 await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), updateData);
                 window.closeEditModal(); window.loadData(); alert("Dados atualizados!");
