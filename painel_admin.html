@@ -403,7 +403,7 @@
         </table>
 
         <!-- NOVA TABELA DE PRESENÇAS NA IMPRESSÃO -->
-        <h3 class="font-bold text-md mb-3 border-b border-gray-300 pb-1 mt-6">Extrato de Presenças (Total: <span id="print-prog-att-total">0</span> aulas)</h3>
+        <h3 class="font-bold text-md mb-3 border-b border-gray-300 pb-1 mt-6">Extrato de Presenças <span class="text-sm font-normal text-gray-600 ml-2" id="print-prog-att-total">Total: 0 aulas</span></h3>
         <table class="w-full text-sm text-left border-collapse">
             <thead>
                 <tr class="bg-gray-100"><th class="p-2 border w-1/3">Data</th><th class="p-2 border">Horário / Turma</th></tr>
@@ -477,10 +477,16 @@
 
                 <!-- NOVA SEÇÃO: HISTÓRICO DE PRESENÇAS -->
                 <div class="mt-8 border-t border-gray-200 pt-6">
-                    <h5 class="font-bold text-gray-700 mb-4 border-b pb-1 text-sm uppercase flex justify-between items-center">
-                        <span><i class="fa-solid fa-calendar-check text-green-600 mr-2"></i> Histórico de Presenças</span>
-                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded" id="prog-att-total">0 aulas</span>
-                    </h5>
+                    <div class="flex justify-between items-center mb-4">
+                        <h5 class="font-bold text-gray-700 border-b pb-1 text-sm uppercase flex-1 mr-4">
+                            <i class="fa-solid fa-calendar-check text-green-600 mr-2"></i> Histórico de Presenças
+                        </h5>
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs text-gray-500 font-bold">MÊS:</label>
+                            <input type="month" id="prog-month-filter" class="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:border-teal-500" onchange="window.filterProgressAttendance()">
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-bold" id="prog-att-total">0 aulas</span>
+                        </div>
+                    </div>
                     <div id="prog-attendance-list" class="max-h-48 overflow-y-auto bg-gray-50 border border-gray-200 rounded p-2 space-y-1">
                         <!-- Attendances injected here -->
                     </div>
@@ -884,6 +890,36 @@
                         </div>
                     </div>
 
+                    <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200">
+                        <h4 class="text-sm font-bold text-green-700 uppercase mb-3"><i class="fa-solid fa-cash-register"></i> Primeiro Pagamento (Opcional)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Status Inicial</label>
+                                <select id="reg-payment" class="w-full border rounded p-2 text-sm bg-gray-50 focus:outline-none focus:border-green-500">
+                                    <option value="Pendente">Pendente (Paga depois)</option>
+                                    <option value="Em dia">Em dia (Já pagou)</option>
+                                    <option value="Isento">Isento</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Valor Pago (R$)</label>
+                                <input type="number" id="reg-pay-amount" class="w-full border rounded p-2 text-sm font-bold text-gray-700 focus:outline-none focus:border-green-500" placeholder="Ex: 189.90" step="0.01">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Forma de Pagamento</label>
+                                <select id="reg-pay-method" class="w-full border rounded p-2 text-sm bg-gray-50 focus:outline-none focus:border-green-500">
+                                    <option value="Pix">Pix</option>
+                                    <option value="Dinheiro">Dinheiro</option>
+                                    <option value="Débito">Débito</option>
+                                    <option value="Crédito à vista">Crédito à vista</option>
+                                    <option value="Crédito 2x">Crédito 2x</option>
+                                    <option value="Crédito 3x">Crédito 3x</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-1">Se preencher o Valor Pago, o sistema já registrará o recibo inicial e deixará o aluno "Em dia".</p>
+                    </div>
+
                     <div id="admin-reg-deps-container" class="md:col-span-2 hidden border-t-2 border-purple-200 pt-4 mt-2">
                         <h4 class="text-sm font-bold text-purple-700 uppercase mb-3"><i class="fa-solid fa-users"></i> Cadastrar Dependentes Simultaneamente</h4>
                         <p class="text-xs text-gray-500 mb-3">Como selecionou um Plano Família, pode adicionar os dependentes agora para criar o vínculo automático.</p>
@@ -1162,6 +1198,7 @@
             document.getElementById('prog-start-date').innerText = formatDate(s.registrationDate);
             document.getElementById('prog-current-belt').innerText = s.belt || 'Branca';
             document.getElementById('prog-new-note').value = '';
+            document.getElementById('prog-month-filter').value = '';
             
             // 1. Linha do Tempo (Anotações e Graduações)
             const tl = document.getElementById('prog-timeline');
@@ -1194,6 +1231,19 @@
             });
 
             // 2. Histórico de Presenças (Lista Separada)
+            window.filterProgressAttendance();
+            
+            document.getElementById('progress-modal').classList.remove('hidden'); 
+            document.getElementById('progress-modal').classList.add('flex');
+        };
+
+        window.filterProgressAttendance = () => {
+            const id = document.getElementById('prog-student-id').value;
+            const s = window.students.find(st => st.id === id);
+            if(!s) return;
+            
+            const monthFilter = document.getElementById('prog-month-filter').value;
+            
             const attList = document.getElementById('prog-attendance-list');
             attList.innerHTML = '';
             let attendances = [];
@@ -1204,10 +1254,14 @@
                 attendances = s.attendance.map(dateStr => ({ date: dateStr, time: 'Check-in manual' }));
             }
 
+            if (monthFilter) {
+                attendances = attendances.filter(att => att.date.startsWith(monthFilter));
+            }
+
             document.getElementById('prog-att-total').innerText = `${attendances.length} aulas`;
 
             if (attendances.length === 0) {
-                attList.innerHTML = '<div class="text-xs text-gray-500 text-center py-4 italic">Nenhuma presença registrada para este aluno.</div>';
+                attList.innerHTML = '<div class="text-xs text-gray-500 text-center py-4 italic">Nenhuma presença encontrada para este período.</div>';
             } else {
                 attendances.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(att => {
                     const dateFmt = formatDate(att.date + 'T12:00:00');
@@ -1219,9 +1273,6 @@
                     `;
                 });
             }
-            
-            document.getElementById('progress-modal').classList.remove('hidden'); 
-            document.getElementById('progress-modal').classList.add('flex');
         };
 
         window.closeProgressModal = () => { document.getElementById('progress-modal').classList.add('hidden'); document.getElementById('progress-modal').classList.remove('flex'); };
@@ -1246,6 +1297,7 @@
         window.printProgressReport = () => {
             const id = document.getElementById('prog-student-id').value;
             const s = window.students.find(st => st.id === id); if(!s) return;
+            const monthFilter = document.getElementById('prog-month-filter').value;
             
             document.getElementById('print-prog-name').innerText = s.name;
             document.getElementById('print-prog-start').innerText = formatDate(s.registrationDate);
@@ -1277,10 +1329,17 @@
                 attendances = s.attendance.map(dateStr => ({ date: dateStr, time: 'Check-in manual' }));
             }
 
-            document.getElementById('print-prog-att-total').innerText = attendances.length;
+            let printMonthLabel = "Todo o Período";
+            if (monthFilter) {
+                attendances = attendances.filter(att => att.date.startsWith(monthFilter));
+                const [yyyy, mm] = monthFilter.split('-');
+                printMonthLabel = `${mm}/${yyyy}`;
+            }
+
+            document.getElementById('print-prog-att-total').innerText = `Total: ${attendances.length} aulas (${printMonthLabel})`;
 
             if (attendances.length === 0) {
-                tbodyAtt.innerHTML = '<tr><td colspan="2" class="p-2 border text-center text-gray-500 italic">Nenhuma presença registrada.</td></tr>';
+                tbodyAtt.innerHTML = '<tr><td colspan="2" class="p-2 border text-center text-gray-500 italic">Nenhuma presença registrada neste período.</td></tr>';
             } else {
                 attendances.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(att => {
                     const dateFmt = formatDate(att.date + 'T12:00:00');
