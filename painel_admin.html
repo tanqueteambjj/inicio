@@ -1061,19 +1061,20 @@
                     app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj"; window.db = db;
                     
                     const initAuth = async () => {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            try { await signInWithCustomToken(auth, __initial_auth_token); } catch(e) { await signInAnonymously(auth); }
-                        } else await signInAnonymously(auth);
-                    };
-
-                    onAuthStateChanged(auth, (user) => {
-                        if (user) { 
-                            window.loadData(); 
-                            window.loadNotices(); 
-                            window.loadExperimentalData(); 
+                        try {
+                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                await signInWithCustomToken(auth, __initial_auth_token);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                        } catch (e) {
+                            console.error("Auth error", e);
                         }
-                    });
-
+                        
+                        window.loadData();
+                        window.loadNotices();
+                        window.loadExperimentalData();
+                    };
                     initAuth();
                 } catch(e) { console.error("Firebase init error", e); }
             }
@@ -1087,8 +1088,24 @@
         // UTILITÁRIOS
         function getAge(dobStr) {
             if (!dobStr) return null;
-            let dobDate = dobStr.includes('/') ? new Date(dobStr.split('/')[2], dobStr.split('/')[1] - 1, dobStr.split('/')[0]) : (dobStr.includes('T') ? new Date(dobStr) : new Date(dobStr.split('-')[0], split('-')[1] - 1, dobStr.split('-')[2]));
-            return isNaN(dobDate) ? null : Math.abs(new Date(Date.now() - dobDate.getTime()).getUTCFullYear() - 1970);
+            let dobDate;
+            try {
+                if (dobStr.includes('/')) {
+                    const parts = dobStr.split('/');
+                    dobDate = new Date(parts[2], parts[1] - 1, parts[0]);
+                } else if (dobStr.includes('T')) {
+                    dobDate = new Date(dobStr);
+                } else {
+                    const parts = dobStr.split('-');
+                    dobDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                }
+                if (isNaN(dobDate)) return null;
+                const ageDifMs = Date.now() - dobDate.getTime();
+                const ageDate = new Date(ageDifMs);
+                return Math.abs(ageDate.getUTCFullYear() - 1970);
+            } catch(e) {
+                return null;
+            }
         }
 
         function toISODate(ptBrDate) { return (!ptBrDate || !ptBrDate.includes('/')) ? ptBrDate : ptBrDate.split('/').reverse().join('-'); }
