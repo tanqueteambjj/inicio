@@ -55,6 +55,9 @@
             body.printing-report #report-container { display: block !important; position: relative !important; width: 100% !important; margin: 0 !important; padding: 0 !important; visibility: visible !important; background-color: white !important; color: black !important; }
             body.printing-report #report-container * { visibility: visible !important; }
 
+            body.printing-progress #printable-progress { display: block !important; position: relative !important; width: 100% !important; margin: 0 !important; padding: 0 !important; visibility: visible !important; background-color: white !important; color: black !important; }
+            body.printing-progress #printable-progress * { visibility: visible !important; }
+
             body.printing-qr #qr-modal { display: block !important; visibility: hidden !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; }
             body.printing-qr #printable-qr-card { display: flex !important; position: absolute !important; left: 50% !important; top: 2cm !important; transform: translateX(-50%) !important; width: 6.5cm !important; height: 10.5cm !important; visibility: visible !important; background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; border: 1px solid #ccc !important; border-radius: 12px !important; box-shadow: none !important; margin: 0 !important; }
             body.printing-qr #printable-qr-card * { visibility: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -174,13 +177,13 @@
                             <div class="text-green-500 text-2xl"><i class="fa-solid fa-user"></i></div>
                         </div>
                     </div>
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-gray-500 cursor-pointer hover:bg-gray-50 transition" onclick="window.switchTab('inactive')">
+                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-gray-400 cursor-pointer hover:bg-gray-50 transition" onclick="window.switchTab('inactive')">
                         <div class="flex justify-between">
                             <div>
                                 <p class="text-gray-400 text-xs font-bold uppercase">Inativos</p>
                                 <p class="text-2xl font-bold text-gray-800" id="stat-inactive">0</p>
                             </div>
-                            <div class="text-gray-500 text-2xl"><i class="fa-solid fa-user-slash"></i></div>
+                            <div class="text-gray-400 text-2xl"><i class="fa-solid fa-user-slash"></i></div>
                         </div>
                     </div>
                 </div>
@@ -199,9 +202,6 @@
                     <button onclick="window.switchTab('inactive')" id="tab-inactive" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
                         <i class="fa-solid fa-power-off mr-2"></i> INATIVOS
                     </button>
-                    <button onclick="window.switchTab('archived')" id="tab-archived" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
-                        <i class="fa-solid fa-box-archive mr-2"></i> ARQUIVO
-                    </button>
                 </div>
 
                 <!-- Student Table -->
@@ -212,12 +212,12 @@
                                 <span id="list-title">Lista de Alunos</span>
                                 <span class="bg-gray-200 text-gray-600 py-0.5 px-2 rounded-full text-xs" id="list-count">0</span>
                             </h3>
-                            <button onclick="window.archiveSelectedStudents()" id="btn-bulk-archive" class="hidden flex items-center gap-1 bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs font-bold hover:bg-gray-300 transition animate-fade-in border border-gray-300">
-                                <i class="fa-solid fa-box-archive"></i> Arquivar (<span id="selected-count">0</span>)
+                            <button onclick="window.deleteSelectedStudents()" id="btn-bulk-delete" class="hidden flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition border border-red-300">
+                                <i class="fa-solid fa-trash"></i> Excluir (<span id="selected-count">0</span>)
                             </button>
                             <div id="bulk-actions" class="hidden flex items-center gap-2 animate-fade-in">
                                 <button onclick="window.addPresenceSelectedStudents()" class="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-bold hover:bg-green-200 transition">
-                                    <i class="fa-solid fa-check"></i> Dar Presença Hoje
+                                    <i class="fa-solid fa-check"></i> Dar Presença
                                 </button>
                             </div>
                         </div>
@@ -365,6 +365,31 @@
     <!-- PRINTABLE CONTAINERS -->
     <div id="report-container" class="hidden bg-white text-black p-4 font-sans absolute inset-0 z-50"></div>
 
+    <div id="printable-progress" class="hidden bg-white text-black p-8 font-sans absolute inset-0 z-50">
+        <div class="text-center mb-6 border-b-2 border-black pb-4">
+            <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" alt="Logo" class="h-16 mx-auto mb-2" style="filter: grayscale(100%);">
+            <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
+            <h2 class="text-lg font-bold mt-2 uppercase">Relatório de Evolução do Aluno</h2>
+        </div>
+        <div class="mb-6 grid grid-cols-2 gap-4 text-sm bg-gray-50 p-4 border border-gray-200 rounded">
+            <div><strong>Nome:</strong> <span id="print-prog-name"></span></div>
+            <div><strong>Data de Início:</strong> <span id="print-prog-start"></span></div>
+            <div><strong>Faixa Atual:</strong> <span id="print-prog-belt"></span></div>
+            <div><strong>Plano:</strong> <span id="print-prog-plan"></span></div>
+        </div>
+        <h3 class="font-bold text-md mb-3 border-b border-gray-300 pb-1">Histórico de Atividades e Anotações</h3>
+        <table class="w-full text-sm text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-100"><th class="p-2 border">Data</th><th class="p-2 border">Tipo</th><th class="p-2 border">Descrição</th></tr>
+            </thead>
+            <tbody id="print-prog-table-body"></tbody>
+        </table>
+        <div class="mt-12 pt-4 border-t border-black text-center w-64 mx-auto">
+            <p class="font-bold text-sm uppercase">Tanque Team BJJ</p>
+            <p class="text-[10px] text-gray-500">Assinatura do Professor</p>
+        </div>
+    </div>
+
     <div id="printable-contract" class="hidden bg-white text-black p-10 font-serif text-[11pt] leading-relaxed absolute inset-0 z-50">
         <div class="header-section text-center mb-6 border-b-2 border-black pb-4">
             <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" alt="Logo" class="h-16 mx-auto mb-2" style="filter: grayscale(100%);">
@@ -393,6 +418,42 @@
 
     <!-- MODAIS DO SISTEMA -->
     
+    <!-- Modal: Evolução e Anotações (NOVO) -->
+    <div id="progress-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-teal-600">
+            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b">
+                <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-book-journal-whills text-teal-600 mr-2"></i> Evolução e Anotações</h3>
+                <button onclick="window.closeProgressModal()" class="text-gray-400 hover:text-gray-800"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 bg-white">
+                <div class="flex justify-between items-end mb-4">
+                    <div>
+                        <h4 class="font-bold text-xl text-gray-900" id="prog-student-name">--</h4>
+                        <p class="text-sm text-gray-500">Início: <span id="prog-start-date" class="font-medium text-gray-700">--</span> | Faixa Atual: <span id="prog-current-belt" class="font-medium text-gray-700">--</span></p>
+                    </div>
+                    <button onclick="window.printProgressReport()" class="bg-gray-800 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-black transition shadow-sm whitespace-nowrap"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
+                </div>
+                <input type="hidden" id="prog-student-id">
+                
+                <div class="bg-teal-50 p-4 rounded-lg border border-teal-100 mb-6">
+                    <label class="block text-xs font-bold text-teal-800 mb-2 uppercase tracking-wider">Adicionar Anotação / Ocorrência</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="prog-new-note" class="w-full border border-teal-200 rounded p-2 text-sm focus:border-teal-500 focus:outline-none" placeholder="Ex: Excelente desempenho no treino de quedas hoje...">
+                        <button onclick="window.saveProgressNote()" class="bg-teal-600 text-white px-4 py-2 rounded font-bold hover:bg-teal-700 transition shadow-sm">Salvar</button>
+                    </div>
+                </div>
+
+                <h5 class="font-bold text-gray-700 mb-4 border-b pb-1 text-sm uppercase">Linha do Tempo</h5>
+                <div id="prog-timeline" class="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-300 before:to-transparent">
+                    <!-- Timeline items injected here -->
+                </div>
+            </div>
+            <div class="bg-gray-50 px-6 py-3 flex justify-end border-t border-gray-200">
+                <button onclick="window.closeProgressModal()" class="px-5 py-2 bg-white border border-gray-300 shadow-sm rounded text-sm font-bold text-gray-700 hover:bg-gray-50 transition">Fechar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Carteirinha QR Code -->
     <div id="qr-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl p-6 text-center max-w-sm w-full animate-fade-in">
@@ -873,6 +934,42 @@
         </div>
     </div>
 
+    <!-- PROGRESS / EVOLUTION MODAL -->
+    <div id="progress-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-teal-600">
+            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b">
+                <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-book-journal-whills text-teal-600 mr-2"></i> Evolução e Anotações</h3>
+                <button onclick="window.closeProgressModal()" class="text-gray-400 hover:text-gray-800"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 bg-white">
+                <div class="flex justify-between items-end mb-4">
+                    <div>
+                        <h4 class="font-bold text-xl text-gray-900" id="prog-student-name">--</h4>
+                        <p class="text-sm text-gray-500">Início: <span id="prog-start-date" class="font-medium text-gray-700">--</span> | Faixa Atual: <span id="prog-current-belt" class="font-medium text-gray-700">--</span></p>
+                    </div>
+                    <button onclick="window.printProgressReport()" class="bg-gray-800 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-black transition shadow-sm whitespace-nowrap"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
+                </div>
+                <input type="hidden" id="prog-student-id">
+                
+                <div class="bg-teal-50 p-4 rounded-lg border border-teal-100 mb-6">
+                    <label class="block text-xs font-bold text-teal-800 mb-2 uppercase tracking-wider">Adicionar Anotação / Ocorrência</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="prog-new-note" class="w-full border border-teal-200 rounded p-2 text-sm focus:border-teal-500 focus:outline-none" placeholder="Ex: Excelente desempenho no treino de quedas hoje...">
+                        <button onclick="window.saveProgressNote()" class="bg-teal-600 text-white px-4 py-2 rounded font-bold hover:bg-teal-700 transition shadow-sm">Salvar</button>
+                    </div>
+                </div>
+
+                <h5 class="font-bold text-gray-700 mb-4 border-b pb-1 text-sm uppercase">Linha do Tempo</h5>
+                <div id="prog-timeline" class="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-300 before:to-transparent">
+                    <!-- Timeline items injected here -->
+                </div>
+            </div>
+            <div class="bg-gray-50 px-6 py-3 flex justify-end border-t border-gray-200">
+                <button onclick="window.closeProgressModal()" class="px-5 py-2 bg-white border border-gray-300 shadow-sm rounded text-sm font-bold text-gray-700 hover:bg-gray-50 transition">Fechar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -1036,6 +1133,100 @@
             setText('stat-total', total); setText('stat-infantil', kidsCount); setText('stat-adulto', adultsCount); 
             setText('stat-inactive', inactiveCount); setText('stat-archived', archivedCount);
         }
+
+        // PROGRESSO & ANOTAÇÕES (NOVO)
+        window.openProgressModal = (id) => {
+            const s = window.students.find(st => st.id === id); if(!s) return;
+            document.getElementById('prog-student-id').value = id;
+            document.getElementById('prog-student-name').innerText = s.name;
+            document.getElementById('prog-start-date').innerText = formatDate(s.registrationDate);
+            document.getElementById('prog-current-belt').innerText = s.belt || 'Branca';
+            document.getElementById('prog-new-note').value = '';
+            
+            const tl = document.getElementById('prog-timeline');
+            tl.innerHTML = '';
+            
+            let logs = s.progressLog ? [...s.progressLog] : [];
+            // Adiciona a matrícula inicial visualmente na linha do tempo se não existir
+            logs.push({ type: 'info', text: 'Matrícula realizada / Início dos treinos.', date: s.registrationDate || new Date().toISOString() });
+            
+            logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            logs.forEach(log => {
+                const d = new Date(log.date).toLocaleDateString('pt-BR');
+                let icon = '<i class="fa-solid fa-comment-dots text-teal-500"></i>';
+                let bg = 'bg-teal-50 border-teal-200';
+                if(log.type === 'graduation') { icon = '<i class="fa-solid fa-medal text-yellow-500"></i>'; bg = 'bg-yellow-50 border-yellow-200'; }
+                if(log.type === 'info') { icon = '<i class="fa-solid fa-flag-checkered text-blue-500"></i>'; bg = 'bg-blue-50 border-blue-200'; }
+
+                tl.innerHTML += `
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-full border border-white bg-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                            ${icon}
+                        </div>
+                        <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-3 rounded border shadow-sm ${bg}">
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="font-bold text-gray-800 text-xs">${log.type === 'graduation' ? 'Graduação' : (log.type === 'note' ? 'Anotação do Professor' : 'Registro do Sistema')}</div>
+                                <time class="text-[10px] font-medium text-gray-500">${d}</time>
+                            </div>
+                            <div class="text-sm text-gray-600">${log.text}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('progress-modal').classList.remove('hidden'); 
+            document.getElementById('progress-modal').classList.add('flex');
+        };
+
+        window.closeProgressModal = () => { document.getElementById('progress-modal').classList.add('hidden'); document.getElementById('progress-modal').classList.remove('flex'); };
+
+        window.saveProgressNote = async () => {
+            const id = document.getElementById('prog-student-id').value;
+            const text = document.getElementById('prog-new-note').value.trim();
+            if(!text) { alert("Escreva uma anotação."); return; }
+            try {
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), {
+                    progressLog: arrayUnion({ type: 'note', text: text, date: new Date().toISOString() })
+                });
+                const s = window.students.find(st => st.id === id);
+                if(s) {
+                    if(!s.progressLog) s.progressLog = [];
+                    s.progressLog.push({ type: 'note', text: text, date: new Date().toISOString() });
+                }
+                window.openProgressModal(id);
+            } catch(e) { alert("Erro ao salvar anotação."); }
+        };
+
+        window.printProgressReport = () => {
+            const id = document.getElementById('prog-student-id').value;
+            const s = window.students.find(st => st.id === id); if(!s) return;
+            
+            document.getElementById('print-prog-name').innerText = s.name;
+            document.getElementById('print-prog-start').innerText = formatDate(s.registrationDate);
+            document.getElementById('print-prog-belt').innerText = s.belt || 'Branca';
+            document.getElementById('print-prog-plan').innerText = window.getPlanInfo(s.plan).short;
+            
+            const tbody = document.getElementById('print-prog-table-body');
+            tbody.innerHTML = '';
+            
+            let logs = s.progressLog ? [...s.progressLog] : [];
+            logs.push({ type: 'info', text: 'Matrícula realizada / Início dos treinos.', date: s.registrationDate || new Date().toISOString() });
+            logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            logs.forEach(log => {
+                const d = new Date(log.date).toLocaleDateString('pt-BR');
+                let typeStr = log.type === 'graduation' ? 'Graduação' : (log.type === 'note' ? 'Anotação' : 'Sistema');
+                tbody.innerHTML += `<tr><td class="p-2 border">${d}</td><td class="p-2 border font-bold">${typeStr}</td><td class="p-2 border">${log.text}</td></tr>`;
+            });
+            
+            document.body.classList.add('printing-progress'); 
+            setTimeout(() => { 
+                window.print(); 
+                setTimeout(() => { document.body.classList.remove('printing-progress'); }, 2000); 
+            }, 500);
+        };
+
 
         // FUNÇÕES EM MASSA E ARQUIVAMENTO
         window.toggleSelectAll = (source) => { document.querySelectorAll('.student-cb').forEach(cb => cb.checked = source.checked); window.updateBulkActions(); };
@@ -1233,8 +1424,9 @@
                     <td class="px-6 py-4 align-middle text-center">${hasLogin}</td>
                     <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
                         ${toggleBtn}
+                        <button onclick="window.openProgressModal('${s.id}')" class="text-teal-600 hover:text-teal-900 mr-2" title="Evolução e Anotações"><i class="fa-solid fa-book-journal-whills"></i></button>
                         <button onclick="window.openAttendanceModal('${s.id}')" class="text-gray-500 hover:text-black mr-2" title="Frequência"><i class="fa-solid fa-list-check"></i></button>
-                        <button onclick="window.openGraduationModal('${s.id}')" class="text-yellow-500 hover:text-yellow-700 mr-2" title="Graduar"><i class="fa-solid fa-medal"></i></button>
+                        <button onclick="window.openGraduationModal('${s.id}', '${s.name || ''}')" class="text-yellow-500 hover:text-yellow-700 mr-2" title="Graduar"><i class="fa-solid fa-medal"></i></button>
                         <button onclick="window.openQrModal('${s.id}')" class="text-gray-800 hover:text-black mr-2" title="QR Code"><i class="fa-solid fa-qrcode"></i></button>
                         <button onclick="window.openEditModal('${s.id}')" class="text-blue-600 hover:text-blue-900 mr-2" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
                         <button onclick="window.printIndividualContract('${s.id}')" class="text-indigo-600 hover:text-indigo-900 mr-2" title="Contrato"><i class="fa-solid fa-file-contract"></i></button>
@@ -1421,11 +1613,6 @@
         window.handleAdminPlanChange = () => {
             const plan = document.getElementById('reg-plan').value;
             const titularContainer = document.getElementById('admin-reg-titular-container'); const depsContainer = document.getElementById('admin-reg-deps-container'); const dep1 = document.getElementById('admin-reg-dep1'); const dep2 = document.getElementById('admin-reg-dep2');
-            const amountInput = document.getElementById('reg-pay-amount');
-            if (amountInput) {
-                const pInfo = window.getPlanInfo(plan);
-                amountInput.value = (pInfo && pInfo.price > 0) ? pInfo.price : '';
-            }
             
             titularContainer.classList.add('hidden'); depsContainer.classList.add('hidden'); dep1.classList.add('hidden'); dep2.classList.add('hidden');
             if (plan === 'dependente') titularContainer.classList.remove('hidden');
@@ -1437,11 +1624,6 @@
         window.closeAdminRegisterModal = () => {
             document.getElementById('admin-register-modal').classList.add('hidden'); document.getElementById('admin-register-modal').classList.remove('flex');
             document.getElementById('reg-name').value = ''; document.getElementById('reg-dob').value = ''; document.getElementById('reg-cpf').value = ''; document.getElementById('reg-email').value = ''; document.getElementById('reg-phone').value = ''; document.getElementById('reg-address').value = ''; document.getElementById('reg-guardian').value = ''; document.getElementById('reg-plan').value = 'infantil-mensal'; document.getElementById('reg-titular').value = ''; document.getElementById('reg-student-login').value = ''; document.getElementById('reg-student-pass').value = ''; document.getElementById('admin-dep1-name').value = ''; document.getElementById('admin-dep1-dob').value = ''; document.getElementById('admin-dep2-name').value = ''; document.getElementById('admin-dep2-dob').value = ''; 
-            
-            if(document.getElementById('reg-payment')) document.getElementById('reg-payment').value = 'Pendente';
-            if(document.getElementById('reg-pay-amount')) document.getElementById('reg-pay-amount').value = '';
-            if(document.getElementById('reg-pay-method')) document.getElementById('reg-pay-method').value = 'Pix';
-            
             window.handleAdminPlanChange();
         };
 
@@ -1454,25 +1636,15 @@
             if(plan.includes('mensal')) endDate.setMonth(endDate.getMonth() + 1); else if(plan.includes('trimestral')) endDate.setMonth(endDate.getMonth() + 3); else if(plan.includes('semestral') || plan.includes('combo') || plan === 'dependente') endDate.setMonth(endDate.getMonth() + 6); else if(plan === 'administracao') endDate.setFullYear(endDate.getFullYear() + 1); else endDate.setMonth(endDate.getMonth() + 1);
             let category = 'Adulto'; if (plan.includes('infantil')) category = 'Infantil'; if (plan.includes('combo')) category = 'Combo Família'; if (plan === 'administracao') category = 'Administração'; if (plan === 'dependente') category = 'Dependente (Combo)';
 
-            let paymentStatus = document.getElementById('reg-payment') ? document.getElementById('reg-payment').value : 'Pendente'; 
-            const payAmount = document.getElementById('reg-pay-amount') ? document.getElementById('reg-pay-amount').value : ''; 
-            const payMethod = document.getElementById('reg-pay-method') ? document.getElementById('reg-pay-method').value : 'Pix';
-
-            let initialPaymentHistory = [];
-            if (payAmount && parseFloat(payAmount) > 0) { 
-                initialPaymentHistory.push({ date: regDate.toISOString().split('T')[0], amount: payAmount, method: payMethod, timestamp: regDate.toISOString() }); 
-                paymentStatus = 'Em dia'; 
-            }
-
             try {
-                const titularDocRef = await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name, dob, cpf, email, phone, address, guardian, plan, titularName: titular, paymentStatus: paymentStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory });
+                const titularDocRef = await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name, dob, cpf, email, phone, address, guardian, plan, titularName: titular, paymentStatus: 'Pendente', enrollmentStatus: 'Ativo', belt: beltStr, category, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 if (plan === 'combo-dupla' || plan === 'combo-casal' || plan === 'combo-familia') {
                     const d1Name = document.getElementById('admin-dep1-name').value;
-                    if(d1Name) await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name: d1Name, dob: toISODate(document.getElementById('admin-dep1-dob').value), titularName: name, titularId: titularDocRef.id, parentesco: document.getElementById('admin-dep1-kinship').value, belt: `Faixa ${document.getElementById('admin-dep1-belt').value} - ${document.getElementById('admin-dep1-degree').value}º Grau`, plan: 'dependente', category: 'Dependente', registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [] });
+                    if(d1Name) await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name: d1Name, dob: toISODate(document.getElementById('admin-dep1-dob').value), titularName: name, titularId: titularDocRef.id, parentesco: document.getElementById('admin-dep1-kinship').value, belt: `Faixa ${document.getElementById('admin-dep1-belt').value} - ${document.getElementById('admin-dep1-degree').value}º Grau`, plan: 'dependente', category: 'Dependente', registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 }
                 if (plan === 'combo-familia') {
                     const d2Name = document.getElementById('admin-dep2-name').value;
-                    if(d2Name) await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name: d2Name, dob: toISODate(document.getElementById('admin-dep2-dob').value), titularName: name, titularId: titularDocRef.id, parentesco: document.getElementById('admin-dep2-kinship').value, belt: `Faixa ${document.getElementById('admin-dep2-belt').value} - ${document.getElementById('admin-dep2-degree').value}º Grau`, plan: 'dependente', category: 'Dependente', registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [] });
+                    if(d2Name) await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name: d2Name, dob: toISODate(document.getElementById('admin-dep2-dob').value), titularName: name, titularId: titularDocRef.id, parentesco: document.getElementById('admin-dep2-kinship').value, belt: `Faixa ${document.getElementById('admin-dep2-belt').value} - ${document.getElementById('admin-dep2-degree').value}º Grau`, plan: 'dependente', category: 'Dependente', registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 }
                 window.closeAdminRegisterModal(); window.loadData(); alert("Aluno(s) cadastrado(s) com sucesso!");
             } catch(e) { console.error(e); alert("Erro ao cadastrar."); }
@@ -1482,8 +1654,8 @@
             if(!email) { alert("Preencha o e-mail do aluno antes de enviar."); return; }
             if(!login || !pass) { alert("Preencha o login e senha antes de enviar."); return; }
             const originalText = btnElement.innerHTML; btnElement.disabled = true; btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
-            const messageContent = `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;"><div style="background-color: #D90429; color: white; padding: 20px; text-align: center;"><h2 style="margin: 0; text-transform: uppercase; letter-spacing: 1px;">Bem-vindo(a) à Tanque Team! 🥋</h2></div><div style="padding: 25px;"><p style="font-size: 16px;">Fala, <strong>${name.split(' ')[0]}</strong>! Oss!</p><p style="font-size: 14px; line-height: 1.5;">O seu acesso ao nosso <strong>Portal do Aluno</strong> acabou de ser liberado.</p><div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #D90429; margin: 25px 0;"><p style="margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; color: #777; font-weight: bold;">Suas credenciais de acesso:</p><p style="margin: 5px 0; font-size: 16px;"><strong>Login:</strong> ${login}</p><p style="margin: 5px 0; font-size: 16px;"><strong>Senha:</strong> ${pass}</p></div><div style="text-align: center; margin: 30px 0;"><a href="https://www.tanqueteambjj.com.br/login.html" style="background-color: #D90429; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Acessar Portal do Aluno</a></div><p style="font-size: 14px; margin-top: 20px;">Nos vemos no tatame!</p><p style="font-size: 14px; font-weight: bold; color: #D90429;">Equipe Tanque Team BJJ</p></div></div>`;
-            try { await emailjs.send("service_2twa33d", "template_few5bna", { from_name: "Tanque Team BJJ", from_email: "administrativo@tanqueteambjj.com.br", to_name: name, to_email: email, subject: "Seu Acesso ao Portal + QR Code de Check-in", message: messageContent, reply_to: "administrativo@tanqueteambjj.com.br" }); alert("E-mail enviado!"); } catch (error) { alert("Erro ao enviar e-mail."); } finally { btnElement.disabled = false; btnElement.innerHTML = originalText; }
+            const messageContent = `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;"><div style="background-color: #D90429; color: white; padding: 20px; text-align: center;"><h2 style="margin: 0; text-transform: uppercase; letter-spacing: 1px;">Bem-vindo(a) à Tanque Team! \uD83E\uDD4B</h2></div><div style="padding: 25px;"><p style="font-size: 16px;">Fala, <strong>${name.split(' ')[0]}</strong>! Oss!</p><p style="font-size: 14px; line-height: 1.5;">O seu acesso ao nosso <strong>Portal do Aluno</strong> acabou de ser liberado.</p><div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #D90429; margin: 25px 0;"><p style="margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; color: #777; font-weight: bold;">Suas credenciais de acesso:</p><p style="margin: 5px 0; font-size: 16px;"><strong>Login:</strong> ${login}</p><p style="margin: 5px 0; font-size: 16px;"><strong>Senha:</strong> ${pass}</p></div><div style="text-align: center; margin: 30px 0;"><a href="https://www.tanqueteambjj.com.br/login.html" style="background-color: #D90429; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Acessar Portal do Aluno</a></div><p style="font-size: 14px; margin-top: 20px;">Nos vemos no tatame!</p><p style="font-size: 14px; font-weight: bold; color: #D90429;">Equipe Tanque Team BJJ</p></div></div>`;
+            try { await emailjs.send("service_2twa33d", "template_few5bna", { from_name: "Tanque Team BJJ", from_email: "administrativo@tanqueteambjj.com.br", to_name: name, to_email: email, subject: "Seu Acesso ao Portal", message: messageContent, reply_to: "administrativo@tanqueteambjj.com.br" }); alert("E-mail enviado!"); } catch (error) { alert("Erro ao enviar e-mail."); } finally { btnElement.disabled = false; btnElement.innerHTML = originalText; }
         };
 
         window.openQrModal = (id) => {
@@ -1551,9 +1723,19 @@
             document.getElementById('graduation-modal').classList.remove('hidden'); document.getElementById('graduation-modal').classList.add('flex');
         }
         window.closeGraduationModal = () => { document.getElementById('graduation-modal').classList.add('hidden'); document.getElementById('graduation-modal').classList.remove('flex'); }
+        
         window.saveGraduation = async () => {
             const id = document.getElementById('grad-student-id').value; const color = document.getElementById('grad-belt-color').value; const degree = document.getElementById('grad-belt-degree').value; const newBeltStr = `Faixa ${color} - ${degree}º Grau`;
-            try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { belt: newBeltStr, lastGraduationDate: new Date().toISOString() }); alert(`Aluno graduado para ${newBeltStr}!`); window.closeGraduationModal(); window.loadData(); } catch(e) { alert("Erro ao graduar."); }
+            try { 
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { 
+                    belt: newBeltStr, 
+                    lastGraduationDate: new Date().toISOString(),
+                    progressLog: arrayUnion({ type: 'graduation', text: `Graduado para ${newBeltStr}`, date: new Date().toISOString() })
+                }); 
+                alert(`Aluno graduado para ${newBeltStr}!`); 
+                window.closeGraduationModal(); 
+                window.loadData(); 
+            } catch(e) { alert("Erro ao graduar: " + e.message); }
         }
 
         window.loadNotices = async () => {
@@ -1572,12 +1754,13 @@
 
         window.sendBirthdayWhatsApp = (name, phone) => {
             if(!phone || phone.trim() === "") { alert("Aluno sem telefone."); return; }
-            window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(`Fala ${name.split(' ')[0]}! Aqui é da equipe Tanque Team BJJ. Passando para te desejar um Feliz Aniversário! 🎉🥋\n\nQue você tenha muita saúde, paz e que continue evoluindo sempre, com muita resiliência dentro e fora dos tatames. Aproveite o seu dia! Oss! 👊`)}`, '_blank');
+            const msg = `Fala ${name.split(' ')[0]}! Aqui é da equipe Tanque Team BJJ. Passando para te desejar um Feliz Aniversário! \uD83C\uDF89\uD83E\uDD4B\n\nQue você tenha muita saúde, paz e que continue evoluindo sempre, com muita resiliência dentro e fora dos tatames. Aproveite o seu dia! Oss! \uD83D\uDC4A`;
+            window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         };
 
         window.publishBirthdayNotice = async (name) => {
             if(!confirm(`Publicar homenagem para ${name}?`)) return;
-            try { await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'), { title: `🎉 Parabéns, ${name.split(' ')[0]}! 🥋`, text: `Hoje é o aniversário do nosso colega de tatame ${name}! Desejamos muita saúde, vitórias, resiliência e que a evolução seja constante dentro e fora dos tatames. Parabéns! Oss! 👊`, type: 'success', date: new Date().toISOString() }); alert("Homenagem publicada!"); window.loadNotices(); } catch(e) { alert("Erro."); }
+            try { await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'), { title: `\uD83C\uDF89 Parabéns, ${name.split(' ')[0]}! \uD83E\uDD4B`, text: `Hoje é o aniversário do nosso colega de tatame ${name}! Desejamos muita saúde, vitórias, resiliência e que a evolução seja constante dentro e fora dos tatames. Parabéns! Oss! \uD83D\uDC4A`, type: 'success', date: new Date().toISOString() }); alert("Homenagem publicada!"); window.loadNotices(); } catch(e) { alert("Erro."); }
         };
 
         window.renderBirthdays = () => {
@@ -1645,7 +1828,6 @@
             try { await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', id)); window.loadNotices(); } catch(e) { alert("Erro ao excluir: " + e.message); }
         };
 
-        // --- AULAS EXPERIMENTAIS ---
         window.loadExperimentalData = async () => {
             try {
                 const q = query(collection(window.db, 'artifacts', appId, 'public', 'data', 'experimental'));
@@ -1663,6 +1845,7 @@
 
             let filtered = window.experimentalList.filter(e => (e.name || '').toLowerCase().includes(search) || (e.phone || '').includes(search));
             
+            // Reordenar: Agendados/Compareceu primeiro, depois Matriculado/Faltou, e por fim ordem de data.
             filtered.sort((a,b) => {
                 const wA = (a.status === 'Matriculado' || a.status === 'Faltou' || a.status === 'Cancelado') ? 2 : 1;
                 const wB = (b.status === 'Matriculado' || b.status === 'Faltou' || b.status === 'Cancelado') ? 2 : 1;
