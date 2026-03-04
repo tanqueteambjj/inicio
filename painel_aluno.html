@@ -75,24 +75,22 @@
                 margin: 0 !important;
                 padding: 0 !important;
                 background-color: white !important;
+                color: black !important;
             }
-            body > * { display: none !important; }
+            .no-print, #main-ui { display: none !important; }
             
             /* CONTRATO DE MATRÍCULA */
             body.printing-contract #printable-contract { 
                 display: block !important; 
-                position: absolute !important; 
-                left: 0 !important; 
-                top: 0 !important; 
+                position: relative !important; 
                 width: 100% !important; 
                 height: auto !important; 
                 margin: 0 !important; 
-                padding: 20px !important; 
+                padding: 0 !important; 
                 visibility: visible !important; 
                 color: black !important; 
                 background: white !important; 
                 box-sizing: border-box !important;
-                z-index: 99999;
             }
             body.printing-contract #printable-contract * { 
                 visibility: visible !important; 
@@ -101,16 +99,45 @@
                 font-size: 11pt !important;
                 line-height: 1.5 !important;
             }
-            
-            body.printing-contract #printable-contract .text-xs { font-size: 9pt !important; }
-            body.printing-contract #printable-contract .text-sm { font-size: 10pt !important; }
-            body.printing-contract #printable-contract .text-lg { font-size: 14pt !important; }
-            body.printing-contract #printable-contract .text-2xl { font-size: 18pt !important; }
+            body.printing-contract #qr-modal,
+            body.printing-contract #student-history-modal,
+            body.printing-contract #profile-edit-modal {
+                display: none !important;
+            }
 
             /* CARTEIRINHA QR CODE */
-            body.printing-qr #qr-modal { display: block !important; visibility: hidden !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; }
-            body.printing-qr #printable-qr-card { display: flex !important; position: absolute !important; left: 50% !important; top: 2cm !important; transform: translateX(-50%) !important; width: 6.5cm !important; height: 10.5cm !important; visibility: visible !important; background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; border: 1px solid #ccc !important; border-radius: 12px !important; box-shadow: none !important; margin: 0 !important; z-index: 99999; }
+            body.printing-qr #qr-modal { 
+                display: block !important; 
+                position: relative !important; 
+                visibility: visible !important; 
+                background: transparent !important;
+                width: 100% !important;
+                height: auto !important;
+            }
+            body.printing-qr #qr-modal > div {
+                box-shadow: none !important;
+                border: none !important;
+                background: transparent !important;
+                margin: 0 auto !important;
+            }
+            body.printing-qr #printable-qr-card { 
+                display: flex !important; 
+                position: relative !important;
+                margin: 2cm auto !important; 
+                visibility: visible !important; 
+                background: white !important; 
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+                border: 1px solid #ccc !important; 
+                border-radius: 12px !important; 
+                box-shadow: none !important; 
+            }
             body.printing-qr #printable-qr-card * { visibility: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            body.printing-qr #printable-contract,
+            body.printing-qr #student-history-modal,
+            body.printing-qr #profile-edit-modal {
+                display: none !important;
+            }
             
             p { text-align: justify; orphans: 3; widows: 3; margin-bottom: 12px; }
             h1, h2, h3, h4 { page-break-after: avoid; }
@@ -472,7 +499,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all animate-fade-in border-t-4 border-brand-red">
             <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600">
                 <h3 class="text-gray-800 dark:text-white font-display font-bold text-lg"><i class="fa-solid fa-pen-to-square text-brand-red mr-2"></i> Alterar Dados</h3>
-                <button onclick="window.closeProfileEditModal()" class="text-gray-400 hover:text-red-500 transition text-xl"><i class="fa-solid fa-times"></i></button>
+                <button onclick="window.closeProfileEditModal()" class="text-gray-400 hover:text-red-500 transition text-xl no-print"><i class="fa-solid fa-times"></i></button>
             </div>
             
             <div class="p-6">
@@ -517,7 +544,7 @@
                     </div>
                 </div>
                 
-                <div class="mt-6 flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <div class="mt-6 flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-gray-700 no-print">
                     <button onclick="window.closeProfileEditModal()" class="px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-700 font-bold text-gray-700 dark:text-gray-300 transition">Cancelar</button>
                     <button onclick="window.saveProfileChanges()" id="btn-save-profile" class="px-5 py-2 bg-brand-red text-white rounded-lg text-sm hover:bg-red-700 font-bold transition shadow-md flex items-center justify-center gap-2 w-32"><i class="fa-solid fa-save"></i> Salvar</button>
                 </div>
@@ -528,14 +555,14 @@
     <!-- QR Code Modal (Carteirinha) -->
     <div id="qr-modal" class="fixed inset-0 z-[80] hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 text-center max-w-sm w-full animate-fade-in relative border-t-4 border-brand-red">
-            <button onclick="window.closeMyQrModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition text-xl z-20"><i class="fa-solid fa-times"></i></button>
-            <h3 class="font-display font-bold text-xl mb-4 uppercase flex items-center justify-center gap-2 text-gray-800 dark:text-white">
+            <button onclick="window.closeMyQrModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition text-xl z-20 no-print"><i class="fa-solid fa-times"></i></button>
+            <h3 class="font-display font-bold text-xl mb-4 uppercase flex items-center justify-center gap-2 text-gray-800 dark:text-white no-print">
                 <i class="fa-solid fa-id-card text-brand-red"></i> Carteirinha Digital
             </h3>
             
             <div id="printable-qr-card" class="bg-white border border-gray-300 rounded-xl overflow-hidden relative shadow-inner mx-auto flex flex-col" style="width: 260px; height: 410px;">
                 <div class="bg-brand-dark text-white p-3 flex items-center justify-center gap-2 shrink-0 border-b-4 border-brand-red">
-                    <img src="https://iili.io/qC543c7.png" class="h-6"> <!-- Filtro removido para manter a cor -->
+                    <img src="https://iili.io/qC543c7.png" class="h-6">
                     <span class="font-display font-bold text-sm tracking-widest uppercase">Tanque Team</span>
                 </div>
                 
@@ -577,7 +604,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] border-t-4 border-blue-500 animate-fade-in">
             <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
                 <h3 class="font-bold text-lg text-gray-800 dark:text-white"><i class="fa-solid fa-clock-rotate-left text-blue-500 mr-2"></i> O Meu Histórico Financeiro</h3>
-                <button onclick="window.closeStudentHistoryModal()" class="text-gray-400 hover:text-red-500 text-xl transition"><i class="fa-solid fa-times"></i></button>
+                <button onclick="window.closeStudentHistoryModal()" class="text-gray-400 hover:text-red-500 text-xl transition no-print"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="overflow-y-auto p-0 flex-1">
                 <table class="w-full text-sm text-left text-gray-800 dark:text-gray-200">
@@ -596,7 +623,7 @@
                     <p class="text-gray-500 dark:text-gray-400 italic text-sm font-medium">Nenhum pagamento registado no sistema.</p>
                 </div>
             </div>
-            <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 shrink-0 text-right">
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 shrink-0 text-right no-print">
                 <button onclick="window.closeStudentHistoryModal()" class="px-6 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-bold hover:bg-gray-50 dark:hover:bg-gray-600 transition shadow-sm">Fechar</button>
             </div>
         </div>
@@ -1207,7 +1234,7 @@
                 { name: "Guerreiro", desc: "50 Treinos concluídos.", icon: "fa-solid fa-shield-halved text-purple-500", req: 50 },
                 { name: "Veterano", desc: "100 Treinos. Jiu-Jitsu na veia.", icon: "fa-solid fa-crown text-yellow-500", req: 100 },
                 { name: "Focado", desc: "5 dias seguidos no tatame.", icon: "fa-solid fa-bolt text-red-500", customReq: streak >= 5 },
-                { name: "Nova Faixa", desc: "Avançou para uma nova faixa.", icon: "fa-solid fa-medal text-brand-red", customReq: checkForRecentGraduation(currentUserData.progressLog, currentUserData.belt)?.isNewBelt },
+                { name: "Nova Faixa", desc: "Avançou para uma nova faixa.", icon: "fa-solid fa-medal text-brand-red", customReq: checkForRecentGraduation(currentUserData.progressLog, currentUserData.belt)?.isNewBelt === true },
                 { name: "Mais um Degrau", desc: "Recebeu um novo grau.", icon: "fa-solid fa-star text-yellow-600", customReq: checkForRecentGraduation(currentUserData.progressLog, currentUserData.belt)?.isNewBelt === false },
                 { name: "Mestre", desc: "500 Treinos. Uma lenda viva.", icon: "fa-solid fa-dragon text-red-600", req: 500 }
             ];
@@ -1713,20 +1740,21 @@
             clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DIREITO DE IMAGEM:</strong> Autoriza, a título gratuito, uso de imagem e nome para fins de marketing da Tanque Team BJJ.</p>`;
             
             document.getElementById('print-clauses-container').innerHTML = clausesHtml;
-            document.getElementById('printDependentsBlock').innerHTML = ''; // Hide deps on student print
             setText('printSignatureName', s.guardian || s.titularName || s.name || "CONTRATANTE");
             
-            // Corrige o comportamento para desktop e mobile
+            // Remove a classe hidden do contrato
             document.getElementById('printable-contract').classList.remove('hidden');
+            
+            // Adiciona a classe ao body para esconder o resto
             document.body.classList.add('printing-contract'); 
             
+            // Chama a impressão e limpa logo a seguir
+            window.print(); 
+            
             setTimeout(() => { 
-                window.print(); 
-                setTimeout(() => { 
-                    document.body.classList.remove('printing-contract'); 
-                    document.getElementById('printable-contract').classList.add('hidden');
-                }, 1000); 
-            }, 500);
+                document.body.classList.remove('printing-contract'); 
+                document.getElementById('printable-contract').classList.add('hidden');
+            }, 1000); 
         }
 
         // --- CONVIDAR AMIGO ---
