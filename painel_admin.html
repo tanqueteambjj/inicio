@@ -608,7 +608,7 @@
                             <div><label class="block text-xs font-bold text-gray-500 mb-1">Data de Nascimento</label><input type="text" id="edit-dob" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="DD/MM/AAAA" maxlength="10"></div>
                             <div><label class="block text-xs font-bold text-gray-500 mb-1">CPF</label><input type="text" id="edit-cpf" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="000.000.000-00"></div>
                             <div><label class="block text-xs font-bold text-gray-500 mb-1">Telefone / WhatsApp</label><input type="text" id="edit-phone" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
-                            <div><label class="block text-xs font-bold text-gray-500 mb-1">E-mail</label><input type="email" id="edit-email" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
+                            <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 mb-1">E-mail</label><input type="email" id="edit-email" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
                             
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1">Status da Matrícula</label>
@@ -856,13 +856,14 @@
             if (!dobStr) return null;
             let dobDate;
             try {
-                if (dobStr.includes('/')) {
-                    const parts = dobStr.split('/');
+                const sStr = String(dobStr);
+                if (sStr.includes('/')) {
+                    const parts = sStr.split('/');
                     dobDate = new Date(parts[2], parts[1] - 1, parts[0]);
-                } else if (dobStr.includes('T')) {
-                    dobDate = new Date(dobStr);
+                } else if (sStr.includes('T')) {
+                    dobDate = new Date(sStr);
                 } else {
-                    const parts = dobStr.split('-');
+                    const parts = sStr.split('-');
                     dobDate = new Date(parts[0], parts[1] - 1, parts[2]);
                 }
                 if (isNaN(dobDate)) return null;
@@ -874,7 +875,12 @@
             }
         }
 
-        function toISODate(ptBrDate) { return (!ptBrDate || !ptBrDate.includes('/')) ? ptBrDate : ptBrDate.split('/').reverse().join('-'); }
+        function toISODate(ptBrDate) { 
+            const sDate = String(ptBrDate || '');
+            if(!sDate || !sDate.includes('/')) return sDate; 
+            return sDate.split('/').reverse().join('-'); 
+        }
+
         function formatDate(isoStr) { try { const d = new Date(isoStr); return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR'); } catch (e) { return '--'; } }
 
         function isStudentKid(s) {
@@ -1415,9 +1421,15 @@
             const s = window.students.find(st => st.id === id); if (!s) return;
             const contractContainer = document.getElementById('printable-contract'); contractContainer.classList.remove('hidden'); 
             const safePlan = String(s.plan || ''); const pInfo = window.getPlanInfo(safePlan); let price = "R$ " + (Number(pInfo.price) || 0).toFixed(2).replace('.', ','); let displayName = pInfo.long || "NÃO INFORMADO";
-            let promoNote = "";
+            
             let formattedDob = '--/--/----';
-            if (s.dob) { if (s.dob.includes('/')) formattedDob = s.dob; else if (s.dob.includes('T')) { const dObj = new Date(s.dob); if (!isNaN(dObj)) formattedDob = dObj.toLocaleDateString('pt-BR'); } else { const parts = s.dob.split('-'); if (parts.length === 3) formattedDob = `${parts[2].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[0]}`; } }
+            if (s.dob) { 
+                const dobStr = String(s.dob);
+                if (dobStr.includes('/')) formattedDob = dobStr; 
+                else if (dobStr.includes('T')) { const dObj = new Date(dobStr); if (!isNaN(dObj)) formattedDob = dObj.toLocaleDateString('pt-BR'); } 
+                else { const parts = dobStr.split('-'); if (parts.length === 3) formattedDob = `${parts[2].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[0]}`; } 
+            }
+
             let contratanteText = s.name || "NÃO INFORMADO";
             if (s.guardian && String(s.guardian).trim() !== "") contratanteText = `${s.guardian} (Responsável Legal: ${s.guardianKinship || 'Não informado'})`; else if (s.titularName && String(s.titularName).trim() !== "") contratanteText = `${s.titularName} (Titular do Plano)`;
             const setText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; }
@@ -1445,7 +1457,7 @@
                     dependentsHtml = `<p class="mt-2 text-sm"><strong>DEPENDENTES VINCULADOS AO PLANO:</strong></p><ul class="list-disc pl-5 mt-1 text-xs">`;
                     deps.forEach(d => {
                         let dDob = '--/--/----';
-                        if (d.dob) { if (d.dob.includes('/')) dDob = d.dob; else if (d.dob.includes('T')) { const dObj = new Date(d.dob); if (!isNaN(dObj)) dDob = dObj.toLocaleDateString('pt-BR'); } else { const parts = d.dob.split('-'); if (parts.length === 3) dDob = `${parts[2].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[0]}`; } }
+                        if (d.dob) { const dStr = String(d.dob); if (dStr.includes('/')) dDob = dStr; else if (dStr.includes('T')) { const dObj = new Date(dStr); if (!isNaN(dObj)) dDob = dObj.toLocaleDateString('pt-BR'); } else { const parts = dStr.split('-'); if (parts.length === 3) dDob = `${parts[2].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[0]}`; } }
                         dependentsHtml += `<li><strong>${d.name}</strong> - Nasc: ${dDob} | Parentesco: ${d.parentesco || '-'} | Graduação: ${d.belt || 'Branca'}</li>`;
                     });
                     dependentsHtml += `</ul>`;
@@ -1458,99 +1470,124 @@
         };
 
         window.viewStudentDetails = (id) => {
-            const s = window.students.find(st => st.id === id); if(!s) return;
-            document.getElementById('detail-name').innerText = s.name;
-            const age = getAge(s.dob); document.getElementById('detail-age').innerText = age !== null ? `${age} anos` : '--';
-            document.getElementById('detail-belt').innerText = s.belt || "Faixa Branca";
-            const photoImg = document.getElementById('detail-photo'); const photoIcon = document.getElementById('detail-icon');
-            if(s.photoBase64) { photoImg.src = s.photoBase64; photoImg.classList.remove('hidden'); photoIcon.classList.add('hidden'); } 
-            else { photoImg.classList.add('hidden'); photoIcon.classList.remove('hidden'); }
-            const belt = (s.belt || "").toLowerCase(); let headerColor = "bg-gray-200"; 
-            if(belt.includes("azul")) headerColor = "bg-blue-600"; else if(belt.includes("roxa")) headerColor = "bg-purple-600"; else if(belt.includes("marrom")) headerColor = "bg-amber-800"; else if(belt.includes("preta")) headerColor = "bg-black"; else if(belt.includes("amarela")) headerColor = "bg-yellow-400"; else if(belt.includes("laranja")) headerColor = "bg-orange-500"; else if(belt.includes("verde")) headerColor = "bg-green-600";
-            document.getElementById('detail-header-bg').className = `h-24 w-full relative ${headerColor}`;
-            document.getElementById('detail-attendance').innerText = (s.attendance ? s.attendance.length : 0) + " aulas";
-            const statusEl = document.getElementById('detail-status');
-            statusEl.innerText = s.archived ? 'Arquivado' : (s.enrollmentStatus || 'Ativo');
-            statusEl.className = (s.enrollmentStatus === 'Ativo' && !s.archived) ? 'text-sm font-bold mt-1 text-green-600' : 'text-sm font-bold mt-1 text-red-600';
-            document.getElementById('detail-cpf').innerText = s.cpf || '-';
-            const phoneDisplay = document.getElementById('detail-phone');
-            if (s.phone && s.phone.trim() !== "") { const cleanPhone = s.phone.replace(/\D/g, ''); phoneDisplay.innerHTML = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold transition inline-flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${s.phone}</a>`; } else phoneDisplay.innerText = '-';
-            document.getElementById('detail-email').innerText = s.email || '-'; document.getElementById('detail-address').innerText = s.address || '-'; document.getElementById('detail-login').innerText = s.studentLogin || 'Não configurado'; document.getElementById('detail-pass').innerText = s.studentPassword || '---';
-            const guardianBox = document.getElementById('detail-guardian-box');
-            if (s.guardian && s.guardian.trim() !== "") { document.getElementById('detail-guardian-name').innerText = s.guardian; guardianBox.classList.remove('hidden'); } else guardianBox.classList.add('hidden');
-            
-            const pInfo = window.getPlanInfo(s.plan);
-            document.getElementById('detail-plan').innerText = pInfo.long;
-            
-            const titularBox = document.getElementById('detail-titular-box');
-            if (s.titularName && s.titularName.trim() !== "") {
-                document.getElementById('detail-titular-name').innerText = s.titularName;
-                titularBox.classList.remove('hidden');
-            } else titularBox.classList.add('hidden');
+            try {
+                const s = window.students.find(st => st.id === id); if(!s) return;
+                document.getElementById('detail-name').innerText = s.name;
+                const age = getAge(s.dob); document.getElementById('detail-age').innerText = age !== null ? `${age} anos` : '--';
+                document.getElementById('detail-belt').innerText = s.belt || "Faixa Branca";
+                const photoImg = document.getElementById('detail-photo'); const photoIcon = document.getElementById('detail-icon');
+                if(s.photoBase64) { photoImg.src = s.photoBase64; photoImg.classList.remove('hidden'); photoIcon.classList.add('hidden'); } 
+                else { photoImg.classList.add('hidden'); photoIcon.classList.remove('hidden'); }
+                const belt = (s.belt || "").toLowerCase(); let headerColor = "bg-gray-200"; 
+                if(belt.includes("azul")) headerColor = "bg-blue-600"; else if(belt.includes("roxa")) headerColor = "bg-purple-600"; else if(belt.includes("marrom")) headerColor = "bg-amber-800"; else if(belt.includes("preta")) headerColor = "bg-black"; else if(belt.includes("amarela")) headerColor = "bg-yellow-400"; else if(belt.includes("laranja")) headerColor = "bg-orange-500"; else if(belt.includes("verde")) headerColor = "bg-green-600";
+                document.getElementById('detail-header-bg').className = `h-24 w-full relative ${headerColor}`;
+                document.getElementById('detail-attendance').innerText = (s.attendance ? s.attendance.length : 0) + " aulas";
+                const statusEl = document.getElementById('detail-status');
+                statusEl.innerText = s.archived ? 'Arquivado' : (s.enrollmentStatus || 'Ativo');
+                statusEl.className = (s.enrollmentStatus === 'Ativo' && !s.archived) ? 'text-sm font-bold mt-1 text-green-600' : 'text-sm font-bold mt-1 text-red-600';
+                document.getElementById('detail-cpf').innerText = s.cpf || '-';
+                
+                const phoneDisplay = document.getElementById('detail-phone');
+                const phoneStr = String(s.phone || '');
+                if (phoneStr.trim() !== "") { 
+                    const cleanPhone = phoneStr.replace(/\D/g, ''); 
+                    phoneDisplay.innerHTML = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold transition inline-flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${s.phone}</a>`; 
+                } else {
+                    phoneDisplay.innerText = '-';
+                }
 
-            document.getElementById('detail-qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${id}`;
-            document.getElementById('detail-qr-id').value = id;
+                document.getElementById('detail-email').innerText = s.email || '-'; 
+                document.getElementById('detail-address').innerText = s.address || '-'; 
+                document.getElementById('detail-login').innerText = s.studentLogin || 'Não configurado'; 
+                document.getElementById('detail-pass').innerText = s.studentPassword || '---';
+                
+                const guardianBox = document.getElementById('detail-guardian-box');
+                if (s.guardian && String(s.guardian).trim() !== "") { document.getElementById('detail-guardian-name').innerText = s.guardian; guardianBox.classList.remove('hidden'); } else guardianBox.classList.add('hidden');
+                
+                const pInfo = window.getPlanInfo(s.plan);
+                document.getElementById('detail-plan').innerText = pInfo.long;
+                
+                const titularBox = document.getElementById('detail-titular-box');
+                if (s.titularName && String(s.titularName).trim() !== "") {
+                    document.getElementById('detail-titular-name').innerText = s.titularName;
+                    titularBox.classList.remove('hidden');
+                } else titularBox.classList.add('hidden');
 
-            const familyBox = document.getElementById('detail-family-box'); familyBox.innerHTML = '';
-            if (s.plan === 'dependente' && s.titularId) {
-                const titular = window.students.find(t => t.id === s.titularId); const tName = titular ? titular.name : 'Titular Desconhecido';
-                familyBox.innerHTML = `<h4 class="text-xs font-bold text-purple-700 uppercase mb-2"><i class="fa-solid fa-link"></i> Vínculo Familiar</h4><p class="text-sm text-purple-900 mb-2">Este aluno é dependente de <strong>${tName}</strong>.</p><button onclick="window.closeDetailsModal(); setTimeout(() => window.viewStudentDetails('${s.titularId}'), 300)" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-xs font-bold transition w-full shadow-sm"><i class="fa-solid fa-user-tie"></i> Ver Ficha do Titular</button>`;
-                familyBox.classList.remove('hidden');
-            } else {
-                const deps = window.students.filter(d => d.titularId === s.id && d.plan === 'dependente');
-                if (deps.length > 0) {
-                    let html = `<h4 class="text-xs font-bold text-purple-700 uppercase mb-2"><i class="fa-solid fa-users"></i> Dependentes Vinculados (${deps.length})</h4><ul class="space-y-2">`;
-                    deps.forEach(d => {
-                        const attCount = d.attendance ? d.attendance.length : 0;
-                        html += `<li class="flex justify-between items-center bg-white p-2 rounded shadow-sm border border-purple-100"><div><p class="font-bold text-xs text-purple-900 cursor-pointer hover:text-brand-red" onclick="window.closeDetailsModal(); setTimeout(() => window.viewStudentDetails('${d.id}'), 300)">${d.name}</p><p class="text-[10px] text-purple-600">${d.belt || 'Branca'} • Freq: ${attCount}</p></div><button onclick="window.closeDetailsModal(); setTimeout(() => window.viewStudentDetails('${d.id}'), 300)" class="text-purple-500 hover:text-purple-700 text-xs px-2 py-1 bg-purple-50 rounded"><i class="fa-solid fa-eye"></i></button></li>`;
-                    });
-                    html += `</ul>`; familyBox.innerHTML = html; familyBox.classList.remove('hidden');
-                } else familyBox.classList.add('hidden');
+                document.getElementById('detail-qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${id}`;
+                document.getElementById('detail-qr-id').value = id;
+
+                const familyBox = document.getElementById('detail-family-box'); familyBox.innerHTML = '';
+                if (s.plan === 'dependente' && s.titularId) {
+                    const titular = window.students.find(t => t.id === s.titularId); const tName = titular ? titular.name : 'Titular Desconhecido';
+                    familyBox.innerHTML = `<h4 class="text-xs font-bold text-purple-700 uppercase mb-2"><i class="fa-solid fa-link"></i> Vínculo Familiar</h4><p class="text-sm text-purple-900 mb-2">Este aluno é dependente de <strong>${tName}</strong>.</p><button onclick="window.closeDetailsModal(); setTimeout(() => window.viewStudentDetails('${s.titularId}'), 300)" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-xs font-bold transition w-full shadow-sm"><i class="fa-solid fa-user-tie"></i> Ver Ficha do Titular</button>`;
+                    familyBox.classList.remove('hidden');
+                } else {
+                    const deps = window.students.filter(d => d.titularId === s.id && d.plan === 'dependente');
+                    if (deps.length > 0) {
+                        let html = `<h4 class="text-xs font-bold text-purple-700 uppercase mb-2"><i class="fa-solid fa-users"></i> Dependentes Vinculados (${deps.length})</h4><ul class="space-y-2">`;
+                        deps.forEach(d => {
+                            const attCount = d.attendance ? d.attendance.length : 0;
+                            html += `<li class="flex justify-between items-center bg-white p-2 rounded shadow-sm border border-purple-100"><div><p class="font-bold text-xs text-purple-900 cursor-pointer hover:text-brand-red" onclick="window.closeDetailsModal(); setTimeout(() => window.viewStudentDetails('${d.id}'), 300)">${d.name}</p><p class="text-[10px] text-purple-600">${d.belt || 'Branca'} • Freq: ${attCount}</p></div><button onclick="window.closeDetailsModal(); setTimeout(() => window.viewStudentDetails('${d.id}'), 300)" class="text-purple-500 hover:text-purple-700 text-xs px-2 py-1 bg-purple-50 rounded"><i class="fa-solid fa-eye"></i></button></li>`;
+                        });
+                        html += `</ul>`; familyBox.innerHTML = html; familyBox.classList.remove('hidden');
+                    } else familyBox.classList.add('hidden');
+                }
+                
+                document.getElementById('detail-student-id').value = id;
+                document.getElementById('details-modal').classList.remove('hidden'); document.getElementById('details-modal').classList.add('flex');
+            } catch(e) {
+                console.error("Erro ao abrir detalhes do aluno:", e);
+                alert("Ocorreu um erro ao carregar os dados. Verifique a consola.");
             }
-            
-            document.getElementById('detail-student-id').value = id;
-            document.getElementById('details-modal').classList.remove('hidden'); document.getElementById('details-modal').classList.add('flex');
         };
         
         window.closeDetailsModal = () => { document.getElementById('details-modal').classList.add('hidden'); document.getElementById('details-modal').classList.remove('flex'); };
 
         window.openEditModal = (id) => {
-            const s = window.students.find(st => st.id === id); if(!s) return;
-            document.getElementById('edit-id').value = id; 
-            document.getElementById('edit-name').value = s.name || ''; 
-            
-            let formattedDob = s.dob || '';
-            if (formattedDob && formattedDob.includes('-')) { const [y, m, d] = formattedDob.split('-'); formattedDob = `${d}/${m}/${y}`; }
-            document.getElementById('edit-dob').value = formattedDob;
-            
-            document.getElementById('edit-cpf').value = s.cpf || ''; 
-            document.getElementById('edit-address').value = s.address || ''; 
-            document.getElementById('edit-guardian').value = s.guardian || ''; 
-            document.getElementById('edit-guardian-kinship').value = s.guardianKinship || ''; 
+            try {
+                const s = window.students.find(st => st.id === id); if(!s) return;
+                document.getElementById('edit-id').value = id; 
+                document.getElementById('edit-name').value = s.name || ''; 
+                
+                let formattedDob = String(s.dob || '');
+                if (formattedDob && formattedDob.includes('-')) { 
+                    const parts = formattedDob.split('-'); 
+                    if(parts.length === 3) formattedDob = `${parts[2].substring(0,2)}/${parts[1]}/${parts[0]}`; 
+                }
+                document.getElementById('edit-dob').value = formattedDob;
+                
+                document.getElementById('edit-cpf').value = s.cpf || ''; 
+                document.getElementById('edit-address').value = s.address || ''; 
+                document.getElementById('edit-guardian').value = s.guardian || ''; 
+                document.getElementById('edit-guardian-kinship').value = s.guardianKinship || ''; 
 
-            document.getElementById('edit-plan').value = s.plan || 'infantil-mensal'; 
-            document.getElementById('edit-titular').value = s.titularName || ''; 
-            document.getElementById('edit-email').value = s.email || ''; 
-            document.getElementById('edit-phone').value = s.phone || '';
-            
-            const preview = document.getElementById('edit-photo-preview');
-            if(s.photoBase64) preview.src = s.photoBase64; else preview.src = `https://ui-avatars.com/api/?name=${s.name}&background=random`;
-            
-            let color = 'Branca'; let degree = '0';
-            if(s.belt) { const parts = s.belt.split(' - '); if(parts.length > 0) color = parts[0].replace('Faixa ', ''); if(parts.length > 1) degree = parts[1].replace('º Grau', ''); }
-            
-            document.getElementById('edit-original-belt').value = s.belt || "Faixa Branca - 0º Grau";
+                document.getElementById('edit-plan').value = s.plan || 'infantil-mensal'; 
+                document.getElementById('edit-titular').value = s.titularName || ''; 
+                document.getElementById('edit-email').value = s.email || ''; 
+                document.getElementById('edit-phone').value = s.phone || '';
+                
+                const preview = document.getElementById('edit-photo-preview');
+                if(s.photoBase64) preview.src = s.photoBase64; else preview.src = `https://ui-avatars.com/api/?name=${s.name}&background=random`;
+                
+                let color = 'Branca'; let degree = '0';
+                if(s.belt) { const parts = s.belt.split(' - '); if(parts.length > 0) color = parts[0].replace('Faixa ', ''); if(parts.length > 1) degree = parts[1].replace('º Grau', ''); }
+                
+                document.getElementById('edit-original-belt').value = s.belt || "Faixa Branca - 0º Grau";
 
-            const selColor = document.getElementById('edit-belt-color'); for(let i=0; i<selColor.options.length; i++) { if(selColor.options[i].text === color) selColor.selectedIndex = i; }
-            document.getElementById('edit-belt-degree').value = degree;
-            if(s.contractEndDate) document.getElementById('edit-end-date').value = s.contractEndDate.split('T')[0];
-            document.getElementById('edit-login').value = s.studentLogin || ''; 
-            document.getElementById('edit-password').value = s.studentPassword || '';
-            document.getElementById('edit-enrollment-status').value = s.enrollmentStatus || 'Ativo';
-            
-            window.handleEditPlanChange();
-            
-            document.getElementById('edit-modal').classList.remove('hidden'); document.getElementById('edit-modal').classList.add('flex');
+                const selColor = document.getElementById('edit-belt-color'); for(let i=0; i<selColor.options.length; i++) { if(selColor.options[i].text === color) selColor.selectedIndex = i; }
+                document.getElementById('edit-belt-degree').value = degree;
+                if(s.contractEndDate) document.getElementById('edit-end-date').value = s.contractEndDate.split('T')[0]; else document.getElementById('edit-end-date').value = '';
+                document.getElementById('edit-login').value = s.studentLogin || ''; 
+                document.getElementById('edit-password').value = s.studentPassword || '';
+                document.getElementById('edit-enrollment-status').value = s.enrollmentStatus || 'Ativo';
+                
+                window.handleEditPlanChange();
+                
+                document.getElementById('edit-modal').classList.remove('hidden'); document.getElementById('edit-modal').classList.add('flex');
+            } catch(e) {
+                console.error("Erro ao abrir formulário de edição:", e);
+                alert("Erro ao abrir janela de edição.");
+            }
         };
         
         window.closeEditModal = () => { document.getElementById('edit-modal').classList.add('hidden'); document.getElementById('edit-modal').classList.remove('flex'); };
