@@ -32,9 +32,43 @@
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
         
         @media print {
-            body * { visibility: hidden; }
-            #printable-receipt, #printable-receipt * { visibility: visible; }
-            #printable-receipt { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; font-family: monospace; }
+            @page { margin: 1cm; size: A4 portrait; }
+            body, html { height: auto !important; min-height: auto !important; overflow: visible !important; background: white !important; }
+            body > * { display: none !important; }
+            
+            /* CSS Específico para Recibo */
+            body.printing-receipt #printable-receipt { 
+                display: block !important; 
+                position: absolute !important; 
+                left: 0; 
+                top: 0; 
+                width: 100% !important; 
+                padding: 40px !important; 
+                font-family: monospace; 
+                color: black !important; 
+                background: white !important; 
+                z-index: 9999; 
+            }
+            body.printing-receipt #printable-receipt * { visibility: visible !important; }
+
+            /* CSS Específico para Relatórios */
+            body.printing-report #report-container { 
+                display: block !important; 
+                position: absolute !important; 
+                left: 0; 
+                top: 0; 
+                width: 100% !important; 
+                padding: 20px !important; 
+                font-family: sans-serif; 
+                color: black !important; 
+                background: white !important; 
+                z-index: 9999; 
+            }
+            body.printing-report #report-container * { visibility: visible !important; }
+            
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f3f3f3 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
 </head>
@@ -58,6 +92,9 @@
             </a>
             <a href="#" onclick="window.switchMainView('students')" id="nav-students" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
                 <i class="fa-solid fa-file-invoice-dollar w-6"></i> <span>Mensalidades</span>
+            </a>
+            <a href="#" onclick="window.switchMainView('reports')" id="nav-reports" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
+                <i class="fa-solid fa-chart-pie w-6"></i> <span>Relatórios</span>
             </a>
         </nav>
         <div class="p-4 border-t border-gray-800">
@@ -191,6 +228,45 @@
                 </div>
             </div>
 
+            <!-- VIEW: RELATÓRIOS -->
+            <div id="view-reports" class="hidden animate-fade-in">
+                <div class="mb-6 flex justify-between items-center">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-gray-800">Relatórios Financeiros</h2>
+                        <p class="text-sm text-gray-500">Gere e imprima relatórios financeiros da escola.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Relatório Inadimplentes -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-start justify-between hover:shadow-md transition cursor-pointer" onclick="window.generateFinanceReport('inadimplentes')">
+                        <div>
+                            <h4 class="font-bold text-red-600 mb-2"><i class="fa-solid fa-file-invoice-dollar mr-2"></i> Inadimplentes</h4>
+                            <p class="text-xs text-gray-500">Lista completa de alunos com mensalidades pendentes e atrasadas.</p>
+                        </div>
+                        <button class="mt-4 bg-red-100 text-red-700 hover:bg-red-200 px-4 py-2 rounded text-xs font-bold w-full transition"><i class="fa-solid fa-print mr-1"></i> Imprimir Relatório</button>
+                    </div>
+                    
+                    <!-- Relatório Pagantes / Em Dia -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-start justify-between hover:shadow-md transition cursor-pointer" onclick="window.generateFinanceReport('pagantes')">
+                        <div>
+                            <h4 class="font-bold text-green-600 mb-2"><i class="fa-solid fa-check-circle mr-2"></i> Pagantes (Em Dia)</h4>
+                            <p class="text-xs text-gray-500">Relação de todos os alunos com o status financeiro regularizado.</p>
+                        </div>
+                        <button class="mt-4 bg-green-100 text-green-700 hover:bg-green-200 px-4 py-2 rounded text-xs font-bold w-full transition"><i class="fa-solid fa-print mr-1"></i> Imprimir Relatório</button>
+                    </div>
+
+                    <!-- Relatório Receitas do Mês -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-start justify-between hover:shadow-md transition cursor-pointer" onclick="window.generateFinanceReport('receitas_mes')">
+                        <div>
+                            <h4 class="font-bold text-blue-600 mb-2"><i class="fa-solid fa-hand-holding-dollar mr-2"></i> Receitas do Mês</h4>
+                            <p class="text-xs text-gray-500">Extrato de todos os pagamentos recebidos no mês atual.</p>
+                        </div>
+                        <button class="mt-4 bg-blue-100 text-blue-700 hover:bg-blue-200 px-4 py-2 rounded text-xs font-bold w-full transition"><i class="fa-solid fa-print mr-1"></i> Imprimir Relatório</button>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -286,7 +362,7 @@
         </div>
     </div>
 
-    <!-- RECIBO INVISÍVEL (PARA IMPRESSÃO) -->
+    <!-- RECIBO (PARA IMPRESSÃO) -->
     <div id="printable-receipt" class="hidden">
         <div style="text-align: center; margin-bottom: 20px; border-bottom: 1px dashed #000; padding-bottom: 10px;">
             <h2 style="margin:0; font-size: 18px;">TANQUE TEAM BJJ</h2>
@@ -302,6 +378,9 @@
             <p style="font-size: 10px;">Tanque Team - Recebimento</p>
         </div>
     </div>
+
+    <!-- RELATÓRIO INVISÍVEL (PARA IMPRESSÃO) -->
+    <div id="report-container" class="hidden"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -503,19 +582,21 @@
             
             document.getElementById('view-dashboard').classList.toggle('hidden', viewName !== 'dashboard');
             document.getElementById('view-students').classList.toggle('hidden', viewName !== 'students');
+            document.getElementById('view-reports').classList.toggle('hidden', viewName !== 'reports');
             
             const nDash = document.getElementById('nav-dashboard');
             const nStud = document.getElementById('nav-students');
+            const nRepo = document.getElementById('nav-reports');
             
-            if(viewName === 'dashboard') {
-                nDash.className = "flex items-center px-4 py-3 bg-green-600 text-white rounded-lg shadow-md transition-all font-bold";
-                nStud.className = "flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold";
-                window.renderRecentPayments();
-            } else {
-                nStud.className = "flex items-center px-4 py-3 bg-green-600 text-white rounded-lg shadow-md transition-all font-bold";
-                nDash.className = "flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold";
-                window.renderTable();
-            }
+            const activeClass = "flex items-center px-4 py-3 bg-green-600 text-white rounded-lg shadow-md transition-all font-bold";
+            const inactiveClass = "flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold";
+
+            if(nDash) nDash.className = viewName === 'dashboard' ? activeClass : inactiveClass;
+            if(nStud) nStud.className = viewName === 'students' ? activeClass : inactiveClass;
+            if(nRepo) nRepo.className = viewName === 'reports' ? activeClass : inactiveClass;
+
+            if(viewName === 'dashboard') window.renderRecentPayments();
+            if(viewName === 'students') window.renderTable();
         };
 
         window.switchFinanceTab = (tab) => {
@@ -581,7 +662,16 @@
                 }
 
                 const cleanPhone = (s.phone || '').replace(/\D/g, '');
-                const waBtn = cleanPhone ? `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-500 hover:text-green-700 mx-1" title="Cobrar no WhatsApp"><i class="fa-brands fa-whatsapp text-lg"></i></a>` : '';
+                let waBtn = '';
+                if (cleanPhone) {
+                    if (s.paymentStatus === 'Pendente') {
+                        const msg = encodeURIComponent(`Olá ${s.name.split(' ')[0]}, tudo bem? Aqui é do financeiro da Tanque Team BJJ 🥋.\n\nVerificamos que a sua mensalidade referente ao plano *${planInfo.short}* consta como pendente no nosso sistema.\n\nPor favor, regularize o pagamento na recepção ou via Pix. Qualquer dúvida, estamos à disposição. Oss!`);
+                        waBtn = `<a href="https://wa.me/55${cleanPhone}?text=${msg}" target="_blank" class="text-green-500 hover:text-green-700 mx-1" title="Cobrar no WhatsApp"><i class="fa-brands fa-whatsapp text-lg"></i></a>`;
+                    } else {
+                        const msg = encodeURIComponent(`Olá ${s.name.split(' ')[0]}, tudo bem? Aqui é da Tanque Team BJJ 🥋.`);
+                        waBtn = `<a href="https://wa.me/55${cleanPhone}?text=${msg}" target="_blank" class="text-green-500 hover:text-green-700 mx-1" title="Chamar no WhatsApp"><i class="fa-brands fa-whatsapp text-lg"></i></a>`;
+                    }
+                }
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-green-50 transition border-b border-gray-100";
@@ -606,6 +696,71 @@
                 `;
                 tbody.appendChild(tr);
             });
+        };
+
+        // --- RELATÓRIOS ---
+        window.generateFinanceReport = (type) => {
+            const container = document.getElementById('report-container');
+            container.classList.remove('hidden');
+            let html = `<div class="text-center mb-6 border-b pb-4"><h2 class="text-2xl font-bold uppercase tracking-wider">TANQUE TEAM BJJ</h2><h3 class="text-lg text-gray-600 uppercase mt-1">Relatório Financeiro</h3><p class="text-xs text-gray-500 mt-2">Gerado em: ${new Date().toLocaleString('pt-BR')}</p></div>`;
+            let tableRows = '';
+
+            if (type === 'inadimplentes') {
+                html += `<h3 class="font-bold text-lg mb-4 text-red-600">ALUNOS INADIMPLENTES (PENDENTES)</h3><table style="width:100%; border-collapse: collapse; font-size: 12px;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Nome</th><th style="border: 1px solid #ddd; padding: 8px;">Plano</th><th style="border: 1px solid #ddd; padding: 8px;">Vencimento</th><th style="border: 1px solid #ddd; padding: 8px;">Contato</th></tr></thead><tbody>`;
+                window.students.filter(s => s.paymentStatus === 'Pendente').sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(s => {
+                    const dueStr = s.nextDueDate ? formatDateBR(s.nextDueDate) : 'Não definido';
+                    tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${s.name}</td><td style="border: 1px solid #ddd; padding: 8px;" class="uppercase">${window.getPlanInfo(s.plan).short}</td><td style="border: 1px solid #ddd; padding: 8px; color: red;">${dueStr}</td><td style="border: 1px solid #ddd; padding: 8px;">${s.phone||'-'}</td></tr>`;
+                });
+                if(tableRows === '') tableRows = '<tr><td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: center;">Nenhum aluno inadimplente.</td></tr>';
+                html += tableRows + `</tbody></table>`;
+            } else if (type === 'pagantes') {
+                html += `<h3 class="font-bold text-lg mb-4 text-green-600">ALUNOS PAGANTES (EM DIA)</h3><table style="width:100%; border-collapse: collapse; font-size: 12px;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Nome</th><th style="border: 1px solid #ddd; padding: 8px;">Plano</th><th style="border: 1px solid #ddd; padding: 8px;">Próx. Vencimento</th></tr></thead><tbody>`;
+                window.students.filter(s => s.paymentStatus === 'Em dia').sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(s => {
+                    const dueStr = s.nextDueDate ? formatDateBR(s.nextDueDate) : 'Não definido';
+                    tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${s.name}</td><td style="border: 1px solid #ddd; padding: 8px;" class="uppercase">${window.getPlanInfo(s.plan).short}</td><td style="border: 1px solid #ddd; padding: 8px;">${dueStr}</td></tr>`;
+                });
+                if(tableRows === '') tableRows = '<tr><td colspan="3" style="border: 1px solid #ddd; padding: 8px; text-align: center;">Nenhum aluno pagante.</td></tr>';
+                html += tableRows + `</tbody></table>`;
+            } else if (type === 'receitas_mes') {
+                html += `<h3 class="font-bold text-lg mb-4 text-blue-600">RECEITAS DO MÊS ATUAL</h3><table style="width:100%; border-collapse: collapse; font-size: 12px;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Data</th><th style="border: 1px solid #ddd; padding: 8px;">Aluno/Titular</th><th style="border: 1px solid #ddd; padding: 8px;">Método</th><th style="border: 1px solid #ddd; padding: 8px;">Valor</th></tr></thead><tbody>`;
+                
+                const currentMonth = new Date().getMonth();
+                const currentYear = new Date().getFullYear();
+                let allPayments = [];
+                let totalMes = 0;
+
+                window.students.forEach(s => {
+                    if (s.paymentHistory && s.paymentHistory.length > 0) {
+                        s.paymentHistory.forEach(pay => {
+                            const pDate = new Date(pay.timestamp || pay.date);
+                            if (!isNaN(pDate) && pDate.getMonth() === currentMonth && pDate.getFullYear() === currentYear) {
+                                allPayments.push({ studentName: s.name, amount: Number(pay.amount||0), method: pay.method || 'Não inf.', timestamp: pay.timestamp || pay.date });
+                                totalMes += Number(pay.amount||0);
+                            }
+                        });
+                    }
+                });
+
+                allPayments.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                allPayments.forEach(p => {
+                    tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px;">${formatDateBR(p.timestamp)}</td><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${p.studentName}</td><td style="border: 1px solid #ddd; padding: 8px;" class="uppercase">${p.method}</td><td style="border: 1px solid #ddd; padding: 8px; color:green; font-weight:bold;">${formatCurrency(p.amount)}</td></tr>`;
+                });
+                
+                if(tableRows === '') tableRows = '<tr><td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: center;">Nenhuma receita registrada este mês.</td></tr>';
+                else tableRows += `<tr style="background-color: #e8f5e9;"><td colspan="3" style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold;">TOTAL DO MÊS:</td><td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; font-size: 14px; color: green;">${formatCurrency(totalMes)}</td></tr>`;
+
+                html += tableRows + `</tbody></table>`;
+            }
+
+            container.innerHTML = html;
+            document.body.classList.add('printing-report');
+            setTimeout(() => { 
+                window.print(); 
+                setTimeout(() => { 
+                    document.body.classList.remove('printing-report'); 
+                    container.classList.add('hidden'); 
+                }, 2000); 
+            }, 800);
         };
 
         // --- DETALHES FINANCEIROS E ORIGEM ---
@@ -735,7 +890,16 @@
             document.getElementById('rec-method').innerText = method;
             document.getElementById('rec-amount').innerText = formatCurrency(amount);
 
-            window.print();
+            document.body.classList.add('printing-receipt');
+            document.getElementById('printable-receipt').classList.remove('hidden');
+
+            setTimeout(() => {
+                window.print();
+                setTimeout(() => {
+                    document.body.classList.remove('printing-receipt');
+                    document.getElementById('printable-receipt').classList.add('hidden');
+                }, 1000);
+            }, 500);
         };
 
     </script>
