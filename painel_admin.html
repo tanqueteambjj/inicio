@@ -1178,11 +1178,14 @@
         window.deleteSelectedStudents = async () => {
             const ids = Array.from(document.querySelectorAll('.student-cb:checked')).map(cb => cb.value);
             if(ids.length === 0) return;
-            if(confirm(`Tem a certeza absoluta que deseja EXCLUIR PERMANENTEMENTE ${ids.length} aluno(s)? Esta ação apagará todos os dados da base de dados e não pode ser revertida.`)) {
+            if(confirm(`Tem a certeza absoluta que deseja EXCLUIR PERMANENTEMENTE ${ids.length} aluno(s) selecionados do arquivo? Esta ação apagará todos os dados de forma irrecuperável.`)) {
                 try {
                     await Promise.all(ids.map(id => deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id))));
                     document.getElementById('cb-select-all').checked = false; window.updateBulkActions(); window.loadData();
-                } catch(e) { alert('Erro ao excluir definitivamente.'); }
+                } catch(e) { 
+                    console.error("Erro na exclusão em massa:", e);
+                    alert('Erro ao excluir definitivamente: ' + e.message); 
+                }
             }
         };
 
@@ -1424,14 +1427,6 @@
             });
         };
 
-        window.deleteStudent = async (id) => {
-            if(!confirm("Tem a certeza absoluta que deseja apagar este aluno permanentemente? Esta ação não pode ser revertida.")) return;
-            try { 
-                await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id)); 
-                window.loadData(); 
-            } catch(e) { alert("Erro ao excluir permanentemente."); }
-        };
-
         // GERAÇÃO DE RELATÓRIOS
         window.generateReport = (type) => {
             const container = document.getElementById('report-container'); container.classList.remove('hidden');
@@ -1475,6 +1470,25 @@
             
             document.body.classList.add('printing-qr'); 
             setTimeout(() => { window.print(); setTimeout(() => { document.body.classList.remove('printing-qr'); }, 2000); }, 500);
+        };
+
+        window.openQrModal = (id) => {
+            const s = window.students.find(st => st.id === id); if(!s) return;
+            document.getElementById('qr-student-name').innerText = s.name || "Aluno"; 
+            document.getElementById('qr-belt').innerText = s.belt || "Faixa Branca"; 
+            document.getElementById('qr-plan').innerText = window.getPlanInfo(s.plan).short;
+            
+            const photoImg = document.getElementById('qr-photo'); 
+            const photoPlaceholder = document.getElementById('qr-photo-placeholder');
+            if (s.photoBase64) { 
+                photoImg.src = s.photoBase64; photoImg.classList.remove('hidden'); photoPlaceholder.classList.add('hidden'); 
+            } else { 
+                photoImg.classList.add('hidden'); photoPlaceholder.classList.remove('hidden'); photoPlaceholder.innerText = (s.name || '?').charAt(0).toUpperCase(); 
+            }
+            
+            document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${id}`; 
+            document.getElementById('qr-modal').classList.remove('hidden'); 
+            document.getElementById('qr-modal').classList.add('flex');
         };
 
         window.printIndividualContract = (id) => {
@@ -1574,6 +1588,7 @@
                 } else titularBox.classList.add('hidden');
 
                 document.getElementById('detail-qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${id}`;
+                document.getElementById('detail-qr-id').value = id;
 
                 const familyBox = document.getElementById('detail-family-box'); familyBox.innerHTML = '';
                 if (s.plan === 'dependente' && s.titularId) {
@@ -1627,26 +1642,42 @@
                 document.getElementById('edit-phone').value = s.phone || '';
                 
                 const preview = document.getElementById('edit-photo-preview');
-                if(s.photoBase64) preview.src = s.photoBase64; else preview.src = `https://ui-avatars.com/api/?name=${s.name}&background=random`;
+                if(s.photoBase64) {
+                    preview.src = s.photoBase64;
+                    preview.classList.remove('hidden');
+                } else {
+                    preview.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name || 'Aluno')}&background=random`;
+                    preview.classList.remove('hidden');
+                }
                 
                 let color = 'Branca'; let degree = '0';
                 if(s.belt) { const parts = s.belt.split(' - '); if(parts.length > 0) color = parts[0].replace('Faixa ', ''); if(parts.length > 1) degree = parts[1].replace('º Grau', ''); }
                 
                 document.getElementById('edit-original-belt').value = s.belt || "Faixa Branca - 0º Grau";
 
-                const selColor = document.getElementById('edit-belt-color'); for(let i=0; i<selColor.options.length; i++) { if(selColor.options[i].text === color) selColor.selectedIndex = i; }
-                document.getElementById('edit-belt-degree').value = degree;
-                if(s.contractEndDate) document.getElementById('edit-end-date').value = s.contractEndDate.split('T')[0]; else document.getElementById('edit-end-date').value = '';
+                const selColor = document.getElementById('edit-belt-color'); 
+                if (selColor) {
+                    for(let i=0; i<selColor.options.length; i++) { 
+                        if(selColor.options[i].text === color || selColor.options[i].value === color) selColor.selectedIndex = i; 
+                    }
+                }
+                
+                if (document.getElementById('edit-belt-degree')) document.getElementById('edit-belt-degree').value = degree;
+                if (document.getElementById('edit-end-date')) {
+                    document.getElementById('edit-end-date').value = (s.contractEndDate && typeof s.contractEndDate === 'string') ? s.contractEndDate.split('T')[0] : '';
+                }
+                
                 document.getElementById('edit-login').value = s.studentLogin || ''; 
                 document.getElementById('edit-password').value = s.studentPassword || '';
-                document.getElementById('edit-enrollment-status').value = s.enrollmentStatus || 'Ativo';
+                if (document.getElementById('edit-enrollment-status')) document.getElementById('edit-enrollment-status').value = s.enrollmentStatus || 'Ativo';
                 
                 window.handleEditPlanChange();
+                window.checkAdminEditAge();
                 
                 document.getElementById('edit-modal').classList.remove('hidden'); document.getElementById('edit-modal').classList.add('flex');
             } catch(e) {
                 console.error("Erro ao abrir formulário de edição:", e);
-                alert("Erro ao abrir janela de edição.");
+                alert("Erro ao abrir janela de edição. Tente novamente.");
             }
         };
         
