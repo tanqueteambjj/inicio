@@ -581,7 +581,7 @@
         </div>
     </div>
 
-    <!-- Edit Student Modal (COM LÓGICA DE GRADUAÇÃO INCLUÍDA) -->
+    <!-- Edit Student Modal (FULL EDIT) -->
     <div id="edit-modal" class="fixed inset-0 z-[70] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in">
             <div class="bg-brand-dark px-6 py-4 flex justify-between text-white shrink-0">
@@ -600,29 +600,60 @@
                                 <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-camera text-white"></i></div>
                                 <input type="file" id="edit-photo" accept="image/*" class="hidden" onchange="window.previewPhoto(event)">
                             </div>
-                            <div><h4 class="text-sm font-bold text-brand-red uppercase">Dados Cadastrais</h4><p class="text-xs text-gray-400">Altere as informações básicas.</p></div>
+                            <div><h4 class="text-sm font-bold text-brand-red uppercase">Dados Cadastrais</h4><p class="text-xs text-gray-400">Altere as informações básicas do aluno.</p></div>
                         </div>
+                        
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome Completo</label><input type="text" id="edit-name" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
+                            <div><label class="block text-xs font-bold text-gray-500 mb-1">Data de Nascimento</label><input type="text" id="edit-dob" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="DD/MM/AAAA" maxlength="10"></div>
+                            <div><label class="block text-xs font-bold text-gray-500 mb-1">CPF</label><input type="text" id="edit-cpf" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="000.000.000-00"></div>
+                            <div><label class="block text-xs font-bold text-gray-500 mb-1">Telefone / WhatsApp</label><input type="text" id="edit-phone" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
+                            <div><label class="block text-xs font-bold text-gray-500 mb-1">E-mail</label><input type="email" id="edit-email" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Status da Matrícula</label>
+                                <select id="edit-enrollment-status" class="w-full border rounded p-2 font-bold text-gray-700 focus:outline-none">
+                                    <option value="Ativo" class="text-green-600">Ativo</option><option value="Inativo" class="text-red-600">Inativo</option>
+                                </select>
+                            </div>
+                            
+                            <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 mb-1">Endereço Completo</label><input type="text" id="edit-address" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
+                            
+                            <div class="md:col-span-2 bg-yellow-50 p-3 rounded border border-yellow-200">
+                                <label class="block text-xs font-bold text-yellow-800 mb-1"><i class="fa-solid fa-triangle-exclamation"></i> Responsável Legal (Preencher se for menor de idade)</label>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <input type="text" id="edit-guardian" class="w-full border border-yellow-300 rounded p-2 focus:border-yellow-500 focus:outline-none text-sm" placeholder="Nome do Pai/Mãe">
+                                    <select id="edit-guardian-kinship" class="w-full border border-yellow-300 rounded p-2 focus:border-yellow-500 focus:outline-none text-sm">
+                                        <option value="">-- Parentesco --</option>
+                                        <option value="Pai">Pai</option>
+                                        <option value="Mãe">Mãe</option>
+                                        <option value="Avô/Avó">Avô/Avó</option>
+                                        <option value="Tio/Tia">Tio/Tia</option>
+                                        <option value="Outro">Outro</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1">Plano Atual</label>
-                                <select id="edit-plan" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none">
+                                <select id="edit-plan" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" onchange="window.handleEditPlanChange()">
                                     <option value="infantil-mensal">Infantil Mensal</option><option value="infantil-trimestral">Infantil Trimestral</option><option value="infantil-semestral">Infantil Semestral</option>
                                     <option value="adulto-mensal">Adulto Mensal</option><option value="adulto-trimestral">Adulto Trimestral</option><option value="adulto-semestral">Adulto Semestral</option>
                                     <option value="combo-dupla">Combo Dupla</option><option value="combo-casal">Combo Casal</option><option value="combo-familia">Combo Família</option>
                                     <option value="dependente">Dependente (Isento)</option><option value="administracao">Administração (Isento)</option>
                                 </select>
                             </div>
+                            
                             <!-- CAMPO TITULAR (VINCULAÇÃO) -->
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-bold text-purple-600 mb-1">Titular do Plano (Preencher caso seja Dependente)</label>
+                            <div class="col-span-1" id="edit-titular-container">
+                                <label class="block text-xs font-bold text-purple-600 mb-1">Titular (Se Dependente)</label>
                                 <select id="edit-titular" class="w-full border border-purple-200 rounded p-2 bg-purple-50 focus:outline-none"><option value="">-- Selecione o Titular --</option></select>
                             </div>
-                            <div><label class="block text-xs font-bold text-gray-500 mb-1">E-mail</label><input type="email" id="edit-email" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
-                            <div><label class="block text-xs font-bold text-gray-500 mb-1">Telefone / WhatsApp</label><input type="text" id="edit-phone" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
+
                         </div>
                     </div>
 
+                    <!-- GRADUAÇÃO -->
                     <div class="bg-yellow-50 p-3 rounded border border-yellow-200 md:col-span-2 grid grid-cols-2 gap-4">
                         <div class="col-span-2"><h4 class="text-xs font-bold text-yellow-700 uppercase"><i class="fa-solid fa-medal"></i> Graduação do Aluno</h4></div>
                         <div>
@@ -662,255 +693,6 @@
             <div class="bg-gray-100 px-6 py-4 flex justify-end gap-3 shrink-0 border-t border-gray-200">
                 <button onclick="window.closeEditModal()" class="px-5 py-2 border border-gray-300 rounded font-bold text-gray-700 hover:bg-gray-200 transition">Cancelar</button>
                 <button onclick="window.saveStudentChanges()" class="px-6 py-2 bg-brand-red text-white rounded font-bold hover:bg-red-700 transition shadow-md">Salvar Alterações</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- DETAILS MODAL (READ ONLY) -->
-    <div id="details-modal" class="fixed inset-0 z-[60] hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all relative">
-            <button onclick="window.closeDetailsModal()" class="absolute top-3 right-3 bg-white/80 hover:bg-white text-gray-600 hover:text-black rounded-full w-8 h-8 flex items-center justify-center z-20 shadow-sm transition"><i class="fa-solid fa-times text-lg"></i></button>
-            <div id="detail-header-bg" class="h-24 bg-gray-200 w-full relative">
-                <div class="absolute -bottom-10 left-6">
-                    <div class="w-20 h-20 bg-white rounded-full p-1 shadow-lg">
-                        <div class="w-full h-full bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-3xl overflow-hidden">
-                            <img id="detail-photo" src="" class="w-full h-full object-cover hidden">
-                            <i id="detail-icon" class="fa-solid fa-user"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="pt-12 px-6 pb-6">
-                <h2 class="text-2xl font-bold text-gray-800 leading-tight" id="detail-name">Nome do Aluno</h2>
-                <p class="text-sm text-gray-500 font-bold uppercase tracking-wide mb-4" id="detail-belt">Faixa Branca</p>
-
-                <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-gray-50 p-3 rounded border border-gray-100 text-center">
-                            <p class="text-xs text-gray-400 uppercase font-bold">Frequência Total</p>
-                            <p class="text-xl font-bold text-brand-dark" id="detail-attendance">0 aulas</p>
-                        </div>
-                        <div class="bg-gray-50 p-3 rounded border border-gray-100 text-center">
-                            <p class="text-xs text-gray-400 uppercase font-bold">Status do Aluno</p>
-                            <p class="text-sm font-bold mt-1" id="detail-status">--</p>
-                        </div>
-                    </div>
-
-                    <div class="grid md:grid-cols-3 gap-4">
-                        <div class="md:col-span-2">
-                            <h4 class="text-xs font-bold text-gray-400 uppercase border-b pb-1 mb-2">Informações Cadastrais</h4>
-                            <div class="grid grid-cols-2 gap-y-2 text-sm">
-                                <div><span class="text-gray-500 block text-xs font-bold">CPF</span><span class="font-medium text-gray-800" id="detail-cpf">--</span></div>
-                                <div><span class="text-gray-500 block text-xs font-bold">Idade</span><span class="font-medium text-gray-800" id="detail-age">--</span></div>
-                                <div><span class="text-gray-500 block text-xs font-bold">Telefone / WhatsApp</span><span class="font-medium" id="detail-phone">--</span></div>
-                                <div class="col-span-2"><span class="text-gray-500 block text-xs font-bold">E-mail</span><span class="font-medium text-gray-800" id="detail-email">--</span></div>
-                                <div class="col-span-2"><span class="text-gray-500 block text-xs font-bold">Endereço</span><span class="font-medium text-gray-800" id="detail-address">--</span></div>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-gray-50 p-3 rounded border border-gray-200 flex flex-col items-center justify-center text-center shadow-inner">
-                            <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-2"><i class="fa-solid fa-qrcode mr-1"></i> QR de Acesso</h4>
-                            <div class="bg-white p-1 rounded shadow-sm border border-gray-300">
-                                <img id="detail-qr-image" src="" alt="QR Code" class="w-20 h-20 opacity-80">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-gray-50 p-3 rounded border border-gray-100 relative mt-4">
-                        <div class="flex justify-between items-start border-b pb-1 mb-2">
-                            <h4 class="text-xs font-bold text-gray-400 uppercase">Detalhes do Contrato</h4>
-                            <button onclick="window.closeDetailsModal(); window.printIndividualContract(document.getElementById('detail-student-id').value)" class="text-[10px] bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-2 py-1 rounded font-bold shadow-sm transition"><i class="fa-solid fa-file-contract"></i> Imprimir Contrato</button>
-                        </div>
-                        <input type="hidden" id="detail-student-id">
-                        <div class="grid grid-cols-1 gap-y-2 text-sm">
-                            <div><span class="text-gray-500 block text-xs font-bold">Plano Registrado</span><span class="font-medium font-bold text-brand-dark uppercase" id="detail-plan">--</span></div>
-                        </div>
-                        <div id="detail-titular-box" class="hidden mt-3 p-2 bg-purple-100 text-purple-800 rounded border border-purple-200 text-xs">
-                            <span class="font-bold">Titular do Plano Família:</span> <span id="detail-titular-name">--</span>
-                        </div>
-                    </div>
-
-                    <div id="detail-guardian-box" class="hidden bg-yellow-50 p-3 rounded border border-yellow-100">
-                        <h4 class="text-xs font-bold text-yellow-700 uppercase mb-1 flex items-center gap-1"><i class="fa-solid fa-people-roof"></i> Responsável Legal (Menor)</h4>
-                        <p class="text-sm font-bold text-yellow-900" id="detail-guardian-name">--</p>
-                    </div>
-
-                    <div class="bg-blue-50 p-3 rounded border border-blue-100">
-                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-1">Acesso ao Portal do Aluno</h4>
-                        <p class="text-sm text-blue-900">
-                            <span class="font-bold">Login:</span> <span id="detail-login">--</span>
-                            <span class="mx-2 text-blue-300">|</span>
-                            <span class="font-bold">Senha:</span> <span id="detail-pass">--</span>
-                        </p>
-                    </div>
-                    
-                    <div id="detail-family-box" class="hidden mt-3 bg-purple-50 p-3 rounded border border-purple-200"></div>
-                </div>
-            </div>
-            <div class="bg-gray-100 px-6 py-3 flex justify-end border-t border-gray-200">
-                <button onclick="window.closeDetailsModal()" class="px-5 py-2 bg-white border border-gray-300 shadow-sm rounded text-sm font-bold text-gray-700 hover:bg-gray-50 transition">Fechar Detalhes</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- NEW REGISTER MODAL -->
-    <div id="admin-register-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in">
-            <div class="bg-brand-dark px-6 py-4 flex justify-between items-center text-white shrink-0">
-                <h3 class="font-display font-bold text-lg tracking-wider">NOVA MATRÍCULA</h3>
-                <button onclick="window.closeAdminRegisterModal()" class="hover:text-gray-300"><i class="fa-solid fa-times"></i></button>
-            </div>
-            
-            <div class="p-6 overflow-y-auto flex-1">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    
-                    <div class="md:col-span-2 pb-4 border-b border-gray-200 mb-2">
-                        <h4 class="text-xs font-bold text-brand-red uppercase mb-3"><i class="fa-solid fa-id-card mr-1"></i> Dados do Aluno</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Nome Completo</label>
-                                <input type="text" id="reg-name" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="Ex: João da Silva">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Data de Nascimento</label>
-                                <input type="text" id="reg-dob" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="DD/MM/AAAA" maxlength="10">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">CPF</label>
-                                <input type="text" id="reg-cpf" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="000.000.000-00">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">E-mail</label>
-                                <input type="email" id="reg-email" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="email@exemplo.com">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Telefone / WhatsApp</label>
-                                <input type="text" id="reg-phone" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="(00) 00000-0000">
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Endereço Completo</label>
-                                <input type="text" id="reg-address" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="Rua, Bairro, Cidade">
-                            </div>
-                            <div class="md:col-span-2 bg-yellow-50 p-3 rounded border border-yellow-200">
-                                <label class="block text-xs font-bold text-yellow-800 mb-1"><i class="fa-solid fa-triangle-exclamation"></i> Responsável Legal (Preencher se for menor de 18 anos)</label>
-                                <input type="text" id="reg-guardian" class="w-full border border-yellow-300 rounded p-2 focus:border-yellow-500 focus:outline-none text-sm" placeholder="Nome do Pai/Mãe">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Selecione o Plano</label>
-                        <select id="reg-plan" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none font-bold text-gray-700" onchange="window.handleAdminPlanChange()">
-                            <option value="infantil-mensal">Infantil Mensal</option>
-                            <option value="infantil-trimestral">Infantil Trimestral</option>
-                            <option value="infantil-semestral">Infantil Semestral</option>
-                            <option value="adulto-mensal">Adulto Mensal</option>
-                            <option value="adulto-trimestral">Adulto Trimestral</option>
-                            <option value="adulto-semestral">Adulto Semestral</option>
-                            <option value="combo-dupla">Combo Dupla (1 Ad + 1 Inf)</option>
-                            <option value="combo-casal">Combo Casal (2 Adultos)</option>
-                            <option value="combo-familia">Combo Família (3 Pessoas)</option>
-                            <option value="dependente">Dependente (Isento no Combo)</option>
-                            <option value="administracao">Administração (Isento)</option>
-                        </select>
-                    </div>
-
-                    <div class="col-span-1 hidden" id="admin-reg-titular-container">
-                        <label class="block text-xs font-bold text-purple-600 mb-1">Vincular a um Titular</label>
-                        <select id="reg-titular" class="w-full border border-purple-300 rounded p-2 bg-purple-50 focus:outline-none focus:border-purple-600 font-bold text-purple-800">
-                            <option value="">-- Selecione o Titular --</option>
-                        </select>
-                    </div>
-                    
-                    <div class="md:col-span-2 grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 mb-1">Cor da Faixa Inicial</label>
-                            <select id="reg-belt-color" class="w-full border rounded p-2 text-sm focus:border-brand-red focus:outline-none">
-                                <option value="Branca">Branca (Iniciante)</option><option value="Cinza">Cinza</option><option value="Amarela">Amarela</option><option value="Laranja">Laranja</option><option value="Verde">Verde</option><option value="Azul">Azul</option><option value="Roxa">Roxa</option><option value="Marrom">Marrom</option><option value="Preta">Preta</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 mb-1">Grau (Se já tiver)</label>
-                            <select id="reg-belt-degree" class="w-full border rounded p-2 text-sm focus:border-brand-red focus:outline-none">
-                                <option value="0">0º Grau (Liso)</option><option value="1">1º Grau</option><option value="2">2º Grau</option><option value="3">3º Grau</option><option value="4">4º Grau</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200">
-                        <h4 class="text-sm font-bold text-green-700 uppercase mb-3"><i class="fa-solid fa-cash-register"></i> Primeiro Pagamento (Opcional)</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Status Inicial</label>
-                                <select id="reg-payment" class="w-full border rounded p-2 text-sm bg-gray-50 focus:outline-none focus:border-green-500">
-                                    <option value="Pendente">Pendente (Paga depois)</option>
-                                    <option value="Em dia">Em dia (Já pagou)</option>
-                                    <option value="Isento">Isento</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Valor Pago (R$)</label>
-                                <input type="number" id="reg-pay-amount" class="w-full border rounded p-2 text-sm font-bold text-gray-700 focus:outline-none focus:border-green-500" placeholder="Ex: 189.90" step="0.01">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Forma de Pagamento</label>
-                                <select id="reg-pay-method" class="w-full border rounded p-2 text-sm bg-gray-50 focus:outline-none focus:border-green-500">
-                                    <option value="Pix">Pix</option>
-                                    <option value="Dinheiro">Dinheiro</option>
-                                    <option value="Débito">Débito</option>
-                                    <option value="Crédito à vista">Crédito à vista</option>
-                                    <option value="Crédito 2x">Crédito 2x</option>
-                                    <option value="Crédito 3x">Crédito 3x</option>
-                                </select>
-                            </div>
-                        </div>
-                        <p class="text-[10px] text-gray-400 mt-1">Se preencher o Valor Pago, o sistema já registrará o recibo inicial e deixará o aluno "Em dia".</p>
-                    </div>
-
-                    <div id="admin-reg-deps-container" class="md:col-span-2 hidden border-t-2 border-purple-200 pt-4 mt-2">
-                        <h4 class="text-sm font-bold text-purple-700 uppercase mb-3"><i class="fa-solid fa-users"></i> Cadastrar Dependentes Simultaneamente</h4>
-                        <p class="text-xs text-gray-500 mb-3">Como selecionou um Plano Família, pode adicionar os dependentes agora para criar o vínculo automático.</p>
-                        
-                        <div id="admin-reg-dep1" class="hidden bg-purple-50 p-4 rounded-lg border border-purple-200 mb-3 shadow-inner">
-                            <h5 class="font-bold text-xs text-purple-800 mb-2 border-b border-purple-200 pb-1">Dependente 1</h5>
-                            <div class="grid md:grid-cols-3 gap-3 mb-2">
-                                <div class="md:col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Nome Completo</label><input type="text" id="admin-dep1-name" class="w-full border rounded p-2 text-sm focus:border-purple-500 focus:outline-none"></div>
-                                <div><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Nascimento</label><input type="text" id="admin-dep1-dob" placeholder="DD/MM/AAAA" maxlength="10" class="w-full border rounded p-2 text-sm focus:border-purple-500 focus:outline-none"></div>
-                                <div><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Parentesco</label>
-                                    <select id="admin-dep1-kinship" class="w-full border rounded p-2 text-sm focus:border-purple-500 focus:outline-none">
-                                        <option value="Filho(a)">Filho(a)</option><option value="Cônjuge">Cônjuge</option><option value="Irmão/Irmã">Irmão/Irmã</option><option value="Outro">Outro</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div id="admin-reg-dep2" class="hidden bg-purple-50 p-4 rounded-lg border border-purple-200 mb-3 shadow-inner">
-                            <h5 class="font-bold text-xs text-purple-800 mb-2 border-b border-purple-200 pb-1">Dependente 2</h5>
-                            <div class="grid md:grid-cols-3 gap-3 mb-2">
-                                <div class="md:col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Nome Completo</label><input type="text" id="admin-dep2-name" class="w-full border rounded p-2 text-sm focus:border-purple-500 focus:outline-none"></div>
-                                <div><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Nascimento</label><input type="text" id="admin-dep2-dob" placeholder="DD/MM/AAAA" maxlength="10" class="w-full border rounded p-2 text-sm focus:border-purple-500 focus:outline-none"></div>
-                                <div><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Parentesco</label>
-                                    <select id="admin-dep2-kinship" class="w-full border rounded p-2 text-sm focus:border-purple-500 focus:outline-none">
-                                        <option value="Filho(a)">Filho(a)</option><option value="Cônjuge">Cônjuge</option><option value="Irmão/Irmã">Irmão/Irmã</option><option value="Outro">Outro</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 bg-blue-50 p-4 rounded-lg shadow-inner border border-blue-100">
-                        <h4 class="text-xs font-bold text-blue-800 uppercase mb-3 flex items-center gap-2"><i class="fa-solid fa-key"></i> Definir Acesso ao Portal do Aluno</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-bold text-blue-700 mb-1">Utilizador (Login)</label><input type="text" id="reg-student-login" class="w-full border border-blue-300 rounded p-2 focus:outline-none focus:border-blue-600" placeholder="Ex: joao.silva"></div>
-                            <div><label class="block text-xs font-bold text-blue-700 mb-1">Senha Padrão</label><input type="text" id="reg-student-pass" class="w-full border border-blue-300 rounded p-2 focus:outline-none focus:border-blue-600" placeholder="Crie uma senha inicial"></div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-            <div class="bg-gray-100 px-6 py-4 flex justify-end gap-3 shrink-0 border-t border-gray-200">
-                <button onclick="window.closeAdminRegisterModal()" class="px-5 py-2 bg-white border border-gray-300 rounded font-bold text-gray-700 hover:bg-gray-50 transition shadow-sm">Cancelar</button>
-                <button onclick="window.saveAdminNewStudent()" class="px-6 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-700 transition shadow-md flex items-center gap-2"><i class="fa-solid fa-user-check"></i> Finalizar Matrícula</button>
             </div>
         </div>
     </div>
@@ -1009,10 +791,11 @@
                 });
             };
             maskInput('reg-cpf', '(\\d{0,3})(\\d{0,3})(\\d{0,3})(\\d{0,2})', x => !x[2] ? x[1] : x[1] + '.' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '-' + x[4] : ''));
+            maskInput('edit-cpf', '(\\d{0,3})(\\d{0,3})(\\d{0,3})(\\d{0,2})', x => !x[2] ? x[1] : x[1] + '.' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '-' + x[4] : ''));
             maskInput('reg-phone', '(\\d{0,2})(\\d{0,5})(\\d{0,4})', x => !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : ''));
             maskInput('edit-exp-phone', '(\\d{0,2})(\\d{0,5})(\\d{0,4})', x => !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : ''));
             
-            ['reg-dob', 'admin-dep1-dob', 'admin-dep2-dob'].forEach(id => {
+            ['reg-dob', 'admin-dep1-dob', 'admin-dep2-dob', 'edit-dob'].forEach(id => {
                 const el = document.getElementById(id);
                 if(el) el.addEventListener('input', e => {
                     let v = e.target.value.replace(/\D/g, '');
@@ -1449,7 +1232,7 @@
             const todayISO = new Date().toISOString().split('T')[0];
             try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { attendance: arrayUnion(todayISO), attendanceLog: arrayUnion({ date: todayISO, time: 'Check-in rápido', timestamp: new Date().toISOString() }) }); window.loadData(); alert(`Presença confirmada para hoje!`); } catch(e) { alert("Erro."); }
         };
-        
+
         // NAVEGAÇÃO
         window.toggleMobileMenu = () => { document.getElementById('sidebar-menu').classList.toggle('-translate-x-full'); document.getElementById('mobile-sidebar-overlay').classList.toggle('hidden'); };
 
@@ -1521,14 +1304,15 @@
                 let avatarHtml = s.photoBase64 ? `<img src="${s.photoBase64}" class="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200">` : `<div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 mr-3 font-bold text-xs">${(s.name || '?').charAt(0).toUpperCase()}</div>`;
                 const age = getAge(s.dob); let nameHtml = isDepRow ? `<i class="fa-solid fa-level-up-alt fa-rotate-90 text-purple-300 mr-2 text-xs"></i>${s.name}` : s.name || 'Sem Nome';
                 
-                // NOME AGORA ABRE OS DETALHES CORRETAMENTE
-                let nameDisplay = `<div onclick="window.viewStudentDetails('${s.id}')" class="font-medium text-gray-900 flex items-center cursor-pointer hover:text-brand-red transition ${isDepRow ? 'pl-4 border-l-2 border-purple-200' : ''}" title="Detalhes">${nameHtml}`;
-                
-                if ((window.currentTab === 'adults' || window.currentTab === 'all') && age !== null && age < 18 && !isStudentKid(s)) nameDisplay += `<span class="ml-2 text-[10px] text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200 font-bold">Menor (${age})</span>`;
-                if (safePlan.includes('combo') && safePlan !== 'dependente') nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase">Combo</span>`;
-                if (safePlan === 'administracao') nameDisplay += `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-bold uppercase">Admin</span>`;
-                if (safePlan === 'dependente') nameDisplay += `<span class="ml-2 text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase" title="Dependente"><i class="fa-solid fa-link"></i> DEP</span>`;
-                if (s.archived) nameDisplay += `<span class="ml-2 text-[10px] text-gray-800 bg-gray-300 px-1.5 py-0.5 rounded border border-gray-400 font-bold uppercase">ARQUIVADO</span>`;
+                let nameDisplay = `
+                    <div class="font-medium text-gray-900 flex items-center group-hover:text-brand-red transition ${isDepRow ? 'pl-4 border-l-2 border-purple-200' : ''}">
+                        ${nameHtml}
+                        ${((window.currentTab === 'adults' || window.currentTab === 'all') && age !== null && age < 18 && !isStudentKid(s)) ? `<span class="ml-2 text-[10px] text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200 font-bold">Menor (${age})</span>` : ''}
+                        ${(safePlan.includes('combo') && safePlan !== 'dependente') ? `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase">Combo</span>` : ''}
+                        ${(safePlan === 'administracao') ? `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-bold uppercase">Admin</span>` : ''}
+                        ${(safePlan === 'dependente') ? `<span class="ml-2 text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase" title="Dependente"><i class="fa-solid fa-link"></i> DEP</span>` : ''}
+                        ${(s.archived) ? `<span class="ml-2 text-[10px] text-gray-800 bg-gray-300 px-1.5 py-0.5 rounded border border-gray-400 font-bold uppercase">ARQUIVADO</span>` : ''}
+                `;
 
                 const myFilteredDeps = filtered.filter(d => d.plan === 'dependente' && d.titularId === s.id);
                 if (!isDepRow && myFilteredDeps.length > 0) {
@@ -1543,13 +1327,10 @@
                 if (s.archived) {
                     actionsHtml = `
                         <button onclick="window.restoreStudent('${s.id}')" class="text-green-600 hover:text-green-900 mr-3" title="Reativar Aluno"><i class="fa-solid fa-box-open"></i></button>
-                        <button onclick="window.viewStudentDetails('${s.id}')" class="text-blue-500 hover:text-blue-700 mr-3" title="Visualizar Dados"><i class="fa-solid fa-eye"></i></button>
                         <button onclick="window.deleteStudent('${s.id}')" class="text-red-600 hover:text-red-900" title="Excluir Permanentemente"><i class="fa-solid fa-trash"></i></button>
                     `;
                 } else {
-                    // BOTÕES LIMPOS: Visualizar, Frequência, Evolução/Histórico, Editar/Graduar e Arquivar
                     actionsHtml = `
-                        <button onclick="window.viewStudentDetails('${s.id}')" class="text-blue-500 hover:text-blue-700 mr-3" title="Visualizar Dados"><i class="fa-solid fa-eye"></i></button>
                         <button onclick="window.openAttendanceModal('${s.id}')" class="text-gray-500 hover:text-black mr-3" title="Frequência"><i class="fa-solid fa-list-check"></i></button>
                         <button onclick="window.openProgressModal('${s.id}')" class="text-teal-600 hover:text-teal-900 mr-3" title="Evolução e Histórico"><i class="fa-solid fa-book-journal-whills"></i></button>
                         <button onclick="window.openEditModal('${s.id}')" class="text-orange-500 hover:text-orange-700 mr-3" title="Editar / Graduar"><i class="fa-solid fa-pen-to-square"></i></button>
@@ -1562,7 +1343,17 @@
                 const tr = document.createElement('tr'); tr.className = isDepRow ? `hidden dep-row-${parentId} bg-purple-50/40 hover:bg-purple-50 transition border-b border-purple-100` : `border-b hover:bg-gray-50 transition`;
                 tr.innerHTML = `
                     <td class="px-6 py-4 align-middle text-center"><input type="checkbox" class="student-cb rounded text-brand-red cursor-pointer" value="${s.id}" onclick="window.updateBulkActions()"></td>
-                    <td class="px-6 py-4 align-middle"><div class="flex items-center">${avatarHtml}<div>${nameDisplay}<div class="text-xs text-gray-500">${window.getPlanInfo(s.plan).short}</div></div></div></td>
+                    
+                    <td class="px-6 py-4 align-middle">
+                        <div onclick="window.viewStudentDetails('${s.id}')" class="flex items-center cursor-pointer group" title="Ver Detalhes do Aluno">
+                            ${avatarHtml}
+                            <div>
+                                ${nameDisplay}
+                                <div class="text-xs text-gray-500 mt-0.5">${window.getPlanInfo(s.plan).short}</div>
+                            </div>
+                        </div>
+                    </td>
+
                     ${guardianCell}
                     <td class="px-6 py-4 align-middle"><div class="w-32 h-8 flex items-center">${beltSVG}</div><div class="text-xs text-gray-400 mt-1">${s.belt || 'Branca'}</div></td>
                     <td class="px-6 py-4 align-middle">${attendanceBtnHtml}</td>
@@ -1679,8 +1470,8 @@
             document.getElementById('detail-header-bg').className = `h-24 w-full relative ${headerColor}`;
             document.getElementById('detail-attendance').innerText = (s.attendance ? s.attendance.length : 0) + " aulas";
             const statusEl = document.getElementById('detail-status');
-            statusEl.innerText = s.archived ? 'Arquivado' : 'Ativo';
-            statusEl.className = (!s.archived) ? 'text-sm font-bold mt-1 text-green-600' : 'text-sm font-bold mt-1 text-gray-500';
+            statusEl.innerText = s.archived ? 'Arquivado' : (s.enrollmentStatus || 'Ativo');
+            statusEl.className = (s.enrollmentStatus === 'Ativo' && !s.archived) ? 'text-sm font-bold mt-1 text-green-600' : 'text-sm font-bold mt-1 text-red-600';
             document.getElementById('detail-cpf').innerText = s.cpf || '-';
             const phoneDisplay = document.getElementById('detail-phone');
             if (s.phone && s.phone.trim() !== "") { const cleanPhone = s.phone.replace(/\D/g, ''); phoneDisplay.innerHTML = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold transition inline-flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${s.phone}</a>`; } else phoneDisplay.innerText = '-';
@@ -1725,9 +1516,26 @@
 
         window.openEditModal = (id) => {
             const s = window.students.find(st => st.id === id); if(!s) return;
-            document.getElementById('edit-id').value = id; document.getElementById('edit-name').value = s.name; document.getElementById('edit-plan').value = s.plan || 'infantil-mensal'; document.getElementById('edit-titular').value = s.titularName || ''; document.getElementById('edit-email').value = s.email || ''; document.getElementById('edit-phone').value = s.phone || '';
+            document.getElementById('edit-id').value = id; 
+            document.getElementById('edit-name').value = s.name || ''; 
+            
+            let formattedDob = s.dob || '';
+            if (formattedDob && formattedDob.includes('-')) { const [y, m, d] = formattedDob.split('-'); formattedDob = `${d}/${m}/${y}`; }
+            document.getElementById('edit-dob').value = formattedDob;
+            
+            document.getElementById('edit-cpf').value = s.cpf || ''; 
+            document.getElementById('edit-address').value = s.address || ''; 
+            document.getElementById('edit-guardian').value = s.guardian || ''; 
+            document.getElementById('edit-guardian-kinship').value = s.guardianKinship || ''; 
+
+            document.getElementById('edit-plan').value = s.plan || 'infantil-mensal'; 
+            document.getElementById('edit-titular').value = s.titularName || ''; 
+            document.getElementById('edit-email').value = s.email || ''; 
+            document.getElementById('edit-phone').value = s.phone || '';
+            
             const preview = document.getElementById('edit-photo-preview');
             if(s.photoBase64) preview.src = s.photoBase64; else preview.src = `https://ui-avatars.com/api/?name=${s.name}&background=random`;
+            
             let color = 'Branca'; let degree = '0';
             if(s.belt) { const parts = s.belt.split(' - '); if(parts.length > 0) color = parts[0].replace('Faixa ', ''); if(parts.length > 1) degree = parts[1].replace('º Grau', ''); }
             
@@ -1736,7 +1544,12 @@
             const selColor = document.getElementById('edit-belt-color'); for(let i=0; i<selColor.options.length; i++) { if(selColor.options[i].text === color) selColor.selectedIndex = i; }
             document.getElementById('edit-belt-degree').value = degree;
             if(s.contractEndDate) document.getElementById('edit-end-date').value = s.contractEndDate.split('T')[0];
-            document.getElementById('edit-login').value = s.studentLogin || ''; document.getElementById('edit-password').value = s.studentPassword || '';
+            document.getElementById('edit-login').value = s.studentLogin || ''; 
+            document.getElementById('edit-password').value = s.studentPassword || '';
+            document.getElementById('edit-enrollment-status').value = s.enrollmentStatus || 'Ativo';
+            
+            window.handleEditPlanChange();
+            
             document.getElementById('edit-modal').classList.remove('hidden'); document.getElementById('edit-modal').classList.add('flex');
         };
         
@@ -1747,19 +1560,53 @@
             if(file) { const reader = new FileReader(); reader.onload = function(e) { document.getElementById('edit-photo-preview').src = e.target.result; }; reader.readAsDataURL(file); }
         };
 
+        window.handleEditPlanChange = () => {
+            const plan = document.getElementById('edit-plan').value;
+            const titularContainer = document.getElementById('edit-titular-container');
+            if (plan === 'dependente') titularContainer.classList.remove('hidden');
+            else titularContainer.classList.add('hidden');
+        };
+
         window.saveStudentChanges = async () => {
-            const id = document.getElementById('edit-id').value; const name = document.getElementById('edit-name').value; const plan = document.getElementById('edit-plan').value; const titular = document.getElementById('edit-titular').value; const email = document.getElementById('edit-email').value; const phone = document.getElementById('edit-phone').value; const color = document.getElementById('edit-belt-color').value; const degree = document.getElementById('edit-belt-degree').value; const beltStr = `Faixa ${color} - ${degree}º Grau`; const dateStr = document.getElementById('edit-end-date').value; const login = document.getElementById('edit-login').value; const pass = document.getElementById('edit-password').value;
+            const id = document.getElementById('edit-id').value; 
+            const name = document.getElementById('edit-name').value; 
+            const dobRaw = document.getElementById('edit-dob').value;
+            const dobIso = toISODate(dobRaw);
+            const cpf = document.getElementById('edit-cpf').value;
+            const address = document.getElementById('edit-address').value;
+            const guardian = document.getElementById('edit-guardian').value;
+            const guardianKinship = document.getElementById('edit-guardian-kinship').value;
+            
+            const plan = document.getElementById('edit-plan').value; 
+            const titular = document.getElementById('edit-titular').value; 
+            const email = document.getElementById('edit-email').value; 
+            const phone = document.getElementById('edit-phone').value; 
+            const color = document.getElementById('edit-belt-color').value; 
+            const degree = document.getElementById('edit-belt-degree').value; 
+            const beltStr = `Faixa ${color} - ${degree}º Grau`; 
+            const dateStr = document.getElementById('edit-end-date').value; 
+            const login = document.getElementById('edit-login').value; 
+            const pass = document.getElementById('edit-password').value;
+            const status = document.getElementById('edit-enrollment-status').value;
+            
             const originalBelt = document.getElementById('edit-original-belt').value;
 
             let dateObj = new Date().toISOString(); if(dateStr) { const [y, m, d] = dateStr.split('-').map(Number); dateObj = new Date(y, m - 1, d, 12, 0, 0).toISOString(); }
             let newCategory = 'Adulto'; if (plan.includes('infantil')) newCategory = 'Infantil'; if (plan.includes('combo')) newCategory = 'Combo Família'; if (plan === 'administracao') newCategory = 'Administração'; if (plan === 'dependente') newCategory = 'Dependente (Combo)';
+            
             const photoInput = document.getElementById('edit-photo'); let photoBase64 = null;
             if(photoInput.files && photoInput.files[0]) {
                  const file = photoInput.files[0]; if(file.size > 800 * 1024) { alert("A foto é muito grande."); return; }
                  photoBase64 = await new Promise((resolve) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result); reader.readAsDataURL(file); });
             }
             try {
-                const updateData = { name: name, plan: plan, titularName: titular, category: newCategory, belt: beltStr, contractEndDate: dateObj, studentLogin: login, studentPassword: pass, email: email, phone: phone };
+                const updateData = { 
+                    name: name, dob: dobIso, cpf: cpf, address: address, guardian: guardian, guardianKinship: guardianKinship,
+                    plan: plan, titularName: titular, category: newCategory, enrollmentStatus: status, 
+                    belt: beltStr, contractEndDate: dateObj, studentLogin: login, studentPassword: pass, 
+                    email: email, phone: phone 
+                };
+                
                 if(photoBase64) updateData.photoBase64 = photoBase64;
                 
                 if (beltStr !== originalBelt) {
@@ -1768,7 +1615,7 @@
                 }
 
                 await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), updateData);
-                window.closeEditModal(); window.loadData(); alert("Dados atualizados!");
+                window.closeEditModal(); window.loadData(); alert("Dados atualizados com sucesso!");
             } catch(e) { console.error(e); alert("Erro ao salvar."); }
         };
 
