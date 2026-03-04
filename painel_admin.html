@@ -697,47 +697,6 @@
         </div>
     </div>
 
-    <!-- NOTICE MODAL -->
-    <div id="notice-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in border-t-4 border-yellow-500">
-            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-200">
-                <h3 class="font-bold text-lg text-gray-800" id="notice-modal-title"><i class="fa-solid fa-bullhorn text-yellow-500 mr-2"></i> Publicar Aviso</h3>
-                <button onclick="window.closeNoticeModal()" class="text-gray-400 hover:text-gray-800"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <div class="p-6 space-y-4">
-                <input type="hidden" id="notice-id">
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 mb-1">Título do Aviso</label>
-                    <input type="text" id="notice-title" class="w-full border rounded p-3 text-sm focus:border-yellow-500 focus:outline-none" placeholder="Ex: Feriado nesta Sexta-feira">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-600 mb-1">Mensagem (Visível para todos os alunos)</label>
-                    <textarea id="notice-text" rows="4" class="w-full border rounded p-3 text-sm focus:border-yellow-500 focus:outline-none" placeholder="Escreva os detalhes do aviso aqui..."></textarea>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 mb-1">Tipo de Etiqueta</label>
-                        <select id="notice-type" class="w-full border rounded p-2 text-sm focus:border-yellow-500 focus:outline-none font-bold">
-                            <option value="info" class="text-blue-600">ℹ️ Informativo (Azul)</option>
-                            <option value="alert" class="text-yellow-600">⚠️ Importante (Amarelo)</option>
-                            <option value="success" class="text-green-600">🎉 Comemoração (Verde)</option>
-                            <option value="danger" class="text-red-600">🚨 Urgente (Vermelho)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 mb-1">Data de Expiração</label>
-                        <input type="date" id="notice-expiry" class="w-full border rounded p-2 text-sm focus:border-yellow-500 focus:outline-none text-gray-700">
-                    </div>
-                </div>
-                <p class="text-[10px] text-gray-500 bg-gray-50 p-2 rounded border border-gray-100"><i class="fa-solid fa-circle-info mr-1"></i> Se não definir uma Data de Expiração, o aviso ficará fixo no mural até ser apagado manualmente.</p>
-                <div class="mt-6 flex justify-end gap-3">
-                    <button onclick="window.closeNoticeModal()" class="px-5 py-2 border rounded text-sm hover:bg-gray-100 font-bold text-gray-600 transition">Cancelar</button>
-                    <button onclick="window.saveNotice()" class="px-6 py-2 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600 font-bold shadow-md transition">Publicar no Mural</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -1909,8 +1868,10 @@
 
         window.convertToStudent = (id) => {
             const exp = window.experimentalList.find(e => e.id === id); if(!exp) return;
-            // Since this redirects to Admin Dashboard which we are not inside, alert user.
-            alert("Acesse o painel do Admin para matricular visitantes.");
+            window.openAdminRegisterModal(); document.getElementById('reg-name').value = exp.name || '';
+            if (exp.dob && exp.dob.includes('-')) { const [y, m, d] = exp.dob.split('-'); document.getElementById('reg-dob').value = `${d}/${m}/${y}`; } else document.getElementById('reg-dob').value = exp.dob || '';
+            document.getElementById('reg-email').value = exp.email || ''; document.getElementById('reg-phone').value = exp.phone || ''; document.getElementById('reg-guardian').value = exp.guardian ? exp.guardian + (exp.guardianKinship ? ` (${exp.guardianKinship})` : '') : '';
+            updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), { status: 'Matriculado' }).then(() => { exp.status = 'Matriculado'; window.renderExperimentalTable(); });
         };
 
         window.openEditExperimentalModal = (id) => {
