@@ -109,21 +109,21 @@
         </div>
         <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
             <a href="#" onclick="window.switchMainView('students')" id="nav-students" class="flex items-center px-4 py-3 bg-brand-red text-white rounded-lg shadow-md transition-all font-bold">
-                <i class="fa-solid fa-users w-6"></i> <span>Alunos</span>
+                <i class="fa-solid fa-users w-6"></i> <span class="ml-2">Alunos</span>
             </a>
             <a href="#" onclick="window.switchMainView('experimental')" id="nav-experimental" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
-                <i class="fa-solid fa-fire w-6"></i> <span>Aulas Exp.</span>
+                <i class="fa-solid fa-fire w-6"></i> <span class="ml-2">Aulas Exp.</span>
             </a>
             <a href="#" onclick="window.switchMainView('reports')" id="nav-reports" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
-                <i class="fa-solid fa-chart-pie w-6"></i> <span>Relatórios</span>
+                <i class="fa-solid fa-chart-pie w-6"></i> <span class="ml-2">Relatórios</span>
             </a>
             <a href="#" onclick="window.switchMainView('notices')" id="nav-notices" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
-                <i class="fa-solid fa-bullhorn w-6"></i> <span>Mural de Avisos</span>
+                <i class="fa-solid fa-bullhorn w-6"></i> <span class="ml-2">Mural de Avisos</span>
             </a>
         </nav>
         <div class="p-4 border-t border-gray-800">
             <button onclick="window.handleLogout()" class="flex items-center w-full px-4 py-2 text-red-400 hover:text-red-300 transition font-bold">
-                <i class="fa-solid fa-right-from-bracket w-6"></i> <span>Sair</span>
+                <i class="fa-solid fa-right-from-bracket w-6"></i> <span class="ml-2">Sair</span>
             </button>
         </div>
     </aside>
@@ -1117,7 +1117,296 @@
 
         window.handleLogout = () => { localStorage.removeItem('tanque_user_session'); window.location.href = "https://www.tanqueteambjj.com.br/login.html"; }
 
-        // ADICIONANDO A LÓGICA DO LEITOR DE QR CODE (CHECK-IN)
+        // UTILITÁRIOS
+        function getAge(dobStr) {
+            if (!dobStr) return null;
+            let dobDate;
+            try {
+                const sStr = String(dobStr);
+                if (sStr.includes('/')) {
+                    const parts = sStr.split('/');
+                    dobDate = new Date(parts[2], parts[1] - 1, parts[0]);
+                } else if (sStr.includes('T')) {
+                    dobDate = new Date(sStr);
+                } else {
+                    const parts = sStr.split('-');
+                    dobDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                }
+                if (isNaN(dobDate)) return null;
+                const ageDifMs = Date.now() - dobDate.getTime();
+                const ageDate = new Date(ageDifMs);
+                return Math.abs(ageDate.getUTCFullYear() - 1970);
+            } catch(e) {
+                return null;
+            }
+        }
+
+        function toISODate(ptBrDate) { 
+            const sDate = String(ptBrDate || '');
+            if(!sDate || !sDate.includes('/')) return sDate; 
+            return sDate.split('/').reverse().join('-'); 
+        }
+
+        function formatDate(isoStr) { try { const d = new Date(isoStr); return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR'); } catch (e) { return '--'; } }
+
+        function isStudentKid(s) {
+            const cat = s.category ? String(s.category).toLowerCase() : ''; const plan = s.plan ? String(s.plan).toLowerCase() : '';
+            if (cat === 'administração' || plan === 'administracao') return false; 
+            const age = getAge(s.dob); if (age !== null && age < 12) return true;
+            if (cat.includes('infantil') || plan.includes('infantil')) return true; return false; 
+        }
+
+        window.checkAdminRegAge = function() {
+            const dob = document.getElementById('reg-dob').value;
+            const container = document.getElementById('admin-reg-guardian-container');
+            const guardianName = document.getElementById('reg-guardian');
+            const guardianCpf = document.getElementById('reg-guardian-cpf');
+            
+            if(dob && dob.length === 10) {
+                const age = getAge(dob);
+                if(age !== null && age < 18) {
+                    container.classList.remove('hidden');
+                    guardianName.setAttribute('required', 'true');
+                    guardianCpf.setAttribute('required', 'true');
+                } else {
+                    container.classList.add('hidden');
+                    guardianName.removeAttribute('required');
+                    guardianCpf.removeAttribute('required');
+                }
+            } else {
+                container.classList.add('hidden');
+                guardianName.removeAttribute('required');
+                guardianCpf.removeAttribute('required');
+            }
+        };
+
+        window.checkAdminEditAge = function() {
+            const dob = document.getElementById('edit-dob').value;
+            const container = document.getElementById('admin-edit-guardian-container');
+            
+            if(dob && dob.length === 10) {
+                const age = getAge(dob);
+                if(age !== null && age < 18) {
+                    container.classList.remove('hidden');
+                } else {
+                    container.classList.add('hidden');
+                }
+            } else {
+                container.classList.remove('hidden'); 
+            }
+        };
+
+        window.populateTitularSelects = function() {
+            const comboStudents = window.students.filter(s => s.plan && s.plan.includes('combo') && s.enrollmentStatus !== 'Inativo' && !s.archived);
+            let optionsHtml = '<option value="">-- Selecione o Titular --</option>';
+            comboStudents.sort((a, b) => (a.name || '').localeCompare(b.name || '')).forEach(s => optionsHtml += `<option value="${s.name}">${s.name}</option>`);
+            if (document.getElementById('reg-titular')) document.getElementById('reg-titular').innerHTML = optionsHtml;
+            if (document.getElementById('edit-titular')) document.getElementById('edit-titular').innerHTML = optionsHtml;
+        }
+
+        // CARREGAMENTO DE ALUNOS
+        window.loadData = async function() {
+            try {
+                if(!window.db) return;
+                const querySnapshot = await getDocs(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'));
+                window.students = [];
+                querySnapshot.forEach(doc => window.students.push({ id: doc.id, ...doc.data() }));
+                window.students.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
+                window.populateTitularSelects();
+                updateStats();
+                if(window.currentView === 'students') window.renderTable();
+            } catch (error) { console.error(error); }
+        }
+
+        function updateStats() {
+            const total = window.students.filter(s => !s.archived).length;
+            let kidsCount = 0, adultsCount = 0, archivedCount = 0;
+            
+            window.students.forEach(s => {
+                if (s.archived) { archivedCount++; return; }
+                if (isStudentKid(s)) kidsCount++; else adultsCount++;
+            });
+            const setText = (id, txt) => { const e = document.getElementById(id); if(e) e.innerText = txt; }
+            setText('stat-total', total); setText('stat-infantil', kidsCount); setText('stat-adulto', adultsCount); 
+            setText('stat-archived', archivedCount);
+        }
+
+        // PROGRESSO, ANOTAÇÕES & PRESENÇAS
+        window.openProgressModal = (id) => {
+            const s = window.students.find(st => st.id === id); if(!s) return;
+            document.getElementById('prog-student-id').value = id;
+            document.getElementById('prog-student-name').innerText = s.name;
+            document.getElementById('prog-start-date').innerText = formatDate(s.registrationDate);
+            document.getElementById('prog-current-belt').innerText = s.belt || 'Branca';
+            document.getElementById('prog-new-note').value = '';
+            document.getElementById('prog-start-filter').value = '';
+            document.getElementById('prog-end-filter').value = '';
+            
+            // 1. Linha do Tempo (Anotações e Graduações)
+            const tl = document.getElementById('prog-timeline');
+            tl.innerHTML = '';
+            let logs = s.progressLog ? [...s.progressLog] : [];
+            logs.push({ type: 'info', text: 'Matrícula realizada / Início dos treinos.', date: s.registrationDate || new Date().toISOString() });
+            logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            logs.forEach(log => {
+                const d = new Date(log.date).toLocaleDateString('pt-BR');
+                let icon = '<i class="fa-solid fa-comment-dots text-teal-500"></i>';
+                let bg = 'bg-teal-50 border-teal-200';
+                if(log.type === 'graduation') { icon = '<i class="fa-solid fa-medal text-yellow-500"></i>'; bg = 'bg-yellow-50 border-yellow-200'; }
+                if(log.type === 'info') { icon = '<i class="fa-solid fa-flag-checkered text-blue-500"></i>'; bg = 'bg-blue-50 border-blue-200'; }
+
+                tl.innerHTML += `
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-full border border-white bg-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                            ${icon}
+                        </div>
+                        <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-3 rounded border shadow-sm ${bg}">
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="font-bold text-gray-800 text-xs">${log.type === 'graduation' ? 'Graduação' : (log.type === 'note' ? 'Anotação do Professor' : 'Registro do Sistema')}</div>
+                                <time class="text-[10px] font-medium text-gray-500">${d}</time>
+                            </div>
+                            <div class="text-sm text-gray-600">${log.text}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // 2. Histórico de Presenças (Lista Separada)
+            window.filterProgressAttendance();
+            
+            document.getElementById('progress-modal').classList.remove('hidden'); 
+            document.getElementById('progress-modal').classList.add('flex');
+        };
+
+        window.filterProgressAttendance = () => {
+            const id = document.getElementById('prog-student-id').value;
+            const s = window.students.find(st => st.id === id);
+            if(!s) return;
+            
+            const startFilter = document.getElementById('prog-start-filter').value;
+            const endFilter = document.getElementById('prog-end-filter').value;
+            
+            const attList = document.getElementById('prog-attendance-list');
+            attList.innerHTML = '';
+            let attendances = [];
+            
+            if (s.attendanceLog && s.attendanceLog.length > 0) {
+                attendances = [...s.attendanceLog];
+            } else if (s.attendance && s.attendance.length > 0) {
+                attendances = s.attendance.map(dateStr => ({ date: dateStr, time: 'Check-in manual' }));
+            }
+
+            if (startFilter) {
+                attendances = attendances.filter(att => att.date >= startFilter);
+            }
+            if (endFilter) {
+                attendances = attendances.filter(att => att.date <= endFilter);
+            }
+
+            document.getElementById('prog-att-total').innerText = `${attendances.length} aulas`;
+
+            if (attendances.length === 0) {
+                attList.innerHTML = '<div class="text-xs text-gray-500 text-center py-4 italic">Nenhuma presença encontrada para este período.</div>';
+            } else {
+                attendances.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(att => {
+                    const dateFmt = formatDate(att.date + 'T12:00:00');
+                    attList.innerHTML += `
+                        <div class="flex justify-between items-center text-sm p-2 bg-white rounded border border-gray-100 shadow-sm">
+                            <span class="font-bold text-gray-700">${dateFmt}</span>
+                            <span class="text-gray-500 text-xs bg-gray-100 px-2 rounded">${att.time || '--'}</span>
+                        </div>
+                    `;
+                });
+            }
+        };
+
+        window.closeProgressModal = () => { document.getElementById('progress-modal').classList.add('hidden'); document.getElementById('progress-modal').classList.remove('flex'); };
+
+        window.saveProgressNote = async () => {
+            const id = document.getElementById('prog-student-id').value;
+            const text = document.getElementById('prog-new-note').value.trim();
+            if(!text) { alert("Escreva uma anotação."); return; }
+            try {
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), {
+                    progressLog: arrayUnion({ type: 'note', text: text, date: new Date().toISOString() })
+                });
+                const s = window.students.find(st => st.id === id);
+                if(s) {
+                    if(!s.progressLog) s.progressLog = [];
+                    s.progressLog.push({ type: 'note', text: text, date: new Date().toISOString() });
+                }
+                window.openProgressModal(id);
+            } catch(e) { alert("Erro ao salvar anotação."); }
+        };
+
+        window.printProgressReport = () => {
+            const id = document.getElementById('prog-student-id').value;
+            const s = window.students.find(st => st.id === id); if(!s) return;
+            const startFilter = document.getElementById('prog-start-filter').value;
+            const endFilter = document.getElementById('prog-end-filter').value;
+            
+            document.getElementById('print-prog-name').innerText = s.name;
+            document.getElementById('print-prog-start').innerText = formatDate(s.registrationDate);
+            document.getElementById('print-prog-belt').innerText = s.belt || 'Branca';
+            document.getElementById('print-prog-plan').innerText = window.getPlanInfo(s.plan).short;
+            
+            // Render Tabela Anotações
+            const tbodyLogs = document.getElementById('print-prog-table-body');
+            tbodyLogs.innerHTML = '';
+            
+            let logs = s.progressLog ? [...s.progressLog] : [];
+            logs.push({ type: 'info', text: 'Matrícula realizada / Início dos treinos.', date: s.registrationDate || new Date().toISOString() });
+            logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            logs.forEach(log => {
+                const d = new Date(log.date).toLocaleDateString('pt-BR');
+                let typeStr = log.type === 'graduation' ? 'Graduação' : (log.type === 'note' ? 'Anotação' : 'Sistema');
+                tbodyLogs.innerHTML += `<tr><td class="p-2 border">${d}</td><td class="p-2 border font-bold">${typeStr}</td><td class="p-2 border">${log.text}</td></tr>`;
+            });
+
+            // Render Tabela Presenças
+            const tbodyAtt = document.getElementById('print-prog-attendance-body');
+            tbodyAtt.innerHTML = '';
+            let attendances = [];
+            
+            if (s.attendanceLog && s.attendanceLog.length > 0) {
+                attendances = [...s.attendanceLog];
+            } else if (s.attendance && s.attendance.length > 0) {
+                attendances = s.attendance.map(dateStr => ({ date: dateStr, time: 'Check-in manual' }));
+            }
+
+            let printMonthLabel = "";
+            if (startFilter || endFilter) {
+                if (startFilter) attendances = attendances.filter(att => att.date >= startFilter);
+                if (endFilter) attendances = attendances.filter(att => att.date <= endFilter);
+                
+                const sDate = startFilter ? formatDate(startFilter + 'T12:00:00') : 'Início';
+                const eDate = endFilter ? formatDate(endFilter + 'T12:00:00') : 'Hoje';
+                printMonthLabel = `(Período: ${sDate} até ${eDate})`;
+            } else {
+                printMonthLabel = "(Todo o Período)";
+            }
+
+            document.getElementById('print-prog-att-total').innerText = `Total: ${attendances.length} aulas ${printMonthLabel}`;
+
+            if (attendances.length === 0) {
+                tbodyAtt.innerHTML = '<tr><td colspan="2" class="p-2 border text-center text-gray-500 italic">Nenhuma presença registrada neste período.</td></tr>';
+            } else {
+                attendances.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(att => {
+                    const dateFmt = formatDate(att.date + 'T12:00:00');
+                    tbodyAtt.innerHTML += `<tr><td class="p-2 border">${dateFmt}</td><td class="p-2 border">${att.time || '--'}</td></tr>`;
+                });
+            }
+            
+            document.body.classList.add('printing-progress'); 
+            setTimeout(() => { 
+                window.print(); 
+                setTimeout(() => { document.body.classList.remove('printing-progress'); }, 2000); 
+            }, 800);
+        };
+
+        // LÓGICA DO LEITOR DE QR CODE (CHECK-IN DA CÂMERA)
         let html5QrcodeScanner = null;
 
         window.openCheckinModal = () => {
@@ -1191,8 +1480,667 @@
 
         window.onScanFailure = (error) => { /* Ignore background scanning errors */ };
 
-        // UTILITÁRIOS FIM DA DECLARAÇÃO
+        // FUNÇÕES EM MASSA E ARQUIVAMENTO
+        window.toggleSelectAll = (source) => { document.querySelectorAll('.student-cb').forEach(cb => cb.checked = source.checked); window.updateBulkActions(); };
+
+        window.updateBulkActions = () => {
+            const count = document.querySelectorAll('.student-cb:checked').length;
+            const bulkDiv = document.getElementById('bulk-actions'); 
+            const btnBulkArchive = document.getElementById('btn-bulk-archive');
+            const btnBulkDelete = document.getElementById('btn-bulk-delete');
+            const btnAddPresence = document.getElementById('btn-add-presence-bulk');
+            
+            if(count > 0) { 
+                bulkDiv.classList.remove('hidden'); 
+                if (window.currentTab === 'archived') {
+                    if(btnBulkDelete) { btnBulkDelete.classList.remove('hidden'); document.getElementById('selected-count-delete').innerText = count; }
+                    if(btnBulkArchive) btnBulkArchive.classList.add('hidden');
+                    if(btnAddPresence) btnAddPresence.classList.add('hidden');
+                } else {
+                    if(btnBulkArchive) { btnBulkArchive.classList.remove('hidden'); document.getElementById('selected-count-archive').innerText = count; }
+                    if(btnBulkDelete) btnBulkDelete.classList.add('hidden');
+                    if(btnAddPresence) btnAddPresence.classList.remove('hidden');
+                }
+            } 
+            else { 
+                bulkDiv.classList.add('hidden'); 
+                if(btnBulkArchive) btnBulkArchive.classList.add('hidden');
+                if(btnBulkDelete) btnBulkDelete.classList.add('hidden');
+            }
+        };
+
+        window.archiveSelectedStudents = async () => {
+            const ids = Array.from(document.querySelectorAll('.student-cb:checked')).map(cb => cb.value);
+            if(ids.length === 0) return;
+            if(confirm(`Tem certeza que deseja ARQUIVAR ${ids.length} alunos selecionados?`)) {
+                try {
+                    await Promise.all(ids.map(id => updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { archived: true })));
+                    document.getElementById('cb-select-all').checked = false; window.updateBulkActions(); window.loadData();
+                } catch(e) { alert('Erro ao arquivar.'); }
+            }
+        };
+
+        window.deleteSelectedStudents = async () => {
+            const ids = Array.from(document.querySelectorAll('.student-cb:checked')).map(cb => cb.value);
+            if(ids.length === 0) return;
+            if(confirm(`Tem a certeza absoluta que deseja EXCLUIR PERMANENTEMENTE ${ids.length} aluno(s) selecionados do arquivo? Esta ação apagará todos os dados de forma irrecuperável.`)) {
+                try {
+                    await Promise.all(ids.map(id => deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id))));
+                    document.getElementById('cb-select-all').checked = false; window.updateBulkActions(); window.loadData();
+                } catch(e) { 
+                    console.error("Erro na exclusão em massa:", e);
+                    alert('Erro ao excluir definitivamente: ' + e.message); 
+                }
+            }
+        };
+
+        window.archiveStudent = async (id) => {
+            const myDeps = window.students.filter(d => d.titularId === id && !d.archived);
+            if(!confirm("Deseja ARQUIVAR este aluno?" + (myDeps.length > 0 ? " Dependentes também serão arquivados." : ""))) return;
+            try {
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { archived: true });
+                if (myDeps.length > 0) for(let dep of myDeps) await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', dep.id), { archived: true });
+                window.loadData();
+            } catch(e) { alert("Erro ao arquivar."); }
+        };
+
+        window.restoreStudent = async (id) => {
+            if(!confirm("Restaurar aluno do arquivo?")) return;
+            try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { archived: false }); window.loadData(); } catch(e) { alert("Erro ao restaurar."); }
+        };
+
+        window.addPresenceSelectedStudents = async () => {
+            const ids = Array.from(document.querySelectorAll('.student-cb:checked')).map(cb => cb.value);
+            if(ids.length === 0) return;
+            const todayISO = new Date().toISOString().split('T')[0];
+            if(confirm(`Confirmar presença de hoje (${todayISO}) para ${ids.length} alunos?`)) {
+                try {
+                    await Promise.all(ids.map(id => updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { attendance: arrayUnion(todayISO), attendanceLog: arrayUnion({ date: todayISO, time: 'Check-in rápido em massa', timestamp: new Date().toISOString() }) })));
+                    document.getElementById('cb-select-all').checked = false; window.updateBulkActions(); window.loadData();
+                } catch(e) { alert('Erro.'); }
+            }
+        };
+
+        // GESTÃO DE FREQUÊNCIA INDIVIDUAL RÁPIDA
+        window.openAttendanceModal = (id) => {
+            const s = window.students.find(st => st.id === id); if(!s) return;
+            document.getElementById('att-student-name').innerText = s.name || 'Aluno'; document.getElementById('att-student-id').value = id; document.getElementById('att-date-input').valueAsDate = new Date();
+            const list = document.getElementById('att-list'); list.innerHTML = '';
+            
+            if(!s.attendance || s.attendance.length === 0) document.getElementById('att-empty').classList.remove('hidden');
+            else {
+                document.getElementById('att-empty').classList.add('hidden');
+                [...s.attendance].sort((a,b) => new Date(b) - new Date(a)).forEach(dateStr => {
+                    const formatted = formatDate(dateStr + 'T12:00:00');
+                    let classInfo = (s.attendanceLog && s.attendanceLog.find(l => l.date === dateStr)?.time) ? `<span class="text-[10px] bg-gray-200 px-2 py-0.5 rounded ml-2 font-bold text-gray-600 border border-gray-300">${s.attendanceLog.find(l => l.date === dateStr).time}</span>` : '';
+                    list.innerHTML += `<div class="flex justify-between items-center py-3 px-4 hover:bg-blue-50 transition border-b border-gray-100"><span class="text-sm font-bold text-gray-700"><i class="fa-regular fa-calendar-check text-green-600 mr-2 text-lg"></i> ${formatted} ${classInfo}</span><button onclick="window.removeAttendance('${dateStr}')" class="text-red-400 hover:text-red-600 p-2 rounded hover:bg-red-50 transition" title="Remover"><i class="fa-solid fa-trash"></i></button></div>`;
+                });
+            }
+            document.getElementById('attendance-modal').classList.remove('hidden'); document.getElementById('attendance-modal').classList.add('flex');
+        };
+
+        window.closeAttendanceModal = () => { document.getElementById('attendance-modal').classList.add('hidden'); document.getElementById('attendance-modal').classList.remove('flex'); };
+
+        window.addManualAttendance = async () => {
+            const id = document.getElementById('att-student-id').value; const dateVal = document.getElementById('att-date-input').value;
+            if(!dateVal) return;
+            try { 
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { attendance: arrayUnion(dateVal), attendanceLog: arrayUnion({ date: dateVal, time: 'Check-in manual', timestamp: new Date().toISOString() }) }); 
+                
+                const s = window.students.find(st => st.id === id);
+                if (s) {
+                    if (!s.attendance) s.attendance = [];
+                    s.attendance.push(dateVal);
+                    if (!s.attendanceLog) s.attendanceLog = [];
+                    s.attendanceLog.push({ date: dateVal, time: 'Check-in manual', timestamp: new Date().toISOString() });
+                }
+
+                window.openAttendanceModal(id); 
+                window.loadData(); 
+            } catch(e) { alert("Erro."); }
+        };
+
+        window.removeAttendance = async (dateStr) => {
+            if(!confirm(`Remover presença do dia ${dateStr}?`)) return;
+            const id = document.getElementById('att-student-id').value;
+            const s = window.students.find(st => st.id === id);
+            try { 
+                let updates = { attendance: arrayRemove(dateStr) };
+                let logEntryToRemove = null;
+                if (s && s.attendanceLog) {
+                    const logEntry = s.attendanceLog.find(l => l.date === dateStr);
+                    if (logEntry) {
+                        updates.attendanceLog = arrayRemove(logEntry);
+                        logEntryToRemove = logEntry;
+                    }
+                }
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), updates); 
+                
+                if (s) {
+                    s.attendance = s.attendance.filter(d => d !== dateStr);
+                    if (s.attendanceLog && logEntryToRemove) {
+                        s.attendanceLog = s.attendanceLog.filter(l => l !== logEntryToRemove);
+                    }
+                }
+
+                window.openAttendanceModal(id); 
+                window.loadData(); 
+            } catch(e) { alert("Erro."); }
+        };
+
+        window.addPresence = async (id) => {
+            const todayISO = new Date().toISOString().split('T')[0];
+            try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { attendance: arrayUnion(todayISO), attendanceLog: arrayUnion({ date: todayISO, time: 'Check-in rápido', timestamp: new Date().toISOString() }) }); window.loadData(); alert(`Presença confirmada para hoje!`); } catch(e) { alert("Erro."); }
+        };
+
+        // NAVEGAÇÃO
+        window.toggleMobileMenu = () => { document.getElementById('sidebar-menu').classList.toggle('-translate-x-full'); document.getElementById('mobile-sidebar-overlay').classList.toggle('hidden'); };
+
+        window.switchMainView = (viewName) => {
+            if(window.innerWidth < 768 && !document.getElementById('sidebar-menu').classList.contains('-translate-x-full')) window.toggleMobileMenu();
+            window.currentView = viewName;
+            ['students', 'reports', 'notices', 'experimental'].forEach(v => {
+                const el = document.getElementById('view-' + v); if(el) el.classList.toggle('hidden', viewName !== v);
+                const nav = document.getElementById('nav-' + v);
+                if(nav) { if (v === viewName) { nav.classList.add('bg-brand-red', 'text-white'); nav.classList.remove('text-gray-400', 'hover:bg-gray-800'); } else { nav.classList.remove('bg-brand-red', 'text-white'); nav.classList.add('text-gray-400', 'hover:bg-gray-800'); } }
+            });
+            if(viewName === 'students') window.renderTable(); else if(viewName === 'notices') { window.renderAdminNotices(); window.renderBirthdays(); } else if(viewName === 'experimental') window.loadExperimentalData();
+        };
+
+        window.switchTab = (tab) => {
+            window.currentTab = tab;
+            const cardIds = ['all', 'adults', 'kids', 'archived'];
+            
+            // Lógica para alterar o design visual dos cartões
+            cardIds.forEach(t => { 
+                const card = document.getElementById('card-' + t);
+                if(card) {
+                    if (t === tab) {
+                        card.classList.add('card-active');
+                        // Destaca a cor dependendo da aba
+                        if(t === 'all') card.classList.replace('border-b-transparent', 'border-b-blue-500');
+                        else if(t === 'kids') card.classList.replace('border-b-transparent', 'border-b-brand-red');
+                        else if(t === 'adults') card.classList.replace('border-b-transparent', 'border-b-green-500');
+                        else if(t === 'archived') card.classList.replace('border-b-transparent', 'border-b-gray-500');
+                    } else {
+                        card.classList.remove('card-active');
+                        card.classList.replace('border-b-blue-500', 'border-b-transparent');
+                        card.classList.replace('border-b-brand-red', 'border-b-transparent');
+                        card.classList.replace('border-b-green-500', 'border-b-transparent');
+                        card.classList.replace('border-b-gray-500', 'border-b-transparent');
+                    }
+                }
+            });
+            
+            window.renderTable();
+        };
+
+        window.filterTable = () => {
+            const desktopSearch = document.getElementById('searchInput'); const mobileSearch1 = document.getElementById('searchInputMobile1');
+            if (document.activeElement === mobileSearch1 && desktopSearch) desktopSearch.value = mobileSearch1.value; else if (document.activeElement === desktopSearch && mobileSearch1) mobileSearch1.value = desktopSearch.value;
+            if(window.currentView === 'students') window.renderTable(); else if(window.currentView === 'experimental') window.renderExperimentalTable();
+        };
+
+        function renderBeltSVG(beltStr) {
+            if (!beltStr) return ''; const colors = { 'Branca': '#ffffff', 'Cinza': '#9ca3af', 'Amarela': '#fbbf24', 'Laranja': '#f97316', 'Verde': '#10b981', 'Azul': '#3b82f6', 'Roxa': '#8b5cf6', 'Marrom': '#78350f', 'Preta': '#000000' };
+            let color = '#ffffff'; let degree = 0; let colorName = 'Branca'; for (const [name, hex] of Object.entries(colors)) { if (beltStr.includes(name)) { color = hex; colorName = name; break; } }
+            const degreeMatch = beltStr.match(/(\d)º/); if (degreeMatch) degree = parseInt(degreeMatch[1]);
+            const width = 100; const height = 24; const tipWidth = 25; const stripeWidth = 4; const stripeGap = 3; let stripesSVG = ''; const barColor = (colorName === 'Preta') ? '#dc2626' : '#000000'; const stripeColor = '#ffffff';
+            for (let i = 0; i < degree; i++) { const x = width - 5 - (i * (stripeWidth + stripeGap)) - stripeWidth; stripesSVG += `<rect x="${x}" y="0" width="${stripeWidth}" height="${height}" fill="${stripeColor}" />`; }
+            return `<svg width="${width}" height="${height}" class="shadow-sm rounded" style="border:1px solid #ddd"><rect x="0" y="0" width="${width}" height="${height}" fill="${color}" /><rect x="${width - tipWidth}" y="0" width="${tipWidth}" height="${height}" fill="${barColor}" />${stripesSVG}</svg>`;
+        }
+
+        window.toggleDepRows = (titularId) => {
+            const rows = document.querySelectorAll(`.dep-row-${titularId}`);
+            const icon = document.getElementById(`icon-dep-${titularId}`);
+            let isHidden = false;
+            rows.forEach(r => {
+                if(r.classList.contains('hidden')) { r.classList.remove('hidden'); isHidden = true; }
+                else { r.classList.add('hidden'); isHidden = false; }
+            });
+            if(icon) icon.className = isHidden ? "fa-solid fa-minus text-[10px]" : "fa-solid fa-plus text-[10px]";
+        };
+
+        window.renderTable = function() {
+            const tbody = document.getElementById('students-table-body'); const thead = document.getElementById('table-headers');
+            const search = (document.getElementById('searchInput')?.value || "").toLowerCase(); const beltFilter = (document.getElementById('filter-belt')?.value || "").toLowerCase(); const sortOrder = document.getElementById('sort-order')?.value || "recent";
+            if(!tbody) return; tbody.innerHTML = '';
+
+            let filtered = window.students.filter(s => {
+                const matchesSearch = String(s.name || '').toLowerCase().includes(search); const matchesBelt = beltFilter === "" || (s.belt && s.belt.toLowerCase().includes(beltFilter));
+                if (window.currentTab === 'archived') return matchesSearch && matchesBelt && s.archived === true;
+                else { if (s.archived) return false; let matchesTab = false; if(window.currentTab === 'all') matchesTab = true; else { let isKid = isStudentKid(s); matchesTab = (window.currentTab === 'kids' && isKid) || (window.currentTab === 'adults' && !isKid); } return matchesTab && matchesSearch && matchesBelt; }
+            });
+
+            if (sortOrder === 'az') filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '')); else if (sortOrder === 'za') filtered.sort((a, b) => (b.name || '').localeCompare(a.name || '')); else filtered.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
+            document.getElementById('list-count').innerText = filtered.length;
+            document.getElementById('list-title').innerText = (window.currentTab === 'all') ? "Todos (Ativos)" : (window.currentTab === 'adults') ? "Adultos e Família" : (window.currentTab === 'kids') ? "Infantil (Ativos)" : "Arquivo de Alunos";
+
+            thead.innerHTML = `<th class="px-6 py-3 border-b font-semibold w-10 text-center"><input type="checkbox" id="cb-select-all" onclick="window.toggleSelectAll(this)" class="rounded text-brand-red cursor-pointer"></th><th class="px-6 py-3 border-b font-semibold">Aluno</th>${window.currentTab === 'kids' || window.currentTab === 'all' ? '<th class="px-6 py-3 border-b font-semibold">Responsável/Titular</th>' : ''}<th class="px-6 py-3 border-b font-semibold">Faixa</th><th class="px-6 py-3 border-b font-semibold">Frequência</th><th class="px-6 py-3 border-b font-semibold text-center">Acesso</th><th class="px-6 py-3 border-b font-semibold text-center">Ações</th>`;
+            if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="${window.currentTab === 'kids' || window.currentTab === 'all' ? 7 : 6}" class="px-6 py-8 text-center text-gray-400 italic">Nenhum aluno encontrado.</td></tr>`; return; }
+
+            const renderRow = (s, isDepRow = false, parentId = null) => {
+                const attendanceCount = s.attendance ? s.attendance.length : 0; const hasLogin = (s.studentLogin && s.studentPassword) ? '<span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-lock"></i> OK</span>' : '<span class="text-gray-400 text-xs italic">--</span>'; const safePlan = String(s.plan || '').toLowerCase();
+                let avatarHtml = s.photoBase64 ? `<img src="${s.photoBase64}" class="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200">` : `<div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 mr-3 font-bold text-xs">${(s.name || '?').charAt(0).toUpperCase()}</div>`;
+                const age = getAge(s.dob); let nameHtml = isDepRow ? `<i class="fa-solid fa-level-up-alt fa-rotate-90 text-purple-300 mr-2 text-xs"></i>${s.name}` : s.name || 'Sem Nome';
+                
+                let nameDisplay = `
+                    <div class="font-medium text-gray-900 flex items-center group-hover:text-brand-red transition ${isDepRow ? 'pl-4 border-l-2 border-purple-200' : ''}">
+                        ${nameHtml}
+                        ${((window.currentTab === 'adults' || window.currentTab === 'all') && age !== null && age < 18 && !isStudentKid(s)) ? `<span class="ml-2 text-[10px] text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200 font-bold">Menor (${age})</span>` : ''}
+                        ${(safePlan.includes('combo') && safePlan !== 'dependente') ? `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase">Combo</span>` : ''}
+                        ${(safePlan === 'administracao') ? `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-bold uppercase">Admin</span>` : ''}
+                        ${(safePlan === 'dependente') ? `<span class="ml-2 text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase" title="Dependente"><i class="fa-solid fa-link"></i> DEP</span>` : ''}
+                        ${(s.archived) ? `<span class="ml-2 text-[10px] text-gray-800 bg-gray-300 px-1.5 py-0.5 rounded border border-gray-400 font-bold uppercase">ARQUIVADO</span>` : ''}
+                `;
+
+                const myFilteredDeps = filtered.filter(d => d.plan === 'dependente' && d.titularId === s.id);
+                if (!isDepRow && myFilteredDeps.length > 0) {
+                    nameDisplay += `<button onclick="event.stopPropagation(); window.toggleDepRows('${s.id}')" class="ml-2 bg-purple-100 text-purple-700 w-5 h-5 rounded flex items-center justify-center shadow-sm hover:bg-purple-200 transition" title="Expandir/Recolher"><i id="icon-dep-${s.id}" class="fa-solid fa-plus text-[10px]"></i></button>`;
+                }
+                nameDisplay += `</div>`;
+
+                const beltSVG = renderBeltSVG(s.belt || 'Faixa Branca - 0º Grau');
+                const guardianCell = (window.currentTab === 'kids' || window.currentTab === 'all') ? `<td class="px-6 py-4 align-middle text-sm text-gray-700"><i class="fa-solid fa-user-shield text-gray-400 mr-1"></i> ${s.guardian || s.titularName || '-'}</td>` : '';
+                
+                let actionsHtml = '';
+                if (s.archived) {
+                    actionsHtml = `
+                        <button onclick="window.restoreStudent('${s.id}')" class="text-green-600 hover:text-green-900 mx-1 w-8 h-8 rounded-full bg-green-50 transition" title="Reativar Aluno"><i class="fa-solid fa-box-open"></i></button>
+                        <button onclick="window.deleteStudent('${s.id}')" class="text-red-600 hover:text-red-900 mx-1 w-8 h-8 rounded-full bg-red-50 transition" title="Excluir Permanentemente"><i class="fa-solid fa-trash"></i></button>
+                    `;
+                } else {
+                    actionsHtml = `
+                        <button onclick="window.openAttendanceModal('${s.id}')" class="text-gray-500 hover:text-black mx-1 w-8 h-8 rounded-full hover:bg-gray-100 transition" title="Frequência"><i class="fa-solid fa-list-check"></i></button>
+                        <button onclick="window.openProgressModal('${s.id}')" class="text-teal-600 hover:text-teal-900 mx-1 w-8 h-8 rounded-full hover:bg-teal-50 transition" title="Evolução e Histórico"><i class="fa-solid fa-book-journal-whills"></i></button>
+                        <button onclick="window.openEditModal('${s.id}')" class="text-orange-500 hover:text-orange-700 mx-1 w-8 h-8 rounded-full hover:bg-orange-50 transition" title="Editar / Graduar"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="window.archiveStudent('${s.id}')" class="text-gray-500 hover:text-gray-800 mx-1 w-8 h-8 rounded-full hover:bg-gray-200 transition" title="Arquivar Aluno"><i class="fa-solid fa-box-archive"></i></button>
+                    `;
+                }
+
+                let attendanceBtnHtml = s.archived ? `<span class="text-gray-400 text-xs italic">--</span>` : `<div class="flex items-center gap-2"><span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded w-16 text-center">${attendanceCount} aulas</span><button onclick="window.addPresence('${s.id}')" class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow"><i class="fa-solid fa-plus text-xs"></i></button></div>`;
+
+                const tr = document.createElement('tr'); tr.className = isDepRow ? `hidden dep-row-${parentId} bg-purple-50/40 hover:bg-purple-50 transition border-b border-purple-100` : `border-b hover:bg-red-50 transition border-gray-100`;
+                tr.innerHTML = `
+                    <td class="px-6 py-4 align-middle text-center"><input type="checkbox" class="student-cb rounded text-brand-red cursor-pointer" value="${s.id}" onclick="window.updateBulkActions()"></td>
+                    
+                    <td class="px-6 py-4 align-middle">
+                        <div onclick="window.viewStudentDetails('${s.id}')" class="flex items-center cursor-pointer group" title="Ver Detalhes do Aluno">
+                            ${avatarHtml}
+                            <div>
+                                ${nameDisplay}
+                                <div class="text-xs text-gray-500 mt-0.5">${window.getPlanInfo(s.plan).short}</div>
+                            </div>
+                        </div>
+                    </td>
+
+                    ${guardianCell}
+                    <td class="px-6 py-4 align-middle"><div class="w-32 h-8 flex items-center">${beltSVG}</div><div class="text-xs text-gray-400 mt-1">${s.belt || 'Branca'}</div></td>
+                    <td class="px-6 py-4 align-middle">${attendanceBtnHtml}</td>
+                    <td class="px-6 py-4 align-middle text-center">${hasLogin}</td>
+                    <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
+                        ${actionsHtml}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            };
+
+            filtered.forEach(s => {
+                if (s.plan === 'dependente' && filtered.some(t => t.id === s.titularId)) return; 
+                renderRow(s, false);
+                filtered.filter(d => d.plan === 'dependente' && d.titularId === s.id).forEach(dep => renderRow(dep, true, s.id));
+            });
+        };
+
+        // GERAÇÃO DE RELATÓRIOS
+        window.generateReport = (type) => {
+            const container = document.getElementById('report-container'); container.classList.remove('hidden');
+            let html = `<div class="text-center mb-6 border-b pb-4"><h2 class="text-2xl font-bold uppercase tracking-wider">TANQUE TEAM BJJ</h2><h3 class="text-lg text-gray-600 uppercase mt-1">Relatório Administrativo</h3><p class="text-xs text-gray-500 mt-2">Gerado em: ${new Date().toLocaleString('pt-BR')}</p></div>`;
+            let tableRows = '';
+            
+            if (type === 'ativos') {
+                html += `<h3 class="font-bold text-lg mb-4">ALUNOS ATIVOS</h3><table><thead><tr><th>Nome</th><th>Plano</th><th>Faixa</th><th>Contato</th></tr></thead><tbody>`;
+                window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(s => { tableRows += `<tr><td class="font-bold">${s.name}</td><td class="uppercase">${(s.plan||'-').replace('-',' ')}</td><td>${s.belt||'Branca'}</td><td>${s.phone||'-'}</td></tr>`; });
+                html += tableRows + `</tbody></table>`;
+            } else if (type === 'frequencia') {
+                html += `<h3 class="font-bold text-lg mb-4 text-purple-600">FREQUÊNCIA - TOP 15 ALUNOS (Últimos 30 dias)</h3><table><thead><tr><th>Posição</th><th>Nome</th><th>Aulas nos últimos 30 dias</th><th>Faixa</th></tr></thead><tbody>`;
+                const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).map(s => ({ name: s.name, belt: s.belt, classes: s.attendance ? s.attendance.filter(d => new Date(d) >= thirtyDaysAgo).length : 0 })).sort((a,b) => b.classes - a.classes).slice(0, 15).forEach((d, i) => { tableRows += `<tr><td>#${i+1}</td><td class="font-bold">${d.name}</td><td class="text-center">${d.classes}</td><td>${d.belt||'-'}</td></tr>`; });
+                html += tableRows + `</tbody></table>`;
+            } else if (type === 'experimental') {
+                html += `<h3 class="font-bold text-lg mb-4 text-yellow-600">RELATÓRIO DE AULAS EXPERIMENTAIS</h3><table><thead><tr><th>Data/Hora</th><th>Nome</th><th>Contato</th><th>Status</th></tr></thead><tbody>`;
+                let expSorted = [...window.experimentalList].sort((a,b) => new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00')));
+                if (expSorted.length === 0) tableRows += `<tr><td colspan="4" class="text-center">Nenhum registro encontrado.</td></tr>`;
+                expSorted.forEach(e => {
+                    let dateFormatted = e.date ? new Date(e.date + 'T12:00:00').toLocaleDateString('pt-BR') : '--';
+                    tableRows += `<tr><td>${dateFormatted} às ${e.time || '--'}</td><td class="font-bold">${e.name}</td><td>${e.phone || '-'}</td><td class="uppercase">${e.status || 'Agendado'}</td></tr>`;
+                });
+                html += tableRows + `</tbody></table>`;
+            }
+
+            container.innerHTML = html;
+            document.body.classList.add('printing-report');
+            setTimeout(() => { window.print(); setTimeout(() => { document.body.classList.remove('printing-report'); container.classList.add('hidden'); }, 2000); }, 800);
+        };
+
+        window.printMyQrCard = () => {
+            const studentId = document.getElementById('detail-student-id').value;
+            const s = window.students.find(st => st.id === studentId);
+            if(!s) return;
+            
+            document.getElementById('qr-student-name').innerText = s.name;
+            document.getElementById('qr-belt').innerText = s.belt || "Faixa Branca";
+            document.getElementById('qr-plan').innerText = window.getPlanInfo(s.plan).short;
+            document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${s.id}`;
+            
+            document.body.classList.add('printing-qr'); 
+            setTimeout(() => { window.print(); setTimeout(() => { document.body.classList.remove('printing-qr'); }, 2000); }, 500);
+        };
+
+        window.printIndividualContract = (id) => {
+            const s = window.students.find(st => st.id === id); if (!s) return;
+            const contractContainer = document.getElementById('printable-contract'); contractContainer.classList.remove('hidden'); 
+            const safePlan = String(s.plan || ''); const pInfo = window.getPlanInfo(safePlan); let price = "R$ " + (Number(pInfo.price) || 0).toFixed(2).replace('.', ','); let displayName = pInfo.long || "NÃO INFORMADO";
+            
+            let formattedDob = '--/--/----';
+            if (s.dob) { 
+                const dobStr = String(s.dob);
+                if (dobStr.includes('/')) formattedDob = dobStr; 
+                else if (dobStr.includes('T')) { const dObj = new Date(dobStr); if (!isNaN(dObj)) formattedDob = dObj.toLocaleDateString('pt-BR'); } 
+                else { const parts = dobStr.split('-'); if (parts.length === 3) formattedDob = `${parts[2].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[0]}`; } 
+            }
+
+            let contratanteText = s.name || "NÃO INFORMADO";
+            if (s.guardian && String(s.guardian).trim() !== "") contratanteText = `${s.guardian} (Responsável Legal: ${s.guardianKinship || 'Não informado'})`; else if (s.titularName && String(s.titularName).trim() !== "") contratanteText = `${s.titularName} (Titular do Plano)`;
+            const setText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; }
+            setText('printContratante', contratanteText); setText('printStudent', s.name || "NÃO INFORMADO"); setText('printDob', formattedDob); setText('printCPF', s.cpf || "Não informado"); setText('printEmail', s.email || "Não informado"); setText('printPhone', s.phone || "Não informado"); setText('printAddress', s.address || "Não informado");
+            let beltInfo = ""; const safeBelt = String(s.belt || ""); if(safeBelt && !safeBelt.includes("Branca - 0º Grau") && !safeBelt.includes("Iniciante")) beltInfo = `| Graduação Atual: ${safeBelt}`;
+            setText('printBeltInfo', beltInfo);
+            let regDate = new Date(); if (s.registrationDate) { const parsed = new Date(s.registrationDate); if (!isNaN(parsed)) regDate = parsed; }
+            document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+            const isCombo = safePlan.includes('combo'); const isFidelity = safePlan.includes('semestral') || safePlan.includes('trimestral') || isCombo;
+            let clausesHtml = `<p><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
+            clausesHtml += `<p><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong class="uppercase underline">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong class="bg-yellow-100 px-1">${price}</strong>. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.</p>`;
+            let clauseNum = 3;
+            if (isFidelity) { clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade correspondente à sua nomenclatura (Trimestral ou Semestral). O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>`; clauseNum++; } 
+            else { clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO:</strong> O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.</p>`; clauseNum++; }
+            if (isCombo) { clausesHtml += `<div class="bg-blue-50 p-2 border-l-2 border-blue-400"><p><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DO PLANO FAMÍLIA (COMBO):</strong> O pagamento das mensalidades é unificado e de inteira responsabilidade do CONTRATANTE titular. O cancelamento ou afastamento de um dos beneficiários dependentes não dá direito a desconto ou reembolso parcial, e reverte automaticamente o plano dos membros restantes para o valor da tabela individual vigente.</p></div>`; clauseNum++; }
+            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA INADIMPLÊNCIA:</strong> O atraso superior a 30 dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e cobrança dos valores devidos acrescidos de multa de 2% e juros de mora legais.</p>`; clauseNum++;
+            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA SAÚDE E APTIDÃO FÍSICA:</strong> O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate, isentando a ESCOLA de qualquer responsabilidade sobre moléstias pré-existentes não declaradas formalmente no ato desta matrícula.</p>`; clauseNum++;
+            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DE CONDUTA (DOJO KUN):</strong> É obrigatório o uso de uniforme (Kimono) estipulado pela escola, limpo e conservado. Atos de indisciplina, desrespeito à hierarquia, agressão fora do contexto do treino esportivo ou falta de higiene poderão acarretar na suspensão ou rescisão unilateral deste contrato por parte da ESCOLA, sem devolução de valores.</p>`; clauseNum++;
+            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO DIREITO DE IMAGEM:</strong> O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da escola ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.</p>`;
+            document.getElementById('print-clauses-container').innerHTML = clausesHtml;
+            let dependentsHtml = '';
+            if (isCombo) {
+                let deps = window.students.filter(d => d.titularId === s.id);
+                if (deps.length > 0) {
+                    dependentsHtml = `<p class="mt-2 text-sm"><strong>DEPENDENTES VINCULADOS AO PLANO:</strong></p><ul class="list-disc pl-5 mt-1 text-xs">`;
+                    deps.forEach(d => {
+                        let dDob = '--/--/----';
+                        if (d.dob) { const dStr = String(d.dob); if (dStr.includes('/')) dDob = dStr; else if (dStr.includes('T')) { const dObj = new Date(dStr); if (!isNaN(dObj)) dDob = dObj.toLocaleDateString('pt-BR'); } else { const parts = dStr.split('-'); if (parts.length === 3) dDob = `${parts[2].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[0]}`; } }
+                        dependentsHtml += `<li><strong>${d.name}</strong> - Nasc: ${dDob} | Parentesco: ${d.parentesco || '-'} | Graduação: ${d.belt || 'Branca'}</li>`;
+                    });
+                    dependentsHtml += `</ul>`;
+                } else dependentsHtml = `<p class="mt-2 text-xs italic text-gray-500">Nenhum dependente vinculado no sistema no momento.</p>`;
+            }
+            document.getElementById('printDependentsBlock').innerHTML = dependentsHtml;
+            setText('printSignatureName', s.guardian || s.titularName || s.name || "CONTRATANTE");
+            document.body.classList.add('printing-contract'); 
+            setTimeout(() => { window.print(); setTimeout(() => { contractContainer.classList.add('hidden'); document.body.classList.remove('printing-contract'); }, 2000); }, 500);
+        };
+
+        window.viewStudentDetails = (id) => {
+            try {
+                const s = window.students.find(st => st.id === id); if(!s) return;
+                document.getElementById('detail-name').innerText = s.name;
+                const age = getAge(s.dob); document.getElementById('detail-age').innerText = age !== null ? `${age} anos` : '--';
+                document.getElementById('detail-belt').innerText = s.belt || "Faixa Branca";
+                const photoImg = document.getElementById('detail-photo'); const photoIcon = document.getElementById('detail-icon');
+                if(s.photoBase64) { photoImg.src = s.photoBase64; photoImg.classList.remove('hidden'); photoIcon.classList.add('hidden'); } 
+                else { photoImg.classList.add('hidden'); photoIcon.classList.remove('hidden'); }
+                const belt = (s.belt || "").toLowerCase(); let headerColor = "bg-gray-200"; 
+                if(belt.includes("azul")) headerColor = "bg-blue-600"; else if(belt.includes("roxa")) headerColor = "bg-purple-600"; else if(belt.includes("marrom")) headerColor = "bg-amber-800"; else if(belt.includes("preta")) headerColor = "bg-black"; else if(belt.includes("amarela")) headerColor = "bg-yellow-400"; else if(belt.includes("laranja")) headerColor = "bg-orange-500"; else if(belt.includes("verde")) headerColor = "bg-green-600";
+                document.getElementById('detail-header-bg').className = `h-24 w-full relative ${headerColor}`;
+                document.getElementById('detail-attendance').innerText = (s.attendance ? s.attendance.length : 0) + " aulas";
+                const statusEl = document.getElementById('detail-status');
+                statusEl.innerText = s.archived ? 'Arquivado' : (s.enrollmentStatus || 'Ativo');
+                statusEl.className = (s.enrollmentStatus === 'Ativo' && !s.archived) ? 'text-sm font-bold mt-1 text-green-600' : 'text-sm font-bold mt-1 text-red-600';
+                document.getElementById('detail-cpf').innerText = s.cpf || '-';
+                
+                const phoneDisplay = document.getElementById('detail-phone');
+                const phoneStr = String(s.phone || '');
+                if (phoneStr.trim() !== "") { 
+                    const cleanPhone = phoneStr.replace(/\D/g, ''); 
+                    phoneDisplay.innerHTML = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold transition inline-flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${s.phone}</a>`; 
+                } else {
+                    phoneDisplay.innerText = '-';
+                }
+
+                document.getElementById('detail-email').innerText = s.email || '-'; 
+                document.getElementById('detail-address').innerText = s.address || '-'; 
+                document.getElementById('detail-login').innerText = s.studentLogin || 'Não configurado'; 
+                document.getElementById('detail-pass').innerText = s.studentPassword || '---';
+                document.getElementById('detail-origin').innerText = s.howDidYouFindUs || 'Não informado';
+                
+                const guardianBox = document.getElementById('detail-guardian-box');
+                if (s.guardian && String(s.guardian).trim() !== "") { document.getElementById('detail-guardian-name').innerText = s.guardian; guardianBox.classList.remove('hidden'); } else guardianBox.classList.add('hidden');
+                
+                const pInfo = window.getPlanInfo(s.plan);
+                document.getElementById('detail-plan').innerText = pInfo.long;
+                
+                const titularBox = document.getElementById('detail-titular-box');
+                if (s.titularName && String(s.titularName).trim() !== "") {
+                    document.getElementById('detail-titular-name').innerText = s.titularName;
+                    titularBox.classList.remove('hidden');
+                } else titularBox.classList.add('hidden');
+
+                document.getElementById('detail-qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${id}`;
+                document.getElementById('detail-qr-id').value = id;
+
+                const familyBox = document.getElementById('detail-family-box'); familyBox.innerHTML = '';
+                if (s.plan === 'dependente' && s.titularId) {
+                    const titular = window.students.find(t => t.id === s.titularId); const tName = titular ? titular.name : 'Titular Desconhecido';
+                    familyBox.innerHTML = `<h4 class="text-xs font-bold text-purple-700 uppercase mb-2"><i class="fa-solid fa-link"></i> Vínculo Familiar</h4><p class="text-sm text-purple-900 mb-2">Este aluno é dependente de <strong>${tName}</strong>.</p><button onclick="window.closeDetailsModal(); setTimeout(() => window.viewStudentDetails('${s.titularId}'), 300)" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-xs font-bold transition w-full shadow-sm"><i class="fa-solid fa-user-tie"></i> Ver Ficha do Titular</button>`;
+                    familyBox.classList.remove('hidden');
+                } else {
+                    const deps = window.students.filter(d => d.titularId === s.id && d.plan === 'dependente');
+                    if (deps.length > 0) {
+                        let html = `<h4 class="text-xs font-bold text-purple-700 uppercase mb-2"><i class="fa-solid fa-users"></i> Dependentes Vinculados (${deps.length})</h4><ul class="space-y-2">`;
+                        deps.forEach(d => {
+                            const attCount = d.attendance ? d.attendance.length : 0;
+                            html += `<li class="flex justify-between items-center bg-white p-2 rounded shadow-sm border border-purple-100"><div><p class="font-bold text-xs text-purple-900 cursor-pointer hover:text-brand-red" onclick="window.closeDetailsModal(); setTimeout(() => window.viewStudentDetails('${d.id}'), 300)">${d.name}</p><p class="text-[10px] text-purple-600">${d.belt || 'Branca'} • Freq: ${attCount}</p></div><button onclick="window.closeDetailsModal(); setTimeout(() => window.viewStudentDetails('${d.id}'), 300)" class="text-purple-500 hover:text-purple-700 text-xs px-2 py-1 bg-purple-50 rounded"><i class="fa-solid fa-eye"></i></button></li>`;
+                        });
+                        html += `</ul>`; familyBox.innerHTML = html; familyBox.classList.remove('hidden');
+                    } else familyBox.classList.add('hidden');
+                }
+                
+                document.getElementById('detail-student-id').value = id;
+                document.getElementById('details-modal').classList.remove('hidden'); document.getElementById('details-modal').classList.add('flex');
+            } catch(e) {
+                console.error("Erro ao abrir detalhes do aluno:", e);
+                alert("Ocorreu um erro ao carregar os dados do aluno. Atualize a página e tente novamente.");
+            }
+        };
         
+        window.closeDetailsModal = () => { document.getElementById('details-modal').classList.add('hidden'); document.getElementById('details-modal').classList.remove('flex'); };
+
+        window.openEditModal = (id) => {
+            try {
+                const s = window.students.find(st => st.id === id); if(!s) return;
+                document.getElementById('edit-id').value = id; 
+                document.getElementById('edit-name').value = s.name || ''; 
+                
+                let formattedDob = String(s.dob || '');
+                if (formattedDob && formattedDob.includes('-')) { 
+                    const parts = formattedDob.split('-'); 
+                    if(parts.length === 3) formattedDob = `${parts[2].substring(0,2)}/${parts[1]}/${parts[0]}`; 
+                }
+                document.getElementById('edit-dob').value = formattedDob;
+                
+                document.getElementById('edit-cpf').value = s.cpf || ''; 
+                document.getElementById('edit-address').value = s.address || ''; 
+                document.getElementById('edit-guardian').value = s.guardian || ''; 
+                document.getElementById('edit-guardian-kinship').value = s.guardianKinship || ''; 
+                if(document.getElementById('edit-guardian-cpf')) document.getElementById('edit-guardian-cpf').value = s.guardianCpf || '';
+
+                document.getElementById('edit-plan').value = s.plan || 'infantil-mensal'; 
+                document.getElementById('edit-titular').value = s.titularName || ''; 
+                document.getElementById('edit-email').value = s.email || ''; 
+                document.getElementById('edit-phone').value = s.phone || '';
+                
+                const preview = document.getElementById('edit-photo-preview');
+                if(s.photoBase64) {
+                    preview.src = s.photoBase64;
+                    preview.classList.remove('hidden');
+                } else {
+                    preview.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name || 'Aluno')}&background=random`;
+                    preview.classList.remove('hidden');
+                }
+                
+                let color = 'Branca'; let degree = '0';
+                if(s.belt) { const parts = s.belt.split(' - '); if(parts.length > 0) color = parts[0].replace('Faixa ', ''); if(parts.length > 1) degree = parts[1].replace('º Grau', ''); }
+                
+                document.getElementById('edit-original-belt').value = s.belt || "Faixa Branca - 0º Grau";
+
+                const selColor = document.getElementById('edit-belt-color'); 
+                if (selColor) {
+                    for(let i=0; i<selColor.options.length; i++) { 
+                        if(selColor.options[i].text === color || selColor.options[i].value === color) selColor.selectedIndex = i; 
+                    }
+                }
+                
+                if (document.getElementById('edit-belt-degree')) document.getElementById('edit-belt-degree').value = degree;
+                if (document.getElementById('edit-end-date')) {
+                    document.getElementById('edit-end-date').value = (s.contractEndDate && typeof s.contractEndDate === 'string') ? s.contractEndDate.split('T')[0] : '';
+                }
+                
+                document.getElementById('edit-login').value = s.studentLogin || ''; 
+                document.getElementById('edit-password').value = s.studentPassword || '';
+                if (document.getElementById('edit-enrollment-status')) document.getElementById('edit-enrollment-status').value = s.enrollmentStatus || 'Ativo';
+                
+                window.handleEditPlanChange();
+                window.checkAdminEditAge();
+                
+                document.getElementById('edit-modal').classList.remove('hidden'); document.getElementById('edit-modal').classList.add('flex');
+            } catch(e) {
+                console.error("Erro ao abrir formulário de edição:", e);
+                alert("Erro ao abrir janela de edição. Tente novamente.");
+            }
+        };
+        
+        window.closeEditModal = () => { document.getElementById('edit-modal').classList.add('hidden'); document.getElementById('edit-modal').classList.remove('flex'); };
+        
+        window.previewPhoto = (event) => {
+            const file = event.target.files[0];
+            if(file) { const reader = new FileReader(); reader.onload = function(e) { document.getElementById('edit-photo-preview').src = e.target.result; }; reader.readAsDataURL(file); }
+        };
+
+        window.handleEditPlanChange = () => {
+            const plan = document.getElementById('edit-plan').value;
+            const titularContainer = document.getElementById('edit-titular-container');
+            if (plan === 'dependente') titularContainer.classList.remove('hidden');
+            else titularContainer.classList.add('hidden');
+        };
+
+        window.saveStudentChanges = async () => {
+            const id = document.getElementById('edit-id').value; 
+            const name = document.getElementById('edit-name').value; 
+            const dobRaw = document.getElementById('edit-dob').value;
+            const dobIso = toISODate(dobRaw);
+            const cpf = document.getElementById('edit-cpf').value;
+            const address = document.getElementById('edit-address').value;
+            const guardian = document.getElementById('edit-guardian').value;
+            const guardianKinship = document.getElementById('edit-guardian-kinship').value;
+            
+            let guardianCpf = '';
+            if(document.getElementById('edit-guardian-cpf')) guardianCpf = document.getElementById('edit-guardian-cpf').value;
+            
+            const plan = document.getElementById('edit-plan').value; 
+            const titular = document.getElementById('edit-titular').value; 
+            const email = document.getElementById('edit-email').value; 
+            const phone = document.getElementById('edit-phone').value; 
+            const color = document.getElementById('edit-belt-color').value; 
+            const degree = document.getElementById('edit-belt-degree').value; 
+            const beltStr = `Faixa ${color} - ${degree}º Grau`; 
+            const dateStr = document.getElementById('edit-end-date').value; 
+            const login = document.getElementById('edit-login').value; 
+            const pass = document.getElementById('edit-password').value;
+            const status = document.getElementById('edit-enrollment-status').value;
+            
+            const originalBelt = document.getElementById('edit-original-belt').value;
+
+            let dateObj = new Date().toISOString(); if(dateStr) { const [y, m, d] = dateStr.split('-').map(Number); dateObj = new Date(y, m - 1, d, 12, 0, 0).toISOString(); }
+            let newCategory = 'Adulto'; if (plan.includes('infantil')) newCategory = 'Infantil'; if (plan.includes('combo')) newCategory = 'Combo Família'; if (plan === 'administracao') newCategory = 'Administração'; if (plan === 'dependente') newCategory = 'Dependente (Combo)';
+            
+            const photoInput = document.getElementById('edit-photo'); let photoBase64 = null;
+            if(photoInput.files && photoInput.files[0]) {
+                 const file = photoInput.files[0]; if(file.size > 800 * 1024) { alert("A foto é muito grande."); return; }
+                 photoBase64 = await new Promise((resolve) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result); reader.readAsDataURL(file); });
+            }
+            try {
+                const updateData = { 
+                    name: name, dob: dobIso, cpf: cpf, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf,
+                    plan: plan, titularName: titular, category: newCategory, enrollmentStatus: status, 
+                    belt: beltStr, contractEndDate: dateObj, studentLogin: login, studentPassword: pass, 
+                    email: email, phone: phone 
+                };
+                
+                if(photoBase64) updateData.photoBase64 = photoBase64;
+                
+                if (beltStr !== originalBelt) {
+                    updateData.lastGraduationDate = new Date().toISOString();
+                    updateData.progressLog = arrayUnion({ type: 'graduation', text: `Graduado para ${beltStr}`, date: new Date().toISOString() });
+                }
+
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), updateData);
+                window.closeEditModal(); window.loadData(); alert("Dados atualizados com sucesso!");
+            } catch(e) { console.error(e); alert("Erro ao salvar."); }
+        };
+
+        window.handleAdminPlanChange = () => {
+            const plan = document.getElementById('reg-plan').value;
+            const titularContainer = document.getElementById('admin-reg-titular-container'); const depsContainer = document.getElementById('admin-reg-deps-container'); const dep1 = document.getElementById('admin-reg-dep1'); const dep2 = document.getElementById('admin-reg-dep2');
+            
+            titularContainer.classList.add('hidden'); depsContainer.classList.add('hidden'); dep1.classList.add('hidden'); dep2.classList.add('hidden');
+            if (plan === 'dependente') titularContainer.classList.remove('hidden');
+            else if (plan === 'combo-dupla' || plan === 'combo-casal') { depsContainer.classList.remove('hidden'); dep1.classList.remove('hidden'); } 
+            else if (plan === 'combo-familia') { depsContainer.classList.remove('hidden'); dep1.classList.remove('hidden'); dep2.classList.remove('hidden'); }
+        };
+
+        window.openAdminRegisterModal = () => { document.getElementById('admin-register-modal').classList.remove('hidden'); document.getElementById('admin-register-modal').classList.add('flex'); window.handleAdminPlanChange(); };
+        window.closeAdminRegisterModal = () => {
+            document.getElementById('admin-register-modal').classList.add('hidden'); document.getElementById('admin-register-modal').classList.remove('flex');
+            document.getElementById('reg-name').value = ''; document.getElementById('reg-dob').value = ''; document.getElementById('reg-cpf').value = ''; document.getElementById('reg-email').value = ''; document.getElementById('reg-phone').value = ''; document.getElementById('reg-address').value = ''; document.getElementById('reg-guardian').value = ''; document.getElementById('reg-plan').value = 'infantil-mensal'; document.getElementById('reg-titular').value = ''; document.getElementById('reg-student-login').value = ''; document.getElementById('reg-student-pass').value = ''; document.getElementById('admin-dep1-name').value = ''; document.getElementById('admin-dep1-dob').value = ''; document.getElementById('admin-dep2-name').value = ''; document.getElementById('admin-dep2-dob').value = ''; 
+            window.handleAdminPlanChange();
+        };
+
+        window.saveAdminNewStudent = async () => {
+            const name = document.getElementById('reg-name').value; const dob = toISODate(document.getElementById('reg-dob').value); const cpf = document.getElementById('reg-cpf').value; const email = document.getElementById('reg-email').value; const phone = document.getElementById('reg-phone').value; const address = document.getElementById('reg-address').value; const guardian = document.getElementById('reg-guardian').value; const guardianCpf = document.getElementById('reg-guardian-cpf') ? document.getElementById('reg-guardian-cpf').value : ''; const plan = document.getElementById('reg-plan').value; const titular = plan === 'dependente' ? document.getElementById('reg-titular').value : ""; 
+            const beltColor = document.getElementById('reg-belt-color').value; const beltDegree = document.getElementById('reg-belt-degree').value; const login = document.getElementById('reg-student-login').value; const pass = document.getElementById('reg-student-pass').value;
+            const origin = document.getElementById('reg-origin').value || 'Não informado';
+            if(!name || !plan) { alert("Preencha nome e plano."); return; }
+            if(plan === 'dependente' && !titular) { alert("Selecione o Titular do plano para este dependente."); return; }
+            const beltStr = `Faixa ${beltColor} - ${beltDegree}º Grau`; const regDate = new Date(); let endDate = new Date(regDate);
+            if(plan.includes('mensal')) endDate.setMonth(endDate.getMonth() + 1); else if(plan.includes('trimestral')) endDate.setMonth(endDate.getMonth() + 3); else if(plan.includes('semestral') || plan.includes('combo') || plan === 'dependente') endDate.setMonth(endDate.getMonth() + 6); else if(plan === 'administracao') endDate.setFullYear(endDate.getFullYear() + 1); else endDate.setMonth(endDate.getMonth() + 1);
+            let category = 'Adulto'; if (plan.includes('infantil')) category = 'Infantil'; if (plan.includes('combo')) category = 'Combo Família'; if (plan === 'administracao') category = 'Administração'; if (plan === 'dependente') category = 'Dependente (Combo)';
+
+            let paymentStatus = 'Pendente'; 
+            let initialPaymentHistory = [];
+
+            try {
+                const titularDocRef = await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name, dob, cpf, email, phone, address, guardian, guardianCpf, plan, titularName: titular, paymentStatus: paymentStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
+                if (plan === 'combo-dupla' || plan === 'combo-casal' || plan === 'combo-familia') {
+                    const d1Name = document.getElementById('admin-dep1-name').value;
+                    if(d1Name) await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name: d1Name, dob: toISODate(document.getElementById('admin-dep1-dob').value), titularName: name, titularId: titularDocRef.id, parentesco: document.getElementById('admin-dep1-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', category: 'Dependente', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
+                }
+                if (plan === 'combo-familia') {
+                    const d2Name = document.getElementById('admin-dep2-name').value;
+                    if(d2Name) await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name: d2Name, dob: toISODate(document.getElementById('admin-dep2-dob').value), titularName: name, titularId: titularDocRef.id, parentesco: document.getElementById('admin-dep2-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', category: 'Dependente', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
+                }
+                window.closeAdminRegisterModal(); window.loadData(); alert("Aluno(s) cadastrado(s) com sucesso!");
+            } catch(e) { console.error(e); alert("Erro ao cadastrar."); }
+        };
+
         window.sendCredsEmail = async (name, email, login, pass, btnElement) => {
             if(!email) { alert("Preencha o e-mail do aluno antes de enviar."); return; }
             if(!login || !pass) { alert("Preencha o login e senha antes de enviar."); return; }
