@@ -65,13 +65,33 @@
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
         .like-animate { animation: pop 0.3s ease-in-out; color: #D90429 !important; }
 
-        /* CSS OTIMIZADO PARA IMPRESSÃO */
+        /* CSS OTIMIZADO PARA IMPRESSÃO - CORRIGIDO PARA MOBILE */
         @media print {
-            @page { margin: 2.5cm; size: A4 portrait; }
-            body, html { height: auto !important; min-height: auto !important; overflow: visible !important; background: white !important; }
+            @page { margin: 1cm; size: auto; }
+            html, body {
+                height: 100% !important;
+                width: 100% !important;
+                overflow: visible !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background-color: white !important;
+            }
             body > * { display: none !important; }
             
-            body.printing-contract #printable-contract { display: block !important; position: relative !important; width: 100% !important; margin: 0 !important; padding: 0 !important; visibility: visible !important; color: black !important; }
+            body.printing-contract #printable-contract { 
+                display: block !important; 
+                position: absolute !important; 
+                left: 0 !important; 
+                top: 0 !important; 
+                width: 100% !important; 
+                height: auto !important; 
+                margin: 0 !important; 
+                padding: 20px !important; 
+                visibility: visible !important; 
+                color: black !important; 
+                background: white !important; 
+                box-sizing: border-box !important;
+            }
             body.printing-contract #printable-contract * { visibility: visible !important; color: black !important; }
 
             body.printing-qr #qr-modal { display: block !important; visibility: hidden !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; }
@@ -236,21 +256,33 @@
                         <div class="lg:col-span-2 space-y-6">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <!-- Card Belt Status -->
-                                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-l-4 border-brand-red relative overflow-hidden">
-                                    <div id="celebration-banner" class="hidden absolute top-0 left-0 w-full bg-yellow-400 text-yellow-900 text-center text-xs font-bold py-1 z-10 animate-pulse">
-                                        🎉 PARABÉNS PELA NOVA GRADUAÇÃO! 🎉
+                                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-l-4 border-brand-red relative overflow-hidden flex flex-col justify-between">
+                                    
+                                    <!-- MENSAGEM DINÂMICA DE PARABÉNS (GRADUAÇÃO RECENTE) -->
+                                    <div id="celebration-banner" class="hidden absolute top-0 left-0 w-full bg-yellow-400 text-yellow-900 text-center text-xs font-bold py-1 z-10">
+                                        <span id="celebration-text">🎉 PARABÉNS PELA NOVA GRADUAÇÃO! 🎉</span>
                                     </div>
-                                    <div class="flex justify-between items-start mb-4 mt-2">
-                                        <div>
-                                            <h3 class="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-widest">Graduação Atual</h3>
-                                            <p class="text-xl font-bold text-brand-dark dark:text-white mt-1" id="belt-text">--</p>
+                                    
+                                    <div>
+                                        <div class="flex justify-between items-start mb-4 mt-2">
+                                            <div>
+                                                <h3 class="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-widest">Graduação Atual</h3>
+                                                <p class="text-xl font-bold text-brand-dark dark:text-white mt-1" id="belt-text">--</p>
+                                            </div>
+                                            <div class="p-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-brand-dark dark:text-gray-300">
+                                                <i class="fa-solid fa-medal text-xl"></i>
+                                            </div>
                                         </div>
-                                        <div class="p-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-brand-dark dark:text-gray-300">
-                                            <i class="fa-solid fa-medal text-xl"></i>
+                                        <div id="belt-visual-container" class="w-full h-12 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 shadow-inner overflow-hidden relative">
+                                            <span class="text-xs text-gray-400 dark:text-gray-500">A carregar faixa...</span>
                                         </div>
                                     </div>
-                                    <div id="belt-visual-container" class="w-full h-12 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 shadow-inner overflow-hidden relative">
-                                        <span class="text-xs text-gray-400 dark:text-gray-500">A carregar faixa...</span>
+                                    
+                                    <!-- Botão de partilha que aparece só se tiver ganho grau/faixa recentemente -->
+                                    <div id="share-belt-container" class="hidden mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                                        <button id="btn-share-belt" onclick="window.shareNewBeltToWhatsApp()" class="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white text-xs font-bold py-2 rounded-lg transition shadow-sm flex items-center justify-center gap-2">
+                                            <i class="fa-brands fa-whatsapp text-lg"></i> Partilhar a minha conquista!
+                                        </button>
                                     </div>
                                 </div>
 
@@ -552,7 +584,7 @@
     </div>
 
     <!-- Printable Contract Container -->
-    <div id="printable-contract" class="hidden bg-white text-black p-10 font-serif text-[11pt] leading-relaxed absolute inset-0 z-[100] min-h-screen">
+    <div id="printable-contract" class="hidden">
         <div class="header-section text-center mb-6 border-b-2 border-black pb-4">
             <img src="https://iili.io/qC543c7.png" alt="Logo" class="h-16 mx-auto mb-2" style="filter: grayscale(100%);">
             <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
@@ -691,7 +723,7 @@
             return `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"><rect x="0" y="0" width="${width}" height="${height}" fill="${color}" /><rect x="${width - tipWidth}" y="0" width="${tipWidth}" height="${height}" fill="${barColor}" />${stripesSVG}</svg>`;
         }
 
-        // CÁLCULO DE DIAS SEGUIDOS
+        // CÁLCULO DE DIAS SEGUIDOS E VERIFICAÇÃO DE GRADUAÇÃO RECENTE
         function calculateConsecutiveDays(attendanceArray) {
             if (!attendanceArray || attendanceArray.length === 0) return 0;
             
@@ -705,7 +737,6 @@
             const today = new Date();
             today.setHours(0,0,0,0);
 
-            // Remover duplicados (mesmo dia)
             const uniqueDates = [];
             let lastTime = 0;
             dates.forEach(d => {
@@ -720,11 +751,10 @@
             let streak = 0;
             let expectedDate = new Date(today);
 
-            // Se ele não veio hoje, checar se a streak estava ativa até ontem
             if (uniqueDates[0].getTime() !== today.getTime()) {
                 expectedDate.setDate(expectedDate.getDate() - 1);
                 if (uniqueDates[0].getTime() !== expectedDate.getTime()) {
-                    return 0; // Streak quebrada
+                    return 0; 
                 }
             }
 
@@ -737,6 +767,36 @@
                 }
             }
             return streak;
+        }
+        
+        function checkForRecentGraduation(progressLog, currentBeltStr) {
+            if (!progressLog || progressLog.length === 0) return null;
+            
+            // Procura por registos de graduação
+            const graduations = progressLog.filter(log => log.type === 'graduation');
+            if (graduations.length === 0) return null;
+            
+            // Ordena pela data mais recente
+            graduations.sort((a, b) => new Date(b.date) - new Date(a.date));
+            const latestGrad = graduations[0];
+            
+            // Verifica se aconteceu nos últimos 5 dias
+            const fiveDaysAgo = new Date();
+            fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+            const gradDate = new Date(latestGrad.date);
+            
+            if (gradDate >= fiveDaysAgo) {
+                // Descobrir se foi Faixa ou Grau
+                // A lógica simples: Se a mensagem contiver "Grau", assumimos grau. Senão, assumimos faixa nova.
+                const isDegree = latestGrad.text.includes('Grau');
+                return {
+                    isNewBelt: !isDegree,
+                    beltStr: currentBeltStr,
+                    date: gradDate
+                };
+            }
+            
+            return null;
         }
 
         // --- Configuração Firebase ---
@@ -917,10 +977,28 @@
                 statBadge.classList.add('bg-green-500');
             }
 
-            // Belt
+            // Belt & Parabéns Dinâmico
             const beltStr = data.belt || "Faixa Branca - 0º Grau";
             document.getElementById('belt-text').innerText = beltStr;
             document.getElementById('belt-visual-container').innerHTML = renderBeltSVG(beltStr);
+
+            const celebrationBanner = document.getElementById('celebration-banner');
+            const shareBeltBtn = document.getElementById('share-belt-container');
+            const recentGrad = checkForRecentGraduation(data.progressLog, beltStr);
+            
+            if (recentGrad) {
+                celebrationBanner.classList.remove('hidden');
+                shareBeltBtn.classList.remove('hidden');
+                
+                if (recentGrad.isNewBelt) {
+                    document.getElementById('celebration-text').innerText = "🎉 PARABÉNS PELA NOVA FAIXA! 🎉";
+                } else {
+                    document.getElementById('celebration-text').innerText = "⭐ PARABÉNS PELO NOVO GRAU! ⭐";
+                }
+            } else {
+                celebrationBanner.classList.add('hidden');
+                shareBeltBtn.classList.add('hidden');
+            }
 
             // Financeiro
             const planKey = data.plan || 'N/A';
@@ -1015,6 +1093,20 @@
 
         // --- CONQUISTAS (BADGES) E PARTILHA DE FEED ---
         
+        window.shareNewBeltToWhatsApp = function() {
+            if(!currentUserData) return;
+            const recentGrad = checkForRecentGraduation(currentUserData.progressLog, currentUserData.belt);
+            if(!recentGrad) return;
+            
+            let msg = '';
+            if (recentGrad.isNewBelt) {
+                msg = encodeURIComponent(`Acabei de ser graduado para a *${recentGrad.beltStr}* na Tanque Team BJJ! 🥋🎉\nO trabalho duro compensa. Oss! 🔥`);
+            } else {
+                msg = encodeURIComponent(`Acabei de receber mais um grau na minha *${recentGrad.beltStr}* na Tanque Team BJJ! 🥋⭐\nUm passo de cada vez. Oss! 🔥`);
+            }
+            window.open(`https://wa.me/?text=${msg}`, '_blank');
+        };
+
         window.checkIfBadgeShared = function(badgeName) {
             let shared = JSON.parse(localStorage.getItem('tanque_shared_badges') || "{}");
             if (!shared[currentUserData.id]) return false;
@@ -1084,7 +1176,8 @@
                 { name: "Guerreiro", desc: "50 Treinos concluídos.", icon: "fa-solid fa-shield-halved text-purple-500", req: 50 },
                 { name: "Veterano", desc: "100 Treinos. Jiu-Jitsu na veia.", icon: "fa-solid fa-crown text-yellow-500", req: 100 },
                 { name: "Focado", desc: "5 dias seguidos no tatame.", icon: "fa-solid fa-bolt text-red-500", customReq: streak >= 5 },
-                { name: "Graduado", desc: "Avançou de Faixa.", icon: "fa-solid fa-medal text-brand-red", customReq: currentUserData.belt && !currentUserData.belt.includes("Branca - 0") },
+                { name: "Nova Faixa", desc: "Avançou para uma nova faixa.", icon: "fa-solid fa-medal text-brand-red", customReq: currentUserData.belt && !currentUserData.belt.includes("Branca") },
+                { name: "Mais um Degrau", desc: "Recebeu um novo grau.", icon: "fa-solid fa-star text-yellow-600", customReq: currentUserData.belt && (currentUserData.belt.includes("1º") || currentUserData.belt.includes("2º") || currentUserData.belt.includes("3º") || currentUserData.belt.includes("4º")) },
                 { name: "Mestre", desc: "500 Treinos. Uma lenda viva.", icon: "fa-solid fa-dragon text-red-600", req: 500 }
             ];
 
@@ -1106,7 +1199,7 @@
                         actionHtml = `
                             <div class="mt-2 w-full">
                                 <button disabled class="w-full text-[9px] font-bold text-green-600 bg-green-50 dark:bg-green-900/30 rounded py-1 flex items-center justify-center gap-1 cursor-not-allowed border border-green-200 dark:border-green-800">
-                                    <i class="fa-solid fa-check"></i> Partilhado no Feed
+                                    <i class="fa-solid fa-check"></i> Partilhado
                                 </button>
                             </div>
                         `;
@@ -1170,8 +1263,8 @@
                 posts.forEach(post => {
                     // Verifica se o aluno atual já curtiu
                     const hasLiked = post.likedBy && post.likedBy.includes(currentUserData.id);
-                    // ÍCONE DE CURTIDA CORRIGIDO
-                    const likeIcon = hasLiked ? 'fa-solid text-brand-red like-animate' : 'fa-regular text-gray-400 dark:text-gray-500 group-hover:text-brand-red';
+                    // ÍCONE DE CURTIDA CORRIGIDO AQUI
+                    const likeIcon = hasLiked ? 'fa-solid fa-thumbs-up text-brand-red like-animate' : 'fa-regular fa-thumbs-up text-gray-400 dark:text-gray-500 group-hover:text-brand-red';
                     
                     let avatar = post.studentPhoto ? `<img src="${post.studentPhoto}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-500">${post.studentName.charAt(0).toUpperCase()}</div>`;
 
@@ -1179,7 +1272,7 @@
 
                     // Opção de excluir se o post for do usuário atual
                     const deleteBtn = post.studentId === currentUserData.id ? `
-                        <button onclick="window.deleteFeedPost('${post.id}')" class="text-gray-300 hover:text-red-500 transition text-sm" title="Apagar Publicação">
+                        <button onclick="window.deleteFeedPost('${post.id}')" class="text-gray-400 hover:text-red-500 transition text-sm bg-gray-100 hover:bg-red-50 dark:bg-gray-700 dark:hover:bg-red-900/30 w-8 h-8 rounded-full flex items-center justify-center" title="Apagar Minha Publicação">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     ` : '';
@@ -1210,7 +1303,7 @@
 
                             <div class="flex items-center border-t border-gray-100 dark:border-gray-700 pt-3">
                                 <button onclick="window.likeFeedPost('${post.id}', this)" class="flex items-center gap-2 font-bold transition group outline-none" data-liked="${hasLiked}">
-                                    <i class="fa-thumbs-up text-xl transition-all ${likeIcon}"></i>
+                                    <i class="${likeIcon}"></i>
                                     <span class="text-sm ${hasLiked ? 'text-brand-red' : 'text-gray-500'} group-hover:text-brand-red likes-count">${post.likes || 0} Oss!</span>
                                 </button>
                             </div>
@@ -1529,80 +1622,6 @@
         window.closeStudentHistoryModal = function() {
             document.getElementById('student-history-modal').classList.add('hidden');
             document.getElementById('student-history-modal').classList.remove('flex');
-        }
-
-        // --- CONTRATO DE IMPRESSÃO (ALUNO) ---
-        window.printStudentContract = function() {
-            if (!currentUserData) return;
-            const s = currentUserData;
-            
-            const pInfo = PLAN_DICT[s.plan] || { short: String(s.plan||'').toUpperCase(), price: 0 };
-            let price = formatCurrency(pInfo.price);
-            let displayName = pInfo.short;
-
-            let formattedDob = '--/--/----';
-            if (s.dob) { 
-                if (s.dob.includes('-')) {
-                    const parts = s.dob.split('-');
-                    if (parts.length === 3) formattedDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
-                } else {
-                    formattedDob = s.dob;
-                }
-            }
-
-            let contratanteText = s.name || "NÃO INFORMADO";
-            if (s.guardian && s.guardian.trim() !== "") contratanteText = `${s.guardian} (Responsável Legal)`;
-            else if (s.titularName && s.titularName.trim() !== "") contratanteText = `${s.titularName} (Titular)`;
-
-            const setText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; }
-            setText('printContratante', contratanteText); 
-            setText('printStudent', s.name || "NÃO INFORMADO"); 
-            setText('printDob', formattedDob); 
-            setText('printCPF', s.cpf || "Não informado"); 
-            setText('printEmail', s.email || "Não informado"); 
-            setText('printPhone', s.phone || "Não informado"); 
-            setText('printAddress', s.address || "Não informado");
-            
-            let beltInfo = ""; 
-            if(s.belt && !s.belt.includes("Branca - 0º") && !s.belt.includes("Iniciante")) beltInfo = `| Graduação: ${s.belt}`;
-            setText('printBeltInfo', beltInfo);
-            
-            let regDate = new Date(); 
-            if (s.registrationDate) { const parsed = new Date(s.registrationDate); if (!isNaN(parsed)) regDate = parsed; }
-            document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
-            
-            const isCombo = String(s.plan).includes('combo'); 
-            const isFidelity = String(s.plan).includes('semestral') || String(s.plan).includes('trimestral') || isCombo;
-            
-            let clausesHtml = `<p><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
-            clausesHtml += `<p><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong class="uppercase underline">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong class="bg-gray-200 px-1">${price}</strong>.</p>`;
-            
-            let clauseNum = 3;
-            if (isFidelity) { clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA FIDELIDADE E CANCELAMENTO:</strong> O plano escolhido possui prazo de fidelidade. O cancelamento deve ser solicitado com 30 dias de antecedência. A rescisão imotivada acarretará multa de 20% sobre o valor das parcelas restantes.</p>`; clauseNum++; } 
-            else { clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO:</strong> Cancelamento solicitado com 30 dias de antecedência. Não há reembolso de valores retroativos por faltas não justificadas.</p>`; clauseNum++; }
-            
-            if (isCombo) { clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO PLANO FAMÍLIA (COMBO):</strong> Pagamento unificado sob responsabilidade do titular. A saída de um membro não isenta os demais e reverte o plano para tabela individual.</p>`; clauseNum++; }
-            
-            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA INADIMPLÊNCIA:</strong> Atraso superior a 30 dias acarreta suspensão do acesso aos treinos e cobrança de multa e juros legais.</p>`; clauseNum++;
-            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA SAÚDE:</strong> O CONTRATANTE atesta plenas condições de saúde física e mental para esportes de combate.</p>`; clauseNum++;
-            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - NORMAS (DOJO KUN):</strong> Uso obrigatório de kimono padronizado limpo. Atos de indisciplina acarretam expulsão sem devolução de valores.</p>`; clauseNum++;
-            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DIREITO DE IMAGEM:</strong> Autoriza, a título gratuito, uso de imagem e nome para fins de marketing da Tanque Team BJJ.</p>`;
-            
-            document.getElementById('print-clauses-container').innerHTML = clausesHtml;
-            document.getElementById('printDependentsBlock').innerHTML = ''; // Hide deps on student print
-            setText('printSignatureName', s.guardian || s.titularName || s.name || "CONTRATANTE");
-            
-            document.body.classList.add('printing-contract'); 
-            setTimeout(() => { 
-                window.print(); 
-                setTimeout(() => { document.body.classList.remove('printing-contract'); }, 1000); 
-            }, 500);
-        }
-
-        // --- CONVIDAR AMIGO ---
-        window.shareTrialLink = function() {
-            const text = encodeURIComponent(`Fala! Eu treino Jiu-Jitsu na *Tanque Team BJJ* e a escola é incrível! 🥋🔥\n\nEles estão com uma promoção e oferecem a *Primeira Aula Grátis*. Vamos marcar um treino experimental juntos?\n\nAcessa o link e agenda a tua aula aqui: http://www.tanqueteambjj.com.br/#experimental`);
-            window.open(`https://wa.me/?text=${text}`, '_blank');
         }
 
     </script>
