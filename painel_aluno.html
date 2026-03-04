@@ -568,8 +568,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, getDocs, collection, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // === LIGAÇÃO E EXPOSIÇÃO DE FUNÇÕES AO ESCOPO GLOBAL ===
-        
+        // === FUNÇÕES GLOBAIS ===
         window.toggleTheme = function() {
             const docEl = document.documentElement;
             if (docEl.classList.contains('dark')) {
@@ -935,31 +934,47 @@
             document.getElementById('month-attendance-count').innerText = monthAttCount;
         }
 
-        // --- CONQUISTAS (BADGES) ---
+        // --- CONQUISTAS (BADGES) E PARTILHA ---
+        window.shareBadge = function(badgeName, desc) {
+            const text = encodeURIComponent(`🥋 Acabei de conquistar a medalha de *${badgeName}* na Tanque Team BJJ! \n\nMotivo: ${desc} \n\nO trabalho duro compensa! Oss! 🔥`);
+            window.open(`https://wa.me/?text=${text}`, '_blank');
+        };
+
         window.renderBadges = function(totalClasses) {
             const container = document.getElementById('badges-container');
             container.innerHTML = '';
             
             const badges = [
-                { name: "Primeiro Passo", desc: "Matrícula realizada", icon: "fa-solid fa-shoe-prints text-blue-500", req: 0 },
-                { name: "Iniciante", desc: "10 Treinos", icon: "fa-solid fa-fire text-orange-500", req: 10 },
-                { name: "Guerreiro", desc: "50 Treinos", icon: "fa-solid fa-shield-halved text-purple-500", req: 50 },
-                { name: "Veterano", desc: "100 Treinos", icon: "fa-solid fa-crown text-yellow-500", req: 100 },
-                { name: "Mestre", desc: "500 Treinos", icon: "fa-solid fa-dragon text-red-600", req: 500 }
+                { name: "O Primeiro Passo", desc: "Matrícula realizada. A jornada começa aqui.", icon: "fa-solid fa-shoe-prints text-blue-500", req: 0 },
+                { name: "Iniciante", desc: "10 Treinos concluídos. Já sabe amarrar a faixa!", icon: "fa-solid fa-fire text-orange-500", req: 10 },
+                { name: "Consistente", desc: "25 Treinos. O hábito está a formar-se.", icon: "fa-solid fa-dumbbell text-gray-500", req: 25 },
+                { name: "Guerreiro", desc: "50 Treinos. Resiliência no tatame.", icon: "fa-solid fa-shield-halved text-purple-500", req: 50 },
+                { name: "Veterano", desc: "100 Treinos. O Jiu-Jitsu já corre nas veias.", icon: "fa-solid fa-crown text-yellow-500", req: 100 },
+                { name: "Graduado", desc: "Avançou de Faixa. O esforço foi reconhecido.", icon: "fa-solid fa-medal text-brand-red", req: 1 }, // Regra condicional
+                { name: "O Mestre", desc: "500 Treinos. Uma lenda viva na escola.", icon: "fa-solid fa-dragon text-red-600", req: 500 }
             ];
 
             badges.forEach(b => {
-                const unlocked = totalClasses >= b.req;
-                const opacityClass = unlocked ? 'opacity-100 ring-2 ring-yellow-400 dark:ring-yellow-500' : 'opacity-40 grayscale';
+                // Condição especial para a badge de "Graduado"
+                let unlocked = totalClasses >= b.req;
+                if (b.name === "Graduado") {
+                    unlocked = currentUserData.belt && !currentUserData.belt.includes("Branca");
+                }
+
+                const opacityClass = unlocked ? 'opacity-100 ring-2 ring-yellow-400 dark:ring-yellow-500' : 'opacity-40 grayscale pointer-events-none';
                 const bgClass = unlocked ? 'bg-gradient-to-b from-white to-gray-100 dark:from-gray-700 dark:to-gray-800' : 'bg-gray-100 dark:bg-gray-800';
-                
+                const actionHtml = unlocked ? `<button onclick="window.shareBadge('${b.name}', '${b.desc}')" class="mt-2 text-[9px] font-bold text-blue-500 hover:text-blue-700 dark:text-blue-400 flex items-center justify-center gap-1 w-full bg-blue-50 dark:bg-blue-900/30 rounded py-1 transition hover:bg-blue-100"><i class="fa-brands fa-whatsapp text-green-500"></i> Partilhar</button>` : '';
+
                 container.innerHTML += `
-                    <div class="flex flex-col items-center justify-center p-3 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm ${bgClass} ${opacityClass} transition transform ${unlocked ? 'hover:scale-105' : ''}">
-                        <div class="w-12 h-12 rounded-full bg-white dark:bg-gray-900 flex items-center justify-center text-2xl shadow-inner mb-2 border border-gray-100 dark:border-gray-600">
-                            <i class="${b.icon}"></i>
+                    <div class="flex flex-col items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm ${bgClass} ${opacityClass} transition transform ${unlocked ? 'hover:-translate-y-1' : ''}">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 rounded-full bg-white dark:bg-gray-900 flex items-center justify-center text-2xl shadow-inner mb-2 border border-gray-100 dark:border-gray-600">
+                                <i class="${b.icon}"></i>
+                            </div>
+                            <p class="text-[10px] font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider text-center leading-tight mb-1">${b.name}</p>
+                            <p class="text-[8px] text-gray-500 dark:text-gray-400 text-center leading-tight">${b.desc}</p>
                         </div>
-                        <p class="text-[10px] font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider text-center leading-tight mb-1">${b.name}</p>
-                        <p class="text-[8px] text-gray-500 dark:text-gray-400 text-center">${b.desc}</p>
+                        ${actionHtml}
                     </div>
                 `;
             });
