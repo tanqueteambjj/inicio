@@ -278,10 +278,10 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Botão de partilha que aparece só se tiver ganho grau/faixa recentemente -->
+                                    <!-- Botão de partilha (Feed) que aparece só se tiver ganho grau/faixa recentemente -->
                                     <div id="share-belt-container" class="hidden mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                                        <button id="btn-share-belt" onclick="window.shareNewBeltToWhatsApp()" class="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white text-xs font-bold py-2 rounded-lg transition shadow-sm flex items-center justify-center gap-2">
-                                            <i class="fa-brands fa-whatsapp text-lg"></i> Partilhar a minha conquista!
+                                        <button id="btn-share-belt" onclick="window.shareNewBeltToFeed(this)" class="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 rounded-lg transition shadow-sm flex items-center justify-center gap-2">
+                                            <i class="fa-solid fa-share-nodes text-lg"></i> Partilhar no Feed da Equipe
                                         </button>
                                     </div>
                                 </div>
@@ -368,7 +368,7 @@
                         <!-- Conquistas -->
                         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-t-4 border-yellow-500 flex flex-col" id="achievements-section">
                             <h3 class="font-display text-xl font-bold text-gray-700 dark:text-gray-200 mb-2 flex items-center gap-2"><i class="fa-solid fa-trophy text-yellow-500"></i> As Minhas Conquistas</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-6">Acompanhe a sua evolução no tatame e partilhe as suas medalhas!</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-6">Acompanhe a sua evolução no tatame e partilhe as suas medalhas no Feed!</p>
                             
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 overflow-y-auto max-h-[300px] pr-2 pb-2" id="badges-container">
                                 <!-- Preenchido dinamicamente se houver presenças -->
@@ -398,11 +398,16 @@
 
                 <!-- ==================== ABA FEED DA EQUIPE ==================== -->
                 <div id="view-feed" class="hidden animate-fade-in">
-                    <div class="mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
-                        <h2 class="font-display text-3xl font-bold text-brand-dark dark:text-white flex items-center gap-3">
-                            <i class="fa-solid fa-users text-blue-500"></i> Feed da Equipe
-                        </h2>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Veja as conquistas recentes da sua escola. As partilhas desaparecem após 24 horas.</p>
+                    <div class="mb-6 border-b border-gray-200 dark:border-gray-700 pb-4 flex justify-between items-end">
+                        <div>
+                            <h2 class="font-display text-3xl font-bold text-brand-dark dark:text-white flex items-center gap-3">
+                                <i class="fa-solid fa-users text-blue-500"></i> Feed da Equipe
+                            </h2>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Veja as conquistas recentes da sua escola. As partilhas desaparecem após 24 horas.</p>
+                        </div>
+                        <button onclick="window.loadFeedData()" class="bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-bold flex items-center gap-2 transition">
+                            <i class="fa-solid fa-rotate"></i> Atualizar
+                        </button>
                     </div>
 
                     <div class="max-w-2xl mx-auto space-y-6" id="feed-container">
@@ -584,7 +589,7 @@
     </div>
 
     <!-- Printable Contract Container -->
-    <div id="printable-contract" class="hidden">
+    <div id="printable-contract" class="hidden bg-white text-black p-10 font-serif text-[11pt] leading-relaxed absolute inset-0 z-50">
         <div class="header-section text-center mb-6 border-b-2 border-black pb-4">
             <img src="https://iili.io/qC543c7.png" alt="Logo" class="h-16 mx-auto mb-2" style="filter: grayscale(100%);">
             <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
@@ -787,7 +792,6 @@
             
             if (gradDate >= fiveDaysAgo) {
                 // Descobrir se foi Faixa ou Grau
-                // A lógica simples: Se a mensagem contiver "Grau", assumimos grau. Senão, assumimos faixa nova.
                 const isDegree = latestGrad.text.includes('Grau');
                 return {
                     isNewBelt: !isDegree,
@@ -995,6 +999,21 @@
                 } else {
                     document.getElementById('celebration-text').innerText = "⭐ PARABÉNS PELO NOVO GRAU! ⭐";
                 }
+
+                // Verifica se já foi partilhado
+                const badgeNameToCheck = recentGrad.isNewBelt ? "Nova Faixa" : "Mais um Degrau";
+                const alreadyShared = window.checkIfBadgeShared(badgeNameToCheck);
+                const btn = document.getElementById('btn-share-belt');
+                
+                if (alreadyShared) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fa-solid fa-check text-green-500"></i> Partilhado no Feed';
+                    btn.className = "w-full bg-gray-100 dark:bg-gray-700 text-gray-500 text-xs font-bold py-2 rounded-lg cursor-not-allowed flex items-center justify-center gap-2";
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-share-nodes text-lg"></i> Partilhar no Feed da Equipe';
+                    btn.className = "w-full bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 rounded-lg transition shadow-sm flex items-center justify-center gap-2";
+                }
             } else {
                 celebrationBanner.classList.add('hidden');
                 shareBeltBtn.classList.add('hidden');
@@ -1093,20 +1112,6 @@
 
         // --- CONQUISTAS (BADGES) E PARTILHA DE FEED ---
         
-        window.shareNewBeltToWhatsApp = function() {
-            if(!currentUserData) return;
-            const recentGrad = checkForRecentGraduation(currentUserData.progressLog, currentUserData.belt);
-            if(!recentGrad) return;
-            
-            let msg = '';
-            if (recentGrad.isNewBelt) {
-                msg = encodeURIComponent(`Acabei de ser graduado para a *${recentGrad.beltStr}* na Tanque Team BJJ! 🥋🎉\nO trabalho duro compensa. Oss! 🔥`);
-            } else {
-                msg = encodeURIComponent(`Acabei de receber mais um grau na minha *${recentGrad.beltStr}* na Tanque Team BJJ! 🥋⭐\nUm passo de cada vez. Oss! 🔥`);
-            }
-            window.open(`https://wa.me/?text=${msg}`, '_blank');
-        };
-
         window.checkIfBadgeShared = function(badgeName) {
             let shared = JSON.parse(localStorage.getItem('tanque_shared_badges') || "{}");
             if (!shared[currentUserData.id]) return false;
@@ -1121,6 +1126,20 @@
                 localStorage.setItem('tanque_shared_badges', JSON.stringify(shared));
             }
         }
+
+        window.shareNewBeltToFeed = async function(btnElement) {
+            if(!currentUserData) return;
+            const recentGrad = checkForRecentGraduation(currentUserData.progressLog, currentUserData.belt);
+            if(!recentGrad) return;
+            
+            let badgeName = recentGrad.isNewBelt ? "Nova Faixa" : "Mais um Degrau";
+            let desc = recentGrad.isNewBelt 
+                ? `Fui graduado para a ${recentGrad.beltStr}! O trabalho duro compensa. Oss! 🔥` 
+                : `Recebi mais um grau na minha ${recentGrad.beltStr}! Um passo de cada vez. Oss! 🔥`;
+            let iconClass = recentGrad.isNewBelt ? "fa-solid fa-medal text-brand-red" : "fa-solid fa-star text-yellow-600";
+            
+            await window.shareBadgeToFeed(badgeName, desc, iconClass, btnElement);
+        };
 
         window.shareBadgeToFeed = async function(badgeName, desc, iconClass, btnElement) {
             if(!currentUserData) return;
@@ -1151,11 +1170,9 @@
                 // Marca como partilhado localmente
                 window.markBadgeAsShared(badgeName);
 
-                btnElement.innerHTML = '<i class="fa-solid fa-check text-green-500"></i> Partilhado!';
-                btnElement.classList.replace('bg-blue-50', 'bg-green-50');
-                btnElement.classList.replace('text-blue-500', 'text-green-600');
-                btnElement.classList.replace('hover:bg-blue-100', 'hover:bg-green-50');
-                btnElement.classList.add('cursor-not-allowed');
+                btnElement.innerHTML = '<i class="fa-solid fa-check text-green-500"></i> Partilhado no Feed';
+                btnElement.classList.remove('bg-blue-50', 'hover:bg-blue-100', 'text-blue-500', 'bg-blue-500', 'hover:bg-blue-600', 'text-white');
+                btnElement.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-500', 'cursor-not-allowed');
                 
             } catch (e) {
                 console.error("Erro ao partilhar no feed:", e);
@@ -1176,7 +1193,7 @@
                 { name: "Guerreiro", desc: "50 Treinos concluídos.", icon: "fa-solid fa-shield-halved text-purple-500", req: 50 },
                 { name: "Veterano", desc: "100 Treinos. Jiu-Jitsu na veia.", icon: "fa-solid fa-crown text-yellow-500", req: 100 },
                 { name: "Focado", desc: "5 dias seguidos no tatame.", icon: "fa-solid fa-bolt text-red-500", customReq: streak >= 5 },
-                { name: "Nova Faixa", desc: "Avançou para uma nova faixa.", icon: "fa-solid fa-medal text-brand-red", customReq: currentUserData.belt && !currentUserData.belt.includes("Branca") },
+                { name: "Nova Faixa", desc: "Avançou para uma nova faixa.", icon: "fa-solid fa-medal text-brand-red", customReq: currentUserData.belt && !currentUserData.belt.includes("Branca - 0") },
                 { name: "Mais um Degrau", desc: "Recebeu um novo grau.", icon: "fa-solid fa-star text-yellow-600", customReq: currentUserData.belt && (currentUserData.belt.includes("1º") || currentUserData.belt.includes("2º") || currentUserData.belt.includes("3º") || currentUserData.belt.includes("4º")) },
                 { name: "Mestre", desc: "500 Treinos. Uma lenda viva.", icon: "fa-solid fa-dragon text-red-600", req: 500 }
             ];
@@ -1198,8 +1215,8 @@
                     if (alreadyShared) {
                         actionHtml = `
                             <div class="mt-2 w-full">
-                                <button disabled class="w-full text-[9px] font-bold text-green-600 bg-green-50 dark:bg-green-900/30 rounded py-1 flex items-center justify-center gap-1 cursor-not-allowed border border-green-200 dark:border-green-800">
-                                    <i class="fa-solid fa-check"></i> Partilhado
+                                <button disabled class="w-full text-[9px] font-bold text-gray-500 bg-gray-100 dark:bg-gray-700 rounded py-1 flex items-center justify-center gap-1 cursor-not-allowed border border-gray-200 dark:border-gray-600">
+                                    <i class="fa-solid fa-check text-green-500"></i> Partilhado
                                 </button>
                             </div>
                         `;
@@ -1263,7 +1280,7 @@
                 posts.forEach(post => {
                     // Verifica se o aluno atual já curtiu
                     const hasLiked = post.likedBy && post.likedBy.includes(currentUserData.id);
-                    // ÍCONE DE CURTIDA CORRIGIDO AQUI
+                    // ÍCONE DE CURTIDA CORRIGIDO
                     const likeIcon = hasLiked ? 'fa-solid fa-thumbs-up text-brand-red like-animate' : 'fa-regular fa-thumbs-up text-gray-400 dark:text-gray-500 group-hover:text-brand-red';
                     
                     let avatar = post.studentPhoto ? `<img src="${post.studentPhoto}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-500">${post.studentName.charAt(0).toUpperCase()}</div>`;
@@ -1622,6 +1639,80 @@
         window.closeStudentHistoryModal = function() {
             document.getElementById('student-history-modal').classList.add('hidden');
             document.getElementById('student-history-modal').classList.remove('flex');
+        }
+
+        // --- CONTRATO DE IMPRESSÃO (ALUNO) ---
+        window.printStudentContract = function() {
+            if (!currentUserData) return;
+            const s = currentUserData;
+            
+            const pInfo = PLAN_DICT[s.plan] || { short: String(s.plan||'').toUpperCase(), price: 0 };
+            let price = formatCurrency(pInfo.price);
+            let displayName = pInfo.short;
+
+            let formattedDob = '--/--/----';
+            if (s.dob) { 
+                if (s.dob.includes('-')) {
+                    const parts = s.dob.split('-');
+                    if (parts.length === 3) formattedDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                } else {
+                    formattedDob = s.dob;
+                }
+            }
+
+            let contratanteText = s.name || "NÃO INFORMADO";
+            if (s.guardian && s.guardian.trim() !== "") contratanteText = `${s.guardian} (Responsável Legal)`;
+            else if (s.titularName && s.titularName.trim() !== "") contratanteText = `${s.titularName} (Titular)`;
+
+            const setText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; }
+            setText('printContratante', contratanteText); 
+            setText('printStudent', s.name || "NÃO INFORMADO"); 
+            setText('printDob', formattedDob); 
+            setText('printCPF', s.cpf || "Não informado"); 
+            setText('printEmail', s.email || "Não informado"); 
+            setText('printPhone', s.phone || "Não informado"); 
+            setText('printAddress', s.address || "Não informado");
+            
+            let beltInfo = ""; 
+            if(s.belt && !s.belt.includes("Branca - 0º") && !s.belt.includes("Iniciante")) beltInfo = `| Graduação: ${s.belt}`;
+            setText('printBeltInfo', beltInfo);
+            
+            let regDate = new Date(); 
+            if (s.registrationDate) { const parsed = new Date(s.registrationDate); if (!isNaN(parsed)) regDate = parsed; }
+            document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+            
+            const isCombo = String(s.plan).includes('combo'); 
+            const isFidelity = String(s.plan).includes('semestral') || String(s.plan).includes('trimestral') || isCombo;
+            
+            let clausesHtml = `<p><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
+            clausesHtml += `<p><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong class="uppercase underline">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong class="bg-gray-200 px-1">${price}</strong>.</p>`;
+            
+            let clauseNum = 3;
+            if (isFidelity) { clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA FIDELIDADE E CANCELAMENTO:</strong> O plano escolhido possui prazo de fidelidade. O cancelamento deve ser solicitado com 30 dias de antecedência. A rescisão imotivada acarretará multa de 20% sobre o valor das parcelas restantes.</p>`; clauseNum++; } 
+            else { clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO:</strong> Cancelamento solicitado com 30 dias de antecedência. Não há reembolso de valores retroativos por faltas não justificadas.</p>`; clauseNum++; }
+            
+            if (isCombo) { clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO PLANO FAMÍLIA (COMBO):</strong> Pagamento unificado sob responsabilidade do titular. A saída de um membro não isenta os demais e reverte o plano para tabela individual.</p>`; clauseNum++; }
+            
+            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA INADIMPLÊNCIA:</strong> Atraso superior a 30 dias acarreta suspensão do acesso aos treinos e cobrança de multa e juros legais.</p>`; clauseNum++;
+            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA SAÚDE:</strong> O CONTRATANTE atesta plenas condições de saúde física e mental para esportes de combate.</p>`; clauseNum++;
+            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - NORMAS (DOJO KUN):</strong> Uso obrigatório de kimono padronizado limpo. Atos de indisciplina acarretam expulsão sem devolução de valores.</p>`; clauseNum++;
+            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DIREITO DE IMAGEM:</strong> Autoriza, a título gratuito, uso de imagem e nome para fins de marketing da Tanque Team BJJ.</p>`;
+            
+            document.getElementById('print-clauses-container').innerHTML = clausesHtml;
+            document.getElementById('printDependentsBlock').innerHTML = ''; // Hide deps on student print
+            setText('printSignatureName', s.guardian || s.titularName || s.name || "CONTRATANTE");
+            
+            document.body.classList.add('printing-contract'); 
+            setTimeout(() => { 
+                window.print(); 
+                setTimeout(() => { document.body.classList.remove('printing-contract'); }, 1000); 
+            }, 500);
+        }
+
+        // --- CONVIDAR AMIGO ---
+        window.shareTrialLink = function() {
+            const text = encodeURIComponent(`Fala! Eu treino Jiu-Jitsu na *Tanque Team BJJ* e a escola é incrível! 🥋🔥\n\nEles estão com uma promoção e oferecem a *Primeira Aula Grátis*. Vamos marcar um treino experimental juntos?\n\nAcessa o link e agenda a tua aula aqui: http://www.tanqueteambjj.com.br/#experimental`);
+            window.open(`https://wa.me/?text=${text}`, '_blank');
         }
 
     </script>
