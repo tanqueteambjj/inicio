@@ -65,77 +65,59 @@
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
         .like-animate { animation: pop 0.3s ease-in-out; color: #D90429 !important; }
 
-        /* CSS OTIMIZADO PARA IMPRESSÃO - CORRIGIDO PARA MOBILE E CONTRATO */
+        /* CSS OTIMIZADO PARA IMPRESSÃO - ROBUSTO PARA MOBILE */
         @media print {
-            @page { margin: 1cm; size: auto; }
-            html, body {
-                height: auto !important;
-                width: auto !important;
-                overflow: visible !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                background-color: white !important;
-                color: black !important;
-            }
-            .no-print, #main-ui { display: none !important; }
+            @page { margin: 1cm; size: A4 portrait; }
             
-            /* CONTRATO DE MATRÍCULA */
-            body.printing-contract #printable-contract { 
-                display: block !important; 
-                position: relative !important; 
-                width: 100% !important; 
-                height: auto !important; 
-                margin: 0 !important; 
-                padding: 0 !important; 
-                visibility: visible !important; 
-                color: black !important; 
-                background: white !important; 
-                box-sizing: border-box !important;
+            body * {
+                visibility: hidden !important;
             }
+
+            /* --- CONTRATO DE MATRÍCULA --- */
+            body.printing-contract #printable-contract,
             body.printing-contract #printable-contract * { 
                 visibility: visible !important; 
-                color: black !important; 
+                color: black !important;
+            }
+            body.printing-contract #printable-contract { 
+                position: absolute !important; 
+                left: 0 !important; 
+                top: 0 !important; 
+                width: 100% !important; 
+                display: block !important; 
+                background: white !important; 
                 font-family: serif !important;
                 font-size: 11pt !important;
                 line-height: 1.5 !important;
+                padding: 0 !important;
+                margin: 0 !important;
             }
-            body.printing-contract #qr-modal,
-            body.printing-contract #student-history-modal,
-            body.printing-contract #profile-edit-modal {
-                display: none !important;
-            }
+            
+            body.printing-contract #printable-contract .text-xs { font-size: 9pt !important; }
+            body.printing-contract #printable-contract .text-sm { font-size: 10pt !important; }
+            body.printing-contract #printable-contract .text-lg { font-size: 14pt !important; }
+            body.printing-contract #printable-contract .text-2xl { font-size: 18pt !important; }
 
-            /* CARTEIRINHA QR CODE */
-            body.printing-qr #qr-modal { 
-                display: block !important; 
-                position: relative !important; 
+            /* --- CARTEIRINHA QR CODE --- */
+            body.printing-qr #qr-modal,
+            body.printing-qr #qr-modal * { 
                 visibility: visible !important; 
-                background: transparent !important;
+            }
+            body.printing-qr #qr-modal { 
+                position: absolute !important; 
+                left: 0 !important; 
+                top: 0 !important; 
                 width: 100% !important;
                 height: auto !important;
+                display: block !important; 
+                background: transparent !important;
             }
             body.printing-qr #qr-modal > div {
                 box-shadow: none !important;
                 border: none !important;
-                background: transparent !important;
                 margin: 0 auto !important;
             }
-            body.printing-qr #printable-qr-card { 
-                display: flex !important; 
-                position: relative !important;
-                margin: 2cm auto !important; 
-                visibility: visible !important; 
-                background: white !important; 
-                -webkit-print-color-adjust: exact !important; 
-                print-color-adjust: exact !important; 
-                border: 1px solid #ccc !important; 
-                border-radius: 12px !important; 
-                box-shadow: none !important; 
-            }
-            body.printing-qr #printable-qr-card * { visibility: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            body.printing-qr #printable-contract,
-            body.printing-qr #student-history-modal,
-            body.printing-qr #profile-edit-modal {
+            body.printing-qr .no-print, body.printing-qr .no-print * {
                 display: none !important;
             }
             
@@ -283,12 +265,6 @@
                             </div>
                             <i class="fa-solid fa-chevron-right text-gray-400 text-2xl hidden md:block"></i>
                         </button>
-                    </div>
-
-                    <!-- MURAL DE AVISOS -->
-                    <div id="student-notices-container" class="hidden mb-8">
-                        <h3 class="font-display text-xl font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2"><i class="fa-solid fa-bullhorn text-yellow-500"></i> Quadro de Avisos</h3>
-                        <div id="student-notices-list" class="space-y-3"></div>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -562,7 +538,7 @@
             
             <div id="printable-qr-card" class="bg-white border border-gray-300 rounded-xl overflow-hidden relative shadow-inner mx-auto flex flex-col" style="width: 260px; height: 410px;">
                 <div class="bg-brand-dark text-white p-3 flex items-center justify-center gap-2 shrink-0 border-b-4 border-brand-red">
-                    <img src="https://iili.io/qC543c7.png" class="h-6">
+                    <img src="https://iili.io/qC543c7.png" class="h-6"> <!-- Filtro removido para manter a cor -->
                     <span class="font-display font-bold text-sm tracking-widest uppercase">Tanque Team</span>
                 </div>
                 
@@ -644,6 +620,7 @@
             <p><strong>1. CONTRATADA:</strong> <span class="uppercase font-bold">Tanque Team Escola de Artes Marciais LTDA</span>.</p>
             <p><strong>2. CONTRATANTE:</strong> <span id="printContratante" class="font-bold uppercase"></span>, CPF: <span id="printCPF" class="font-mono font-bold"></span>, Endereço: <span id="printAddress" class="uppercase"></span>, Tel: <span id="printPhone"></span>, E-mail: <span id="printEmail"></span>.</p>
             <p><strong>3. ALUNO(A):</strong> <span id="printStudent" class="font-bold uppercase"></span>, Nasc: <span id="printDob" class="font-mono"></span>. <span id="printBeltInfo"></span></p>
+            <div id="printDependentsBlock" class="mt-2 pl-4 border-l-2 border-gray-400"></div>
         </div>
 
         <div id="print-clauses-container" class="clauses-section text-sm text-justify mb-6 space-y-3"></div>
@@ -930,6 +907,9 @@
 
         async function loadDependents(titularId) {
             try {
+                // Guarda de forma global os dependentes para usar no contrato
+                window.myDependents = [];
+
                 const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'students'));
                 const querySnapshot = await getDocs(q);
                 
@@ -943,6 +923,8 @@
                     const dep = { id: docSnap.id, ...docSnap.data() };
                     if(dep.titularId === titularId && dep.plan === 'dependente' && !dep.archived) {
                         foundDeps = true;
+                        window.myDependents.push(dep);
+                        
                         const attCount = dep.attendance ? dep.attendance.length : 0;
                         const beltName = dep.belt ? dep.belt.split('-')[0].trim() : 'Branca';
                         
@@ -1687,6 +1669,7 @@
             if (!currentUserData) return;
             const s = currentUserData;
             
+            // Recriamos e preenchemos os dados no contrato (mesmo oculto, ele está no DOM)
             const pInfo = PLAN_DICT[s.plan] || { short: String(s.plan||'').toUpperCase(), price: 0 };
             let price = formatCurrency(pInfo.price);
             let displayName = pInfo.short;
@@ -1740,21 +1723,42 @@
             clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DIREITO DE IMAGEM:</strong> Autoriza, a título gratuito, uso de imagem e nome para fins de marketing da Tanque Team BJJ.</p>`;
             
             document.getElementById('print-clauses-container').innerHTML = clausesHtml;
+
+            let dependentsHtml = '';
+            if (isCombo && window.myDependents && window.myDependents.length > 0) {
+                dependentsHtml = `<p class="mt-2 text-sm"><strong>DEPENDENTES VINCULADOS AO PLANO:</strong></p><ul class="list-disc pl-5 mt-1 text-xs">`;
+                window.myDependents.forEach(d => {
+                    let dDob = '--/--/----';
+                    if (d.dob) { 
+                        if(d.dob.includes('-')) {
+                            const parts = d.dob.split('-');
+                            if(parts.length===3) dDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                        } else dDob = d.dob;
+                    }
+                    dependentsHtml += `<li><strong>${d.name}</strong> - Nasc: ${dDob} | Parentesco: ${d.parentesco || '-'} | Graduação: ${d.belt || 'Branca'}</li>`;
+                });
+                dependentsHtml += `</ul>`;
+            } else if (isCombo) {
+                dependentsHtml = `<p class="mt-2 text-xs italic text-gray-500">Nenhum dependente vinculado no sistema no momento.</p>`;
+            }
+            document.getElementById('printDependentsBlock').innerHTML = dependentsHtml;
+
             setText('printSignatureName', s.guardian || s.titularName || s.name || "CONTRATANTE");
             
-            // Remove a classe hidden do contrato
-            document.getElementById('printable-contract').classList.remove('hidden');
-            
-            // Adiciona a classe ao body para esconder o resto
+            // Adiciona a classe no body para habilitar o modo contrato e desabilita delays problemáticos
             document.body.classList.add('printing-contract'); 
-            
-            // Chama a impressão e limpa logo a seguir
             window.print(); 
             
+            // Limpeza rápida pós-impressão
             setTimeout(() => { 
                 document.body.classList.remove('printing-contract'); 
-                document.getElementById('printable-contract').classList.add('hidden');
-            }, 1000); 
+            }, 500); 
+        }
+
+        window.printQrCard = function() {
+            document.body.classList.add('printing-qr'); 
+            window.print(); 
+            setTimeout(() => { document.body.classList.remove('printing-qr'); }, 500); 
         }
 
         // --- CONVIDAR AMIGO ---
