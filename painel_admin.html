@@ -91,6 +91,9 @@
             </button>
         </div>
         <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+            <a href="#" onclick="window.switchMainView('checkin-list')" id="nav-checkin-list" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
+                <i class="fa-solid fa-clipboard-user w-6"></i> <span class="ml-2">Presenças Manuais</span>
+            </a>
             <a href="#" onclick="window.switchMainView('students')" id="nav-students" class="flex items-center px-4 py-3 bg-brand-red text-white rounded-lg shadow-md transition-all font-bold">
                 <i class="fa-solid fa-users w-6"></i> <span class="ml-2">Alunos</span>
             </a>
@@ -131,6 +134,36 @@
         </header>
 
         <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-6 relative">
+
+            <!-- VIEW: CHECK-IN MANUAL -->
+            <div id="view-checkin-list" class="hidden animate-fade-in">
+                <div class="mb-6">
+                    <h1 class="text-3xl font-display font-bold text-brand-dark uppercase tracking-wider"><i class="fa-solid fa-clipboard-user text-purple-500 mr-2"></i> Presenças Manuais</h1>
+                    <p class="text-gray-500 text-sm mt-1">Marque ou cancele a presença dos alunos de forma rápida.</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md p-6 border border-gray-200 max-w-3xl">
+                    <div class="mb-6 bg-purple-50 p-4 rounded-xl border border-purple-200 shadow-inner">
+                        <label class="block text-xs font-bold text-purple-800 uppercase tracking-wider mb-2">1. Selecione a Turma do Check-in</label>
+                        <select id="main-checkin-class" onchange="window.renderCheckinList()" class="w-full border-2 border-purple-300 rounded-lg p-3 font-bold text-gray-800 bg-white focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition">
+                            <option value="Turma Mista (Livre)">Geral / Mista</option>
+                            <option value="Adulto - 10h30">Adulto - 10h30</option>
+                            <option value="Adulto - 12h30">Adulto - 12h30</option>
+                            <option value="Adulto - 18h00">Adulto - 18h00</option>
+                            <option value="Adulto - 21h00">Adulto - 21h00</option>
+                            <option value="Infantil - 15h00">Infantil - 15h00</option>
+                            <option value="Infantil - 16h30">Infantil - 16h30</option>
+                        </select>
+                    </div>
+
+                    <div class="relative mb-6">
+                        <input type="text" id="checkin-search" onkeyup="window.renderCheckinList()" placeholder="Procurar aluno..." class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-lg focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition outline-none shadow-sm">
+                        <i class="fa-solid fa-search absolute left-4 top-4 text-gray-400"></i>
+                    </div>
+
+                    <div class="max-h-[500px] overflow-y-auto pr-2" id="checkin-list-container"></div>
+                </div>
+            </div>
 
             <!-- VIEW: ALUNOS -->
             <div id="view-students" class="animate-fade-in">
@@ -882,7 +915,7 @@
             measurementId: "G-SW8PP8X7WM"
         };
 
-        let app, db, auth, appId;
+        let app, db, auth, APP_ID;
 
         window.students = []; 
         window.currentTab = 'all'; 
@@ -1004,9 +1037,13 @@
                 window.location.href = "https://www.tanqueteambjj.com.br/login.html";
             } else {
                 try {
-                    app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj"; 
+                    app = initializeApp(firebaseConfig); 
+                    auth = getAuth(app); 
+                    db = getFirestore(app); 
+                    APP_ID = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj"; 
                     
                     window.db = db;
+                    window.appIdVar = APP_ID;
                     
                     const initAuth = async () => {
                         try {
@@ -1127,7 +1164,7 @@
         window.loadData = async function() {
             try {
                 if(!window.db) return;
-                const querySnapshot = await getDocs(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'));
+                const querySnapshot = await getDocs(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'));
                 window.students = [];
                 querySnapshot.forEach(doc => window.students.push({ id: doc.id, ...doc.data() }));
                 window.students.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
@@ -1252,7 +1289,7 @@
             const text = document.getElementById('prog-new-note').value.trim();
             if(!text) { alert("Escreva uma anotação."); return; }
             try {
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), {
+                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), {
                     progressLog: arrayUnion({ type: 'note', text: text, date: new Date().toISOString() })
                 });
                 const s = window.students.find(st => st.id === id);
@@ -1354,7 +1391,7 @@
         };
 
         // ==========================================
-        // LÓGICA DO LEITOR DE QR CODE (Câmera)
+        // LÓGICA DO LEITOR DE QR CODE (Câmera Contínua)
         // ==========================================
         window.playBeep = () => {
             try {
@@ -1421,8 +1458,8 @@
         };
 
         window.onScanSuccess = async (decodedText, decodedResult) => {
-            if(window.isScanningPaused) return; // Prevent multiple reads
-            window.isScanningPaused = true;
+            if(window.isScanningPaused) return; // Previne múltiplas leituras seguidas
+            window.isScanningPaused = true; // Bloqueia a câmara temporariamente (mas sem desligar)
             
             const resDiv = document.getElementById('checkin-result');
             resDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-blue-500 mb-2"></i> Processando...';
@@ -1459,7 +1496,7 @@
 
                 const newLog = { date: todayISO, time: className, timestamp: new Date().toISOString() };
 
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), {
+                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), {
                     attendance: arrayUnion(todayISO),
                     attendanceLog: arrayUnion(newLog)
                 });
@@ -1493,8 +1530,6 @@
             resDiv.className = "text-center py-4 w-full rounded-lg bg-gray-50 border border-gray-200 font-medium text-gray-600 min-h-[100px] flex flex-col items-center justify-center";
             window.isScanningPaused = false;
         };
-
-        window.onScanFailure = (error) => { /* Ignorar erros de background */ };
 
         // ==========================================
         // NOVA LÓGICA DE PRESENÇAS MANUAIS (CHECK-IN) E FREQUÊNCIA
@@ -1567,7 +1602,7 @@
 
                 const newLog = { date: dateStr, time: selectedClass, timestamp: new Date().toISOString() };
                 
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), {
+                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), {
                     attendance: arrayUnion(dateStr),
                     attendanceLog: arrayUnion(newLog)
                 });
@@ -1590,7 +1625,7 @@
             if (!logEntry) return;
 
             try {
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), {
+                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), {
                     attendanceLog: arrayRemove(logEntry)
                 });
                 
@@ -1598,7 +1633,7 @@
 
                 const stillHasLogsForDate = s.attendanceLog.some(l => l.date === dateStr);
                 if (!stillHasLogsForDate) {
-                    await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), {
+                    await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), {
                         attendance: arrayRemove(dateStr)
                     });
                     if(s.attendance) s.attendance = s.attendance.filter(d => d !== dateStr);
@@ -1664,7 +1699,7 @@
                 }
 
                 const newLog = { date: dateVal, time: classVal, timestamp: new Date().toISOString() };
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { 
+                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { 
                     attendance: arrayUnion(dateVal), 
                     attendanceLog: arrayUnion(newLog) 
                 }); 
@@ -1838,7 +1873,7 @@
         // --- AULAS EXPERIMENTAIS ---
         window.loadExperimentalData = async () => {
             try {
-                const q = query(collection(window.db, 'artifacts', appId, 'public', 'data', 'experimental'));
+                const q = query(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental'));
                 const snap = await getDocs(q); window.experimentalList = [];
                 snap.forEach((doc) => window.experimentalList.push({ id: doc.id, ...doc.data() }));
                 window.renderExperimentalTable();
@@ -1933,7 +1968,7 @@
 
         window.changeExpStatus = async (id, newStatus) => { 
             try { 
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), { status: newStatus }); 
+                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id), { status: newStatus }); 
                 const exp = window.experimentalList.find(e => e.id === id); 
                 if(exp) exp.status = newStatus; 
                 window.renderExperimentalTable(); 
@@ -1942,7 +1977,7 @@
 
         window.deleteExperimental = async (id) => {
             if(!confirm("Excluir este agendamento permanentemente?")) return;
-            try { await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id)); window.experimentalList = window.experimentalList.filter(e => e.id !== id); window.renderExperimentalTable(); } catch(e) { alert("Erro ao excluir."); }
+            try { await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id)); window.experimentalList = window.experimentalList.filter(e => e.id !== id); window.renderExperimentalTable(); } catch(e) { alert("Erro ao excluir."); }
         };
 
         window.convertToStudent = (id) => {
@@ -1950,7 +1985,7 @@
             window.openAdminRegisterModal(); document.getElementById('reg-name').value = exp.name || '';
             if (exp.dob && exp.dob.includes('-')) { const [y, m, d] = exp.dob.split('-'); document.getElementById('reg-dob').value = `${d}/${m}/${y}`; } else document.getElementById('reg-dob').value = exp.dob || '';
             document.getElementById('reg-email').value = exp.email || ''; document.getElementById('reg-phone').value = exp.phone || ''; document.getElementById('reg-guardian').value = exp.guardian ? exp.guardian + (exp.guardianKinship ? ` (${exp.guardianKinship})` : '') : '';
-            updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), { status: 'Matriculado' }).then(() => { exp.status = 'Matriculado'; window.renderExperimentalTable(); });
+            updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id), { status: 'Matriculado' }).then(() => { exp.status = 'Matriculado'; window.renderExperimentalTable(); });
         };
 
         window.openEditExperimentalModal = (id) => {
@@ -1967,7 +2002,7 @@
             const id = document.getElementById('edit-exp-id').value; const name = document.getElementById('edit-exp-name').value; const phone = document.getElementById('edit-exp-phone').value; const dobRaw = document.getElementById('edit-exp-dob').value; const date = document.getElementById('edit-exp-date').value; const time = document.getElementById('edit-exp-time').value;
             if(!name || !date || !time) { alert("Preencha o Nome, Data e Horário."); return; }
             let dobIso = (dobRaw && dobRaw.includes('/')) ? dobRaw.split('/').reverse().join('-') : dobRaw;
-            try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'experimental', id), { name, phone, dob: dobIso, date, time }); alert("Agendamento atualizado!"); window.closeEditExperimentalModal(); window.loadExperimentalData(); } catch(e) { alert("Erro ao atualizar."); }
+            try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id), { name, phone, dob: dobIso, date, time }); alert("Agendamento atualizado!"); window.closeEditExperimentalModal(); window.loadExperimentalData(); } catch(e) { alert("Erro ao atualizar."); }
         };
 
     </script>
