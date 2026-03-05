@@ -79,17 +79,18 @@
                 print-color-adjust: exact !important;
             }
             
-            /* Esconde a Interface Base */
-            #main-ui, #loading-screen, #redirect-overlay, 
-            #profile-edit-modal, #student-history-modal { 
+            /* Esconde a Interface Base para qualquer impressão */
+            body.printing-contract #main-ui, body.printing-contract #loading-screen, body.printing-contract #redirect-overlay, 
+            body.printing-contract #profile-edit-modal, body.printing-contract #student-history-modal, body.printing-contract #qr-modal,
+            body.printing-qr #main-ui, body.printing-qr #loading-screen, body.printing-qr #redirect-overlay, 
+            body.printing-qr #profile-edit-modal, body.printing-qr #student-history-modal, body.printing-qr #printable-contract { 
                 display: none !important; 
             }
 
             /* --- CONTRATO DE MATRÍCULA --- */
-            body.printing-contract #qr-modal { display: none !important; }
             body.printing-contract #printable-contract { 
                 display: block !important; 
-                position: relative !important; 
+                position: static !important; /* CRUCIAL: Remove absolute/fixed no mobile */
                 width: 100% !important; 
                 height: auto !important; 
                 visibility: visible !important; 
@@ -111,34 +112,37 @@
             body.printing-contract #printable-contract .bg-blue-50 { background-color: #eff6ff !important; border-left: 2px solid #60a5fa !important; }
 
             /* --- CARTEIRINHA QR CODE --- */
-            body.printing-qr #printable-contract { display: none !important; }
             body.printing-qr #qr-modal { 
-                display: flex !important; 
-                position: absolute !important; 
-                left: 0 !important; 
-                top: 0 !important; 
+                display: block !important; 
+                position: static !important; /* CRUCIAL: Remove a posição fixa da modal no mobile */
+                visibility: visible !important; 
+                background: white !important; /* Remove o fundo preto transparente da modal */
                 width: 100% !important;
                 height: auto !important;
-                padding: 1cm 0 !important;
-                align-items: flex-start !important;
-                justify-content: center !important;
-                background: white !important; /* Força o fundo branco no container inteiro */
+                padding: 0 !important;
+                margin: 0 !important;
             }
-            /* Remove a caixa escura que envolvia a carteirinha no telemóvel */
+            /* Limpa o contêiner interno da modal */
             body.printing-qr #qr-modal > div {
+                display: block !important;
                 box-shadow: none !important;
                 border: none !important;
                 margin: 0 auto !important;
-                padding: 0 !important; /* Remove padding para não criar caixa cinza */
-                background: transparent !important;
+                padding: 0 !important; 
+                background: white !important;
+                transform: none !important; /* Remove animações/transforms */
             }
+            /* Isola o cartão */
             body.printing-qr #printable-qr-card {
-                position: relative !important;
+                position: static !important;
                 display: flex !important;
                 flex-direction: column !important;
                 margin: 0 auto !important;
-                border: 2px solid black !important; /* Contorno claro na impressão */
-                background: white !important; /* Fundo do cartão branco */
+                border: 2px solid black !important; /* Contorno visível na impressão */
+                background: white !important; 
+                width: 6.5cm !important;
+                height: 10.5cm !important;
+                page-break-inside: avoid;
             }
             body.printing-qr .no-print, body.printing-qr .no-print * {
                 display: none !important;
@@ -567,7 +571,7 @@
             
             <div id="printable-qr-card" class="bg-white border border-gray-300 rounded-xl overflow-hidden relative shadow-inner flex flex-col" style="width: 260px; height: 410px;">
                 <div class="bg-brand-dark text-white p-3 flex items-center justify-center gap-2 shrink-0 border-b-4 border-brand-red">
-                    <img src="https://iili.io/qC543c7.png" class="h-6"> <!-- Corrigido para manter as cores originais -->
+                    <img src="https://iili.io/qC543c7.png" class="h-6">
                     <span class="font-display font-bold text-sm tracking-widest uppercase">Tanque Team</span>
                 </div>
                 
@@ -635,7 +639,7 @@
     </div>
 
     <!-- Printable Contract Container -->
-    <!-- Ele deve ficar solto no body e ser revelado no @media print -->
+    <!-- Elemento fica escondido da UI através de hidden mas é ativado na impressão -->
     <div id="printable-contract" class="hidden">
         <div class="header-section text-center mb-6 border-b-2 border-black pb-4">
             <img src="https://iili.io/qC543c7.png" alt="Logo" class="h-16 mx-auto mb-2" style="filter: grayscale(100%);">
@@ -1716,13 +1720,9 @@
 
         window.printQrCard = function() {
             document.body.classList.add('printing-qr'); 
-            
-            setTimeout(() => {
-                window.print();
-                setTimeout(() => {
-                    document.body.classList.remove('printing-qr');
-                }, 100);
-            }, 100);
+            document.body.offsetHeight; // Força re-render para telemóveis
+            window.print(); 
+            document.body.classList.remove('printing-qr'); 
         }
 
         window.printStudentContract = function() {
@@ -1805,13 +1805,9 @@
             setText('printSignatureName', s.guardian || s.titularName || s.name || "CONTRATANTE");
             
             document.body.classList.add('printing-contract'); 
-            
-            setTimeout(() => {
-                window.print();
-                setTimeout(() => {
-                    document.body.classList.remove('printing-contract');
-                }, 100);
-            }, 100);
+            document.body.offsetHeight; // Força re-render para telemóveis
+            window.print(); 
+            document.body.classList.remove('printing-contract'); 
         }
 
         window.shareTrialLink = function() {
