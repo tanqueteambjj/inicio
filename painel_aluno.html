@@ -1868,6 +1868,41 @@
             window.open(`https://wa.me/?text=${text}`, '_blank');
         }
 
+        // NOVO MOTOR DE IMPRESSÃO
+        window.printHtmlContent = function(htmlContent, title) {
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.top = '-10000px';
+            document.body.appendChild(iframe);
+            
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(`
+                <html>
+                <head>
+                    <title>${title}</title>
+                    <style>
+                        @media print {
+                            @page { margin: 10mm; size: A4 portrait; }
+                            body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        }
+                        body { font-family: sans-serif; display: flex; justify-content: center; align-items: flex-start; margin:0; background:white; }
+                    </style>
+                </head>
+                <body>
+                    ${htmlContent}
+                </body>
+                </html>
+            `);
+            doc.close();
+            
+            setTimeout(() => {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+                setTimeout(() => { document.body.removeChild(iframe); }, 1000);
+            }, 500);
+        }
+
     </script>
 </body>
 </html>
