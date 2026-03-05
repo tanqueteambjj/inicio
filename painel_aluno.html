@@ -64,6 +64,11 @@
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
         .like-animate { animation: pop 0.3s ease-in-out; color: #D90429 !important; }
 
+        /* Containers Restritos à Impressão */
+        .print-only-element {
+            display: none !important; /* Esconde TUDO no ecrã normal */
+        }
+
         /* CSS BLINDADO PARA IMPRESSÃO PERFEITA EM MOBILE E PC */
         @media print {
             @page { margin: 15mm; size: A4 portrait; }
@@ -628,7 +633,7 @@
     <!-- ========================================== -->
     
     <!-- Printable Contract Container (Idêntico ao Admin) -->
-    <div id="printable-contract">
+    <div id="printable-contract" class="print-only-element">
         <div class="header-section text-center mb-6 border-b-2 border-black pb-4">
             <img src="https://iili.io/qC543c7.png" alt="Logo" class="h-16 mx-auto mb-2" style="filter: grayscale(100%);">
             <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
@@ -656,7 +661,7 @@
     </div>
 
     <!-- Printable QR Card Container (Separado, Fundo Branco Forte) -->
-    <div id="print-only-qr">
+    <div id="print-only-qr" class="print-only-element">
         <div style="width: 6.5cm; border: 2px solid #000; border-radius: 12px; margin: 0 auto; text-align: center; font-family: sans-serif; overflow: hidden; background: #fff;">
             <div style="background-color: #000; color: #fff; padding: 12px; font-weight: bold; text-transform: uppercase; font-size: 14px; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
                 <img src="https://iili.io/qC543c7.png" style="height: 24px; filter: invert(1);"> 
@@ -991,6 +996,7 @@
         window.updateDashboardUI = function(data) {
             const isDep = viewingDependentId !== null;
             
+            // PRIMEIRO NOME NO TOPO
             const firstName = (data.name || "Aluno").split(' ')[0];
             document.getElementById('student-name-display').innerText = firstName;
             
@@ -1009,6 +1015,7 @@
                 initEl.innerText = firstName.charAt(0).toUpperCase();
             }
 
+            // Status Badge
             const statBadge = document.getElementById('enrollment-status-badge');
             statBadge.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'bg-gray-500');
             if (data.archived) {
@@ -1022,6 +1029,7 @@
                 statBadge.classList.add('bg-green-500');
             }
 
+            // Belt & Parabéns Dinâmico
             const beltStr = data.belt || "Faixa Branca - 0º Grau";
             document.getElementById('belt-text').innerText = beltStr;
             document.getElementById('belt-visual-container').innerHTML = renderBeltSVG(beltStr);
@@ -1040,6 +1048,7 @@
                     document.getElementById('celebration-text').innerText = "⭐ PARABÉNS PELO NOVO GRAU! ⭐";
                 }
 
+                // Verifica se já foi partilhado
                 const badgeNameToCheck = recentGrad.isNewBelt ? "Nova Faixa" : "Mais um Degrau";
                 const alreadyShared = window.checkIfBadgeShared(badgeNameToCheck);
                 const btn = document.getElementById('btn-share-belt');
@@ -1058,6 +1067,7 @@
                 shareBeltBtn.classList.add('hidden');
             }
 
+            // Financeiro
             const planKey = data.plan || 'N/A';
             const planInfo = PLAN_DICT[planKey] || { short: planKey.toUpperCase(), price: 0 };
             document.getElementById('plan-display').innerText = planInfo.short;
@@ -1081,15 +1091,18 @@
                 payIcon.className = "fa-solid fa-check-circle text-3xl text-green-500 dark:text-green-400";
             }
 
+            // Frequência Total e Seguidos
             const totalAtt = data.attendance ? data.attendance.length : 0;
             document.getElementById('total-attendance-count').innerText = totalAtt;
             
             const streak = calculateConsecutiveDays(data.attendance || []);
             
+            // Chama as funções globais passando os dados
             window.renderCalendar(data.attendance || []);
             window.renderBadges(totalAtt, streak);
             window.renderRanking(); 
 
+            // Preencher Perfil Completo
             if (!isDep) {
                 document.getElementById('data-name').innerText = data.name || '--';
                 document.getElementById('data-login').innerText = data.studentLogin || '--';
@@ -1100,6 +1113,7 @@
             }
         };
 
+        // --- CALENDÁRIO ---
         window.changeMonth = function(dir) {
             currentCalendarMonth += dir;
             if (currentCalendarMonth > 11) { currentCalendarMonth = 0; currentCalendarYear++; }
@@ -1724,11 +1738,12 @@
 
             document.body.classList.add('printing-qr'); 
             
+            // Execução IMEDIATA para mobile
+            window.print();
+            
+            // Cleanup
             setTimeout(() => {
-                window.print();
-                setTimeout(() => {
-                    document.body.classList.remove('printing-qr');
-                }, 500); // Dá tempo para o diálogo fechar antes de limpar a classe
+                document.body.classList.remove('printing-qr');
             }, 100);
         }
 
@@ -1813,11 +1828,12 @@
             
             document.body.classList.add('printing-contract'); 
             
+            // Impressão imediata para telemóveis
+            window.print(); 
+            
+            // Cleanup
             setTimeout(() => {
-                window.print();
-                setTimeout(() => {
-                    document.body.classList.remove('printing-contract');
-                }, 500); // Dá tempo para fechar o diálogo antes de limpar o CSS
+                document.body.classList.remove('printing-contract');
             }, 100);
         }
 
