@@ -114,20 +114,23 @@
             body.printing-qr #printable-contract { display: none !important; }
             body.printing-qr #qr-modal { 
                 display: flex !important; 
-                position: relative !important; 
-                visibility: visible !important; 
-                background: white !important; /* Força fundo branco em vez de herdar o preto do modal */
+                position: absolute !important; 
+                left: 0 !important; 
+                top: 0 !important; 
                 width: 100% !important;
                 height: auto !important;
                 padding: 1cm 0 !important;
                 align-items: flex-start !important;
                 justify-content: center !important;
+                background: white !important; /* Força o fundo branco no container inteiro */
             }
+            /* Remove a caixa escura que envolvia a carteirinha no telemóvel */
             body.printing-qr #qr-modal > div {
                 box-shadow: none !important;
                 border: none !important;
                 margin: 0 auto !important;
-                background: white !important; /* Força fundo branco */
+                padding: 0 !important; /* Remove padding para não criar caixa cinza */
+                background: transparent !important;
             }
             body.printing-qr #printable-qr-card {
                 position: relative !important;
@@ -562,7 +565,6 @@
                 <i class="fa-solid fa-id-card text-brand-red"></i> Carteirinha Digital
             </h3>
             
-            <!-- Este ID "printable-qr-card" é o que será isolado no momento da impressão -->
             <div id="printable-qr-card" class="bg-white border border-gray-300 rounded-xl overflow-hidden relative shadow-inner flex flex-col" style="width: 260px; height: 410px;">
                 <div class="bg-brand-dark text-white p-3 flex items-center justify-center gap-2 shrink-0 border-b-4 border-brand-red">
                     <img src="https://iili.io/qC543c7.png" class="h-6"> <!-- Corrigido para manter as cores originais -->
@@ -570,8 +572,7 @@
                 </div>
                 
                 <div class="p-4 flex flex-col items-center flex-1 relative bg-white">
-                    <!-- Marca de água super subtil -->
-                    <img src="https://iili.io/qC543c7.png" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 opacity-5 pointer-events-none grayscale">
+                    <img src="https://iili.io/qC543c7.png" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 opacity-[0.05] pointer-events-none grayscale">
                     
                     <div class="w-20 h-20 bg-gray-100 rounded-full border-2 border-gray-200 overflow-hidden mb-3 shadow-sm z-10 flex-shrink-0 relative">
                         <img id="qr-photo" src="" class="w-full h-full object-cover hidden">
@@ -729,19 +730,16 @@
         }
 
         const PLAN_DICT = {
-            'infantil-mensal': { price: 189.90, short: 'Infantil Mensal', long: 'INFANTIL MENSAL' },
-            'infantil-trimestral': { price: 168.90, short: 'Infantil Trimestral', long: 'INFANTIL TRIMESTRAL' },
-            'infantil-semestral': { price: 157.90, short: 'Infantil Semestral', long: 'INFANTIL SEMESTRAL' },
-            'adulto-mensal': { price: 168.90, short: 'Adulto Mensal', long: 'JOVEM/ADULTO MENSAL' },
-            'adulto-trimestral': { price: 147.90, short: 'Adulto Trimestral', long: 'JOVEM/ADULTO TRIMESTRAL' },
-            'adulto-semestral': { price: 126.90, short: 'Adulto Semestral', long: 'JOVEM/ADULTO SEMESTRAL' },
-            'combo-dupla': { price: 250.00, short: 'Combo Dupla', long: 'COMBO DUPLA SEMESTRAL' },
-            'combo-casal': { price: 220.00, short: 'Combo Casal', long: 'COMBO CASAL SEMESTRAL' },
-            'combo-familia': { price: 362.02, short: 'Combo Família', long: 'COMBO FAMÍLIA SEMESTRAL' },
-            'administracao': { price: 0.00, short: 'Administração', long: 'ADMINISTRAÇÃO (ISENTO)' },
-            'dependente': { price: 0.00, short: 'Dependente', long: 'DEPENDENTE - COMBO FAMÍLIA' },
-            'isento': { price: 0.00, short: 'Isento', long: 'ISENTO / BOLSISTA' },
-            'outros': { price: 0.00, short: 'Outros', long: 'OUTROS' }
+            'infantil-mensal': { price: 189.90, short: 'Infantil Mensal' },
+            'infantil-trimestral': { price: 168.90, short: 'Infantil Trimestral' },
+            'infantil-semestral': { price: 157.90, short: 'Infantil Semestral' },
+            'adulto-mensal': { price: 168.90, short: 'Adulto Mensal' },
+            'adulto-trimestral': { price: 147.90, short: 'Adulto Trimestral' },
+            'adulto-semestral': { price: 126.90, short: 'Adulto Semestral' },
+            'combo-dupla': { price: 250.00, short: 'Combo Dupla' },
+            'combo-familia': { price: 362.02, short: 'Combo Família' },
+            'administracao': { price: 0.00, short: 'Administração' },
+            'dependente': { price: 0.00, short: 'Dependente' }
         };
 
         function renderBeltSVG(beltStr) {
@@ -1164,6 +1162,20 @@
                 localStorage.setItem('tanque_shared_badges', JSON.stringify(shared));
             }
         }
+
+        window.shareNewBeltToFeed = async function(btnElement) {
+            if(!currentUserData) return;
+            const recentGrad = checkForRecentGraduation(currentUserData.progressLog, currentUserData.belt);
+            if(!recentGrad) return;
+            
+            let badgeName = recentGrad.isNewBelt ? "Nova Faixa" : "Mais um Degrau";
+            let desc = recentGrad.isNewBelt 
+                ? `Fui graduado para a ${recentGrad.beltStr}! O trabalho duro compensa. Oss! 🔥` 
+                : `Recebi mais um grau na minha ${recentGrad.beltStr}! Um passo de cada vez. Oss! 🔥`;
+            let iconClass = recentGrad.isNewBelt ? "fa-solid fa-medal text-brand-red" : "fa-solid fa-star text-yellow-600";
+            
+            await window.shareBadgeToFeed(badgeName, desc, iconClass, btnElement);
+        };
 
         window.shareBadgeToFeed = async function(badgeName, desc, iconClass, btnElement) {
             if(!currentUserData) return;
