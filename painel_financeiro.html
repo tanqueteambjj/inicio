@@ -37,24 +37,27 @@
             body > * { display: none !important; }
             
             body.printing-receipt #printable-receipt,
-            body.printing-report #report-container { 
+            body.printing-report #report-container,
+            body.printing-student-history #report-container { 
                 display: block !important; 
                 position: absolute !important; 
                 left: 0; 
                 top: 0; 
                 width: 100% !important; 
                 padding: 40px !important; 
-                font-family: monospace; 
+                font-family: sans-serif; 
                 color: black !important; 
                 background: white !important; 
                 z-index: 9999; 
             }
             body.printing-receipt #printable-receipt *,
-            body.printing-report #report-container * { visibility: visible !important; }
+            body.printing-report #report-container *,
+            body.printing-student-history #report-container * { visibility: visible !important; }
             
-            body.printing-report table { border-collapse: collapse; width: 100%; font-family: sans-serif; }
-            body.printing-report th, body.printing-report td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            body.printing-report th { background-color: #f3f3f3 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body.printing-report table, body.printing-student-history table { border-collapse: collapse; width: 100%; font-family: sans-serif; }
+            body.printing-report th, body.printing-report td,
+            body.printing-student-history th, body.printing-student-history td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            body.printing-report th, body.printing-student-history th { background-color: #f3f3f3 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
 </head>
@@ -295,6 +298,7 @@
                 <div class="mb-6">
                     <div class="flex justify-between items-center border-b border-gray-200 pb-2 mb-3">
                         <h4 class="font-bold text-gray-700 uppercase text-sm"><i class="fa-solid fa-clock-rotate-left mr-1"></i> Histórico de Pagamentos</h4>
+                        <button onclick="window.printStudentHistory(document.getElementById('pay-student-id').value)" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded font-bold transition shadow-sm flex items-center gap-1"><i class="fa-solid fa-print"></i> Imprimir Extrato</button>
                     </div>
                     <div id="det-history-list" class="space-y-2 max-h-48 overflow-y-auto pr-2">
                         <!-- Injetado via JS -->
@@ -303,6 +307,7 @@
 
                 <div class="flex gap-3 mt-8">
                     <button onclick="window.closeDetailsModal()" class="flex-1 border border-gray-300 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-50 transition shadow-sm">Fechar</button>
+                    <!-- Removido o bloqueio para permitir registrar pagamento mesmo estando "Em dia" -->
                     <button id="btn-open-pay" onclick="window.openPayModal()" class="flex-1 bg-green-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-green-700 transition flex justify-center items-center gap-2 transform active:scale-95"><i class="fa-solid fa-cash-register"></i> Registrar Pagamento</button>
                 </div>
             </div>
@@ -311,7 +316,7 @@
 
     <!-- MODAL: REGISTRAR PAGAMENTO -->
     <div id="pay-modal" class="fixed inset-0 z-[70] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in border-t-4 border-green-500">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-fade-in border-t-4 border-green-500">
             <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-200">
                 <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-cash-register text-green-600 mr-2"></i> Receber Pagamento</h3>
                 <button onclick="window.closePayModal()" class="text-gray-400 hover:text-red-500 transition"><i class="fa-solid fa-times"></i></button>
@@ -348,6 +353,45 @@
                 <div class="mt-6 pt-4 border-t border-gray-100 flex gap-2">
                     <button onclick="window.closePayModal()" class="w-1/3 border border-gray-300 rounded-lg font-bold text-gray-600 hover:bg-gray-50 transition shadow-sm">Cancelar</button>
                     <button onclick="window.confirmPayment()" class="w-2/3 bg-green-600 text-white rounded-lg font-bold py-3 hover:bg-green-700 shadow-md flex items-center justify-center gap-2 transition transform active:scale-95"><i class="fa-solid fa-check-circle"></i> Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: EDITAR PAGAMENTO -->
+    <div id="edit-pay-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-fade-in border-t-4 border-blue-500">
+            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-200">
+                <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-pen text-blue-600 mr-2"></i> Editar Pagamento</h3>
+                <button onclick="window.closeEditPayModal()" class="text-gray-400 hover:text-red-500 transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="edit-pay-student-id">
+                <input type="hidden" id="edit-pay-original-id">
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Valor Recebido (R$)</label>
+                    <input type="number" id="edit-pay-amount" class="w-full border border-gray-300 rounded-lg p-3 font-bold text-lg text-brand-dark focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" step="0.01">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Data de Pagamento</label>
+                    <input type="date" id="edit-pay-date" class="w-full border border-gray-300 rounded-lg p-3 font-bold text-gray-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Forma de Pagamento</label>
+                    <select id="edit-pay-method" class="w-full border border-gray-300 rounded-lg p-3 font-bold text-gray-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="Pix">Pix</option>
+                        <option value="Dinheiro">Dinheiro</option>
+                        <option value="Débito">Cartão de Débito</option>
+                        <option value="Crédito">Cartão de Crédito</option>
+                    </select>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-100 flex gap-2">
+                    <button onclick="window.closeEditPayModal()" class="w-1/3 border border-gray-300 rounded-lg font-bold text-gray-600 hover:bg-gray-50 transition shadow-sm">Cancelar</button>
+                    <button onclick="window.saveEditPayment()" class="w-2/3 bg-blue-600 text-white rounded-lg font-bold py-3 hover:bg-blue-700 shadow-md flex items-center justify-center gap-2 transition transform active:scale-95"><i class="fa-solid fa-save"></i> Salvar</button>
                 </div>
             </div>
         </div>
@@ -423,6 +467,7 @@
                 db = getFirestore(app); 
                 appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj"; 
                 window.db = db;
+                window.appIdVar = appId;
 
                 const initAuth = async () => {
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -749,6 +794,66 @@
             }, 800);
         };
 
+        // --- IMPRESSÃO DE EXTRATO INDIVIDUAL ---
+        window.printStudentHistory = (studentId) => {
+            const s = window.students.find(st => st.id === studentId); if(!s) return;
+            
+            let html = `<div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
+                <h2 style="margin:0; font-size: 20px; font-weight: bold; text-transform: uppercase;">TANQUE TEAM BJJ</h2>
+                <p style="margin: 2px 0 0 0; font-size: 14px;">HISTÓRICO FINANCEIRO DE ALUNO</p>
+            </div>
+            <div style="margin-bottom: 20px; font-size: 12px;">
+                <p style="margin: 3px 0;"><strong>Aluno/Titular:</strong> ${s.name}</p>
+                <p style="margin: 3px 0;"><strong>CPF:</strong> ${s.cpf || 'Não informado'}</p>
+                <p style="margin: 3px 0;"><strong>Plano:</strong> ${window.getPlanInfo(s.plan).short}</p>
+                <p style="margin: 3px 0;"><strong>Data de Emissão:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+                <thead>
+                    <tr style="background-color: #f3f3f3;">
+                        <th style="border: 1px solid #ddd; padding: 8px;">Data</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Método</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Valor</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            
+            let total = 0;
+            if (s.paymentHistory && s.paymentHistory.length > 0) {
+                [...s.paymentHistory].sort((a,b) => new Date(b.timestamp||b.date) - new Date(a.timestamp||a.date)).forEach(p => {
+                    html += `<tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${formatDateBR(p.timestamp || p.date)}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-transform: uppercase;">${p.method || 'N/A'}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold; color: green;">${formatCurrency(p.amount)}</td>
+                    </tr>`;
+                    total += Number(p.amount);
+                });
+            } else {
+                html += `<tr><td colspan="3" style="border: 1px solid #ddd; padding: 8px; text-align: center;">Nenhum pagamento registrado.</td></tr>`;
+            }
+
+            html += `</tbody>
+                <tfoot>
+                    <tr style="background-color: #eee;">
+                        <th colspan="2" style="border: 1px solid #ddd; padding: 8px; text-align: right;">TOTAL PAGO:</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: right; font-size: 14px;">${formatCurrency(total)}</th>
+                    </tr>
+                </tfoot>
+            </table>`;
+
+            document.getElementById('report-container').innerHTML = html;
+            document.getElementById('report-container').classList.remove('hidden');
+            document.body.classList.add('printing-student-history');
+            
+            setTimeout(() => {
+                window.print();
+                setTimeout(() => { 
+                    document.body.classList.remove('printing-student-history'); 
+                    document.getElementById('report-container').classList.add('hidden');
+                }, 1000);
+            }, 500);
+        };
+
         // --- DETALHES FINANCEIROS E ORIGEM ---
         window.viewFinancialDetails = (id) => {
             const s = window.students.find(st => st.id === id); if(!s) return;
@@ -759,9 +864,7 @@
             document.getElementById('det-price').innerText = formatCurrency(window.getPlanInfo(s.plan).price);
             document.getElementById('det-phone').innerText = s.phone || 'Não informado';
             
-            // MÁGICA AQUI: Mostrar como nos conheceu
             document.getElementById('det-origin').innerText = s.howDidYouFindUs || 'Não informado na matrícula';
-
             document.getElementById('pay-student-id').value = id;
 
             // Render History
@@ -773,28 +876,32 @@
             } else {
                 [...s.paymentHistory].sort((a,b) => new Date(b.timestamp||b.date) - new Date(a.timestamp||a.date)).forEach(p => {
                     const d = formatDateBR(p.timestamp || p.date);
+                    const pId = p.timestamp || p.date;
                     historyList.innerHTML += `
-                        <div class="flex justify-between items-center p-3 bg-gray-50 border border-gray-100 rounded-lg text-sm mb-2">
-                            <div><p class="font-bold text-gray-800">${d}</p><p class="text-[10px] text-gray-500 uppercase">${p.method || 'Não Inf.'}</p></div>
-                            <div class="text-right"><p class="font-bold text-green-600">${formatCurrency(p.amount)}</p>
-                            <button onclick="window.printReceipt('${s.id}', '${p.timestamp||p.date}', '${p.amount}', '${p.method||''}')" class="text-[10px] text-brand-dark hover:underline mt-1"><i class="fa-solid fa-print"></i> Recibo</button></div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 border border-gray-100 rounded-lg text-sm mb-2 hover:bg-gray-100 transition">
+                            <div>
+                                <p class="font-bold text-gray-800">${d}</p>
+                                <p class="text-[10px] text-gray-500 uppercase">${p.method || 'Não Inf.'}</p>
+                            </div>
+                            <div class="text-right flex flex-col items-end">
+                                <p class="font-bold text-green-600 mb-1">${formatCurrency(p.amount)}</p>
+                                <div class="flex items-center gap-3 mt-1 opacity-70 hover:opacity-100 transition">
+                                    <button onclick="window.printReceipt('${s.id}', '${p.timestamp||p.date}', '${p.amount}', '${p.method||''}')" class="text-[10px] text-gray-600 hover:text-brand-dark flex items-center gap-1" title="Imprimir Recibo"><i class="fa-solid fa-print"></i></button>
+                                    <button onclick="window.openEditPayModal('${s.id}', '${pId}')" class="text-[10px] text-blue-500 hover:text-blue-700 flex items-center gap-1" title="Editar este pagamento"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="window.deletePayment('${s.id}', '${pId}')" class="text-[10px] text-red-500 hover:text-red-700 flex items-center gap-1" title="Excluir este pagamento"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </div>
                         </div>
                     `;
                 });
             }
 
+            // O botão de pagar fica SEMPRE disponível
             const btnPay = document.getElementById('btn-open-pay');
-            if(s.paymentStatus === 'Em dia') {
-                btnPay.classList.remove('bg-green-600', 'hover:bg-green-700');
-                btnPay.classList.add('bg-gray-400', 'cursor-not-allowed');
-                btnPay.innerHTML = '<i class="fa-solid fa-check"></i> Aluno em Dia';
-                btnPay.disabled = true;
-            } else {
-                btnPay.classList.add('bg-green-600', 'hover:bg-green-700');
-                btnPay.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                btnPay.innerHTML = '<i class="fa-solid fa-cash-register"></i> Registrar Pagamento';
-                btnPay.disabled = false;
-            }
+            btnPay.classList.add('bg-green-600', 'hover:bg-green-700');
+            btnPay.classList.remove('bg-gray-400', 'cursor-not-allowed');
+            btnPay.innerHTML = '<i class="fa-solid fa-cash-register"></i> Registrar Pagamento';
+            btnPay.disabled = false;
 
             document.getElementById('details-modal').classList.remove('hidden');
             document.getElementById('details-modal').classList.add('flex');
@@ -816,7 +923,6 @@
             const price = window.getPlanInfo(s.plan).price;
             document.getElementById('pay-amount').value = price.toFixed(2);
             
-            // Sugere proximo vencimento (+30 dias a partir de hoje)
             const nextD = new Date();
             nextD.setDate(nextD.getDate() + 30);
             document.getElementById('pay-next-due').valueAsDate = nextD;
@@ -847,7 +953,7 @@
                     date: new Date().toISOString().split('T')[0] // backup legacy
                 };
 
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), {
+                await updateDoc(doc(window.db, 'artifacts', window.appIdVar, 'public', 'data', 'students', id), {
                     paymentStatus: 'Em dia',
                     nextDueDate: nextDue,
                     paymentHistory: arrayUnion(payObj)
@@ -855,14 +961,115 @@
 
                 alert("Pagamento recebido e status atualizado com sucesso!");
                 window.closePayModal();
-                window.loadData();
+                await window.loadData();
                 
                 if(confirm("Deseja imprimir o recibo agora?")) {
                     window.printReceipt(id, payObj.timestamp, payObj.amount, payObj.method);
+                } else {
+                    setTimeout(() => window.viewFinancialDetails(id), 500);
                 }
             } catch(e) {
                 console.error(e);
                 alert("Erro ao registrar pagamento.");
+            }
+        };
+
+        // --- EDIÇÃO E EXCLUSÃO DE PAGAMENTOS ---
+        window.deletePayment = async (studentId, paymentId) => {
+            if(!confirm("ATENÇÃO: Tem certeza absoluta que deseja EXCLUIR este pagamento do histórico? Esta ação não pode ser desfeita.")) return;
+            
+            const s = window.students.find(st => st.id === studentId);
+            if(!s || !s.paymentHistory) return;
+            
+            try {
+                // Filtramos a array atual removendo o pagamento específico (pelo timestamp)
+                const updatedHistory = s.paymentHistory.filter(p => (p.timestamp || p.date) !== paymentId);
+                
+                await updateDoc(doc(window.db, 'artifacts', window.appIdVar, 'public', 'data', 'students', studentId), {
+                    paymentHistory: updatedHistory
+                });
+                
+                alert("Pagamento excluído com sucesso.");
+                await window.loadData();
+                setTimeout(() => window.viewFinancialDetails(studentId), 500);
+            } catch(e) {
+                console.error(e); 
+                alert("Erro ao excluir pagamento.");
+            }
+        };
+
+        window.openEditPayModal = (studentId, paymentId) => {
+            const s = window.students.find(st => st.id === studentId); if(!s) return;
+            const payObj = s.paymentHistory.find(p => (p.timestamp || p.date) === paymentId); if(!payObj) return;
+            
+            document.getElementById('edit-pay-student-id').value = studentId;
+            document.getElementById('edit-pay-original-id').value = paymentId;
+            
+            document.getElementById('edit-pay-amount').value = parseFloat(payObj.amount).toFixed(2);
+            document.getElementById('edit-pay-method').value = payObj.method || 'Dinheiro';
+            
+            let dateVal = "";
+            if (payObj.timestamp && payObj.timestamp.includes('T')) {
+                dateVal = payObj.timestamp.split('T')[0];
+            } else if (payObj.date) {
+                dateVal = payObj.date.split('T')[0];
+            }
+            document.getElementById('edit-pay-date').value = dateVal;
+
+            window.closeDetailsModal();
+            document.getElementById('edit-pay-modal').classList.remove('hidden');
+            document.getElementById('edit-pay-modal').classList.add('flex');
+        };
+
+        window.closeEditPayModal = () => {
+            document.getElementById('edit-pay-modal').classList.add('hidden');
+            document.getElementById('edit-pay-modal').classList.remove('flex');
+        };
+
+        window.saveEditPayment = async () => {
+            const studentId = document.getElementById('edit-pay-student-id').value;
+            const originalId = document.getElementById('edit-pay-original-id').value;
+            const amount = document.getElementById('edit-pay-amount').value;
+            const method = document.getElementById('edit-pay-method').value;
+            const dateRaw = document.getElementById('edit-pay-date').value;
+            
+            if(!amount || !dateRaw) { alert("Preencha o valor e a data do pagamento."); return; }
+
+            const s = window.students.find(st => st.id === studentId); if(!s) return;
+            const oldPayObj = s.paymentHistory.find(p => (p.timestamp || p.date) === originalId); if(!oldPayObj) return;
+
+            let newTimestamp = oldPayObj.timestamp;
+            if(newTimestamp && newTimestamp.includes('T')) {
+                const timePart = newTimestamp.split('T')[1];
+                newTimestamp = dateRaw + 'T' + timePart;
+            } else {
+                newTimestamp = dateRaw + 'T12:00:00.000Z';
+            }
+            
+            const newPayObj = {
+                amount: parseFloat(amount),
+                method: method,
+                timestamp: newTimestamp,
+                date: dateRaw 
+            };
+
+            try {
+                const updatedHistory = s.paymentHistory.map(p => {
+                    if ((p.timestamp || p.date) === originalId) return newPayObj;
+                    return p;
+                });
+
+                await updateDoc(doc(window.db, 'artifacts', window.appIdVar, 'public', 'data', 'students', studentId), {
+                    paymentHistory: updatedHistory
+                });
+
+                alert("Pagamento corrigido com sucesso!");
+                window.closeEditPayModal();
+                await window.loadData();
+                setTimeout(() => window.viewFinancialDetails(studentId), 500);
+            } catch(e) {
+                console.error(e);
+                alert("Erro ao atualizar pagamento.");
             }
         };
 
