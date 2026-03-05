@@ -1142,7 +1142,14 @@
                 window.location.href = "https://www.tanqueteambjj.com.br/login.html";
             } else {
                 try {
-                    app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj"; window.db = db;
+                    app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj"; 
+                    
+                    window.db = db;
+                    window.dbCollection = collection;
+                    window.dbQuery = query;
+                    window.dbWhere = where;
+                    window.dbGetDocs = getDocs;
+                    window.appIdVar = appId;
                     
                     const initAuth = async () => {
                         try {
@@ -1531,7 +1538,8 @@
                 const todayISO = new Date().toISOString().split('T')[0];
                 const className = document.getElementById('checkin-class-selector').value;
 
-                await updateDoc(doc(window.db, 'artifacts', window.appId, 'public', 'data', 'students', studentId), {
+                // CORREÇÃO: Utilizando a instância global 'window.db' referenciada no Firebase import
+                await updateDoc(doc(window.db, 'artifacts', window.appIdVar, 'public', 'data', 'students', studentId), {
                     attendance: arrayUnion(todayISO),
                     attendanceLog: arrayUnion({ date: todayISO, time: className, timestamp: new Date().toISOString() })
                 });
