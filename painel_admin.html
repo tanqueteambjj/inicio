@@ -78,7 +78,7 @@
             body.printing-progress #printable-progress,
             body.printing-qr #print-only-qr { 
                 display: block !important; 
-                position: static !important; /* Estático evita erro de página em branco no iOS */
+                position: static !important; 
                 width: 100% !important; 
                 height: auto !important;
                 visibility: visible !important; 
@@ -88,7 +88,6 @@
                 padding: 0 !important;
             }
 
-            /* Forçar visibilidade dos filhos */
             body.printing-contract #printable-contract *,
             body.printing-report #report-container *,
             body.printing-progress #printable-progress *,
@@ -97,7 +96,6 @@
                 color: #000 !important; 
             }
 
-            /* MODO CARTEIRINHA ESPECÍFICO */
             body.printing-qr #print-only-qr {
                 display: flex !important;
                 flex-direction: column !important;
@@ -106,7 +104,6 @@
                 padding: 2cm 0 !important;
             }
 
-            /* Estilos de fonte e formatação para o Contrato */
             body.printing-contract #printable-contract {
                 font-family: "Times New Roman", Times, serif !important;
                 font-size: 11pt !important;
@@ -115,13 +112,11 @@
             body.printing-contract .bg-yellow-100 { background-color: #fef08a !important; }
             body.printing-contract .bg-blue-50 { background-color: #eff6ff !important; border-left: 2px solid #60a5fa !important; }
             
-            /* Tabelas para relatórios */
             table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 15px; page-break-inside: auto; }
             tr { page-break-inside: avoid; page-break-after: auto; }
             th, td { border: 1px solid #ddd; padding: 8px; text-align: left; color: black; }
             th { background-color: #f3f3f3 !important; font-weight: bold; border-bottom: 2px solid #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
-            /* Quebras de página seguras */
             p, div { orphans: 3; widows: 3; }
             h1, h2, h3, h4 { page-break-after: avoid; }
             .page-break-inside-avoid { page-break-inside: avoid; break-inside: avoid; }
@@ -131,10 +126,8 @@
 </head>
 <body class="bg-gray-100 font-sans antialiased h-screen flex overflow-hidden">
 
-    <!-- Mobile Sidebar Overlay -->
     <div id="mobile-sidebar-overlay" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden backdrop-blur-sm transition-opacity" onclick="window.toggleMobileMenu()"></div>
 
-    <!-- Sidebar -->
     <aside id="sidebar-menu" class="fixed md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 w-64 bg-brand-dark text-white flex flex-col shadow-2xl z-40 transition-transform duration-300 ease-in-out no-print h-full">
         <div class="p-6 flex items-center justify-center border-b border-gray-800 relative">
             <img src="https://iili.io/qC543c7.png" alt="Logo" class="h-10 w-auto mr-3">
@@ -149,6 +142,9 @@
             </button>
         </div>
         <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+            <a href="#" onclick="window.switchMainView('checkin-list')" id="nav-checkin-list" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
+                <i class="fa-solid fa-clipboard-user w-6"></i> <span class="ml-2">Presenças Manuais</span>
+            </a>
             <a href="#" onclick="window.switchMainView('students')" id="nav-students" class="flex items-center px-4 py-3 bg-brand-red text-white rounded-lg shadow-md transition-all font-bold">
                 <i class="fa-solid fa-users w-6"></i> <span class="ml-2">Alunos</span>
             </a>
@@ -169,41 +165,61 @@
         </div>
     </aside>
 
-    <!-- Main Content -->
     <div id="admin-dashboard" class="flex-1 flex flex-col h-full overflow-hidden relative w-full">
-        
-        <!-- Topbar -->
         <header class="bg-white shadow-sm h-16 flex items-center justify-between px-4 md:px-6 z-10 no-print shrink-0">
             <div class="flex items-center md:hidden gap-3">
-                <button onclick="window.toggleMobileMenu()" class="text-brand-dark hover:text-brand-red focus:outline-none text-2xl transition">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
+                <button onclick="window.toggleMobileMenu()" class="text-brand-dark hover:text-brand-red focus:outline-none text-2xl transition"><i class="fa-solid fa-bars"></i></button>
                 <img src="https://iili.io/qC543c7.png" class="h-8 w-auto">
             </div>
-            
             <div class="hidden md:flex relative w-96">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-search"></i></span>
                 <input type="text" id="searchInput" onkeyup="window.filterTable()" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border rounded-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-red transition">
             </div>
-
             <div class="flex items-center gap-3">
-                <button onclick="window.openCheckinModal()" class="md:hidden w-10 h-10 flex items-center justify-center bg-green-600 text-white rounded-full shadow-lg">
-                    <i class="fa-solid fa-camera"></i>
-                </button>
-                <button onclick="window.handleLogout()" class="md:hidden w-10 h-10 flex items-center justify-center bg-red-100 text-red-600 rounded-full shadow-sm hover:bg-red-200 transition">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
+                <button onclick="window.openCheckinModal()" class="md:hidden w-10 h-10 flex items-center justify-center bg-green-600 text-white rounded-full shadow-lg"><i class="fa-solid fa-camera"></i></button>
+                <button onclick="window.handleLogout()" class="md:hidden w-10 h-10 flex items-center justify-center bg-red-100 text-red-600 rounded-full shadow-sm hover:bg-red-200 transition"><i class="fa-solid fa-right-from-bracket"></i></button>
                 <span class="text-sm font-bold text-red-700 bg-red-100 px-3 py-1 rounded-full hidden md:block border border-red-200"><i class="fa-solid fa-shield-halved mr-1"></i> Painel Administrativo</span>
                 <div class="hidden md:flex w-8 h-8 rounded-full bg-brand-red text-white items-center justify-center font-bold shadow-sm">A</div>
             </div>
         </header>
 
-        <!-- Content Area -->
         <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-6 relative">
+
+            <!-- VIEW: CHECK-IN MANUAL -->
+            <div id="view-checkin-list" class="hidden animate-fade-in">
+                <div class="mb-6">
+                    <h1 class="text-3xl font-display font-bold text-brand-dark uppercase tracking-wider"><i class="fa-solid fa-clipboard-user text-purple-500 mr-2"></i> Presenças Manuais</h1>
+                    <p class="text-gray-500 text-sm mt-1">Marque ou cancele a presença dos alunos de forma rápida.</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md p-6 border border-gray-200 max-w-3xl">
+                    
+                    <div class="mb-6 bg-purple-50 p-4 rounded-xl border border-purple-200 shadow-inner">
+                        <label class="block text-xs font-bold text-purple-800 uppercase tracking-wider mb-2">1. Selecione a Turma do Check-in</label>
+                        <select id="main-checkin-class" onchange="window.renderCheckinList()" class="w-full border-2 border-purple-300 rounded-lg p-3 font-bold text-gray-800 bg-white focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition">
+                            <option value="Turma Mista (Livre)">Geral / Mista</option>
+                            <option value="Adulto - 10h30">Adulto - 10h30</option>
+                            <option value="Adulto - 12h30">Adulto - 12h30</option>
+                            <option value="Adulto - 18h00">Adulto - 18h00</option>
+                            <option value="Adulto - 21h00">Adulto - 21h00</option>
+                            <option value="Infantil - 15h00">Infantil - 15h00</option>
+                            <option value="Infantil - 16h30">Infantil - 16h30</option>
+                        </select>
+                    </div>
+
+                    <div class="relative mb-6">
+                        <input type="text" id="checkin-search" onkeyup="window.renderCheckinList()" placeholder="Procurar aluno..." class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-lg focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition outline-none shadow-sm">
+                        <i class="fa-solid fa-search absolute left-4 top-4 text-gray-400"></i>
+                    </div>
+
+                    <div class="max-h-[500px] overflow-y-auto pr-2" id="checkin-list-container">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>
+            </div>
 
             <!-- VIEW: ALUNOS -->
             <div id="view-students" class="animate-fade-in">
-                <!-- Stats Row (Cards como botões de navegação) -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 stats-container">
                     <div id="card-all" class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-blue-50 transition-all card-active" onclick="window.switchTab('all')">
                         <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-blue-500 pointer-events-none"><i class="fa-solid fa-users"></i></div>
@@ -227,15 +243,6 @@
                     </div>
                 </div>
 
-                <!-- Tabs Container -->
-                <div class="flex flex-wrap mb-0 tabs-container hidden">
-                    <button id="tab-all"></button>
-                    <button id="tab-adults"></button>
-                    <button id="tab-kids"></button>
-                    <button id="tab-archived"></button>
-                </div>
-
-                <!-- Student Table -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center no-print flex-wrap gap-2">
                         <div class="flex items-center gap-4">
@@ -244,15 +251,8 @@
                                 <span class="bg-gray-200 text-gray-600 py-0.5 px-2 rounded-full text-xs" id="list-count">0</span>
                             </h3>
                             <div id="bulk-actions" class="hidden flex items-center gap-2 animate-fade-in">
-                                <button onclick="window.archiveSelectedStudents()" id="btn-bulk-archive" class="flex items-center gap-1 bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs font-bold hover:bg-gray-300 transition border border-gray-300">
-                                    <i class="fa-solid fa-box-archive"></i> Arquivar (<span id="selected-count-archive">0</span>)
-                                </button>
-                                <button onclick="window.deleteSelectedStudents()" id="btn-bulk-delete" class="hidden flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition border border-red-300">
-                                    <i class="fa-solid fa-trash"></i> Excluir (<span id="selected-count-delete">0</span>)
-                                </button>
-                                <button onclick="window.addPresenceSelectedStudents()" id="btn-add-presence-bulk" class="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-bold hover:bg-green-200 transition border border-green-300">
-                                    <i class="fa-solid fa-check"></i> Dar Presença
-                                </button>
+                                <button onclick="window.archiveSelectedStudents()" id="btn-bulk-archive" class="flex items-center gap-1 bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs font-bold hover:bg-gray-300 transition border border-gray-300"><i class="fa-solid fa-box-archive"></i> Arquivar (<span id="selected-count-archive">0</span>)</button>
+                                <button onclick="window.deleteSelectedStudents()" id="btn-bulk-delete" class="hidden flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition border border-red-300"><i class="fa-solid fa-trash"></i> Excluir (<span id="selected-count-delete">0</span>)</button>
                             </div>
                         </div>
                         <div class="flex gap-2">
@@ -261,21 +261,17 @@
                         </div>
                     </div>
                     
-                    <!-- Barra de Filtros Inteligentes -->
                     <div class="px-6 py-3 border-b border-gray-200 bg-white flex flex-wrap gap-4 items-center text-sm no-print">
                         <div class="w-full md:hidden relative mb-2">
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-search"></i></span>
                             <input type="text" id="searchInputMobile1" onkeyup="window.filterTable()" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-red transition">
                         </div>
-                        
                         <span class="font-bold text-gray-500"><i class="fa-solid fa-filter"></i> Filtros:</span>
-                        
                         <select id="sort-order" onchange="window.filterTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
                             <option value="recent">⏱️ Mais Recentes</option>
                             <option value="az">🔤 Ordem Alfabética (A-Z)</option>
                             <option value="za">🔤 Ordem Alfabética (Z-A)</option>
                         </select>
-                        
                         <select id="filter-belt" onchange="window.filterTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
                             <option value="">🥋 Todas as Faixas</option>
                             <option value="branca">Branca</option>
@@ -385,7 +381,6 @@
                     <div id="admin-birthdays-widget" class="mb-6 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-4 shadow-sm hidden">
                          <h4 class="font-bold text-blue-800 flex items-center gap-2 mb-3"><i class="fa-solid fa-cake-candles text-blue-500"></i> Aniversariantes do Mês (<span id="birthday-month-name"></span>)</h4>
                          <div id="birthday-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                             <!-- JS injetará os aniversariantes aqui -->
                          </div>
                     </div>
                     
@@ -398,14 +393,9 @@
         </main>
     </div>
 
-    <!-- ========================================== -->
-    <!-- ÁREAS EXCLUSIVAS PARA IMPRESSÃO (NATIVAS)  -->
-    <!-- ========================================== -->
-
-    <!-- RELATÓRIOS GERAIS (Ativos, Exp, Frequencia) -->
+    <!-- PRINTABLE CONTAINERS (Absolutos para cobrir a tela antes da impressão) -->
     <div id="report-container" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen"></div>
 
-    <!-- RELATÓRIO DE PROGRESSO DO ALUNO -->
     <div id="printable-progress" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen">
         <div class="text-center mb-6 border-b-2 border-black pb-4">
             <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
@@ -494,7 +484,7 @@
 
     <!-- MODAIS DO SISTEMA -->
 
-    <!-- Modal: Leitor de Check-in da Câmera (CORRIGIDO) -->
+    <!-- Modal: Leitor de Check-in da Câmera (CORRIGIDO E COM BLOQUEIO DE DUPLICIDADE) -->
     <div id="checkin-modal" class="fixed inset-0 z-[100] hidden bg-brand-dark flex flex-col justify-center items-center p-4">
         <div class="w-full max-w-lg bg-white rounded-xl overflow-hidden shadow-2xl flex flex-col animate-fade-in">
             <div class="bg-green-600 px-6 py-4 flex justify-between items-center text-white shrink-0">
@@ -513,7 +503,7 @@
                     <option value="Infantil - 15h00">Infantil - 15h00</option>
                     <option value="Infantil - 16h30">Infantil - 16h30</option>
                 </select>
-                <p class="text-[10px] text-gray-500 mt-1"><i class="fa-solid fa-circle-info"></i> Esta informação fica guardada no histórico do aluno.</p>
+                <p class="text-[10px] text-gray-500 mt-1"><i class="fa-solid fa-circle-info"></i> O sistema bloqueará check-ins duplicados na mesma turma no mesmo dia.</p>
             </div>
 
             <div class="p-6 flex-1 flex flex-col items-center">
@@ -527,75 +517,28 @@
         </div>
     </div>
     
-    <!-- Modal: Evolução e Anotações -->
-    <div id="progress-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-teal-600">
-            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b shrink-0">
-                <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-book-journal-whills text-teal-600 mr-2"></i> Evolução e Histórico</h3>
-                <button onclick="window.closeProgressModal()" class="text-gray-400 hover:text-gray-800"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <div class="p-6 overflow-y-auto flex-1 bg-white">
-                <div class="flex justify-between items-end mb-4">
-                    <div>
-                        <h4 class="font-bold text-xl text-gray-900" id="prog-student-name">--</h4>
-                        <p class="text-sm text-gray-500">Início: <span id="prog-start-date" class="font-medium text-gray-700">--</span> | Faixa Atual: <span id="prog-current-belt" class="font-medium text-gray-700">--</span></p>
-                    </div>
-                    <button onclick="window.printProgressReport()" class="bg-gray-800 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-black transition shadow-sm whitespace-nowrap"><i class="fa-solid fa-print mr-1"></i> Imprimir Histórico</button>
-                </div>
-                <input type="hidden" id="prog-student-id">
-                
-                <div class="bg-teal-50 p-4 rounded-lg border border-teal-100 mb-6">
-                    <label class="block text-xs font-bold text-teal-800 mb-2 uppercase tracking-wider">Adicionar Anotação / Ocorrência</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="prog-new-note" class="w-full border border-teal-200 rounded p-2 text-sm focus:border-teal-500 focus:outline-none" placeholder="Ex: Excelente desempenho no treino de quedas hoje...">
-                        <button onclick="window.saveProgressNote()" class="bg-teal-600 text-white px-4 py-2 rounded font-bold hover:bg-teal-700 transition shadow-sm">Salvar</button>
-                    </div>
-                </div>
-
-                <h5 class="font-bold text-gray-700 mb-4 border-b pb-1 text-sm uppercase">Anotações e Graduações</h5>
-                <div id="prog-timeline" class="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-300 before:to-transparent mb-8">
-                    <!-- Timeline items injected here -->
-                </div>
-
-                <!-- SEÇÃO: HISTÓRICO DE PRESENÇAS -->
-                <div class="mt-8 border-t border-gray-200 pt-6">
-                    <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
-                        <h5 class="font-bold text-gray-700 border-b pb-1 text-sm uppercase flex-1 mr-4">
-                            <i class="fa-solid fa-calendar-check text-green-600 mr-2"></i> Histórico de Presenças
-                        </h5>
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <label class="text-xs text-gray-500 font-bold">PERÍODO:</label>
-                            <input type="date" id="prog-start-filter" class="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:border-teal-500" onchange="window.filterProgressAttendance()">
-                            <span class="text-xs text-gray-500">até</span>
-                            <input type="date" id="prog-end-filter" class="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:border-teal-500" onchange="window.filterProgressAttendance()">
-                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-bold whitespace-nowrap" id="prog-att-total">0 aulas</span>
-                        </div>
-                    </div>
-                    <div id="prog-attendance-list" class="max-h-48 overflow-y-auto bg-gray-50 border border-gray-200 rounded p-2 space-y-1">
-                        <!-- Attendances injected here -->
-                    </div>
-                </div>
-
-            </div>
-            <div class="bg-gray-50 px-6 py-3 flex justify-end border-t border-gray-200 shrink-0">
-                <button onclick="window.closeProgressModal()" class="px-5 py-2 bg-white border border-gray-300 shadow-sm rounded text-sm font-bold text-gray-700 hover:bg-gray-50 transition">Fechar</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Attendance Management Modal -->
     <div id="attendance-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-md flex flex-col max-h-[80vh] animate-fade-in">
             <div class="bg-blue-600 px-6 py-4 flex justify-between text-white shrink-0">
-                <h3 class="font-bold text-lg"><i class="fa-solid fa-calendar-check mr-2"></i> Frequência</h3>
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-calendar-check mr-2"></i> Frequência Manual</h3>
                 <button onclick="window.closeAttendanceModal()"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="p-4 bg-gray-50 border-b shrink-0">
                 <h4 class="font-bold text-gray-800" id="att-student-name">--</h4>
                 <input type="hidden" id="att-student-id">
-                <div class="mt-3 flex gap-2">
-                    <input type="date" id="att-date-input" class="border rounded px-2 py-1 text-sm flex-grow focus:outline-none focus:border-blue-500">
-                    <button onclick="window.addManualAttendance()" class="bg-green-600 text-white px-3 py-1 rounded font-bold hover:bg-green-700">Add</button>
+                <div class="mt-3 flex gap-2 items-center flex-wrap">
+                    <input type="date" id="att-date-input" class="border rounded px-2 py-2 text-sm flex-grow focus:outline-none focus:border-blue-500">
+                    <select id="att-class-input" class="border rounded px-2 py-2 text-sm flex-grow focus:outline-none focus:border-blue-500">
+                        <option value="Turma Mista (Livre)">Geral / Mista</option>
+                        <option value="Adulto - 10h30">Adulto - 10h30</option>
+                        <option value="Adulto - 12h30">Adulto - 12h30</option>
+                        <option value="Adulto - 18h00">Adulto - 18h00</option>
+                        <option value="Adulto - 21h00">Adulto - 21h00</option>
+                        <option value="Infantil - 15h00">Infantil - 15h00</option>
+                        <option value="Infantil - 16h30">Infantil - 16h30</option>
+                    </select>
+                    <button onclick="window.addManualAttendance()" class="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700 w-full mt-2">Adicionar Turma</button>
                 </div>
             </div>
             <div class="overflow-y-auto p-0 flex-1 bg-white">
@@ -1044,6 +987,11 @@
         </div>
     </div>
 
+    <!-- AUDIO PARA CHECK-IN BEM SUCEDIDO -->
+    <audio id="beep-sound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+    </audio>
+
     <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -1086,6 +1034,47 @@
         };
 
         window.getPlanInfo = (planKey) => window.PLAN_DICT[planKey] || { price: 0, short: String(planKey||'').toUpperCase(), long: 'NÃO INFORMADO' };
+
+        // ==========================================
+        // NOVA LÓGICA DE IMPRESSÃO (Nativa - Iframe)
+        // Resolve problemas no Mobile e PC
+        // ==========================================
+        window.printHtmlContent = function(htmlContent, titleStr) {
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.width = '0px';
+            iframe.style.height = '0px';
+            iframe.style.border = 'none';
+            document.body.appendChild(iframe);
+
+            const docIframe = iframe.contentWindow.document;
+            docIframe.open();
+            docIframe.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${titleStr}</title>
+                    <style>
+                        @media print {
+                            @page { margin: 1cm; }
+                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        }
+                        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+                    </style>
+                </head>
+                <body>
+                    ${htmlContent}
+                </body>
+                </html>
+            `);
+            docIframe.close();
+
+            setTimeout(() => {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+                setTimeout(() => { document.body.removeChild(iframe); }, 2000);
+            }, 500);
+        };
 
         // FORMATAÇÃO E MÁSCARAS
         document.addEventListener('DOMContentLoaded', () => {
@@ -1278,6 +1267,7 @@
                 window.populateTitularSelects();
                 updateStats();
                 if(window.currentView === 'students') window.renderTable();
+                if(window.currentView === 'checkin-list') window.renderCheckinList(document.getElementById('checkin-search').value);
             } catch (error) { console.error(error); }
         }
 
@@ -1294,7 +1284,10 @@
             setText('stat-archived', archivedCount);
         }
 
+        // =====================================
         // PROGRESSO, ANOTAÇÕES & PRESENÇAS
+        // =====================================
+
         window.openProgressModal = (id) => {
             const s = window.students.find(st => st.id === id); if(!s) return;
             document.getElementById('prog-student-id').value = id;
@@ -1365,12 +1358,20 @@
             if (attendances.length === 0) {
                 attList.innerHTML = '<div class="text-xs text-gray-500 text-center py-4 italic">Nenhuma presença encontrada.</div>';
             } else {
-                attendances.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(att => {
-                    const dateFmt = formatDate(att.date + 'T12:00:00');
+                // AGRUPAR POR DATA PARA MOSTRAR HORÁRIOS NA MESMA LINHA
+                const grouped = {};
+                attendances.forEach(att => {
+                    if(!grouped[att.date]) grouped[att.date] = new Set();
+                    grouped[att.date].add(att.time || 'Check-in manual');
+                });
+                
+                Object.keys(grouped).sort((a,b) => new Date(b) - new Date(a)).forEach(dateStr => {
+                    const dateFmt = formatDate(dateStr + 'T12:00:00');
+                    const timesStr = Array.from(grouped[dateStr]).join(' | ');
                     attList.innerHTML += `
                         <div class="flex justify-between items-center text-sm p-2 bg-white rounded border border-gray-100 shadow-sm">
                             <span class="font-bold text-gray-700">${dateFmt}</span>
-                            <span class="text-gray-500 text-xs bg-gray-100 px-2 rounded">${att.time || '--'}</span>
+                            <span class="text-gray-500 text-xs bg-gray-100 px-2 rounded">${timesStr}</span>
                         </div>
                     `;
                 });
@@ -1402,28 +1403,18 @@
             const startFilter = document.getElementById('prog-start-filter').value;
             const endFilter = document.getElementById('prog-end-filter').value;
             
-            document.getElementById('print-prog-name').innerText = s.name;
-            document.getElementById('print-prog-start').innerText = formatDate(s.registrationDate);
-            document.getElementById('print-prog-belt').innerText = s.belt || 'Branca';
-            document.getElementById('print-prog-plan').innerText = window.getPlanInfo(s.plan).short;
-            
-            const tbodyLogs = document.getElementById('print-prog-table-body');
-            tbodyLogs.innerHTML = '';
-            
             let logs = s.progressLog ? [...s.progressLog] : [];
             logs.push({ type: 'info', text: 'Matrícula realizada / Início dos treinos.', date: s.registrationDate || new Date().toISOString() });
             logs.sort((a, b) => new Date(b.date) - new Date(a.date));
             
+            let tbodyLogs = '';
             logs.forEach(log => {
                 const d = new Date(log.date).toLocaleDateString('pt-BR');
                 let typeStr = log.type === 'graduation' ? 'Graduação' : (log.type === 'note' ? 'Anotação' : 'Sistema');
-                tbodyLogs.innerHTML += `<tr><td class="p-2 border">${d}</td><td class="p-2 border font-bold">${typeStr}</td><td class="p-2 border">${log.text}</td></tr>`;
+                tbodyLogs += `<tr><td style="border: 1px solid #ddd; padding: 8px;">${d}</td><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${typeStr}</td><td style="border: 1px solid #ddd; padding: 8px;">${log.text}</td></tr>`;
             });
 
-            const tbodyAtt = document.getElementById('print-prog-attendance-body');
-            tbodyAtt.innerHTML = '';
             let attendances = [];
-            
             if (s.attendanceLog && s.attendanceLog.length > 0) attendances = [...s.attendanceLog];
             else if (s.attendance && s.attendance.length > 0) attendances = s.attendance.map(dateStr => ({ date: dateStr, time: 'Check-in manual' }));
 
@@ -1436,24 +1427,179 @@
                 printMonthLabel = `(Período: ${sDate} até ${eDate})`;
             } else printMonthLabel = "(Todo o Período)";
 
-            document.getElementById('print-prog-att-total').innerText = `Total: ${attendances.length} aulas ${printMonthLabel}`;
-
-            if (attendances.length === 0) tbodyAtt.innerHTML = '<tr><td colspan="2" class="p-2 border text-center text-gray-500 italic">Nenhuma presença registrada.</td></tr>';
+            let tbodyAtt = '';
+            if (attendances.length === 0) tbodyAtt = '<tr><td colspan="2" style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #666; font-style: italic;">Nenhuma presença registrada.</td></tr>';
             else {
-                attendances.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(att => {
-                    const dateFmt = formatDate(att.date + 'T12:00:00');
-                    tbodyAtt.innerHTML += `<tr><td class="p-2 border">${dateFmt}</td><td class="p-2 border">${att.time || '--'}</td></tr>`;
+                // AGRUPAR POR DATA
+                const grouped = {};
+                attendances.forEach(att => {
+                    if(!grouped[att.date]) grouped[att.date] = new Set();
+                    grouped[att.date].add(att.time || 'Check-in manual');
+                });
+                
+                Object.keys(grouped).sort((a,b) => new Date(b) - new Date(a)).forEach(dateStr => {
+                    const dateFmt = formatDate(dateStr + 'T12:00:00');
+                    const timesStr = Array.from(grouped[dateStr]).join(' | ');
+                    tbodyAtt += `<tr><td style="border: 1px solid #ddd; padding: 8px;">${dateFmt}</td><td style="border: 1px solid #ddd; padding: 8px;">${timesStr}</td></tr>`;
                 });
             }
             
-            document.body.classList.add('printing-progress'); 
-            setTimeout(() => { 
-                window.print(); 
-                setTimeout(() => { document.body.classList.remove('printing-progress'); }, 1000); 
-            }, 500);
+            const htmlContent = `
+                <div style="font-family: Arial, sans-serif; padding: 20px;">
+                    <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 15px;">
+                        <h1 style="font-size: 24px; font-weight: bold; text-transform: uppercase; margin: 0 0 5px 0;">Tanque Team BJJ</h1>
+                        <h2 style="font-size: 18px; margin: 0;">Relatório de Evolução do Aluno</h2>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px; font-size: 12px; border: 1px solid #ccc; padding: 10px; background: #f9fafb; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                        <p style="margin: 3px 0;"><strong>Nome:</strong> ${s.name}</p>
+                        <p style="margin: 3px 0;"><strong>Data de Início:</strong> ${formatDate(s.registrationDate)}</p>
+                        <p style="margin: 3px 0;"><strong>Faixa Atual:</strong> ${s.belt || 'Branca'}</p>
+                        <p style="margin: 3px 0;"><strong>Plano:</strong> ${window.getPlanInfo(s.plan).short}</p>
+                    </div>
+                    
+                    <h3 style="font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Histórico de Atividades e Anotações</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; margin-bottom: 30px;">
+                        <thead>
+                            <tr style="background-color: #f3f3f3; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                                <th style="border: 1px solid #ddd; padding: 8px;">Data</th>
+                                <th style="border: 1px solid #ddd; padding: 8px;">Tipo</th>
+                                <th style="border: 1px solid #ddd; padding: 8px;">Descrição</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tbodyLogs}</tbody>
+                    </table>
+
+                    <h3 style="font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Extrato de Presenças <span style="font-size: 12px; font-weight: normal; color: #666; margin-left: 10px;">Total: ${attendances.length} aulas ${printMonthLabel}</span></h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+                        <thead>
+                            <tr style="background-color: #f3f3f3; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                                <th style="border: 1px solid #ddd; padding: 8px; width: 33%;">Data</th>
+                                <th style="border: 1px solid #ddd; padding: 8px;">Horário / Turma</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tbodyAtt}</tbody>
+                    </table>
+                </div>
+            `;
+
+            window.printHtmlContent(htmlContent, "Relatorio_Progresso_" + s.name);
         };
 
-        // LÓGICA DO LEITOR DE QR CODE (Nativo e Direto)
+        // ==========================================
+        // NOVA LÓGICA DE PRESENÇAS MANUAIS (CHECK-IN)
+        // ==========================================
+        window.renderCheckinList = function(searchTerm = "") {
+            const container = document.getElementById('checkin-list-container');
+            container.innerHTML = '';
+            
+            const selectedClass = document.getElementById('main-checkin-class').value;
+            const todayStr = new Date().toISOString().split('T')[0]; 
+            
+            let actives = window.students.filter(s => !s.archived && s.enrollmentStatus !== 'Inativo');
+            
+            if(searchTerm) {
+                actives = actives.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
+            } else {
+                actives.sort((a,b) => a.name.localeCompare(b.name));
+            }
+
+            if(actives.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 italic py-4">Nenhum aluno encontrado.</p>';
+                return;
+            }
+
+            actives.forEach(s => {
+                const logsToday = (s.attendanceLog || []).filter(l => l.date === todayStr);
+                const hasCheckedInClass = logsToday.some(l => l.time === selectedClass);
+                const timesToday = logsToday.map(l => l.time).join(', ');
+                
+                const isBlocked = s.paymentStatus === 'Pendente';
+                
+                let statusHtml = '';
+                let actionBtn = '';
+
+                if(isBlocked) {
+                    statusHtml = `<span class="text-red-500 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-lock"></i> Pagamento Pendente</span>`;
+                    actionBtn = `<button disabled class="bg-gray-200 text-gray-400 px-4 py-2 rounded text-xs font-bold cursor-not-allowed">Bloqueado</button>`;
+                } else if(hasCheckedInClass) {
+                    statusHtml = `<span class="text-green-500 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-check-double"></i> Presente: ${selectedClass}</span>`;
+                    actionBtn = `<button onclick="window.removeSpecificAttendance('${s.id}', '${todayStr}', '${selectedClass}')" class="bg-red-50 text-red-500 hover:bg-red-100 border border-red-200 px-4 py-2 rounded text-xs font-bold transition">Cancelar Check-in</button>`;
+                } else {
+                    statusHtml = logsToday.length > 0 
+                        ? `<span class="text-blue-500 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 mt-1"><i class="fa-solid fa-check"></i> Outras turmas hoje: ${timesToday}</span>` 
+                        : `<span class="text-gray-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 mt-1"><i class="fa-regular fa-circle"></i> Sem presenças hoje</span>`;
+                    
+                    actionBtn = `<button onclick="window.doCheckin('${s.id}', '${todayStr}', '${selectedClass}')" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded shadow-sm text-xs font-bold transition transform hover:-translate-y-0.5"><i class="fa-solid fa-camera mr-1"></i> Fazer Check-in</button>`;
+                }
+
+                container.innerHTML += `
+                    <div class="flex items-center justify-between p-3 border-b border-gray-100 hover:bg-gray-50 transition rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-500 shrink-0">${s.name.charAt(0).toUpperCase()}</div>
+                            <div>
+                                <p class="font-bold text-sm text-brand-dark leading-tight">${s.name}</p>
+                                ${statusHtml}
+                            </div>
+                        </div>
+                        <div>${actionBtn}</div>
+                    </div>
+                `;
+            });
+        };
+
+        window.doCheckin = async function(studentId, dateStr, selectedClass) {
+            try {
+                const s = window.students.find(x => x.id === studentId);
+                if (s && s.attendanceLog && s.attendanceLog.some(l => l.date === dateStr && l.time === selectedClass)) {
+                    alert("O aluno já fez check-in nesta turma hoje!"); return;
+                }
+
+                const newLog = { date: dateStr, time: selectedClass, timestamp: new Date().toISOString() };
+                
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), {
+                    attendance: arrayUnion(dateStr),
+                    attendanceLog: arrayUnion(newLog)
+                });
+                
+                if(s) { 
+                    if(!s.attendance) s.attendance = []; if(!s.attendance.includes(dateStr)) s.attendance.push(dateStr); 
+                    if(!s.attendanceLog) s.attendanceLog = []; s.attendanceLog.push(newLog);
+                }
+                window.renderCheckinList(document.getElementById('checkin-search').value);
+            } catch (e) { alert("Erro ao fazer check-in."); }
+        };
+
+        window.removeSpecificAttendance = async (studentId, dateStr, timeStr) => {
+            if(!confirm(`Remover presença da turma ${timeStr} no dia ${dateStr}?`)) return;
+            const s = window.students.find(st => st.id === studentId);
+            if(!s || !s.attendanceLog) return;
+            
+            const logEntry = s.attendanceLog.find(l => l.date === dateStr && l.time === timeStr);
+            if (!logEntry) return;
+
+            try {
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), {
+                    attendanceLog: arrayRemove(logEntry)
+                });
+                
+                s.attendanceLog = s.attendanceLog.filter(l => l !== logEntry);
+
+                const stillHasLogsForDate = s.attendanceLog.some(l => l.date === dateStr);
+                if (!stillHasLogsForDate) {
+                    await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', studentId), {
+                        attendance: arrayRemove(dateStr)
+                    });
+                    s.attendance = s.attendance.filter(d => d !== dateStr);
+                }
+
+                if (document.getElementById('attendance-modal').classList.contains('flex')) window.openAttendanceModal(studentId);
+                if (document.getElementById('view-checkin-list').classList.contains('hidden') === false) window.renderCheckinList(document.getElementById('checkin-search').value);
+                if (document.getElementById('view-students').classList.contains('hidden') === false) window.renderTable();
+            } catch(e) { alert("Erro ao remover"); }
+        };
+
+        // LÓGICA DO LEITOR DE QR CODE (Câmera)
         let html5QrCode = null;
 
         window.openCheckinModal = () => {
@@ -1463,30 +1609,21 @@
             resDiv.innerHTML = '<i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o QR Code...';
             resDiv.className = "text-center py-4 w-full rounded-lg bg-gray-50 border border-gray-200 font-medium text-gray-600 min-h-[100px] flex flex-col items-center justify-center";
             
-            // Timeout para dar tempo ao DOM de renderizar a div "reader" corretamente
             setTimeout(() => {
                 try {
-                    if (!html5QrCode) {
-                        html5QrCode = new Html5Qrcode("reader");
-                    }
-                    
+                    if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); }
                     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
                     
-                    // Tenta iniciar com a câmara traseira (environment)
                     html5QrCode.start({ facingMode: "environment" }, config, window.onScanSuccess, window.onScanFailure)
                     .catch(err => {
                         console.warn("Câmara traseira falhou, a tentar câmara frontal...", err);
-                        // Fallback para câmara frontal (user)
                         html5QrCode.start({ facingMode: "user" }, config, window.onScanSuccess, window.onScanFailure)
                         .catch(err2 => {
-                            console.error("Câmara bloqueada:", err2);
                             resDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-3xl text-orange-500 mb-2"></i> Câmara bloqueada ou indisponível. Dê permissão no navegador.';
                             resDiv.className = "text-center py-4 w-full rounded-lg bg-orange-50 border border-orange-200 font-medium text-orange-700 min-h-[100px] flex flex-col items-center justify-center";
                         });
                     });
-                } catch(e) {
-                    console.error("Erro ao iniciar leitor:", e);
-                }
+                } catch(e) { console.error("Erro ao iniciar leitor:", e); }
             }, 300);
         };
 
@@ -1496,22 +1633,22 @@
             if (html5QrCode) {
                 try {
                     html5QrCode.stop().then(() => {
-                        html5QrCode.clear();
-                        html5QrCode = null;
-                        document.getElementById('reader').innerHTML = '';
+                        html5QrCode.clear(); html5QrCode = null; document.getElementById('reader').innerHTML = '';
                     }).catch(e => console.error("Erro ao parar a câmara:", e));
                 } catch(e) {}
             }
         };
 
-        window.onScanSuccess = async (decodedText, decodedResult) => {
-            if (html5QrCode) {
-                try {
-                    await html5QrCode.stop();
-                    html5QrCode.clear();
-                    html5QrCode = null;
-                } catch(e) {}
+        window.playBeep = () => {
+            const beep = document.getElementById('beep-sound');
+            if (beep) {
+                beep.currentTime = 0;
+                beep.play().catch(e => console.log("Navegador bloqueou autoplay do som", e));
             }
+        };
+
+        window.onScanSuccess = async (decodedText, decodedResult) => {
+            if (html5QrCode) { try { await html5QrCode.stop(); html5QrCode.clear(); html5QrCode = null; } catch(e) {} }
             
             const resDiv = document.getElementById('checkin-result');
             resDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-blue-500 mb-2"></i> Processando...';
@@ -1538,17 +1675,25 @@
                 const todayISO = new Date().toISOString().split('T')[0];
                 const className = document.getElementById('checkin-class-selector').value;
 
-                // CORREÇÃO: Utilizando a instância global 'window.db' referenciada no Firebase import
+                // VERIFICAÇÃO DE DUPLICIDADE NO QR CODE
+                if (student.attendanceLog && student.attendanceLog.some(l => l.date === todayISO && l.time === className)) {
+                    resDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-3xl text-yellow-600 mb-2"></i> Check-in já realizado!<br><span class="text-sm font-bold text-gray-800">${student.name}</span><br><span class="text-xs">Já tem presença registada na turma: ${className}</span>`;
+                    resDiv.className = "text-center py-4 w-full rounded-lg bg-yellow-50 border border-yellow-300 font-medium text-yellow-800 min-h-[100px] flex flex-col items-center justify-center shadow-inner";
+                    setTimeout(() => { if(!document.getElementById('checkin-modal').classList.contains('hidden')) window.openCheckinModal(); }, 3500);
+                    return;
+                }
+
                 await updateDoc(doc(window.db, 'artifacts', window.appIdVar, 'public', 'data', 'students', studentId), {
                     attendance: arrayUnion(todayISO),
                     attendanceLog: arrayUnion({ date: todayISO, time: className, timestamp: new Date().toISOString() })
                 });
 
+                window.playBeep(); // ALERTA SONORO DISCRETO
                 resDiv.innerHTML = `<i class="fa-solid fa-check-circle text-4xl text-green-500 mb-2"></i> Check-in Confirmado!<br><span class="text-lg font-bold text-gray-800">${student.name}</span><br><span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded mt-1 inline-block">${className}</span>`;
                 resDiv.className = "text-center py-4 w-full rounded-lg bg-green-50 border border-green-300 font-medium text-green-700 min-h-[100px] flex flex-col items-center justify-center shadow-inner";
                 
                 window.loadData();
-                setTimeout(() => { if(!document.getElementById('checkin-modal').classList.contains('hidden')) window.openCheckinModal(); }, 3500);
+                setTimeout(() => { if(!document.getElementById('checkin-modal').classList.contains('hidden')) window.openCheckinModal(); }, 3000);
 
             } catch(e) {
                 console.error(e);
@@ -1560,93 +1705,19 @@
 
         window.onScanFailure = (error) => { /* Ignorar erros de background */ };
 
-        // FUNÇÕES EM MASSA
-        window.toggleSelectAll = (source) => { document.querySelectorAll('.student-cb').forEach(cb => cb.checked = source.checked); window.updateBulkActions(); };
-
-        window.updateBulkActions = () => {
-            const count = document.querySelectorAll('.student-cb:checked').length;
-            const bulkDiv = document.getElementById('bulk-actions'); 
-            const btnBulkArchive = document.getElementById('btn-bulk-archive');
-            const btnBulkDelete = document.getElementById('btn-bulk-delete');
-            const btnAddPresence = document.getElementById('btn-add-presence-bulk');
-            
-            if(count > 0) { 
-                bulkDiv.classList.remove('hidden'); 
-                if (window.currentTab === 'archived') {
-                    if(btnBulkDelete) { btnBulkDelete.classList.remove('hidden'); document.getElementById('selected-count-delete').innerText = count; }
-                    if(btnBulkArchive) btnBulkArchive.classList.add('hidden');
-                    if(btnAddPresence) btnAddPresence.classList.add('hidden');
-                } else {
-                    if(btnBulkArchive) { btnBulkArchive.classList.remove('hidden'); document.getElementById('selected-count-archive').innerText = count; }
-                    if(btnBulkDelete) btnBulkDelete.classList.add('hidden');
-                    if(btnAddPresence) btnAddPresence.classList.remove('hidden');
-                }
-            } else { 
-                bulkDiv.classList.add('hidden'); 
-            }
-        };
-
-        window.archiveSelectedStudents = async () => {
-            const ids = Array.from(document.querySelectorAll('.student-cb:checked')).map(cb => cb.value);
-            if(ids.length === 0) return;
-            if(confirm(`Tem certeza que deseja ARQUIVAR ${ids.length} alunos selecionados?`)) {
-                try {
-                    await Promise.all(ids.map(id => updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { archived: true })));
-                    document.getElementById('cb-select-all').checked = false; window.updateBulkActions(); window.loadData();
-                } catch(e) { alert('Erro ao arquivar.'); }
-            }
-        };
-
-        window.deleteSelectedStudents = async () => {
-            const ids = Array.from(document.querySelectorAll('.student-cb:checked')).map(cb => cb.value);
-            if(ids.length === 0) return;
-            if(confirm(`Tem a certeza absoluta que deseja EXCLUIR PERMANENTEMENTE ${ids.length} aluno(s) selecionados do arquivo?`)) {
-                try {
-                    await Promise.all(ids.map(id => deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id))));
-                    document.getElementById('cb-select-all').checked = false; window.updateBulkActions(); window.loadData();
-                } catch(e) { alert('Erro ao excluir definitivamente: ' + e.message); }
-            }
-        };
-
-        window.archiveStudent = async (id) => {
-            const myDeps = window.students.filter(d => d.titularId === id && !d.archived);
-            if(!confirm("Deseja ARQUIVAR este aluno?" + (myDeps.length > 0 ? " Dependentes também serão arquivados." : ""))) return;
-            try {
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { archived: true });
-                if (myDeps.length > 0) for(let dep of myDeps) await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', dep.id), { archived: true });
-                window.loadData();
-            } catch(e) { alert("Erro ao arquivar."); }
-        };
-
-        window.restoreStudent = async (id) => {
-            if(!confirm("Restaurar aluno do arquivo?")) return;
-            try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { archived: false }); window.loadData(); } catch(e) { alert("Erro ao restaurar."); }
-        };
-
-        window.addPresenceSelectedStudents = async () => {
-            const ids = Array.from(document.querySelectorAll('.student-cb:checked')).map(cb => cb.value);
-            if(ids.length === 0) return;
-            const todayISO = new Date().toISOString().split('T')[0];
-            if(confirm(`Confirmar presença de hoje para ${ids.length} alunos?`)) {
-                try {
-                    await Promise.all(ids.map(id => updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { attendance: arrayUnion(todayISO), attendanceLog: arrayUnion({ date: todayISO, time: 'Check-in rápido em massa', timestamp: new Date().toISOString() }) })));
-                    document.getElementById('cb-select-all').checked = false; window.updateBulkActions(); window.loadData();
-                } catch(e) { alert('Erro.'); }
-            }
-        };
-
+        // Attendance Management (Ver Todos e Excluir Unicamente)
         window.openAttendanceModal = (id) => {
             const s = window.students.find(st => st.id === id); if(!s) return;
             document.getElementById('att-student-name').innerText = s.name || 'Aluno'; document.getElementById('att-student-id').value = id; document.getElementById('att-date-input').valueAsDate = new Date();
             const list = document.getElementById('att-list'); list.innerHTML = '';
             
-            if(!s.attendance || s.attendance.length === 0) document.getElementById('att-empty').classList.remove('hidden');
+            if(!s.attendanceLog || s.attendanceLog.length === 0) document.getElementById('att-empty').classList.remove('hidden');
             else {
                 document.getElementById('att-empty').classList.add('hidden');
-                [...s.attendance].sort((a,b) => new Date(b) - new Date(a)).forEach(dateStr => {
-                    const formatted = formatDate(dateStr + 'T12:00:00');
-                    let classInfo = (s.attendanceLog && s.attendanceLog.find(l => l.date === dateStr)?.time) ? `<span class="text-[10px] bg-gray-200 px-2 py-0.5 rounded ml-2 font-bold text-gray-600 border border-gray-300">${s.attendanceLog.find(l => l.date === dateStr).time}</span>` : '';
-                    list.innerHTML += `<div class="flex justify-between items-center py-3 px-4 hover:bg-blue-50 transition border-b border-gray-100"><span class="text-sm font-bold text-gray-700"><i class="fa-regular fa-calendar-check text-green-600 mr-2 text-lg"></i> ${formatted} ${classInfo}</span><button onclick="window.removeAttendance('${dateStr}')" class="text-red-400 hover:text-red-600 p-2 rounded hover:bg-red-50 transition" title="Remover"><i class="fa-solid fa-trash"></i></button></div>`;
+                [...s.attendanceLog].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(log => {
+                    const formatted = formatDate(log.date + 'T12:00:00');
+                    let classInfo = log.time ? `<span class="text-[10px] bg-gray-200 px-2 py-0.5 rounded ml-2 font-bold text-gray-600 border border-gray-300">${log.time}</span>` : '';
+                    list.innerHTML += `<div class="flex justify-between items-center py-3 px-4 hover:bg-blue-50 transition border-b border-gray-100"><span class="text-sm font-bold text-gray-700"><i class="fa-regular fa-calendar-check text-green-600 mr-2 text-lg"></i> ${formatted} ${classInfo}</span><button onclick="window.removeSpecificAttendance('${id}', '${log.date}', '${log.time}')" class="text-red-400 hover:text-red-600 p-2 rounded hover:bg-red-50 transition" title="Remover esta aula"><i class="fa-solid fa-trash"></i></button></div>`;
                 });
             }
             document.getElementById('attendance-modal').classList.remove('hidden'); document.getElementById('attendance-modal').classList.add('flex');
@@ -1655,42 +1726,29 @@
         window.closeAttendanceModal = () => { document.getElementById('attendance-modal').classList.add('hidden'); document.getElementById('attendance-modal').classList.remove('flex'); };
 
         window.addManualAttendance = async () => {
-            const id = document.getElementById('att-student-id').value; const dateVal = document.getElementById('att-date-input').value;
+            const id = document.getElementById('att-student-id').value; 
+            const dateVal = document.getElementById('att-date-input').value;
+            const classVal = document.getElementById('att-class-input').value;
             if(!dateVal) return;
+            
             try { 
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { attendance: arrayUnion(dateVal), attendanceLog: arrayUnion({ date: dateVal, time: 'Check-in manual', timestamp: new Date().toISOString() }) }); 
-                const s = window.students.find(st => st.id === id);
+                const s = window.students.find(x => x.id === id);
+                if (s && s.attendanceLog && s.attendanceLog.some(l => l.date === dateVal && l.time === classVal)) {
+                    alert("Já existe presença registrada nesta turma e dia!"); return;
+                }
+
+                const newLog = { date: dateVal, time: classVal, timestamp: new Date().toISOString() };
+                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { 
+                    attendance: arrayUnion(dateVal), 
+                    attendanceLog: arrayUnion(newLog) 
+                }); 
+                
                 if (s) {
                     if (!s.attendance) s.attendance = []; s.attendance.push(dateVal);
-                    if (!s.attendanceLog) s.attendanceLog = []; s.attendanceLog.push({ date: dateVal, time: 'Check-in manual', timestamp: new Date().toISOString() });
+                    if (!s.attendanceLog) s.attendanceLog = []; s.attendanceLog.push(newLog);
                 }
                 window.openAttendanceModal(id); window.loadData(); 
             } catch(e) { alert("Erro."); }
-        };
-
-        window.removeAttendance = async (dateStr) => {
-            if(!confirm(`Remover presença do dia ${dateStr}?`)) return;
-            const id = document.getElementById('att-student-id').value;
-            const s = window.students.find(st => st.id === id);
-            try { 
-                let updates = { attendance: arrayRemove(dateStr) };
-                let logEntryToRemove = null;
-                if (s && s.attendanceLog) {
-                    const logEntry = s.attendanceLog.find(l => l.date === dateStr);
-                    if (logEntry) { updates.attendanceLog = arrayRemove(logEntry); logEntryToRemove = logEntry; }
-                }
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), updates); 
-                if (s) {
-                    s.attendance = s.attendance.filter(d => d !== dateStr);
-                    if (s.attendanceLog && logEntryToRemove) s.attendanceLog = s.attendanceLog.filter(l => l !== logEntryToRemove);
-                }
-                window.openAttendanceModal(id); window.loadData(); 
-            } catch(e) { alert("Erro."); }
-        };
-
-        window.addPresence = async (id) => {
-            const todayISO = new Date().toISOString().split('T')[0];
-            try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { attendance: arrayUnion(todayISO), attendanceLog: arrayUnion({ date: todayISO, time: 'Check-in rápido', timestamp: new Date().toISOString() }) }); window.loadData(); alert(`Presença confirmada para hoje!`); } catch(e) { alert("Erro."); }
         };
 
         // NAVEGAÇÃO MAIN E ABAS
@@ -1699,12 +1757,15 @@
         window.switchMainView = (viewName) => {
             if(window.innerWidth < 768 && !document.getElementById('sidebar-menu').classList.contains('-translate-x-full')) window.toggleMobileMenu();
             window.currentView = viewName;
-            ['students', 'reports', 'notices', 'experimental'].forEach(v => {
+            ['students', 'reports', 'notices', 'experimental', 'checkin-list'].forEach(v => {
                 const el = document.getElementById('view-' + v); if(el) el.classList.toggle('hidden', viewName !== v);
                 const nav = document.getElementById('nav-' + v);
                 if(nav) { if (v === viewName) { nav.classList.add('bg-brand-red', 'text-white'); nav.classList.remove('text-gray-400', 'hover:bg-gray-800'); } else { nav.classList.remove('bg-brand-red', 'text-white'); nav.classList.add('text-gray-400', 'hover:bg-gray-800'); } }
             });
-            if(viewName === 'students') window.renderTable(); else if(viewName === 'notices') { window.renderAdminNotices(); window.renderBirthdays(); } else if(viewName === 'experimental') window.loadExperimentalData();
+            if(viewName === 'students') window.renderTable(); 
+            else if(viewName === 'notices') { window.renderAdminNotices(); window.renderBirthdays(); } 
+            else if(viewName === 'experimental') window.loadExperimentalData();
+            else if(viewName === 'checkin-list') window.renderCheckinList(document.getElementById('checkin-search').value);
         };
 
         window.switchTab = (tab) => {
@@ -1814,7 +1875,7 @@
                     `;
                 }
 
-                let attendanceBtnHtml = s.archived ? `<span class="text-gray-400 text-xs italic">--</span>` : `<div class="flex items-center gap-2"><span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded w-16 text-center">${attendanceCount} aulas</span><button onclick="window.addPresence('${s.id}')" class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow"><i class="fa-solid fa-plus text-xs"></i></button></div>`;
+                let attendanceBtnHtml = s.archived ? `<span class="text-gray-400 text-xs italic">--</span>` : `<div class="flex items-center gap-2"><span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded w-16 text-center">${attendanceCount} aulas</span></div>`;
 
                 const tr = document.createElement('tr'); tr.className = isDepRow ? `hidden dep-row-${parentId} bg-purple-50/40 hover:bg-purple-50 transition border-b border-purple-100` : `border-b hover:bg-red-50 transition border-gray-100`;
                 tr.innerHTML = `
@@ -1846,482 +1907,6 @@
                 renderRow(s, false);
                 filtered.filter(d => d.plan === 'dependente' && d.titularId === s.id).forEach(dep => renderRow(dep, true, s.id));
             });
-        };
-
-        // GERAÇÃO DE RELATÓRIOS
-        window.generateReport = (type) => {
-            const container = document.getElementById('report-container'); container.classList.remove('hidden');
-            let html = `<div style="text-align:center; margin-bottom:20px; border-bottom:2px solid #000; padding-bottom:10px;"><h2 style="font-size:24px; font-weight:bold; margin:0;">TANQUE TEAM BJJ</h2><h3 style="font-size:16px; color:#555; margin:5px 0;">Relatório Administrativo</h3><p style="font-size:12px; color:#777;">Gerado em: ${new Date().toLocaleString('pt-BR')}</p></div>`;
-            let tableRows = '';
-            
-            if (type === 'ativos') {
-                html += `<h3 style="font-size:18px; font-weight:bold; margin-bottom:15px; color:#0056b3;">ALUNOS ATIVOS</h3><table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:left;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Nome</th><th style="border: 1px solid #ddd; padding: 8px;">Plano</th><th style="border: 1px solid #ddd; padding: 8px;">Faixa</th><th style="border: 1px solid #ddd; padding: 8px;">Contato</th></tr></thead><tbody>`;
-                window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(s => { tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${s.name}</td><td style="border: 1px solid #ddd; padding: 8px; text-transform:uppercase;">${(s.plan||'-').replace('-',' ')}</td><td style="border: 1px solid #ddd; padding: 8px;">${s.belt||'Branca'}</td><td style="border: 1px solid #ddd; padding: 8px;">${s.phone||'-'}</td></tr>`; });
-                html += tableRows + `</tbody></table>`;
-            } else if (type === 'frequencia') {
-                html += `<h3 style="font-size:18px; font-weight:bold; margin-bottom:15px; color:#6f42c1;">FREQUÊNCIA - TOP 15 ALUNOS (Últimos 30 dias)</h3><table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:left;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Posição</th><th style="border: 1px solid #ddd; padding: 8px;">Nome</th><th style="border: 1px solid #ddd; padding: 8px; text-align:center;">Aulas (30 dias)</th><th style="border: 1px solid #ddd; padding: 8px;">Faixa</th></tr></thead><tbody>`;
-                const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).map(s => ({ name: s.name, belt: s.belt, classes: s.attendance ? s.attendance.filter(d => new Date(d) >= thirtyDaysAgo).length : 0 })).sort((a,b) => b.classes - a.classes).slice(0, 15).forEach((d, i) => { tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px;">#${i+1}</td><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${d.name}</td><td style="border: 1px solid #ddd; padding: 8px; text-align:center;">${d.classes}</td><td style="border: 1px solid #ddd; padding: 8px;">${d.belt||'-'}</td></tr>`; });
-                html += tableRows + `</tbody></table>`;
-            } else if (type === 'experimental') {
-                html += `<h3 style="font-size:18px; font-weight:bold; margin-bottom:15px; color:#d39e00;">RELATÓRIO DE AULAS EXPERIMENTAIS</h3><table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:left;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Data/Hora</th><th style="border: 1px solid #ddd; padding: 8px;">Nome</th><th style="border: 1px solid #ddd; padding: 8px;">Contato</th><th style="border: 1px solid #ddd; padding: 8px;">Status</th></tr></thead><tbody>`;
-                let expSorted = [...window.experimentalList].sort((a,b) => new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00')));
-                if (expSorted.length === 0) tableRows += `<tr><td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: center;">Nenhum registro encontrado.</td></tr>`;
-                expSorted.forEach(e => {
-                    let dateFormatted = e.date ? new Date(e.date + 'T12:00:00').toLocaleDateString('pt-BR') : '--';
-                    tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px;">${dateFormatted} às ${e.time || '--'}</td><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${e.name}</td><td style="border: 1px solid #ddd; padding: 8px;">${e.phone || '-'}</td><td style="border: 1px solid #ddd; padding: 8px; text-transform:uppercase;">${e.status || 'Agendado'}</td></tr>`;
-                });
-                html += tableRows + `</tbody></table>`;
-            }
-
-            container.innerHTML = html;
-            document.body.classList.add('printing-report');
-            setTimeout(() => { window.print(); setTimeout(() => { document.body.classList.remove('printing-report'); container.classList.add('hidden'); }, 2000); }, 800);
-        };
-
-        window.printAdminQrCard = function() {
-            const id = document.getElementById('detail-student-id').value;
-            const s = window.students.find(x => x.id === id);
-            if(!s) return;
-
-            document.getElementById('print-qr-name').innerText = s.name;
-            document.getElementById('print-qr-belt').innerText = s.belt || "Faixa Branca";
-            document.getElementById('print-qr-plan').innerText = window.getPlanInfo(s.plan).short;
-            document.getElementById('print-qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${s.id}`;
-            
-            const photoImg = document.getElementById('print-qr-photo');
-            const photoPlaceholder = document.getElementById('print-qr-photo-placeholder');
-            
-            if (s.photoBase64) {
-                photoImg.src = s.photoBase64;
-                photoImg.style.display = 'block';
-                photoPlaceholder.style.display = 'none';
-            } else {
-                photoImg.style.display = 'none';
-                photoPlaceholder.style.display = 'block';
-                photoPlaceholder.innerText = s.name.charAt(0).toUpperCase();
-            }
-            
-            window.closeDetailsModal();
-
-            setTimeout(() => {
-                document.body.classList.add('printing-qr'); 
-                
-                setTimeout(() => {
-                    window.print();
-                    setTimeout(() => { document.body.classList.remove('printing-qr'); }, 500);
-                }, 100);
-            }, 300);
-        }
-
-        window.printIndividualContract = (id) => {
-            const s = window.students.find(st => st.id === id); if (!s) return;
-            const contractContainer = document.getElementById('printable-contract'); contractContainer.classList.remove('hidden'); 
-            const safePlan = String(s.plan || ''); const pInfo = window.getPlanInfo(safePlan); let price = "R$ " + (Number(pInfo.price) || 0).toFixed(2).replace('.', ','); let displayName = pInfo.long || "NÃO INFORMADO";
-            
-            let formattedDob = '--/--/----';
-            if (s.dob) { 
-                const dobStr = String(s.dob);
-                if (dobStr.includes('/')) formattedDob = dobStr; 
-                else if (dobStr.includes('T')) { const dObj = new Date(dobStr); if (!isNaN(dObj)) formattedDob = dObj.toLocaleDateString('pt-BR'); } 
-                else { const parts = dobStr.split('-'); if (parts.length === 3) formattedDob = `${parts[2].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[0]}`; } 
-            }
-
-            let contratanteText = s.name || "NÃO INFORMADO";
-            if (s.guardian && String(s.guardian).trim() !== "") contratanteText = `${s.guardian} (Responsável Legal: ${s.guardianKinship || 'Não informado'})`; else if (s.titularName && String(s.titularName).trim() !== "") contratanteText = `${s.titularName} (Titular do Plano)`;
-            const setText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; }
-            setText('printContratante', contratanteText); setText('printStudent', s.name || "NÃO INFORMADO"); setText('printDob', formattedDob); setText('printCPF', s.cpf || "Não informado"); setText('printEmail', s.email || "Não informado"); setText('printPhone', s.phone || "Não informado"); setText('printAddress', s.address || "Não informado");
-            let beltInfo = ""; const safeBelt = String(s.belt || ""); if(safeBelt && !safeBelt.includes("Branca - 0º Grau") && !safeBelt.includes("Iniciante")) beltInfo = `| Graduação Atual: ${safeBelt}`;
-            setText('printBeltInfo', beltInfo);
-            
-            let regDate = new Date(); 
-            if (s.registrationDate) { const parsed = new Date(s.registrationDate); if (!isNaN(parsed)) regDate = parsed; }
-            document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
-            
-            const isCombo = safePlan.includes('combo'); const isFidelity = safePlan.includes('semestral') || safePlan.includes('trimestral') || isCombo;
-            let clausesHtml = `<p><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
-            clausesHtml += `<p><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong class="uppercase underline">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong class="bg-yellow-100 px-1">${price}</strong>. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.</p>`;
-            let clauseNum = 3;
-            if (isFidelity) { clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade correspondente à sua nomenclatura (Trimestral ou Semestral). O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>`; clauseNum++; } 
-            else { clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO:</strong> O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.</p>`; clauseNum++; }
-            if (isCombo) { clausesHtml += `<div class="bg-blue-50 p-2 border-l-2 border-blue-400"><p><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DO PLANO FAMÍLIA (COMBO):</strong> O pagamento das mensalidades é unificado e de inteira responsabilidade do CONTRATANTE titular. O cancelamento ou afastamento de um dos beneficiários dependentes não dá direito a desconto ou reembolso parcial, e reverte automaticamente o plano dos membros restantes para o valor da tabela individual vigente.</p></div>`; clauseNum++; }
-            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA INADIMPLÊNCIA:</strong> O atraso superior a 30 dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e cobrança dos valores devidos acrescidos de multa de 2% e juros de mora legais.</p>`; clauseNum++;
-            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DA SAÚDE E APTIDÃO FÍSICA:</strong> O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate, isentando a ESCOLA de qualquer responsabilidade sobre moléstias pré-existentes não declaradas formalmente no ato desta matrícula.</p>`; clauseNum++;
-            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DE CONDUTA (DOJO KUN):</strong> É obrigatório o uso de uniforme (Kimono) estipulado pela escola, limpo e conservado. Atos de indisciplina, desrespeito à hierarquia, agressão fora do contexto do treino esportivo ou falta de higiene poderão acarretar na suspensão ou rescisão unilateral deste contrato por parte da ESCOLA, sem devolução de valores.</p>`; clauseNum++;
-            clausesHtml += `<p><strong>CLÁUSULA ${clauseNum}ª - DO DIREITO DE IMAGEM:</strong> O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da escola ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.</p>`;
-            document.getElementById('print-clauses-container').innerHTML = clausesHtml;
-            let dependentsHtml = '';
-            if (isCombo) {
-                let deps = window.students.filter(d => d.titularId === s.id);
-                if (deps.length > 0) {
-                    dependentsHtml = `<p class="mt-2 text-sm"><strong>DEPENDENTES VINCULADOS AO PLANO:</strong></p><ul class="list-disc pl-5 mt-1 text-xs">`;
-                    deps.forEach(d => {
-                        let dDob = '--/--/----';
-                        if (d.dob) { const dStr = String(d.dob); if (dStr.includes('/')) dDob = dStr; else if (dStr.includes('T')) { const dObj = new Date(dStr); if (!isNaN(dObj)) dDob = dObj.toLocaleDateString('pt-BR'); } else { const parts = dStr.split('-'); if (parts.length === 3) dDob = `${parts[2].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[0]}`; } }
-                        dependentsHtml += `<li><strong>${d.name}</strong> - Nasc: ${dDob} | Parentesco: ${d.parentesco || '-'} | Graduação: ${d.belt || 'Branca'}</li>`;
-                    });
-                    dependentsHtml += `</ul>`;
-                } else dependentsHtml = `<p class="mt-2 text-xs italic text-gray-500">Nenhum dependente vinculado no sistema no momento.</p>`;
-            }
-            document.getElementById('printDependentsBlock').innerHTML = dependentsHtml;
-            setText('printSignatureName', s.guardian || s.titularName || s.name || "CONTRATANTE");
-            document.body.classList.add('printing-contract'); 
-            setTimeout(() => { window.print(); setTimeout(() => { contractContainer.classList.add('hidden'); document.body.classList.remove('printing-contract'); }, 2000); }, 500);
-        };
-
-        window.viewStudentDetails = (id) => {
-            try {
-                const s = window.students.find(st => st.id === id); if(!s) return;
-                document.getElementById('detail-name').innerText = s.name;
-                const age = getAge(s.dob); document.getElementById('detail-age').innerText = age !== null ? `${age} anos` : '--';
-                document.getElementById('detail-belt').innerText = s.belt || "Faixa Branca";
-                const photoImg = document.getElementById('detail-photo'); const photoIcon = document.getElementById('detail-icon');
-                if(s.photoBase64) { photoImg.src = s.photoBase64; photoImg.classList.remove('hidden'); photoIcon.classList.add('hidden'); } 
-                else { photoImg.classList.add('hidden'); photoIcon.classList.remove('hidden'); }
-                const belt = (s.belt || "").toLowerCase(); let headerColor = "bg-gray-200"; 
-                if(belt.includes("azul")) headerColor = "bg-blue-600"; else if(belt.includes("roxa")) headerColor = "bg-purple-600"; else if(belt.includes("marrom")) headerColor = "bg-amber-800"; else if(belt.includes("preta")) headerColor = "bg-black"; else if(belt.includes("amarela")) headerColor = "bg-yellow-400"; else if(belt.includes("laranja")) headerColor = "bg-orange-500"; else if(belt.includes("verde")) headerColor = "bg-green-600";
-                document.getElementById('detail-header-bg').className = `h-24 w-full relative ${headerColor}`;
-                document.getElementById('detail-attendance').innerText = (s.attendance ? s.attendance.length : 0) + " aulas";
-                const statusEl = document.getElementById('detail-status');
-                statusEl.innerText = s.archived ? 'Arquivado' : (s.enrollmentStatus || 'Ativo');
-                statusEl.className = (s.enrollmentStatus === 'Ativo' && !s.archived) ? 'text-sm font-bold mt-1 text-green-600' : 'text-sm font-bold mt-1 text-red-600';
-                document.getElementById('detail-cpf').innerText = s.cpf || '-';
-                
-                const phoneDisplay = document.getElementById('detail-phone');
-                const phoneStr = String(s.phone || '');
-                if (phoneStr.trim() !== "") { 
-                    const cleanPhone = phoneStr.replace(/\D/g, ''); 
-                    phoneDisplay.innerHTML = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold transition inline-flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${s.phone}</a>`; 
-                } else {
-                    phoneDisplay.innerText = '-';
-                }
-
-                document.getElementById('detail-email').innerText = s.email || '-'; 
-                document.getElementById('detail-address').innerText = s.address || '-'; 
-                document.getElementById('detail-login').innerText = s.studentLogin || 'Não configurado'; 
-                document.getElementById('detail-pass').innerText = s.studentPassword || '---';
-                
-                const originEl = document.getElementById('detail-origin');
-                if (originEl) originEl.innerText = s.howDidYouFindUs || 'Não informado';
-                
-                const guardianBox = document.getElementById('detail-guardian-box');
-                if (s.guardian && String(s.guardian).trim() !== "") { document.getElementById('detail-guardian-name').innerText = s.guardian; guardianBox.classList.remove('hidden'); } else guardianBox.classList.add('hidden');
-                
-                const pInfo = window.getPlanInfo(s.plan);
-                document.getElementById('detail-plan').innerText = pInfo.long;
-                
-                const titularBox = document.getElementById('detail-titular-box');
-                if (s.titularName && String(s.titularName).trim() !== "") {
-                    document.getElementById('detail-titular-name').innerText = s.titularName;
-                    titularBox.classList.remove('hidden');
-                } else titularBox.classList.add('hidden');
-
-                document.getElementById('detail-qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${id}`;
-                document.getElementById('detail-qr-id').value = id;
-                document.getElementById('detail-student-id').value = id;
-
-                const familyBox = document.getElementById('detail-family-box'); familyBox.innerHTML = '';
-                if (s.plan === 'dependente' && s.titularId) {
-                    const titular = window.students.find(t => t.id === s.titularId); const tName = titular ? titular.name : 'Titular Desconhecido';
-                    familyBox.innerHTML = `<h4 class="text-xs font-bold text-purple-700 uppercase mb-2"><i class="fa-solid fa-link"></i> Vínculo Familiar</h4><p class="text-sm text-purple-900 mb-2">Este aluno é dependente de <strong>${tName}</strong>.</p><button onclick="window.closeDetailsModal(); setTimeout(() => window.viewStudentDetails('${s.titularId}'), 300)" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-xs font-bold transition w-full shadow-sm"><i class="fa-solid fa-user-tie"></i> Ver Ficha do Titular</button>`;
-                    familyBox.classList.remove('hidden');
-                } else {
-                    const deps = window.students.filter(d => d.titularId === s.id && d.plan === 'dependente');
-                    if (deps.length > 0) {
-                        let html = `<h4 class="text-xs font-bold text-purple-700 uppercase mb-2"><i class="fa-solid fa-users"></i> Dependentes Vinculados (${deps.length})</h4><ul class="space-y-2">`;
-                        deps.forEach(d => {
-                            const attCount = d.attendance ? d.attendance.length : 0;
-                            html += `<li class="flex justify-between items-center bg-white p-2 rounded shadow-sm border border-purple-100"><div><p class="font-bold text-xs text-purple-900 cursor-pointer hover:text-brand-red" onclick="window.closeDetailsModal(); setTimeout(() => window.viewStudentDetails('${d.id}'), 300)">${d.name}</p><p class="text-[10px] text-purple-600">${d.belt || 'Branca'} • Freq: ${attCount}</p></div><button onclick="window.closeDetailsModal(); setTimeout(() => window.viewStudentDetails('${d.id}'), 300)" class="text-purple-500 hover:text-purple-700 text-xs px-2 py-1 bg-purple-50 rounded"><i class="fa-solid fa-eye"></i></button></li>`;
-                        });
-                        html += `</ul>`; familyBox.innerHTML = html; familyBox.classList.remove('hidden');
-                    } else familyBox.classList.add('hidden');
-                }
-                
-                document.getElementById('details-modal').classList.remove('hidden'); document.getElementById('details-modal').classList.add('flex');
-            } catch(e) {
-                console.error("Erro ao abrir detalhes do aluno:", e);
-                alert("Ocorreu um erro ao carregar os dados do aluno. Atualize a página e tente novamente.");
-            }
-        };
-        
-        window.closeDetailsModal = () => { document.getElementById('details-modal').classList.add('hidden'); document.getElementById('details-modal').classList.remove('flex'); };
-
-        window.openEditModal = (id) => {
-            try {
-                const s = window.students.find(st => st.id === id); if(!s) return;
-                document.getElementById('edit-id').value = id; 
-                document.getElementById('edit-name').value = s.name || ''; 
-                
-                let formattedDob = String(s.dob || '');
-                if (formattedDob && formattedDob.includes('-')) { 
-                    const parts = formattedDob.split('-'); 
-                    if(parts.length === 3) formattedDob = `${parts[2].substring(0,2)}/${parts[1]}/${parts[0]}`; 
-                }
-                document.getElementById('edit-dob').value = formattedDob;
-                
-                document.getElementById('edit-cpf').value = s.cpf || ''; 
-                document.getElementById('edit-address').value = s.address || ''; 
-                document.getElementById('edit-guardian').value = s.guardian || ''; 
-                if (document.getElementById('edit-guardian-kinship')) document.getElementById('edit-guardian-kinship').value = s.guardianKinship || ''; 
-                if (document.getElementById('edit-guardian-cpf')) document.getElementById('edit-guardian-cpf').value = s.guardianCpf || '';
-
-                document.getElementById('edit-plan').value = s.plan || 'infantil-mensal'; 
-                document.getElementById('edit-titular').value = s.titularName || ''; 
-                document.getElementById('edit-email').value = s.email || ''; 
-                document.getElementById('edit-phone').value = s.phone || '';
-                
-                const preview = document.getElementById('edit-photo-preview');
-                if(s.photoBase64) {
-                    preview.src = s.photoBase64;
-                    preview.classList.remove('hidden');
-                } else {
-                    preview.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name || 'Aluno')}&background=random`;
-                    preview.classList.remove('hidden');
-                }
-                
-                let color = 'Branca'; let degree = '0';
-                if(s.belt) { const parts = s.belt.split(' - '); if(parts.length > 0) color = parts[0].replace('Faixa ', ''); if(parts.length > 1) degree = parts[1].replace('º Grau', ''); }
-                
-                document.getElementById('edit-original-belt').value = s.belt || "Faixa Branca - 0º Grau";
-
-                const selColor = document.getElementById('edit-belt-color'); 
-                if (selColor) {
-                    for(let i=0; i<selColor.options.length; i++) { 
-                        if(selColor.options[i].text === color || selColor.options[i].value === color) selColor.selectedIndex = i; 
-                    }
-                }
-                
-                if (document.getElementById('edit-belt-degree')) document.getElementById('edit-belt-degree').value = degree;
-                if (document.getElementById('edit-end-date')) {
-                    document.getElementById('edit-end-date').value = (s.contractEndDate && typeof s.contractEndDate === 'string') ? s.contractEndDate.split('T')[0] : '';
-                }
-                
-                document.getElementById('edit-login').value = s.studentLogin || ''; 
-                document.getElementById('edit-password').value = s.studentPassword || '';
-                if (document.getElementById('edit-enrollment-status')) document.getElementById('edit-enrollment-status').value = s.enrollmentStatus || 'Ativo';
-                
-                window.handleEditPlanChange();
-                window.checkAdminEditAge();
-                
-                document.getElementById('edit-modal').classList.remove('hidden'); document.getElementById('edit-modal').classList.add('flex');
-            } catch(e) {
-                console.error("Erro ao abrir formulário de edição:", e);
-                alert("Erro ao abrir janela de edição. Tente novamente.");
-            }
-        };
-        
-        window.closeEditModal = () => { document.getElementById('edit-modal').classList.add('hidden'); document.getElementById('edit-modal').classList.remove('flex'); };
-        
-        window.previewPhoto = (event) => {
-            const file = event.target.files[0];
-            if(file) { const reader = new FileReader(); reader.onload = function(e) { document.getElementById('edit-photo-preview').src = e.target.result; }; reader.readAsDataURL(file); }
-        };
-
-        window.handleEditPlanChange = () => {
-            const plan = document.getElementById('edit-plan').value;
-            const titularContainer = document.getElementById('edit-titular-container');
-            if (plan === 'dependente') titularContainer.classList.remove('hidden');
-            else titularContainer.classList.add('hidden');
-        };
-
-        window.saveStudentChanges = async () => {
-            const id = document.getElementById('edit-id').value; 
-            const name = document.getElementById('edit-name').value; 
-            const dobRaw = document.getElementById('edit-dob').value;
-            const dobIso = toISODate(dobRaw);
-            const cpf = document.getElementById('edit-cpf').value;
-            const address = document.getElementById('edit-address').value;
-            const guardian = document.getElementById('edit-guardian').value;
-            
-            let guardianKinship = '';
-            if(document.getElementById('edit-guardian-kinship')) guardianKinship = document.getElementById('edit-guardian-kinship').value;
-            
-            let guardianCpf = '';
-            if(document.getElementById('edit-guardian-cpf')) guardianCpf = document.getElementById('edit-guardian-cpf').value;
-            
-            const plan = document.getElementById('edit-plan').value; 
-            const titular = document.getElementById('edit-titular').value; 
-            const email = document.getElementById('edit-email').value; 
-            const phone = document.getElementById('edit-phone').value; 
-            const color = document.getElementById('edit-belt-color').value; 
-            const degree = document.getElementById('edit-belt-degree').value; 
-            const beltStr = `Faixa ${color} - ${degree}º Grau`; 
-            const dateStr = document.getElementById('edit-end-date').value; 
-            const login = document.getElementById('edit-login').value; 
-            const pass = document.getElementById('edit-password').value;
-            const status = document.getElementById('edit-enrollment-status').value;
-            
-            const originalBelt = document.getElementById('edit-original-belt').value;
-
-            let dateObj = new Date().toISOString(); if(dateStr) { const [y, m, d] = dateStr.split('-').map(Number); dateObj = new Date(y, m - 1, d, 12, 0, 0).toISOString(); }
-            let newCategory = 'Adulto'; if (plan.includes('infantil')) newCategory = 'Infantil'; if (plan.includes('combo')) newCategory = 'Combo Família'; if (plan === 'administracao') newCategory = 'Administração'; if (plan === 'dependente') newCategory = 'Dependente (Combo)';
-            
-            const photoInput = document.getElementById('edit-photo'); let photoBase64 = null;
-            if(photoInput.files && photoInput.files[0]) {
-                 const file = photoInput.files[0]; if(file.size > 800 * 1024) { alert("A foto é muito grande."); return; }
-                 photoBase64 = await new Promise((resolve) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result); reader.readAsDataURL(file); });
-            }
-            try {
-                const updateData = { 
-                    name: name, dob: dobIso, cpf: cpf, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf,
-                    plan: plan, titularName: titular, category: newCategory, enrollmentStatus: status, 
-                    belt: beltStr, contractEndDate: dateObj, studentLogin: login, studentPassword: pass, 
-                    email: email, phone: phone 
-                };
-                
-                if(photoBase64) updateData.photoBase64 = photoBase64;
-                
-                if (beltStr !== originalBelt) {
-                    updateData.lastGraduationDate = new Date().toISOString();
-                    updateData.progressLog = arrayUnion({ type: 'graduation', text: `Graduado para ${beltStr}`, date: new Date().toISOString() });
-                }
-
-                await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), updateData);
-                window.closeEditModal(); window.loadData(); alert("Dados atualizados com sucesso!");
-            } catch(e) { console.error(e); alert("Erro ao salvar."); }
-        };
-
-        window.handleAdminPlanChange = () => {
-            const plan = document.getElementById('reg-plan').value;
-            const titularContainer = document.getElementById('admin-reg-titular-container'); const depsContainer = document.getElementById('admin-reg-deps-container'); const dep1 = document.getElementById('admin-reg-dep1'); const dep2 = document.getElementById('admin-reg-dep2');
-            
-            titularContainer.classList.add('hidden'); depsContainer.classList.add('hidden'); dep1.classList.add('hidden'); dep2.classList.add('hidden');
-            if (plan === 'dependente') titularContainer.classList.remove('hidden');
-            else if (plan === 'combo-dupla' || plan === 'combo-casal') { depsContainer.classList.remove('hidden'); dep1.classList.remove('hidden'); } 
-            else if (plan === 'combo-familia') { depsContainer.classList.remove('hidden'); dep1.classList.remove('hidden'); dep2.classList.remove('hidden'); }
-        };
-
-        window.openAdminRegisterModal = () => { document.getElementById('admin-register-modal').classList.remove('hidden'); document.getElementById('admin-register-modal').classList.add('flex'); window.handleAdminPlanChange(); };
-        window.closeAdminRegisterModal = () => {
-            document.getElementById('admin-register-modal').classList.add('hidden'); document.getElementById('admin-register-modal').classList.remove('flex');
-            document.getElementById('reg-name').value = ''; document.getElementById('reg-dob').value = ''; document.getElementById('reg-cpf').value = ''; document.getElementById('reg-email').value = ''; document.getElementById('reg-phone').value = ''; document.getElementById('reg-address').value = ''; document.getElementById('reg-guardian').value = ''; document.getElementById('reg-plan').value = 'infantil-mensal'; document.getElementById('reg-titular').value = ''; document.getElementById('reg-student-login').value = ''; document.getElementById('reg-student-pass').value = ''; document.getElementById('admin-dep1-name').value = ''; document.getElementById('admin-dep1-dob').value = ''; document.getElementById('admin-dep2-name').value = ''; document.getElementById('admin-dep2-dob').value = ''; 
-            window.handleAdminPlanChange();
-        };
-
-        window.saveAdminNewStudent = async () => {
-            const name = document.getElementById('reg-name').value; const dob = toISODate(document.getElementById('reg-dob').value); const cpf = document.getElementById('reg-cpf').value; const email = document.getElementById('reg-email').value; const phone = document.getElementById('reg-phone').value; const address = document.getElementById('reg-address').value; const guardian = document.getElementById('reg-guardian').value; const guardianCpf = document.getElementById('reg-guardian-cpf') ? document.getElementById('reg-guardian-cpf').value : ''; const plan = document.getElementById('reg-plan').value; const titular = plan === 'dependente' ? document.getElementById('reg-titular').value : ""; 
-            const beltColor = document.getElementById('reg-belt-color').value; const beltDegree = document.getElementById('reg-belt-degree').value; const login = document.getElementById('reg-student-login').value; const pass = document.getElementById('reg-student-pass').value;
-            const origin = document.getElementById('reg-origin') ? document.getElementById('reg-origin').value : 'Não informado';
-            
-            if(!name || !plan) { alert("Preencha nome e plano."); return; }
-            if(plan === 'dependente' && !titular) { alert("Selecione o Titular do plano para este dependente."); return; }
-            const beltStr = `Faixa ${beltColor} - ${beltDegree}º Grau`; const regDate = new Date(); let endDate = new Date(regDate);
-            if(plan.includes('mensal')) endDate.setMonth(endDate.getMonth() + 1); else if(plan.includes('trimestral')) endDate.setMonth(endDate.getMonth() + 3); else if(plan.includes('semestral') || plan.includes('combo') || plan === 'dependente') endDate.setMonth(endDate.getMonth() + 6); else if(plan === 'administracao') endDate.setFullYear(endDate.getFullYear() + 1); else endDate.setMonth(endDate.getMonth() + 1);
-            let category = 'Adulto'; if (plan.includes('infantil')) category = 'Infantil'; if (plan.includes('combo')) category = 'Combo Família'; if (plan === 'administracao') category = 'Administração'; if (plan === 'dependente') category = 'Dependente (Combo)';
-
-            let paymentStatus = 'Pendente'; 
-            let initialPaymentHistory = [];
-
-            try {
-                const titularDocRef = await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name, dob, cpf, email, phone, address, guardian, guardianCpf, plan, titularName: titular, paymentStatus: paymentStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
-                if (plan === 'combo-dupla' || plan === 'combo-casal' || plan === 'combo-familia') {
-                    const d1Name = document.getElementById('admin-dep1-name').value;
-                    if(d1Name) await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name: d1Name, dob: toISODate(document.getElementById('admin-dep1-dob').value), titularName: name, titularId: titularDocRef.id, parentesco: document.getElementById('admin-dep1-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', category: 'Dependente', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
-                }
-                if (plan === 'combo-familia') {
-                    const d2Name = document.getElementById('admin-dep2-name').value;
-                    if(d2Name) await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name: d2Name, dob: toISODate(document.getElementById('admin-dep2-dob').value), titularName: name, titularId: titularDocRef.id, parentesco: document.getElementById('admin-dep2-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', category: 'Dependente', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
-                }
-                window.closeAdminRegisterModal(); window.loadData(); alert("Aluno(s) cadastrado(s) com sucesso!");
-            } catch(e) { console.error(e); alert("Erro ao cadastrar."); }
-        };
-
-        window.sendCredsEmail = async (name, email, login, pass, btnElement) => {
-            if(!email) { alert("Preencha o e-mail do aluno antes de enviar."); return; }
-            if(!login || !pass) { alert("Preencha o login e senha antes de enviar."); return; }
-            const originalText = btnElement.innerHTML; btnElement.disabled = true; btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
-            const messageContent = `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;"><div style="background-color: #D90429; color: white; padding: 20px; text-align: center;"><h2 style="margin: 0; text-transform: uppercase; letter-spacing: 1px;">Bem-vindo(a) à Tanque Team! \uD83E\uDD4B</h2></div><div style="padding: 25px;"><p style="font-size: 16px;">Fala, <strong>${name.split(' ')[0]}</strong>! Oss!</p><p style="font-size: 14px; line-height: 1.5;">O seu acesso ao nosso <strong>Portal do Aluno</strong> acabou de ser liberado.</p><div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #D90429; margin: 25px 0;"><p style="margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; color: #777; font-weight: bold;">Suas credenciais de acesso:</p><p style="margin: 5px 0; font-size: 16px;"><strong>Login:</strong> ${login}</p><p style="margin: 5px 0; font-size: 16px;"><strong>Senha:</strong> ${pass}</p></div><div style="text-align: center; margin: 30px 0;"><a href="https://www.tanqueteambjj.com.br/login.html" style="background-color: #D90429; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Acessar Portal do Aluno</a></div><p style="font-size: 14px; margin-top: 20px;">Nos vemos no tatame!</p><p style="font-size: 14px; font-weight: bold; color: #D90429;">Equipe Tanque Team BJJ</p></div></div>`;
-            try { await emailjs.send("service_2twa33d", "template_few5bna", { from_name: "Tanque Team BJJ", from_email: "tanqueteambjj@gmail.com", to_name: name, to_email: email, subject: "Seu Acesso ao Portal + QR Code de Check-in", message: messageContent, reply_to: "tanqueteambjj@gmail.com" }); alert("E-mail enviado!"); } catch (error) { alert("Erro ao enviar e-mail."); } finally { btnElement.disabled = false; btnElement.innerHTML = originalText; }
-        };
-
-        window.loadNotices = async () => {
-            try {
-                const q = query(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'));
-                const querySnapshot = await getDocs(q); window.noticesList = []; const now = new Date();
-                querySnapshot.forEach((doc) => {
-                    const noticeData = doc.data();
-                    if (noticeData.expiresAt && now > new Date(noticeData.expiresAt)) return; 
-                    window.noticesList.push({ id: doc.id, ...noticeData });
-                });
-                window.noticesList.sort((a, b) => new Date(b.date) - new Date(a.date));
-                if (window.currentView === 'notices') { window.renderAdminNotices(); window.renderBirthdays(); }
-            } catch (error) { console.error("Erro ao carregar avisos:", error); }
-        };
-
-        window.sendBirthdayWhatsApp = (name, phone) => {
-            if(!phone || phone.trim() === "") { alert("Aluno sem telefone."); return; }
-            const msg = `Fala ${name.split(' ')[0]}! Aqui é da equipe Tanque Team BJJ. Passando para te desejar um Feliz Aniversário! \uD83C\uDF89\uD83E\uDD4B\n\nQue você tenha muita saúde, paz e que continue evoluindo sempre, com muita resiliência dentro e fora dos tatames. Aproveite o seu dia! Oss! \uD83D\uDC4A`;
-            window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-        };
-
-        window.publishBirthdayNotice = async (name) => {
-            if(!confirm(`Publicar homenagem para ${name}?`)) return;
-            try { await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'), { title: `\uD83C\uDF89 Parabéns, ${name.split(' ')[0]}! \uD83E\uDD4B`, text: `Hoje é o aniversário do nosso colega de tatame ${name}! Desejamos muita saúde, vitórias, resiliência e que a evolução seja constante dentro e fora dos tatames. Parabéns! Oss! \uD83D\uDC4A`, type: 'success', date: new Date().toISOString() }); alert("Homenagem publicada!"); window.loadNotices(); } catch(e) { alert("Erro."); }
-        };
-
-        window.renderBirthdays = () => {
-            const currentMonth = new Date().getMonth(); const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            document.getElementById('birthday-month-name').innerText = monthNames[currentMonth];
-            const birthdays = window.students.filter(s => {
-                if (!s.dob || s.enrollmentStatus === 'Inativo' || s.archived) return false;
-                let dobDate = s.dob.includes('/') ? new Date(s.dob.split('/')[2], s.dob.split('/')[1] - 1, s.dob.split('/')[0]) : (s.dob.includes('T') ? new Date(s.dob) : new Date(s.dob.split('-')[0], s.dob.split('-')[1] - 1, s.dob.split('-')[2]));
-                return !isNaN(dobDate) && dobDate.getMonth() === currentMonth;
-            });
-            const container = document.getElementById('admin-birthdays-widget'); const list = document.getElementById('birthday-list'); list.innerHTML = '';
-            if (birthdays.length === 0) container.classList.add('hidden');
-            else {
-                container.classList.remove('hidden');
-                birthdays.sort((a, b) => {
-                    const getDay = (dob) => dob.includes('/') ? Number(dob.split('/')[0]) : (dob.includes('T') ? new Date(dob).getDate() : Number(dob.split('-')[2]));
-                    return getDay(a.dob) - getDay(b.dob);
-                }).forEach(s => {
-                    let day = s.dob.includes('/') ? Number(s.dob.split('/')[0]) : (s.dob.includes('T') ? new Date(s.dob).getDate() : Number(s.dob.split('-')[2]));
-                    const cleanPhone = (s.phone || '').replace(/\D/g, '');
-                    list.innerHTML += `<div class="bg-white p-2 rounded shadow-sm flex items-center gap-3 border-l-4 border-blue-400"><div class="bg-blue-100 text-blue-800 font-bold w-10 h-10 rounded flex flex-col items-center justify-center leading-tight shrink-0"><span class="text-[10px] font-normal uppercase">Dia</span><span>${day}</span></div><div class="flex-1 truncate"><p class="font-bold text-sm text-gray-800 truncate">${s.name.split(' ')[0]} ${s.name.split(' ').length > 1 ? s.name.split(' ').pop() : ''}</p><p class="text-[10px] text-gray-500 uppercase truncate">${(s.plan || '').replace('-', ' ')}</p></div><div class="flex items-center gap-1 border-l border-gray-100 pl-2">${cleanPhone ? `<button onclick="window.sendBirthdayWhatsApp('${s.name}', '${cleanPhone}')" class="text-green-500 hover:text-green-700 p-1"><i class="fa-brands fa-whatsapp text-lg"></i></button>` : ''}<button onclick="window.publishBirthdayNotice('${s.name}')" class="text-blue-500 hover:text-blue-700 p-1"><i class="fa-solid fa-bullhorn text-lg"></i></button></div></div>`;
-                });
-            }
-        };
-
-        window.renderAdminNotices = () => {
-            const list = document.getElementById('admin-notices-list'); list.innerHTML = '';
-            if (window.noticesList.length === 0) { list.innerHTML = '<div class="text-center py-8 text-gray-400 italic text-sm">Nenhum aviso publicado.</div>'; return; }
-            window.noticesList.forEach(notice => {
-                const d = new Date(notice.date).toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
-                let bg = 'bg-blue-50 border-blue-200'; let icon = '<i class="fa-solid fa-circle-info text-blue-500"></i>';
-                if(notice.type === 'alert') { bg = 'bg-yellow-50 border-yellow-200'; icon = '<i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>'; }
-                if(notice.type === 'success') { bg = 'bg-green-50 border-green-200'; icon = '<i class="fa-solid fa-check-circle text-green-500"></i>'; }
-                if(notice.type === 'danger') { bg = 'bg-red-50 border-red-200'; icon = '<i class="fa-solid fa-circle-xmark text-red-500"></i>'; }
-                list.innerHTML += `<div class="p-4 border rounded-lg ${bg} flex justify-between items-start"><div><h4 class="font-bold text-gray-800 flex items-center gap-2">${icon} ${notice.title}</h4><p class="text-sm text-gray-600 mt-1 whitespace-pre-wrap">${notice.text}</p><p class="text-[10px] text-gray-500 mt-2 font-medium">Publicado em: ${d} ${notice.expiresAt ? (new Date() > new Date(notice.expiresAt) ? '<span class="text-red-500 font-bold ml-2">(Expirado)</span>' : `<span class="text-orange-500 font-bold ml-2">(Expira em: ${new Date(notice.expiresAt).toLocaleDateString('pt-BR')})</span>`) : ''}</p></div><div class="flex gap-3"><button onclick="window.editNotice('${notice.id}')" class="text-blue-400 hover:text-blue-600 transition" title="Editar"><i class="fa-solid fa-pen"></i></button><button onclick="window.deleteNotice('${notice.id}')" class="text-red-400 hover:text-red-600 transition" title="Excluir"><i class="fa-solid fa-trash"></i></button></div></div>`;
-            });
-        };
-
-        window.openNoticeModal = () => {
-            document.getElementById('notice-id').value = ''; document.getElementById('notice-title').value = ''; document.getElementById('notice-text').value = ''; document.getElementById('notice-type').value = 'info'; document.getElementById('notice-expiry').value = ''; document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-bullhorn mr-2"></i> Publicar Aviso';
-            document.getElementById('notice-modal').classList.remove('hidden'); document.getElementById('notice-modal').classList.add('flex');
-        };
-
-        window.editNotice = (id) => {
-            const notice = window.noticesList.find(n => n.id === id); if (!notice) return;
-            document.getElementById('notice-id').value = notice.id; document.getElementById('notice-title').value = notice.title; document.getElementById('notice-text').value = notice.text; document.getElementById('notice-type').value = notice.type || 'info'; document.getElementById('notice-expiry').value = notice.expiresAt ? notice.expiresAt.split('T')[0] : ''; document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-pen mr-2"></i> Editar Aviso';
-            document.getElementById('notice-modal').classList.remove('hidden'); document.getElementById('notice-modal').classList.add('flex');
-        };
-
-        window.closeNoticeModal = () => { document.getElementById('notice-modal').classList.add('hidden'); document.getElementById('notice-modal').classList.remove('flex'); };
-
-        window.saveNotice = async () => {
-            const id = document.getElementById('notice-id').value; const title = document.getElementById('notice-title').value; const text = document.getElementById('notice-text').value; const type = document.getElementById('notice-type').value; const expiryRaw = document.getElementById('notice-expiry').value;
-            if(!title || !text) { alert("Preencha título e mensagem."); return; }
-            const noticeData = { title, text, type, expiresAt: expiryRaw ? new Date(expiryRaw + 'T23:59:59').toISOString() : null };
-            try {
-                if (id) { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', id), noticeData); alert("Aviso atualizado!"); } 
-                else { noticeData.date = new Date().toISOString(); await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'notices'), noticeData); alert("Aviso publicado!"); }
-                window.closeNoticeModal(); window.loadNotices();
-            } catch(e) { alert("Erro ao salvar aviso: " + e.message); }
-        };
-
-        window.deleteNotice = async (id) => {
-            if(!confirm("Excluir este aviso permanentemente?")) return;
-            try { await deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'notices', id)); window.loadNotices(); } catch(e) { alert("Erro ao excluir: " + e.message); }
         };
 
         // --- AULAS EXPERIMENTAIS ---
