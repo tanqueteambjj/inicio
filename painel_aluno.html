@@ -64,89 +64,9 @@
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
         .like-animate { animation: pop 0.3s ease-in-out; color: #D90429 !important; }
 
-        /* Containers Restritos à Impressão */
-        .print-only-element {
-            display: none !important; /* Esconde TUDO no ecrã normal */
-        }
-
-        /* CSS BLINDADO PARA IMPRESSÃO PERFEITA EM MOBILE E PC */
+        /* Print Media - Oculta a interface gráfica normal se o utilizador usar o atalho Ctrl+P nativo do browser */
         @media print {
-            @page { margin: 15mm; size: A4 portrait; }
-            
-            /* 1. Reset estrutural forçado e Mobile Safe */
-            html, body {
-                height: auto !important;
-                min-height: 100% !important;
-                width: auto !important;
-                overflow: visible !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                background-color: #fff !important;
-                color: #000 !important;
-                -webkit-print-color-adjust: exact !important; 
-                print-color-adjust: exact !important;
-            }
-            
-            /* 2. Esconde toda a Interface Normal */
-            body.printing-contract #main-ui, body.printing-contract #loading-screen, body.printing-contract #redirect-overlay, 
-            body.printing-contract #profile-edit-modal, body.printing-contract #student-history-modal, body.printing-contract #qr-modal,
-            body.printing-contract #print-only-qr,
-            body.printing-qr #main-ui, body.printing-qr #loading-screen, body.printing-qr #redirect-overlay, 
-            body.printing-qr #profile-edit-modal, body.printing-qr #student-history-modal, body.printing-qr #printable-contract { 
-                display: none !important; 
-            }
-
-            /* --- MODO CONTRATO --- */
-            body.printing-contract #printable-contract { 
-                display: block !important; 
-                position: static !important; /* Estático evita o erro da página em branco no iOS */
-                width: 100% !important; 
-                height: auto !important;
-                visibility: visible !important; 
-                background: #fff !important; 
-                color: #000 !important;
-                font-family: "Times New Roman", Times, serif !important;
-                font-size: 11pt !important;
-                line-height: 1.5 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            body.printing-contract #printable-contract * { 
-                visibility: visible !important; 
-                color: #000 !important; 
-            }
-            body.printing-contract #printable-contract .text-xs { font-size: 9pt !important; }
-            body.printing-contract #printable-contract .text-sm { font-size: 10pt !important; }
-            body.printing-contract #printable-contract .text-lg { font-size: 14pt !important; }
-            body.printing-contract #printable-contract .text-2xl { font-size: 18pt !important; }
-            body.printing-contract #printable-contract .bg-yellow-100 { background-color: #fef08a !important; }
-            body.printing-contract #printable-contract .bg-blue-50 { background-color: #eff6ff !important; border-left: 2px solid #60a5fa !important; }
-
-            /* --- MODO CARTEIRINHA DIGITAL --- */
-            body.printing-qr #qr-modal { display: none !important; } /* Esconde o modal visual original */
-            body.printing-qr #print-only-qr { 
-                display: flex !important; 
-                flex-direction: column !important;
-                align-items: center !important;
-                justify-content: flex-start !important;
-                position: static !important; 
-                visibility: visible !important; 
-                background: #fff !important;
-                width: 100% !important;
-                height: auto !important;
-                padding: 2cm 0 !important;
-                margin: 0 !important;
-            }
-            body.printing-qr #print-only-qr * {
-                visibility: visible !important;
-                -webkit-print-color-adjust: exact !important; 
-                print-color-adjust: exact !important;
-            }
-
-            /* Quebras de página seguras */
-            p, div { orphans: 3; widows: 3; }
-            h1, h2, h3, h4 { page-break-after: avoid; }
-            .page-break-inside-avoid { page-break-inside: avoid; break-inside: avoid; }
+            body > *:not(.print-iframe-container) { display: none !important; }
         }
     </style>
 </head>
@@ -557,11 +477,11 @@
         </div>
     </div>
 
-    <!-- QR Code Modal (Visualização no Ecrã apenas - Não é usada na impressão) -->
-    <div id="qr-modal" class="fixed inset-0 z-[80] hidden bg-black/80 items-center justify-center p-4 backdrop-blur-sm no-print">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 text-center max-w-sm w-full animate-fade-in relative border-t-4 border-brand-red flex flex-col items-center">
+    <!-- Modal de Visualização da Carteirinha na Tela (Apenas Visual) -->
+    <div id="qr-modal" class="fixed inset-0 z-[80] hidden bg-black/80 flex flex-col items-center justify-center p-4 backdrop-blur-sm no-print">
+        <div class="bg-white rounded-xl shadow-2xl p-6 text-center max-w-sm w-full animate-fade-in relative border-t-4 border-brand-red flex flex-col items-center">
             <button onclick="window.closeMyQrModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition text-xl z-20"><i class="fa-solid fa-times"></i></button>
-            <h3 class="font-display font-bold text-xl mb-4 uppercase flex items-center justify-center gap-2 text-gray-800 dark:text-white">
+            <h3 class="font-display font-bold text-xl mb-4 uppercase flex items-center justify-center gap-2 text-gray-800">
                 <i class="fa-solid fa-id-card text-brand-red"></i> Carteirinha Digital
             </h3>
             
@@ -570,24 +490,30 @@
                     <img src="https://iili.io/qC543c7.png" class="h-6">
                     <span class="font-display font-bold text-sm tracking-widest uppercase">Tanque Team</span>
                 </div>
+                
                 <div class="p-4 flex flex-col items-center flex-1 relative bg-white">
-                    <img src="https://iili.io/qC543c7.png" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 opacity-5 pointer-events-none grayscale">
+                    <img src="https://iili.io/qC543c7.png" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 opacity-[0.05] pointer-events-none grayscale">
+                    
                     <div class="w-20 h-20 bg-gray-100 rounded-full border-2 border-gray-200 overflow-hidden mb-3 shadow-sm z-10 flex-shrink-0 relative">
                         <img id="qr-photo" src="" class="w-full h-full object-cover hidden">
                         <div id="qr-photo-placeholder" class="w-full h-full flex items-center justify-center text-gray-400 font-bold text-2xl font-display">TT</div>
                     </div>
+                    
                     <div class="text-center z-10 w-full mb-3">
                         <h4 class="font-bold text-sm text-gray-900 leading-tight uppercase truncate" id="qr-student-name">Nome do Aluno</h4>
                         <p class="text-[10px] text-brand-red font-bold uppercase truncate mt-0.5" id="qr-belt">Faixa Branca</p>
                         <p class="text-[9px] text-gray-500 uppercase font-bold tracking-wider truncate mt-0.5" id="qr-plan">Plano</p>
                     </div>
+                    
                     <div id="qr-code-wrapper" class="mt-auto bg-white p-1 border border-gray-200 rounded shadow-sm z-10 inline-block">
                         <img id="qr-image" src="" alt="QR Code" class="w-28 h-28">
                     </div>
+                    
                     <div id="qr-blocked-wrapper" class="hidden mt-auto bg-red-50 p-2 border border-red-200 rounded shadow-sm z-10 flex-col items-center justify-center w-28 h-28 text-center">
                         <i class="fa-solid fa-lock text-red-500 text-3xl mb-1"></i>
                         <span class="text-[10px] font-bold text-red-700 leading-tight uppercase">Acesso<br>Bloqueado</span>
                     </div>
+
                     <p id="qr-footer-text" class="text-[8px] text-gray-400 mt-3 z-10 font-bold uppercase tracking-widest">Apresente no Check-in</p>
                 </div>
             </div>
@@ -598,7 +524,7 @@
         </div>
     </div>
 
-    <!-- Student History Modal -->
+    <!-- Modal Histórico de Pagamentos -->
     <div id="student-history-modal" class="fixed inset-0 z-[70] hidden bg-black/60 items-center justify-center p-4 backdrop-blur-sm no-print">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] border-t-4 border-blue-500 animate-fade-in">
             <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
@@ -614,7 +540,6 @@
                         </tr>
                     </thead>
                     <tbody id="student-history-body" class="divide-y divide-gray-100 dark:divide-gray-700">
-                        <!-- Filled by JS -->
                     </tbody>
                 </table>
                 <div id="student-history-empty" class="hidden text-center py-10 flex flex-col items-center">
@@ -624,59 +549,6 @@
             </div>
             <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 shrink-0 text-right">
                 <button onclick="window.closeStudentHistoryModal()" class="px-6 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-bold hover:bg-gray-50 dark:hover:bg-gray-600 transition shadow-sm">Fechar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- ÁREAS EXCLUSIVAS PARA IMPRESSÃO (NATIVAS)  -->
-    <!-- ========================================== -->
-    
-    <!-- Printable Contract Container (Idêntico ao Admin) -->
-    <div id="printable-contract" class="print-only-element">
-        <div class="header-section text-center mb-6 border-b-2 border-black pb-4">
-            <img src="https://iili.io/qC543c7.png" alt="Logo" class="h-16 mx-auto mb-2" style="filter: grayscale(100%);">
-            <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
-            <p class="text-xs">CNPJ: 00.000.000/0001-00 | Tel: (91) 99819-2610</p>
-            <p class="text-xs">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</p>
-        </div>
-        <h2 class="text-center font-bold text-lg mb-6 uppercase underline tracking-wide">Contrato de Prestação de Serviços Esportivos</h2>
-        
-        <div class="parties-section mb-6 text-sm text-justify space-y-2 bg-gray-50 p-4 border border-gray-200 rounded">
-            <p><strong>1. CONTRATADA:</strong> <span class="uppercase font-bold">Tanque Team Escola de Artes Marciais LTDA</span>.</p>
-            <p><strong>2. CONTRATANTE:</strong> <span id="printContratante" class="font-bold uppercase"></span>, CPF: <span id="printCPF" class="font-mono font-bold"></span>, Endereço: <span id="printAddress" class="uppercase"></span>, Tel: <span id="printPhone"></span>, E-mail: <span id="printEmail"></span>.</p>
-            <p><strong>3. ALUNO(A):</strong> <span id="printStudent" class="font-bold uppercase"></span>, Nasc: <span id="printDob" class="font-mono"></span>. <span id="printBeltInfo"></span></p>
-            <div id="printDependentsBlock" class="mt-2 pl-4 border-l-2 border-gray-400"></div>
-        </div>
-
-        <div id="print-clauses-container" class="clauses-section text-sm text-justify mb-6 space-y-3"></div>
-
-        <div class="signatures-section mt-16 page-break-inside-avoid">
-            <p class="mb-12 text-right text-sm">Belém-PA, <span id="printContractDate"></span>.</p>
-            <div class="flex justify-between gap-12 mt-16 px-8">
-                <div class="w-1/2 text-center"><div class="border-t border-black pt-2"><p class="font-bold uppercase text-xs tracking-wider">Tanque Team BJJ (CONTRATADA)</p></div></div>
-                <div class="w-1/2 text-center"><div class="border-t border-black pt-2"><p class="font-bold text-sm uppercase" id="printSignatureName"></p><p class="font-bold uppercase text-[10px] text-gray-600 tracking-wider">CONTRATANTE / RESP. FINANCEIRO</p></div></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Printable QR Card Container (Separado, Fundo Branco Forte) -->
-    <div id="print-only-qr" class="print-only-element">
-        <div style="width: 6.5cm; border: 2px solid #000; border-radius: 12px; margin: 0 auto; text-align: center; font-family: sans-serif; overflow: hidden; background: #fff;">
-            <div style="background-color: #000; color: #fff; padding: 12px; font-weight: bold; text-transform: uppercase; font-size: 14px; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-                <img src="https://iili.io/qC543c7.png" style="height: 24px; filter: invert(1);"> 
-                Tanque Team
-            </div>
-            <div style="padding: 20px; text-align: center;">
-                <h4 id="print-only-qr-name" style="margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase; color: #000; line-height: 1.2;">NOME</h4>
-                <p id="print-only-qr-belt" style="margin: 6px 0 0 0; color: #D90429; font-size: 12px; font-weight: bold; text-transform: uppercase;">FAIXA</p>
-                <p id="print-only-qr-plan" style="margin: 4px 0 15px 0; color: #666; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">PLANO</p>
-                
-                <div style="border: 1px solid #ddd; padding: 8px; display: inline-block; border-radius: 8px; margin-bottom: 15px; background: white;">
-                    <img id="print-only-qr-img" src="" style="width: 140px; height: 140px; display: block;">
-                </div>
-                
-                <p style="margin: 0; font-size: 10px; color: #888; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">Apresente no Check-in</p>
             </div>
         </div>
     </div>
@@ -934,7 +806,6 @@
         async function loadDependents(titularId) {
             try {
                 window.myDependents = [];
-
                 const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'students'));
                 const querySnapshot = await getDocs(q);
                 
@@ -1097,12 +968,10 @@
             
             const streak = calculateConsecutiveDays(data.attendance || []);
             
-            // Chama as funções globais passando os dados
             window.renderCalendar(data.attendance || []);
             window.renderBadges(totalAtt, streak);
             window.renderRanking(); 
 
-            // Preencher Perfil Completo
             if (!isDep) {
                 document.getElementById('data-name').innerText = data.name || '--';
                 document.getElementById('data-login').innerText = data.studentLogin || '--';
@@ -1173,28 +1042,11 @@
             }
         }
 
-        window.shareNewBeltToFeed = async function(btnElement) {
-            if(!currentUserData) return;
-            const recentGrad = checkForRecentGraduation(currentUserData.progressLog, currentUserData.belt);
-            if(!recentGrad) return;
-            
-            let badgeName = recentGrad.isNewBelt ? "Nova Faixa" : "Mais um Degrau";
-            let desc = recentGrad.isNewBelt 
-                ? `Fui graduado para a ${recentGrad.beltStr}! O trabalho duro compensa. Oss! 🔥` 
-                : `Recebi mais um grau na minha ${recentGrad.beltStr}! Um passo de cada vez. Oss! 🔥`;
-            let iconClass = recentGrad.isNewBelt ? "fa-solid fa-medal text-brand-red" : "fa-solid fa-star text-yellow-600";
-            
-            await window.shareBadgeToFeed(badgeName, desc, iconClass, btnElement);
-        };
-
         window.shareBadgeToFeed = async function(badgeName, desc, iconClass, btnElement) {
             if(!currentUserData) return;
             
-            // ALERT DE CONFIRMAÇÃO OBRIGATÓRIO (Em Português)
             const userConfirmed = confirm("Tem certeza que deseja partilhar esta conquista no Feed da Equipe? Esta publicação ficará visível para todos os alunos da escola durante 24 horas.");
-            if (!userConfirmed) {
-                return; 
-            }
+            if (!userConfirmed) return; 
 
             const originalHtml = btnElement.innerHTML;
             btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
@@ -1218,13 +1070,11 @@
 
             try {
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'feed'), feedPost);
-                
                 window.markBadgeAsShared(badgeName);
 
                 btnElement.innerHTML = '<i class="fa-solid fa-check text-green-500"></i> Partilhado no Feed';
                 btnElement.classList.remove('bg-blue-50', 'hover:bg-blue-100', 'text-blue-500', 'bg-blue-500', 'hover:bg-blue-600', 'text-white');
                 btnElement.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-500', 'cursor-not-allowed');
-                
             } catch (e) {
                 console.error("Erro ao partilhar no feed:", e);
                 alert("Erro ao publicar.");
@@ -1682,7 +1532,6 @@
         window.openMyQrModal = function() {
             if(!currentUserData) return;
             
-            // Popula Modal Interativa
             document.getElementById('qr-student-name').innerText = currentUserData.name;
             document.getElementById('qr-belt').innerText = currentUserData.belt || "Faixa Branca";
             document.getElementById('qr-plan').innerText = PLAN_DICT[currentUserData.plan]?.short || "Plano";
@@ -1719,32 +1568,82 @@
             }
 
             document.getElementById('qr-modal').classList.remove('hidden');
+            document.getElementById('qr-modal').classList.add('flex');
         }
 
         window.closeMyQrModal = function() {
             document.getElementById('qr-modal').classList.add('hidden');
+            document.getElementById('qr-modal').classList.remove('flex');
         }
+
+        // ==========================================
+        // NOVA LÓGICA DE IMPRESSÃO (Nativa - Iframe)
+        // Resolve problemas no Mobile e PC
+        // ==========================================
+
+        window.printHtmlContent = function(htmlContent, titleStr) {
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.width = '0px';
+            iframe.style.height = '0px';
+            iframe.style.border = 'none';
+            document.body.appendChild(iframe);
+
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${titleStr}</title>
+                    <style>
+                        @media print {
+                            @page { margin: 1cm; }
+                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        }
+                        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+                    </style>
+                </head>
+                <body>
+                    ${htmlContent}
+                </body>
+                </html>
+            `);
+            doc.close();
+
+            // Timeout de 500ms essencial para mobile carregar recursos
+            setTimeout(() => {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+                setTimeout(() => { document.body.removeChild(iframe); }, 2000);
+            }, 500);
+        };
 
         window.printQrCard = function() {
             if (!currentUserData) return;
-            
-            // Popula container oculto EXCLUSIVO de impressão (Nativo)
-            document.getElementById('print-only-qr-name').innerText = currentUserData.name;
-            document.getElementById('print-only-qr-belt').innerText = currentUserData.belt || "Faixa Branca";
-            document.getElementById('print-only-qr-plan').innerText = PLAN_DICT[currentUserData.plan]?.short || "Plano";
-            document.getElementById('print-only-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentUserData.id}`;
-            
             window.closeMyQrModal();
 
-            document.body.classList.add('printing-qr'); 
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentUserData.id}`;
+            const name = currentUserData.name;
+            const belt = currentUserData.belt || "Faixa Branca";
+            const plan = PLAN_DICT[currentUserData.plan]?.short || "Plano";
             
-            // Execução IMEDIATA para mobile
-            window.print();
+            const htmlContent = `
+                <div style="width: 6.5cm; height: 10.5cm; border: 2px solid #000; border-radius: 12px; margin: 0 auto; text-align: center; overflow: hidden; background: #fff; box-sizing: border-box;">
+                    <div style="background-color: #000; color: #fff; padding: 12px; font-weight: bold; text-transform: uppercase; font-size: 14px; letter-spacing: 2px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                        TANQUE TEAM
+                    </div>
+                    <div style="padding: 20px;">
+                        <h4 style="margin: 10px 0 5px 0; font-size: 16px; font-weight: bold; text-transform: uppercase; color: #000;">${name}</h4>
+                        <p style="margin: 0 0 5px 0; color: #D90429; font-size: 12px; font-weight: bold; text-transform: uppercase;">${belt}</p>
+                        <p style="margin: 0 0 15px 0; color: #666; font-size: 10px; font-weight: bold; text-transform: uppercase;">${plan}</p>
+                        <img src="${qrUrl}" style="width: 140px; height: 140px; border: 1px solid #ddd; padding: 5px; border-radius: 8px;">
+                        <p style="margin: 15px 0 0 0; font-size: 10px; color: #888; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Apresente no Check-in</p>
+                    </div>
+                </div>
+            `;
             
-            // Cleanup
-            setTimeout(() => {
-                document.body.classList.remove('printing-qr');
-            }, 100);
+            window.printHtmlContent(htmlContent, "Carteirinha_TanqueTeam");
         }
 
         window.printStudentContract = function() {
@@ -1769,45 +1668,33 @@
             if (s.guardian && s.guardian.trim() !== "") contratanteText = `${s.guardian} (Responsável Legal)`;
             else if (s.titularName && s.titularName.trim() !== "") contratanteText = `${s.titularName} (Titular)`;
 
-            const setText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; }
-            setText('printContratante', contratanteText); 
-            setText('printStudent', s.name || "NÃO INFORMADO"); 
-            setText('printDob', formattedDob); 
-            setText('printCPF', s.cpf || "Não informado"); 
-            setText('printEmail', s.email || "Não informado"); 
-            setText('printPhone', s.phone || "Não informado"); 
-            setText('printAddress', s.address || "Não informado");
-            
             let beltInfo = ""; 
             if(s.belt && !s.belt.includes("Branca - 0º") && !s.belt.includes("Iniciante")) beltInfo = `| Graduação: ${s.belt}`;
-            setText('printBeltInfo', beltInfo);
             
             let regDate = new Date(); 
             if (s.registrationDate) { const parsed = new Date(s.registrationDate); if (!isNaN(parsed)) regDate = parsed; }
-            document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+            const printDateStr = regDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
             
             const isCombo = String(s.plan).includes('combo'); 
             const isFidelity = String(s.plan).includes('semestral') || String(s.plan).includes('trimestral') || isCombo;
             
-            let clausesHtml = `<p style="margin-bottom:0.5rem;"><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
-            clausesHtml += `<p style="margin-bottom:0.5rem;"><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong style="text-transform: uppercase; text-decoration: underline;">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong class="bg-yellow-100" style="padding: 0 4px;">${price}</strong>. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.</p>`;
+            let clausesHtml = `<p style="margin-bottom:10px;"><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
+            clausesHtml += `<p style="margin-bottom:10px;"><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong style="text-transform: uppercase; text-decoration: underline;">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong style="background-color: #fef08a; padding: 0 4px;">${price}</strong>. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.</p>`;
             
             let clauseNum = 3;
-            if (isFidelity) { clausesHtml += `<p style="margin-bottom:0.5rem;"><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade correspondente à sua nomenclatura (Trimestral ou Semestral). O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>`; clauseNum++; } 
-            else { clausesHtml += `<p style="margin-bottom:0.5rem;"><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO:</strong> O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.</p>`; clauseNum++; }
+            if (isFidelity) { clausesHtml += `<p style="margin-bottom:10px;"><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade correspondente à sua nomenclatura (Trimestral ou Semestral). O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>`; clauseNum++; } 
+            else { clausesHtml += `<p style="margin-bottom:10px;"><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO:</strong> O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.</p>`; clauseNum++; }
             
-            if (isCombo) { clausesHtml += `<div class="bg-blue-50" style="padding: 8px; border-left: 2px solid #60a5fa; margin-bottom:0.5rem;"><p style="margin:0;"><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DO PLANO FAMÍLIA (COMBO):</strong> O pagamento das mensalidades é unificado e de inteira responsabilidade do CONTRATANTE titular. O cancelamento ou afastamento de um dos beneficiários dependentes não dá direito a desconto ou reembolso parcial, e reverte automaticamente o plano dos membros restantes para o valor da tabela individual vigente.</p></div>`; clauseNum++; }
+            if (isCombo) { clausesHtml += `<div style="background-color: #eff6ff; border-left: 3px solid #60a5fa; padding: 10px; margin-bottom: 10px;"><p style="margin:0;"><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DO PLANO FAMÍLIA (COMBO):</strong> O pagamento das mensalidades é unificado e de inteira responsabilidade do CONTRATANTE titular. O cancelamento ou afastamento de um dos beneficiários dependentes não dá direito a desconto ou reembolso parcial, e reverte automaticamente o plano dos membros restantes para o valor da tabela individual vigente.</p></div>`; clauseNum++; }
             
-            clausesHtml += `<p style="margin-bottom:0.5rem;"><strong>CLÁUSULA ${clauseNum}ª - DA INADIMPLÊNCIA:</strong> O atraso superior a 30 dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e cobrança dos valores devidos acrescidos de multa de 2% e juros de mora legais.</p>`; clauseNum++;
-            clausesHtml += `<p style="margin-bottom:0.5rem;"><strong>CLÁUSULA ${clauseNum}ª - DA SAÚDE E APTIDÃO FÍSICA:</strong> O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate, isentando a ESCOLA de qualquer responsabilidade sobre moléstias pré-existentes não declaradas formalmente no ato desta matrícula.</p>`; clauseNum++;
-            clausesHtml += `<p style="margin-bottom:0.5rem;"><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DE CONDUTA (DOJO KUN):</strong> É obrigatório o uso de uniforme (Kimono) estipulado pela escola, limpo e conservado. Atos de indisciplina, desrespeito à hierarquia, agressão fora do contexto do treino esportivo ou falta de higiene poderão acarretar na suspensão ou rescisão unilateral deste contrato por parte da ESCOLA, sem devolução de valores.</p>`; clauseNum++;
-            clausesHtml += `<p style="margin-bottom:0.5rem;"><strong>CLÁUSULA ${clauseNum}ª - DO DIREITO DE IMAGEM:</strong> O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da escola ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.</p>`;
+            clausesHtml += `<p style="margin-bottom:10px;"><strong>CLÁUSULA ${clauseNum}ª - DA INADIMPLÊNCIA:</strong> O atraso superior a 30 dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e cobrança dos valores devidos acrescidos de multa de 2% e juros de mora legais.</p>`; clauseNum++;
+            clausesHtml += `<p style="margin-bottom:10px;"><strong>CLÁUSULA ${clauseNum}ª - DA SAÚDE E APTIDÃO FÍSICA:</strong> O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate, isentando a ESCOLA de qualquer responsabilidade sobre moléstias pré-existentes não declaradas formalmente no ato desta matrícula.</p>`; clauseNum++;
+            clausesHtml += `<p style="margin-bottom:10px;"><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DE CONDUTA (DOJO KUN):</strong> É obrigatório o uso de uniforme (Kimono) estipulado pela escola, limpo e conservado. Atos de indisciplina, desrespeito à hierarquia, agressão fora do contexto do treino esportivo ou falta de higiene poderão acarretar na suspensão ou rescisão unilateral deste contrato por parte da ESCOLA, sem devolução de valores.</p>`; clauseNum++;
+            clausesHtml += `<p style="margin-bottom:10px;"><strong>CLÁUSULA ${clauseNum}ª - DO DIREITO DE IMAGEM:</strong> O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da escola ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.</p>`;
             
-            document.getElementById('print-clauses-container').innerHTML = clausesHtml;
-
             let dependentsHtml = '';
             if (isCombo && window.myDependents && window.myDependents.length > 0) {
-                dependentsHtml = `<p style="margin-top:0.5rem; font-size:10pt;"><strong>DEPENDENTES VINCULADOS AO PLANO:</strong></p><ul style="padding-left:1.5rem; font-size:9pt; margin-top:0.25rem;">`;
+                dependentsHtml = `<p style="margin-top:10px; font-size:10pt;"><strong>DEPENDENTES VINCULADOS AO PLANO:</strong></p><ul style="padding-left:20px; font-size:10pt; margin-top:5px; border-left: 2px solid #ccc;">`;
                 window.myDependents.forEach(d => {
                     let dDob = '--/--/----';
                     if (d.dob) { 
@@ -1816,25 +1703,55 @@
                             if(parts.length===3) dDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
                         } else dDob = d.dob;
                     }
-                    dependentsHtml += `<li style="margin-bottom: 2px;"><strong>${d.name}</strong> - Nasc: ${dDob} | Parentesco: ${d.parentesco || '-'} | Graduação: ${d.belt || 'Branca'}</li>`;
+                    dependentsHtml += `<li style="margin-bottom: 3px;"><strong>${d.name}</strong> - Nasc: ${dDob} | Parentesco: ${d.parentesco || '-'} | Graduação: ${d.belt || 'Branca'}</li>`;
                 });
                 dependentsHtml += `</ul>`;
             } else if (isCombo) {
-                dependentsHtml = `<p style="margin-top:0.5rem; font-size:9pt; font-style:italic; color:#666;">Nenhum dependente vinculado no sistema no momento.</p>`;
+                dependentsHtml = `<p style="margin-top:10px; font-size:10pt; font-style:italic; color:#666;">Nenhum dependente vinculado no sistema no momento.</p>`;
             }
-            document.getElementById('printDependentsBlock').innerHTML = dependentsHtml;
 
-            setText('printSignatureName', s.guardian || s.titularName || s.name || "CONTRATANTE");
+            const signName = s.guardian || s.titularName || s.name || "CONTRATANTE";
+
+            const contractHtml = `
+                <div style="font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.5; color: #000; max-width: 800px; margin: 0 auto; padding: 20px;">
+                    <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 15px;">
+                        <h1 style="font-size: 18pt; font-weight: bold; text-transform: uppercase; margin: 0 0 5px 0;">Tanque Team BJJ</h1>
+                        <p style="font-size: 9pt; margin: 0;">CNPJ: 00.000.000/0001-00 | Tel: (91) 99819-2610</p>
+                        <p style="font-size: 9pt; margin: 0;">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</p>
+                    </div>
+                    
+                    <h2 style="text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 20px; text-transform: uppercase; text-decoration: underline;">Contrato de Prestação de Serviços Esportivos</h2>
+                    
+                    <div style="margin-bottom: 20px; font-size: 10pt; border: 1px solid #ccc; padding: 15px; border-radius: 5px; background: #f9fafb; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                        <p style="margin: 0 0 5px 0;"><strong>1. CONTRATADA:</strong> TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA.</p>
+                        <p style="margin: 0 0 5px 0;"><strong>2. CONTRATANTE:</strong> ${contratanteText}, CPF: ${s.cpf || "Não informado"}, Endereço: ${s.address || "Não informado"}, Tel: ${s.phone || "Não informado"}, E-mail: ${s.email || "Não informado"}.</p>
+                        <p style="margin: 0;"><strong>3. ALUNO(A):</strong> ${s.name || "NÃO INFORMADO"}, Nasc: ${formattedDob}. ${beltInfo}</p>
+                        ${dependentsHtml}
+                    </div>
+
+                    <div style="margin-bottom: 30px; text-align: justify;">
+                        ${clausesHtml}
+                    </div>
+
+                    <div style="margin-top: 50px; page-break-inside: avoid;">
+                        <p style="text-align: right; margin-bottom: 40px; font-size: 10pt;">Belém-PA, ${printDateStr}.</p>
+                        <table style="width: 100%; text-align: center; border: none;">
+                            <tr>
+                                <td style="width: 45%; border-top: 1px solid #000; padding-top: 5px;">
+                                    <p style="font-weight: bold; text-transform: uppercase; font-size: 9pt; margin: 0;">Tanque Team BJJ (CONTRATADA)</p>
+                                </td>
+                                <td style="width: 10%;"></td>
+                                <td style="width: 45%; border-top: 1px solid #000; padding-top: 5px;">
+                                    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; margin: 0;">${signName}</p>
+                                    <p style="font-size: 8pt; color: #555; margin: 0;">CONTRATANTE / RESP. FINANCEIRO</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            `;
             
-            document.body.classList.add('printing-contract'); 
-            
-            // Impressão imediata para telemóveis
-            window.print(); 
-            
-            // Cleanup
-            setTimeout(() => {
-                document.body.classList.remove('printing-contract');
-            }, 100);
+            window.printHtmlContent(contractHtml, "Contrato_Matricula_TanqueTeam");
         }
 
         window.shareTrialLink = function() {
