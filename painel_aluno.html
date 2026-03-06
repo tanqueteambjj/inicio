@@ -1653,42 +1653,8 @@
                 </div>
             `;
             
-            // Reutilizando a lógica nativa de iframe para impressão sem o hidden display none conflicts
-            const iframe = document.createElement('iframe');
-            iframe.style.position = 'absolute';
-            iframe.style.width = '0px';
-            iframe.style.height = '0px';
-            iframe.style.border = 'none';
-            document.body.appendChild(iframe);
-
-            const docIframe = iframe.contentWindow.document;
-            docIframe.open();
-            docIframe.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Carteirinha Tanque Team</title>
-                    <style>
-                        @media print {
-                            @page { margin: 1cm; size: portrait; }
-                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                        }
-                        body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-                    </style>
-                </head>
-                <body>
-                    ${htmlContent}
-                </body>
-                </html>
-            `);
-            docIframe.close();
-
-            setTimeout(() => {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-                setTimeout(() => { document.body.removeChild(iframe); }, 2000);
-            }, 500);
-        };
+            window.printHtmlContent(htmlContent, "Carteirinha_TanqueTeam");
+        }
 
         window.printStudentContract = function() {
             if (!currentUserData) return;
@@ -1722,21 +1688,19 @@
             const isCombo = String(s.plan).includes('combo'); 
             const isFidelity = String(s.plan).includes('semestral') || String(s.plan).includes('trimestral') || isCombo;
             
-            let clausesHtmlABNT = `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA PRIMEIRA – DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA SEGUNDA – DO PLANO E DOS VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong style="text-transform: uppercase; text-decoration: underline;">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong>${price}</strong>. As mensalidades deverão ser pagas pontualmente conforme a data de vencimento acordada no ato da matrícula.</p>`;
-            
             let clauseNum = 3;
-            const clauseNames = ["TERCEIRA", "QUARTA", "QUINTA", "SEXTA", "SÉTIMA", "OITAVA", "NONA", "DÉCIMA"];
+            let clausesHtmlABNT = `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA 1ª – DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
+            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA 2ª – DO PLANO E DOS VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong style="text-transform: uppercase; text-decoration: underline;">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong>${price}</strong>. As mensalidades deverão ser pagas pontualmente conforme a data de vencimento acordada no ato da matrícula.</p>`;
 
-            if (isFidelity) { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNames[clauseNum-1]} – DO CANCELAMENTO E DA FIDELIDADE:</strong> O plano escolhido possui prazo de fidelidade correspondente à sua nomenclatura. O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito. A rescisão imotivada antes do término do período de fidelidade acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas.</p>`; clauseNum++; } 
-            else { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNames[clauseNum-1]} – DO CANCELAMENTO:</strong> O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.</p>`; clauseNum++; }
+            if (isFidelity) { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNum}ª – DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade correspondente à sua nomenclatura. O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>`; clauseNum++; } 
+            else { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNum}ª – DO CANCELAMENTO:</strong> O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.</p>`; clauseNum++; }
             
-            if (isCombo) { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNames[clauseNum-1]} – DAS REGRAS DO PLANO FAMÍLIA (COMBO):</strong> O pagamento das mensalidades é unificado e de inteira responsabilidade do CONTRATANTE titular. O cancelamento ou afastamento de um dos beneficiários dependentes não dá direito a desconto ou reembolso parcial, revertendo automaticamente o plano dos membros restantes para o valor da tabela individual vigente.</p>`; clauseNum++; }
+            if (isCombo) { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNum}ª – DAS REGRAS DO PLANO FAMÍLIA (COMBO):</strong> O pagamento das mensalidades é unificado e de inteira responsabilidade do CONTRATANTE titular. O cancelamento ou afastamento de um dos beneficiários dependentes não dá direito a desconto ou reembolso parcial, e reverte automaticamente o plano dos membros restantes para o valor da tabela individual vigente.</p>`; clauseNum++; }
             
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNames[clauseNum-1]} – DA INADIMPLÊNCIA:</strong> O atraso superior a 30 (trinta) dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e a cobrança dos valores devidos acrescidos de multa de 2% (dois por cento) e juros de mora legais.</p>`; clauseNum++;
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNames[clauseNum-1]} – DA SAÚDE E APTIDÃO FÍSICA:</strong> O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate, isentando a ESCOLA de qualquer responsabilidade sobre patologias pré-existentes não declaradas formalmente no ato desta matrícula.</p>`; clauseNum++;
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNames[clauseNum-1]} – DAS REGRAS DE CONDUTA (DOJO KUN):</strong> É obrigatório o uso do uniforme (Kimono) estipulado pela escola, limpo e conservado. Atos de indisciplina, desrespeito à hierarquia, agressão fora do contexto esportivo ou falta de higiene poderão acarretar na suspensão ou rescisão unilateral deste contrato por parte da ESCOLA, sem devolução de valores pagos.</p>`; clauseNum++;
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNames[clauseNum-1]} – DO DIREITO DE IMAGEM:</strong> O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da escola ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ em qualquer mídia.</p>`;
+            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNum}ª – DA INADIMPLÊNCIA:</strong> O atraso superior a 30 (trinta) dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e a cobrança dos valores devidos acrescidos de multa de 2% (dois por cento) e juros de mora legais.</p>`; clauseNum++;
+            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNum}ª – DA SAÚDE E APTIDÃO FÍSICA:</strong> O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate, isentando a ESCOLA de qualquer responsabilidade sobre moléstias pré-existentes não declaradas formalmente no ato desta matrícula.</p>`; clauseNum++;
+            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNum}ª – DAS REGRAS DE CONDUTA (DOJO KUN):</strong> É obrigatório o uso de uniforme (Kimono) estipulado pela escola, limpo e conservado. Atos de indisciplina, desrespeito à hierarquia, agressão fora do contexto do treino esportivo ou falta de higiene poderão acarretar na suspensão ou rescisão unilateral deste contrato por parte da ESCOLA, sem devolução de valores.</p>`; clauseNum++;
+            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNum}ª – DO DIREITO DE IMAGEM:</strong> O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da escola ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.</p>`;
             
             let dependentsHtmlABNT = '';
             if (isCombo && window.myDependents && window.myDependents.length > 0) {
@@ -1759,15 +1723,26 @@
             const contractHtml = `
                 <div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.5; color: #000; max-width: 100%; margin: 0; padding: 0; text-align: justify;">
                     
-                    <div style="text-align: center; margin-bottom: 2cm;">
-                        <img src="https://iili.io/qC543c7.png" alt="Logo" style="height: 3cm; margin-bottom: 0.5cm; filter: grayscale(100%);">
-                        <p style="font-weight: bold; text-transform: uppercase; margin: 0;">TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA</p>
-                        <p style="margin: 0;">CNPJ: 00.000.000/0001-00 | Tel: (91) 99819-2610</p>
-                        <p style="margin: 0;">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</p>
+                    <!-- Logo no topo centralizada e Nome abaixo em maiúsculo -->
+                    <div style="text-align: center; margin-bottom: 1cm;">
+                        <img src="https://iili.io/qC543c7.png" alt="Logo" style="height: 3cm; margin-bottom: 0.2cm; filter: grayscale(100%);">
+                        <h1 style="font-weight: bold; text-transform: uppercase; font-size: 16pt; margin: 0;">TANQUE TEAM BJJ</h1>
                     </div>
                     
-                    <h2 style="text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 1.5cm; text-transform: uppercase;">CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS</h2>
+                    <!-- Cabeçalho abaixo com alinhamento à esquerda -->
+                    <div style="text-align: left; margin-bottom: 0.5cm; font-size: 10pt;">
+                        <p style="margin: 0;"><strong>Razão Social:</strong> TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA</p>
+                        <p style="margin: 0;"><strong>CNPJ:</strong> 00.000.000/0001-00 | <strong>Tel:</strong> (91) 99819-2610</p>
+                        <p style="margin: 0;"><strong>Endereço:</strong> Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</p>
+                    </div>
                     
+                    <!-- Linha -->
+                    <hr style="border: none; border-top: 1px solid #000; margin-bottom: 1cm;">
+                    
+                    <!-- Título Maiúsculo, Negrito e Centralizado -->
+                    <h2 style="text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 1.5cm; text-transform: uppercase;">CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS</h2>
+                    
+                    <!-- O Contrato abaixo -->
                     <div style="margin-bottom: 1.5cm;">
                         <p style="text-indent: 1.25cm; margin-bottom: 0.5cm;"><strong>1. CONTRATADA:</strong> TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA, com sede na Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, inscrita no CNPJ sob o nº 00.000.000/0001-00.</p>
                         <p style="text-indent: 1.25cm; margin-bottom: 0.5cm;"><strong>2. CONTRATANTE:</strong> ${contratanteText}, portador(a) do CPF nº ${s.cpf || "Não informado"}, residente e domiciliado(a) no endereço: ${s.address || "Não informado"}, telefone para contato: ${s.phone || "Não informado"}, endereço eletrônico (e-mail): ${s.email || "Não informado"}.</p>
@@ -1779,6 +1754,7 @@
                         ${clausesHtmlABNT}
                     </div>
 
+                    <!-- Assinaturas -->
                     <div style="margin-top: 2cm; page-break-inside: avoid;">
                         <p style="text-align: right; margin-bottom: 2.5cm;">Belém-PA, ${printDateStr}.</p>
                         <table style="width: 100%; text-align: center; border: none;">
