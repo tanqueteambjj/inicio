@@ -37,14 +37,12 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
 
-        /* Estilo para Card Ativo */
         .card-active {
             transform: translateY(-4px);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             border-bottom-width: 4px;
         }
 
-        /* Contêineres Restritos à Impressão */
         .print-only-element { display: none !important; }
 
         /* CSS BLINDADO PARA IMPRESSÃO EM MOBILE E PC */
@@ -53,10 +51,10 @@
             html, body { height: auto !important; min-height: 100% !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; background-color: #fff !important; color: #000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             body > *:not(.print-only-element) { display: none !important; }
             
-            body.printing-progress #printable-progress, body.printing-qr #print-only-qr { 
+            body.printing-contract #printable-contract, body.printing-report #report-container, body.printing-progress #printable-progress, body.printing-qr #print-only-qr { 
                 display: block !important; position: static !important; width: 100% !important; height: auto !important; visibility: visible !important; background: #fff !important; color: #000 !important; margin: 0 !important; padding: 0 !important;
             }
-            body.printing-progress #printable-progress *, body.printing-qr #print-only-qr * { visibility: visible !important; color: #000 !important; }
+            body.printing-contract #printable-contract *, body.printing-report #report-container *, body.printing-progress #printable-progress *, body.printing-qr #print-only-qr * { visibility: visible !important; color: #000 !important; }
             
             body.printing-qr #print-only-qr { display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: flex-start !important; padding: 2cm 0 !important; }
             
@@ -277,7 +275,7 @@
 
     <!-- MODAIS DO SISTEMA -->
 
-    <!-- Modal: Leitor de Check-in da Câmera (CORRIGIDO E OTIMIZADO PARA SER CONTÍNUO) -->
+    <!-- Modal: Leitor de Check-in da Câmera -->
     <div id="checkin-modal" class="fixed inset-0 z-[100] hidden bg-brand-dark flex-col justify-center items-center p-4">
         <div class="w-full max-w-lg bg-white rounded-xl overflow-hidden shadow-2xl flex flex-col animate-fade-in">
             <div class="bg-green-600 px-6 py-4 flex justify-between items-center text-white shrink-0">
@@ -333,19 +331,6 @@
                 <h5 class="font-bold text-gray-700 mb-4 border-b pb-1 text-sm uppercase">Anotações e Graduações</h5>
                 <div id="prog-timeline" class="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-300 before:to-transparent mb-8"></div>
 
-                <div class="mt-8 border-t border-gray-200 pt-6">
-                    <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
-                        <h5 class="font-bold text-gray-700 border-b pb-1 text-sm uppercase flex-1 mr-4"><i class="fa-solid fa-calendar-check text-green-600 mr-2"></i> Histórico de Presenças</h5>
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <label class="text-xs text-gray-500 font-bold">PERÍODO:</label>
-                            <input type="date" id="prog-start-filter" class="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:border-teal-500" onchange="window.filterProgressAttendance()">
-                            <span class="text-xs text-gray-500">até</span>
-                            <input type="date" id="prog-end-filter" class="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:border-teal-500" onchange="window.filterProgressAttendance()">
-                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-bold whitespace-nowrap" id="prog-att-total">0 aulas</span>
-                        </div>
-                    </div>
-                    <div id="prog-attendance-list" class="max-h-48 overflow-y-auto bg-gray-50 border border-gray-200 rounded p-2 space-y-1"></div>
-                </div>
             </div>
             <div class="bg-gray-50 px-6 py-3 flex justify-end border-t border-gray-200 shrink-0">
                 <button onclick="window.closeProgressModal()" class="px-5 py-2 bg-white border border-gray-300 shadow-sm rounded text-sm font-bold text-gray-700 hover:bg-gray-50 transition">Fechar</button>
@@ -357,25 +342,12 @@
     <div id="attendance-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-md flex flex-col max-h-[80vh] animate-fade-in">
             <div class="bg-blue-600 px-6 py-4 flex justify-between text-white shrink-0">
-                <h3 class="font-bold text-lg"><i class="fa-solid fa-calendar-check mr-2"></i> Frequência Manual</h3>
+                <h3 class="font-bold text-lg"><i class="fa-solid fa-calendar-check mr-2"></i> Histórico de Frequência</h3>
                 <button onclick="window.closeAttendanceModal()"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="p-4 bg-gray-50 border-b shrink-0">
                 <h4 class="font-bold text-gray-800" id="att-student-name">--</h4>
                 <input type="hidden" id="att-student-id">
-                <div class="mt-3 flex gap-2 items-center flex-wrap">
-                    <input type="date" id="att-date-input" class="border rounded px-2 py-2 text-sm flex-grow focus:outline-none focus:border-blue-500">
-                    <select id="att-class-input" class="border rounded px-2 py-2 text-sm flex-grow focus:outline-none focus:border-blue-500">
-                        <option value="Turma Mista (Livre)">Geral / Mista</option>
-                        <option value="Adulto - 10h30">Adulto - 10h30</option>
-                        <option value="Adulto - 12h30">Adulto - 12h30</option>
-                        <option value="Adulto - 18h00">Adulto - 18h00</option>
-                        <option value="Adulto - 21h00">Adulto - 21h00</option>
-                        <option value="Infantil - 15h00">Infantil - 15h00</option>
-                        <option value="Infantil - 16h30">Infantil - 16h30</option>
-                    </select>
-                    <button onclick="window.addManualAttendance()" class="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700 w-full mt-2 transition shadow-sm">Adicionar Turma</button>
-                </div>
             </div>
             <div class="overflow-y-auto p-0 flex-1 bg-white">
                 <div id="att-list" class="divide-y divide-gray-100"></div>
@@ -508,11 +480,6 @@
                                 <option value="0">0º</option><option value="1">1º</option><option value="2">2º</option><option value="3">3º</option><option value="4">4º</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div class="col-span-1 md:col-span-2 pt-2">
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Vencimento Contrato (Fidelidade)</label>
-                        <input type="date" id="edit-end-date" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none">
                     </div>
 
                     <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 bg-blue-50 p-4 rounded-lg">
@@ -967,6 +934,7 @@
                     APP_ID = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj"; 
                     
                     window.db = db;
+                    window.appIdVar = APP_ID;
                     
                     const initAuth = async () => {
                         try {
@@ -1321,7 +1289,7 @@
         };
 
         // =====================================
-        // PROGRESSO, ANOTAÇÕES & PRESENÇAS
+        // PROGRESSO E ANOTAÇÕES
         // =====================================
         window.openProgressModal = (id) => {
             const s = window.students.find(st => st.id === id); if(!s) return;
