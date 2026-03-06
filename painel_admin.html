@@ -127,7 +127,13 @@
                             </tr>
                         </thead>
                         <tbody id="alunos-tbody" class="divide-y divide-gray-100">
-                            <!-- Injetado via JavaScript -->
+                            <!-- Indicador de carregamento inicial -->
+                            <tr>
+                                <td colSpan="5" class="p-12 text-center text-gray-400">
+                                    <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3"></i>
+                                    <p class="font-medium">A sincronizar com o Firebase...</p>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -180,7 +186,9 @@
                             </h4>
                             <p class="text-sm text-gray-500 mb-4">Clique num aluno abaixo para simular a passagem dele na catraca virtual.</p>
                             <div class="space-y-3" id="simulator-list">
-                                <!-- Injetado via JavaScript -->
+                                <div class="p-4 text-center text-gray-400 text-sm">
+                                    A aguardar dados dos alunos...
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -328,12 +336,10 @@
 
     <!-- FIREBASE & LÓGICA DO SISTEMA (Vanilla JS) -->
     <script type="module">
-        // 1. Importar Firebase via CDN (Módulos Nativos do Navegador)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // 2. Configuração exata do seu projeto
         const firebaseConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
             authDomain: "tanqueteambjj.firebaseapp.com",
@@ -347,7 +353,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- ESTADO GLOBAL ---
         const STATE = {
             alunos: [],
             filterStr: '',
@@ -355,8 +360,6 @@
             isCanvas: typeof __app_id !== 'undefined'
         };
 
-        // Função auxiliar para determinar o caminho correto da coleção 
-        // (Isso permite que o código rode no meu ambiente de testes e no seu site real sem quebrar)
         const getCollectionRef = (name) => {
             return STATE.isCanvas 
                 ? collection(db, 'artifacts', __app_id, 'public', 'data', name) 
@@ -368,31 +371,52 @@
                 : doc(db, name, id);
         };
 
-        // --- INICIALIZAÇÃO E LISTENERS ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 console.log("Utilizador autenticado no Firebase:", user.uid);
                 loadData();
             } else {
-                console.log("Nenhum utilizador logado. Redirecionando...");
-                // Se testar fora do painel de login, descomente a linha abaixo
-                // window.location.href = 'https://www.tanqueteambjj.com.br/login.html';
-                
-                // Para demonstração, carrega os dados mesmo sem login se não for forçado
+                console.log("A tentar carregar dados sem utilizador logado (Modo Demonstração)...");
                 loadData(); 
             }
         });
 
         function loadData() {
+            const tbody = document.getElementById('alunos-tbody');
+            
+            // Ouvinte do Firestore com tratamento de erros de permissão
             onSnapshot(getCollectionRef('alunos'), (snapshot) => {
                 STATE.alunos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderAlunos();
                 renderCheckinSimulator();
                 renderPrintList();
+            }, (error) => {
+                console.error("Erro do Firestore:", error);
+                
+                // Tratamento visual para mostrar ao usuário o que falhou
+                if (error.code === 'permission-denied') {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colSpan="5" class="p-12 text-center text-red-500 bg-red-50">
+                                <i class="fa-solid fa-lock text-4xl mb-3"></i><br>
+                                <span class="font-bold text-lg">Acesso Negado</span><br>
+                                O Firebase bloqueou a leitura por segurança. A sua sessão de login expirou ou não tem permissões para ler a coleção "alunos".
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colSpan="5" class="p-12 text-center text-red-500">
+                                <i class="fa-solid fa-triangle-exclamation text-4xl mb-3"></i><br>
+                                Falha ao carregar dados: ${error.message}
+                            </td>
+                        </tr>
+                    `;
+                }
             });
         }
 
-        // --- RENDERIZAÇÃO DA INTERFACE ---
         const BELT_STYLES = {
             'Branca': 'bg-white text-gray-800 border-gray-300',
             'Cinza': 'bg-gray-400 text-white border-gray-500',
@@ -406,7 +430,6 @@
         };
 
         function renderAlunos() {
-            // Filtragem
             let filtrados = STATE.alunos.filter(a => {
                 const matchBusca = a.nome.toLowerCase().includes(STATE.filterStr.toLowerCase()) || 
                                    (a.telefone && a.telefone.includes(STATE.filterStr));
@@ -421,16 +444,14 @@
                 return matchBusca && matchTipo;
             });
 
-            // Atualizar contadores
             document.getElementById('stat-ativos').textContent = STATE.alunos.filter(a => a.status === 'Ativo').length;
             document.getElementById('stat-infantil').textContent = STATE.alunos.filter(a => a.tipo === 'Infantil' && a.status !== 'Arquivo').length;
             document.getElementById('stat-adulto').textContent = STATE.alunos.filter(a => a.tipo === 'Adulto' && a.status !== 'Arquivo').length;
             document.getElementById('stat-arquivo').textContent = STATE.alunos.filter(a => a.status === 'Arquivo').length;
 
-            // Renderizar Tabela
             const tbody = document.getElementById('alunos-tbody');
             if(filtrados.length === 0) {
-                tbody.innerHTML = `<tr><td colSpan="5" class="p-8 text-center text-gray-500">Nenhum aluno encontrado.</td></tr>`;
+                tbody.innerHTML = `<tr><td colSpan="5" class="p-12 text-center text-gray-500"><i class="fa-solid fa-folder-open text-3xl mb-3 opacity-50"></i><br>Nenhum aluno registado ou encontrado.</td></tr>`;
                 return;
             }
 
@@ -474,9 +495,12 @@
 
         function renderCheckinSimulator() {
             const list = document.getElementById('simulator-list');
-            // Pega os 6 primeiros alunos para simular
+            if(STATE.alunos.length === 0) {
+                list.innerHTML = `<div class="p-4 text-center text-gray-400 text-sm">Adicione alunos na aba principal para simular o check-in.</div>`;
+                return;
+            }
+
             const alunosSimulacao = STATE.alunos.slice(0, 6);
-            
             list.innerHTML = alunosSimulacao.map(aluno => `
                 <button onclick="simulateCheckin('${aluno.id}', '${aluno.status}', '${aluno.nome}')" class="w-full flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-400 transition-all text-left">
                     <span class="font-medium text-gray-800 flex-1">${aluno.nome}</span>
@@ -497,20 +521,15 @@
             `).join('');
         }
 
-        // --- FUNÇÕES EXPOSTAS AO WINDOW (Para o HTML conseguir chamar) ---
-
         window.changeTab = function(tabId, btnElement) {
-            // Atualizar botões
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.className = "nav-btn w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors";
             });
             btnElement.className = "nav-btn w-full flex items-center gap-3 px-6 py-3 text-sm font-medium bg-red-600 text-white border-r-4 border-red-400";
             
-            // Atualizar secções
             document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
             document.getElementById('view-' + tabId).classList.add('active');
             
-            // Atualizar título
             document.getElementById('header-title').textContent = btnElement.textContent.trim();
         };
 
@@ -575,7 +594,11 @@
                 closeModal();
             } catch (error) {
                 console.error("Erro ao salvar:", error);
-                alert("Ocorreu um erro ao gravar no banco de dados.");
+                if (error.code === 'permission-denied') {
+                    alert("Acesso Negado: Não tem permissão para guardar dados. Verifique o seu login.");
+                } else {
+                    alert("Ocorreu um erro ao gravar no banco de dados.");
+                }
             }
         };
 
@@ -599,16 +622,8 @@
                 document.getElementById('checkin-name-success').textContent = nome;
                 success.classList.remove('hidden');
                 success.classList.add('flex');
-                
-                // Gravar presença no banco de dados (Opcional, pode descomentar se quiser)
-                /*
-                await addDoc(getCollectionRef('presencas'), {
-                    aluno_id: id, timestamp: serverTimestamp()
-                });
-                */
             }
 
-            // Resetar após 3.5 segundos
             setTimeout(() => {
                 screen.className = "relative aspect-[4/3] rounded-xl overflow-hidden border-4 border-gray-800 bg-gray-900 transition-colors duration-300 flex items-center justify-center";
                 success.classList.add('hidden'); success.classList.remove('flex');
@@ -619,7 +634,6 @@
 
         window.handleLogout = function() {
             signOut(auth).then(() => {
-                // Redireciona para o login do seu site original
                 window.location.href = 'https://www.tanqueteambjj.com.br/login.html';
             }).catch((error) => console.error("Erro ao sair", error));
         };
