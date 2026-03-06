@@ -1,966 +1,629 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { 
-  Users, QrCode, ClipboardList, Megaphone, FileText, Settings, 
-  Search, Plus, Filter, MoreVertical, LogOut, CheckCircle, 
-  XCircle, AlertTriangle, Calendar, Award, UserPlus, FileDown,
-  Printer, Trash2, Edit3, Mail, Check, ChevronsUpDown, Phone
-} from 'lucide-react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
-import { 
-  getFirestore, collection, onSnapshot, doc, setDoc, 
-  deleteDoc, updateDoc, addDoc, serverTimestamp 
-} from 'firebase/firestore';
-
-// --- FIREBASE CONFIGURATION ---
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-  apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
-  authDomain: "tanqueteambjj.firebaseapp.com",
-  projectId: "tanqueteambjj",
-  storageBucket: "tanqueteambjj.firebasestorage.app",
-  messagingSenderId: "410605992451",
-  appId: "1:410605992451:web:f0f341f4594fe75f376c36",
-  measurementId: "G-SW8PP8X7WM"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'tanque-team-bjj-app';
-
-// --- CONSTANTS ---
-const BELT_COLORS = {
-  'Branca': 'bg-white text-gray-800 border-gray-300',
-  'Cinza': 'bg-gray-400 text-white border-gray-500',
-  'Amarela': 'bg-yellow-400 text-gray-900 border-yellow-500',
-  'Laranja': 'bg-orange-500 text-white border-orange-600',
-  'Verde': 'bg-green-600 text-white border-green-700',
-  'Azul': 'bg-blue-600 text-white border-blue-700',
-  'Roxa': 'bg-purple-600 text-white border-purple-700',
-  'Marrom': 'bg-amber-800 text-white border-amber-900',
-  'Preta': 'bg-gray-900 text-white border-black',
-  'Coral': 'bg-gradient-to-r from-red-600 to-black text-white',
-  'Vermelha': 'bg-red-600 text-white border-red-700'
-};
-
-const MOCK_DATA = {
-  alunos: [
-    { id: '1', nome: 'João Silva', telefone: '(91) 98888-1111', faixa: 'Azul', graus: 2, status: 'Ativo', tipo: 'Adulto', dt_matricula: '2023-01-15' },
-    { id: '2', nome: 'Maria Santos', telefone: '(91) 98888-2222', faixa: 'Branca', graus: 4, status: 'Pendente', tipo: 'Adulto', dt_matricula: '2023-10-05' },
-    { id: '3', nome: 'Pedro Henrique (Filho)', telefone: '(91) 98888-3333', faixa: 'Cinza', graus: 1, status: 'Ativo', tipo: 'Infantil', dt_matricula: '2024-02-20', titular_id: '1' },
-    { id: '4', nome: 'Carlos Eduardo', telefone: '(91) 98888-4444', faixa: 'Roxa', graus: 0, status: 'Ativo', tipo: 'Adulto', dt_matricula: '2021-05-10' },
-  ],
-  visitantes: [
-    { id: 'v1', nome: 'Lucas Oliveira', telefone: '(91) 99999-0000', data_agendada: '2024-05-20', status: 'Agendado' }
-  ]
-};
-
-// --- HELPER COMPONENTS ---
-const PrintStyles = () => (
-  <style>{`
-    @media print {
-      body * { visibility: hidden; }
-      #printable-area, #printable-area * { visibility: visible; }
-      #printable-area { position: absolute; left: 0; top: 0; width: 100%; }
-      .no-print { display: none !important; }
-    }
-  `}</style>
-);
-
-const Badge = ({ children, colorClass }) => (
-  <span className={`px-2 py-1 text-xs font-semibold rounded-full border ${colorClass}`}>
-    {children}
-  </span>
-);
-
-export default function AdminDashboard() {
-  // --- AUTH STATE ---
-  const [firebaseUser, setFirebaseUser] = useState(null);
-
-  // --- APP STATE ---
-  const [activeTab, setActiveTab] = useState('alunos');
-  const [isPrinting, setIsPrinting] = useState(false);
-  
-  // Data States
-  const [alunos, setAlunos] = useState([]);
-  const [visitantes, setVisitantes] = useState([]);
-  const [avisos, setAvisos] = useState([]);
-  const [presencas, setPresencas] = useState([]);
-
-  // UI States (Alunos)
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('Todos'); // Todos, Infantil, Adulto, Arquivo
-  const [selectedAlunos, setSelectedAlunos] = useState([]);
-  const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
-  const [currentStudent, setCurrentStudent] = useState(null);
-
-  // --- FIREBASE INIT & LISTENERS ---
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-      } catch (error) {
-        console.error("Auth error:", error);
-      }
-    };
-    initAuth();
-
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setFirebaseUser(user);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!firebaseUser) return;
-
-    // Use Public paths for shared admin data
-    const basePath = `artifacts/${appId}/public/data`;
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo - Tanque Team BJJ</title>
     
-    const unsubAlunos = onSnapshot(collection(db, basePath, 'alunos'), (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // If empty, seed with mock data for demonstration
-      if (data.length === 0) {
-        MOCK_DATA.alunos.forEach(aluno => {
-          setDoc(doc(db, basePath, 'alunos', aluno.id), aluno);
-        });
-      } else {
-        setAlunos(data);
-      }
-    }, (error) => console.error("Error fetching alunos:", error));
+    <!-- Tailwind CSS para o Design -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome para os Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Estilos base e utilitários */
+        .view-section { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .view-section.active { display: block; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Esconder interface ao imprimir (para os contratos/relatórios) */
+        @media print {
+            body * { visibility: hidden; }
+            #printable-area, #printable-area * { visibility: visible; }
+            #printable-area { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800 flex h-screen overflow-hidden">
 
-    const unsubVisitantes = onSnapshot(collection(db, basePath, 'visitantes'), (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      if (data.length === 0) {
-        MOCK_DATA.visitantes.forEach(v => {
-          setDoc(doc(db, basePath, 'visitantes', v.id), v);
-        });
-      } else {
-        setVisitantes(data);
-      }
-    }, (error) => console.error("Error fetching visitantes:", error));
-
-    const unsubAvisos = onSnapshot(collection(db, basePath, 'avisos'), (snapshot) => {
-      setAvisos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }, (error) => console.error("Error fetching avisos:", error));
-
-    const unsubPresencas = onSnapshot(collection(db, basePath, 'presencas'), (snapshot) => {
-      setPresencas(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }, (error) => console.error("Error fetching presencas:", error));
-
-    return () => {
-      unsubAlunos(); unsubVisitantes(); unsubAvisos(); unsubPresencas();
-    };
-  }, [firebaseUser]);
-
-  // --- HANDLERS ---
-  const handleLogout = () => {
-    auth.signOut().then(() => {
-      console.log("Usuário deslogado do Firebase.");
-      // Opcional: Redirecionar para a sua tela de login
-      // window.location.href = 'https://www.tanqueteambjj.com.br/login.html';
-    }).catch((error) => {
-      console.error("Erro ao sair:", error);
-    });
-  };
-
-  const saveStudent = async (studentData) => {
-    if (!firebaseUser) return;
-    const basePath = `artifacts/${appId}/public/data`;
-    if (studentData.id) {
-      await updateDoc(doc(db, basePath, 'alunos', studentData.id), studentData);
-    } else {
-      await addDoc(collection(db, basePath, 'alunos'), {
-        ...studentData,
-        dt_matricula: new Date().toISOString().split('T')[0]
-      });
-    }
-    setIsStudentModalOpen(false);
-  };
-
-  const registerCheckIn = async (alunoId, status) => {
-    if (!firebaseUser || status !== 'Ativo') return false;
-    const basePath = `artifacts/${appId}/public/data`;
-    await addDoc(collection(db, basePath, 'presencas'), {
-      aluno_id: alunoId,
-      timestamp: serverTimestamp(),
-      data: new Date().toLocaleDateString()
-    });
-    return true;
-  };
-
-  // --- VIEWS ---
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex font-sans text-gray-800">
-      <PrintStyles />
-      
-      {/* SIDEBAR */}
-      <aside className="w-64 bg-gray-900 text-white flex flex-col no-print transition-all duration-300">
-        <div className="p-6 text-center border-b border-gray-800">
-          <h2 className="text-2xl font-black text-red-500 tracking-tighter">TANQUE<span className="text-white">TEAM</span></h2>
-          <p className="text-xs text-gray-400 mt-1">Gestão de Academia</p>
+    <!-- BARRA LATERAL (SIDEBAR) -->
+    <aside class="w-64 bg-gray-900 text-white flex flex-col no-print shrink-0">
+        <div class="p-6 text-center border-b border-gray-800">
+            <h2 class="text-2xl font-black text-red-500 tracking-tighter">TANQUE<span class="text-white">TEAM</span></h2>
+            <p class="text-xs text-gray-400 mt-1">Gestão de Academia</p>
         </div>
         
-        <nav className="flex-1 py-4 space-y-1">
-          {[
-            { id: 'alunos', icon: Users, label: 'Alunos' },
-            { id: 'checkin', icon: QrCode, label: 'Recepção (Check-in)' },
-            { id: 'visitantes', icon: UserPlus, label: 'Visitantes' },
-            { id: 'mural', icon: Megaphone, label: 'Mural de Avisos' },
-            { id: 'relatorios', icon: FileText, label: 'Relatórios' },
-          ].map(item => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-6 py-3 text-sm font-medium transition-colors ${
-                activeTab === item.id 
-                  ? 'bg-red-600 text-white border-r-4 border-red-400' 
-                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-              }`}
-            >
-              <item.icon size={20} />
-              {item.label}
+        <nav class="flex-1 py-4 space-y-1" id="nav-menu">
+            <button onclick="changeTab('alunos', this)" class="nav-btn w-full flex items-center gap-3 px-6 py-3 text-sm font-medium bg-red-600 text-white border-r-4 border-red-400">
+                <i class="fa-solid fa-users w-5 text-center"></i> Alunos
             </button>
-          ))}
+            <button onclick="changeTab('checkin', this)" class="nav-btn w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors">
+                <i class="fa-solid fa-qrcode w-5 text-center"></i> Recepção (Check-in)
+            </button>
+            <button onclick="changeTab('visitantes', this)" class="nav-btn w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors">
+                <i class="fa-solid fa-user-plus w-5 text-center"></i> Visitantes
+            </button>
+            <button onclick="changeTab('mural', this)" class="nav-btn w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors">
+                <i class="fa-solid fa-bullhorn w-5 text-center"></i> Mural de Avisos
+            </button>
+            <button onclick="changeTab('relatorios', this)" class="nav-btn w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors">
+                <i class="fa-solid fa-file-lines w-5 text-center"></i> Relatórios
+            </button>
         </nav>
 
-        <div className="p-4 border-t border-gray-800">
-          <button 
-            onClick={handleLogout}
-            className="flex items-center gap-2 text-gray-400 hover:text-red-400 transition-colors w-full px-2"
-          >
-            <LogOut size={18} />
-            <span className="text-sm font-medium">Sair</span>
-          </button>
+        <div class="p-4 border-t border-gray-800">
+            <button onclick="handleLogout()" class="flex items-center gap-2 text-gray-400 hover:text-red-400 transition-colors w-full px-2">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span class="text-sm font-medium">Sair do Painel</span>
+            </button>
         </div>
-      </aside>
+    </aside>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Header (Top Bar) */}
-        <header className="bg-white shadow-sm h-16 flex items-center justify-between px-8 no-print z-10">
-          <h1 className="text-xl font-bold text-gray-800 capitalize">
-            {activeTab.replace('-', ' ')}
-          </h1>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              Sistema Online
+    <!-- ÁREA PRINCIPAL -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        <!-- Cabeçalho Topo -->
+        <header class="bg-white shadow-sm h-16 flex items-center justify-between px-8 no-print z-10">
+            <h1 id="header-title" class="text-xl font-bold text-gray-800">Alunos</h1>
+            <div class="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                Conectado ao Firebase
             </div>
-          </div>
         </header>
 
-        {/* Scrollable Area */}
-        <div className="flex-1 overflow-auto p-8 relative">
-          
-          {/* TAB: ALUNOS */}
-          {activeTab === 'alunos' && (
-            <AlunosView 
-              alunos={alunos} 
-              filterType={filterType} 
-              setFilterType={setFilterType}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              onOpenStudent={(student) => { setCurrentStudent(student); setIsStudentModalOpen(true); }}
-            />
-          )}
-
-          {/* TAB: CHECKIN */}
-          {activeTab === 'checkin' && (
-            <CheckinView alunos={alunos} onCheckIn={registerCheckIn} />
-          )}
-
-          {/* TAB: VISITANTES */}
-          {activeTab === 'visitantes' && (
-            <VisitantesView visitantes={visitantes} />
-          )}
-
-          {/* TAB: MURAL */}
-          {activeTab === 'mural' && (
-            <MuralView alunos={alunos} avisos={avisos} />
-          )}
-
-          {/* TAB: RELATORIOS */}
-          {activeTab === 'relatorios' && (
-            <RelatoriosView alunos={alunos} />
-          )}
-
-        </div>
-      </main>
-
-      {/* MODALS */}
-      {isStudentModalOpen && (
-        <StudentModal 
-          student={currentStudent} 
-          onClose={() => setIsStudentModalOpen(false)} 
-          onSave={saveStudent}
-          presencas={presencas.filter(p => p.aluno_id === currentStudent?.id)}
-        />
-      )}
-    </div>
-  );
-}
-
-// ==========================================
-// VIEWS COMPONENTS
-// ==========================================
-
-function AlunosView({ alunos, filterType, setFilterType, searchTerm, setSearchTerm, onOpenStudent }) {
-  
-  const stats = useMemo(() => {
-    return {
-      todos: alunos.filter(a => a.status !== 'Arquivo').length,
-      ativos: alunos.filter(a => a.status === 'Ativo').length,
-      infantil: alunos.filter(a => a.tipo === 'Infantil' && a.status !== 'Arquivo').length,
-      adulto: alunos.filter(a => a.tipo === 'Adulto' && a.status !== 'Arquivo').length,
-      arquivo: alunos.filter(a => a.status === 'Arquivo').length,
-    };
-  }, [alunos]);
-
-  const filteredAlunos = useMemo(() => {
-    return alunos.filter(aluno => {
-      const matchesSearch = aluno.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            aluno.telefone.includes(searchTerm);
-      
-      let matchesFilter = true;
-      if (filterType === 'Ativos') matchesFilter = aluno.status === 'Ativo';
-      if (filterType === 'Infantil') matchesFilter = aluno.tipo === 'Infantil';
-      if (filterType === 'Adulto') matchesFilter = aluno.tipo === 'Adulto';
-      if (filterType === 'Arquivo') matchesFilter = aluno.status === 'Arquivo';
-      if (filterType === 'Todos') matchesFilter = aluno.status !== 'Arquivo';
-
-      return matchesSearch && matchesFilter;
-    });
-  }, [alunos, searchTerm, filterType]);
-
-  return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Ativos', count: stats.ativos, type: 'Ativos', color: 'bg-blue-50 border-blue-200 text-blue-700' },
-          { label: 'Infantil', count: stats.infantil, type: 'Infantil', color: 'bg-green-50 border-green-200 text-green-700' },
-          { label: 'Adulto/Família', count: stats.adulto, type: 'Adulto', color: 'bg-orange-50 border-orange-200 text-orange-700' },
-          { label: 'Arquivo', count: stats.arquivo, type: 'Arquivo', color: 'bg-gray-100 border-gray-300 text-gray-600' }
-        ].map((stat) => (
-          <div 
-            key={stat.type}
-            onClick={() => setFilterType(filterType === stat.type ? 'Todos' : stat.type)}
-            className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-              filterType === stat.type ? `ring-2 ring-offset-2 ring-[${stat.color.split(' ')[2]}] shadow-md ${stat.color}` : 'bg-white border-gray-100 hover:border-gray-200 shadow-sm'
-            }`}
-          >
-            <div className="text-3xl font-black mb-1">{stat.count}</div>
-            <div className="text-sm font-semibold uppercase tracking-wider opacity-80">{stat.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="relative w-full sm:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <input 
-            type="text" 
-            placeholder="Buscar por nome ou telefone..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500 outline-none transition-all"
-          />
-        </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors">
-            <Filter size={16} /> Filtros
-          </button>
-          <button 
-            onClick={() => onOpenStudent({ nome: '', telefone: '', faixa: 'Branca', graus: 0, status: 'Ativo', tipo: 'Adulto' })}
-            className="flex flex-1 sm:flex-none items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors shadow-sm"
-          >
-            <Plus size={16} /> Novo Aluno
-          </button>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50 text-gray-500 text-sm uppercase tracking-wider border-b border-gray-100">
-              <th className="p-4 font-semibold w-10"><input type="checkbox" className="rounded text-red-600 focus:ring-red-500"/></th>
-              <th className="p-4 font-semibold">Aluno</th>
-              <th className="p-4 font-semibold hidden md:table-cell">Contato</th>
-              <th className="p-4 font-semibold text-center">Graduação</th>
-              <th className="p-4 font-semibold text-center">Status</th>
-              <th className="p-4 font-semibold text-right">Ações</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {filteredAlunos.length === 0 ? (
-              <tr><td colSpan="6" className="p-8 text-center text-gray-500">Nenhum aluno encontrado.</td></tr>
-            ) : (
-              filteredAlunos.map(aluno => (
-                <tr key={aluno.id} className="hover:bg-gray-50 transition-colors group">
-                  <td className="p-4"><input type="checkbox" className="rounded text-red-600 focus:ring-red-500"/></td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600 overflow-hidden border border-gray-300">
-                        {aluno.nome.charAt(0)}
-                      </div>
-                      <div>
-                        <div className="font-semibold text-gray-900 flex items-center gap-2">
-                          {aluno.nome}
-                          {aluno.titular_id && <Badge colorClass="bg-blue-50 text-blue-600 border-blue-200 text-[10px]">Dependente</Badge>}
-                        </div>
-                        <div className="text-xs text-gray-500">{aluno.tipo}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-4 hidden md:table-cell text-sm text-gray-600">{aluno.telefone}</td>
-                  <td className="p-4 text-center">
-                    <Badge colorClass={BELT_COLORS[aluno.faixa] || BELT_COLORS['Branca']}>
-                      {aluno.faixa} {aluno.graus > 0 && `- ${aluno.graus}º Grau`}
-                    </Badge>
-                  </td>
-                  <td className="p-4 text-center">
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
-                      aluno.status === 'Ativo' ? 'bg-green-100 text-green-800' : 
-                      aluno.status === 'Pendente' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {aluno.status === 'Ativo' ? <CheckCircle size={12}/> : <AlertTriangle size={12}/>}
-                      {aluno.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-right">
-                    <button 
-                      onClick={() => onOpenStudent(aluno)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors inline-flex items-center"
-                      title="Ficha do Aluno"
-                    >
-                      <Edit3 size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function CheckinView({ alunos, onCheckIn }) {
-  const [scanStatus, setScanStatus] = useState('idle'); // idle, success, error
-  const [lastScanned, setLastScanned] = useState(null);
-  const [selectedTurma, setSelectedTurma] = useState('Adulto - 19h00');
-
-  // Simulator function to act like a QR code scan
-  const simulateScan = (aluno) => {
-    if (aluno.status === 'Pendente') {
-      setScanStatus('error');
-      setLastScanned(aluno);
-      // Play error sound (simulated with standard web audio API if possible, or just visual)
-      playBeep(400, 'square');
-      setTimeout(() => setScanStatus('idle'), 3500);
-    } else {
-      setScanStatus('success');
-      setLastScanned(aluno);
-      onCheckIn(aluno.id, aluno.status);
-      playBeep(800, 'sine');
-      setTimeout(() => setScanStatus('idle'), 3500);
-    }
-  };
-
-  const playBeep = (freq, type) => {
-    try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) return;
-      const ctx = new AudioContext();
-      const osc = ctx.createOscillator();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      osc.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.1);
-    } catch(e) { console.log("Audio not supported in this frame"); }
-  };
-
-  return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
-      <div className="text-center space-y-2 mb-8">
-        <h2 className="text-3xl font-black text-gray-800">Auto Check-in</h2>
-        <p className="text-gray-500">Mantenha esta tela aberta na recepção para leitura de QR Code.</p>
-      </div>
-
-      <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col md:flex-row gap-8 items-center">
-        
-        {/* Leitor (Simulado) */}
-        <div className="flex-1 w-full max-w-sm">
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Turma Atual</label>
-            <select 
-              value={selectedTurma}
-              onChange={(e) => setSelectedTurma(e.target.value)}
-              className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg font-semibold text-gray-800 focus:ring-2 focus:ring-red-500 outline-none"
-            >
-              <option>Infantil - 17h00</option>
-              <option>Adulto - 18h00</option>
-              <option>Adulto - 19h00 (Competição)</option>
-              <option>Família - 20h00</option>
-            </select>
-          </div>
-
-          <div className={`relative aspect-[4/3] rounded-xl overflow-hidden border-4 transition-colors duration-300 flex items-center justify-center bg-gray-900 ${
-            scanStatus === 'success' ? 'border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.4)]' : 
-            scanStatus === 'error' ? 'border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.4)]' : 'border-gray-800'
-          }`}>
-            {scanStatus === 'idle' && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
-                <QrCode size={48} className="mb-2 opacity-50" />
-                <p className="text-sm font-medium">Câmera Ativa</p>
-                <div className="absolute w-full h-1 bg-red-500/50 blur-sm top-1/2 -translate-y-1/2 animate-pulse"></div>
-              </div>
-            )}
+        <!-- Container Scrollável -->
+        <div class="flex-1 overflow-auto p-8 relative">
             
-            {scanStatus === 'success' && (
-              <div className="absolute inset-0 bg-green-500 flex flex-col items-center justify-center text-white z-10 animate-in fade-in zoom-in duration-200">
-                <CheckCircle size={64} className="mb-4" />
-                <h3 className="text-2xl font-bold">ACESSO LIBERADO</h3>
-                <p className="text-green-100 text-lg mt-2">{lastScanned?.nome}</p>
-              </div>
-            )}
-
-            {scanStatus === 'error' && (
-              <div className="absolute inset-0 bg-red-600 flex flex-col items-center justify-center text-white z-10 animate-in fade-in zoom-in duration-200">
-                <XCircle size={64} className="mb-4" />
-                <h3 className="text-2xl font-bold">ACESSO BLOQUEADO</h3>
-                <p className="text-red-200 text-lg mt-2">{lastScanned?.nome}</p>
-                <p className="text-sm font-bold bg-red-800 px-3 py-1 rounded-full mt-4">Pagamento Pendente</p>
-              </div>
-            )}
-          </div>
-          
-          <p className="text-center text-xs text-gray-400 mt-4">Aproxime o QR Code do aluno na câmera.</p>
-        </div>
-
-        {/* Simulador Controls (Para demonstração) */}
-        <div className="flex-1 w-full bg-gray-50 p-6 rounded-xl border border-gray-200">
-          <h4 className="font-bold text-gray-700 mb-4 flex items-center gap-2">
-            <Settings size={18}/> Simulador de Leitura (Admin)
-          </h4>
-          <p className="text-sm text-gray-500 mb-4">Clique nos botões abaixo para simular a passagem de um aluno na catraca.</p>
-          <div className="space-y-3">
-            {alunos.slice(0, 4).map(aluno => (
-              <button
-                key={aluno.id}
-                onClick={() => simulateScan(aluno)}
-                disabled={scanStatus !== 'idle'}
-                className="w-full flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-400 hover:shadow-sm transition-all disabled:opacity-50"
-              >
-                <span className="font-medium text-gray-800">{aluno.nome}</span>
-                <Badge colorClass={aluno.status === 'Ativo' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-red-100 text-red-800 border-red-200'}>
-                  {aluno.status}
-                </Badge>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function VisitantesView({ visitantes }) {
-  return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">Aulas Experimentais</h2>
-          <p className="text-gray-500 text-sm">Gerencie potenciais novos alunos.</p>
-        </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium transition-colors">
-          <Plus size={16} /> Novo Agendamento
-        </button>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50 text-gray-500 text-sm uppercase tracking-wider border-b border-gray-100">
-              <th className="p-4 font-semibold">Nome</th>
-              <th className="p-4 font-semibold">Contato</th>
-              <th className="p-4 font-semibold text-center">Data Agendada</th>
-              <th className="p-4 font-semibold text-center">Status</th>
-              <th className="p-4 font-semibold text-right">Ações</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {visitantes.length === 0 ? (
-              <tr><td colSpan="5" className="p-8 text-center text-gray-500">Nenhum visitante registrado.</td></tr>
-            ) : (
-              visitantes.map(v => (
-                <tr key={v.id} className="hover:bg-gray-50">
-                  <td className="p-4 font-medium text-gray-900">{v.nome}</td>
-                  <td className="p-4 text-sm text-gray-600">{v.telefone}</td>
-                  <td className="p-4 text-center text-sm text-gray-600">{v.data_agendada}</td>
-                  <td className="p-4 text-center">
-                     <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                      {v.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-right">
-                    <button className="px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition-colors flex items-center gap-1 ml-auto">
-                      <UserPlus size={14} /> Matricular
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function MuralView({ alunos, avisos }) {
-  const currentMonth = new Date().getMonth();
-  
-  // Simulando aniversariantes do mês (como não temos datas exatas no mock, pegamos aleatórios para demo)
-  const aniversariantes = alunos.slice(0, 2); 
-
-  return (
-    <div className="space-y-6 animate-fade-in flex flex-col lg:flex-row gap-6">
-      
-      {/* Esquerda: Lista de Avisos */}
-      <div className="flex-1 space-y-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <ClipboardList className="text-blue-500"/> Mural de Recados
-          </h2>
-          <button className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 font-medium transition-colors">
-            <Plus size={14} /> Novo Aviso
-          </button>
-        </div>
-
-        {avisos.length === 0 ? (
-           <div className="bg-white p-8 rounded-xl border border-gray-100 text-center text-gray-500 shadow-sm">
-             <Megaphone size={32} className="mx-auto mb-3 opacity-30"/>
-             Nenhum aviso ativo no momento.
-           </div>
-        ) : (
-          avisos.map(aviso => (
-            <div key={aviso.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex gap-4 items-start">
-              <div className="p-3 bg-blue-50 text-blue-600 rounded-lg shrink-0">
-                <Megaphone size={24} />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-900">{aviso.titulo}</h3>
-                <p className="text-gray-600 text-sm mt-1">{aviso.mensagem}</p>
-                <div className="text-xs text-gray-400 mt-3 font-medium">Expira em: {aviso.validade || 'Nunca'}</div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* Direita: Widgets */}
-      <div className="w-full lg:w-80 space-y-6">
-        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-          <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-4">
-            <Award className="text-yellow-500" /> Aniversariantes do Mês
-          </h3>
-          <div className="space-y-3">
-            {aniversariantes.map(a => (
-              <div key={a.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-yellow-100 text-yellow-700 font-bold flex items-center justify-center text-xs">
-                    {a.nome.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="text-sm font-bold text-gray-900">{a.nome}</div>
-                    <div className="text-xs text-gray-500">Dia 15</div>
-                  </div>
-                </div>
-                <button className="p-1.5 text-green-600 bg-green-100 rounded hover:bg-green-200 transition-colors" title="Enviar WhatsApp">
-                  <Phone size={14} />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-    </div>
-  );
-}
-
-function RelatoriosView({ alunos }) {
-  const handlePrint = () => {
-    window.print();
-  };
-
-  return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Relatórios e Contratos</h2>
-        <p className="text-gray-500 text-sm">Gere documentos em PDF ou imprima diretamente.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[
-          { title: 'Lista de Chamada (Mensal)', desc: 'Planilha em A4 para anotação manual de presenças.', icon: FileText, color: 'text-blue-600 bg-blue-50' },
-          { title: 'Alunos Ativos', desc: 'Relatório geral com contatos para envio de comunicados.', icon: Users, color: 'text-green-600 bg-green-50' },
-          { title: 'Contrato Padrão (Em Branco)', desc: 'Imprime uma via do contrato de adesão vazia.', icon: FileDown, color: 'text-orange-600 bg-orange-50' },
-        ].map((rel, idx) => (
-          <div key={idx} className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex flex-col items-start">
-            <div className={`p-3 rounded-xl mb-4 ${rel.color}`}>
-              <rel.icon size={24} />
-            </div>
-            <h3 className="font-bold text-gray-900 mb-2">{rel.title}</h3>
-            <p className="text-gray-500 text-sm mb-6 flex-1">{rel.desc}</p>
-            <button 
-              onClick={handlePrint}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
-            >
-              <Printer size={16} /> Imprimir / PDF
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {/* Printable Area (Hidden on screen, visible on print) */}
-      <div id="printable-area" className="hidden print-only bg-white p-8">
-        <div className="text-center border-b-2 border-black pb-4 mb-8">
-          <h1 className="text-3xl font-black uppercase">Tanque Team BJJ</h1>
-          <p className="text-lg">Relatório Oficial de Sistema</p>
-          <p className="text-sm text-gray-500">Gerado em: {new Date().toLocaleDateString()}</p>
-        </div>
-        
-        <h2 className="text-xl font-bold mb-4">Relação de Alunos Ativos</h2>
-        <table className="w-full text-left border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 p-2 text-sm">Nome</th>
-              <th className="border border-gray-300 p-2 text-sm">Telefone</th>
-              <th className="border border-gray-300 p-2 text-sm">Faixa</th>
-            </tr>
-          </thead>
-          <tbody>
-            {alunos.filter(a => a.status === 'Ativo').map(a => (
-              <tr key={a.id}>
-                <td className="border border-gray-300 p-2 text-sm">{a.nome}</td>
-                <td className="border border-gray-300 p-2 text-sm">{a.telefone}</td>
-                <td className="border border-gray-300 p-2 text-sm">{a.faixa}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        
-        <div className="mt-16 pt-8 border-t border-gray-300 text-center text-sm text-gray-500">
-          Documento gerado automaticamente pelo Sistema Tanque Team BJJ.
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ==========================================
-// STUDENT MODAL COMPONENT
-// ==========================================
-
-function StudentModal({ student, onClose, onSave, presencas }) {
-  const [formData, setFormData] = useState({ ...student });
-  const [activeTab, setActiveTab] = useState('ficha'); // ficha, editar, evolucao
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSave = () => {
-    onSave(formData);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 no-print">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
-        
-        {/* Header */}
-        <div className="bg-gray-900 text-white p-6 relative flex gap-6 items-center">
-          <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
-            <XCircle size={24} />
-          </button>
-          
-          <div className="w-20 h-20 rounded-full bg-gray-800 border-4 border-gray-700 flex items-center justify-center text-3xl font-bold shrink-0 shadow-inner">
-            {formData.nome ? formData.nome.charAt(0).toUpperCase() : '?'}
-          </div>
-          
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold mb-1">{formData.nome || 'Novo Aluno'}</h2>
-            <div className="flex gap-2 items-center">
-              {formData.faixa && (
-                <Badge colorClass={BELT_COLORS[formData.faixa] || BELT_COLORS['Branca']}>
-                  {formData.faixa}
-                </Badge>
-              )}
-              <Badge colorClass={formData.status === 'Ativo' ? 'bg-green-900 text-green-300 border-green-700' : 'bg-red-900 text-red-300 border-red-700'}>
-                {formData.status}
-              </Badge>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200 px-6 bg-gray-50">
-          {[
-            { id: 'ficha', label: 'Ficha Rápida' },
-            { id: 'editar', label: 'Editar Cadastro' },
-            { id: 'evolucao', label: 'Evolução & Histórico' },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
-                activeTab === tab.id ? 'border-red-600 text-red-600' : 'border-transparent text-gray-500 hover:text-gray-800'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Content Area */}
-        <div className="p-6 overflow-auto flex-1 bg-white">
-          
-          {/* TAB: FICHA */}
-          {activeTab === 'ficha' && (
-            <div className="space-y-6">
-              <div className="flex gap-6">
-                <div className="flex-1 space-y-4">
-                  <div>
-                    <div className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Contato</div>
-                    <div className="font-medium text-gray-900">{formData.telefone || 'Não informado'}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Categoria</div>
-                    <div className="font-medium text-gray-900">{formData.tipo || 'Adulto'}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Matrícula</div>
-                    <div className="font-medium text-gray-900">{formData.dt_matricula ? new Date(formData.dt_matricula).toLocaleDateString() : 'Hoje'}</div>
-                  </div>
-                </div>
-                
-                {/* QR Code MOCK */}
-                <div className="w-32 h-32 bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center p-2 text-center text-gray-400">
-                  <QrCode size={40} className="mb-2" />
-                  <span className="text-[10px] font-bold">CARTEIRINHA DIGITAL</span>
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4 border-t border-gray-100">
-                <button className="flex-1 flex items-center justify-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors">
-                  <Mail size={16} /> Enviar Acesso
-                </button>
-                <button className="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors">
-                  <Printer size={16} /> Contrato
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: EDITAR */}
-          {activeTab === 'editar' && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
-                  <input type="text" name="nome" value={formData.nome || ''} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Telefone/WhatsApp</label>
-                  <input type="text" name="telefone" value={formData.telefone || ''} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                  <select name="tipo" value={formData.tipo || 'Adulto'} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
-                    <option>Adulto</option>
-                    <option>Infantil</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div className="pt-4 border-t border-gray-100">
-                <h3 className="font-bold text-gray-800 mb-3 text-sm uppercase">Situação na Academia</h3>
-                <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1">Faixa Atual</label>
-                    <select name="faixa" value={formData.faixa || 'Branca'} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg outline-none font-medium">
-                      {Object.keys(BELT_COLORS).map(f => <option key={f}>{f}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1">Graus (0 a 4)</label>
-                    <input type="number" min="0" max="4" name="graus" value={formData.graus || 0} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg outline-none" />
-                  </div>
-                  <div className="col-span-2 mt-2">
-                    <label className="block text-xs font-bold text-gray-500 mb-1">Status Financeiro</label>
-                    <select name="status" value={formData.status || 'Ativo'} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg outline-none font-medium text-gray-900">
-                      <option value="Ativo">Ativo (Pagamento em dia)</option>
-                      <option value="Pendente">Pendente (Bloquear Catraca)</option>
-                      <option value="Arquivo">Arquivo (Desistente)</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: EVOLUCAO */}
-          {activeTab === 'evolucao' && (
-            <div className="space-y-6 relative">
-              <h3 className="font-bold text-gray-800 mb-2">Linha do Tempo</h3>
-              <div className="pl-4 border-l-2 border-gray-200 space-y-6">
-                
-                {presencas && presencas.length > 0 && (
-                  <div className="relative">
-                    <div className="absolute -left-[21px] top-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-                    <div className="text-sm text-gray-500 mb-1">Atividade Recente</div>
-                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 text-sm flex items-center justify-between">
-                      <span className="font-medium text-gray-800">Último Check-in</span>
-                      <span className="text-gray-500 font-mono">{presencas[presencas.length-1].data}</span>
+            <!-- VIEW: ALUNOS -->
+            <section id="view-alunos" class="view-section active">
+                <!-- Cards de Estatísticas -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div onclick="setFilter('Todos')" class="p-4 rounded-xl border-2 cursor-pointer bg-blue-50 border-blue-200 text-blue-700 hover:shadow-md transition-all">
+                        <div class="text-3xl font-black mb-1" id="stat-ativos">0</div>
+                        <div class="text-sm font-semibold uppercase tracking-wider opacity-80">Total Ativos</div>
                     </div>
-                  </div>
-                )}
-
-                <div className="relative">
-                  <div className="absolute -left-[21px] top-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>
-                  <div className="text-sm text-gray-500 mb-1">{formData.dt_matricula ? new Date(formData.dt_matricula).toLocaleDateString() : 'Hoje'}</div>
-                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 text-sm">
-                    <span className="font-bold text-gray-800">Matrícula Realizada</span> na academia Tanque Team.
-                  </div>
+                    <div onclick="setFilter('Infantil')" class="p-4 rounded-xl border-2 cursor-pointer bg-green-50 border-green-200 text-green-700 hover:shadow-md transition-all">
+                        <div class="text-3xl font-black mb-1" id="stat-infantil">0</div>
+                        <div class="text-sm font-semibold uppercase tracking-wider opacity-80">Infantil</div>
+                    </div>
+                    <div onclick="setFilter('Adulto')" class="p-4 rounded-xl border-2 cursor-pointer bg-orange-50 border-orange-200 text-orange-700 hover:shadow-md transition-all">
+                        <div class="text-3xl font-black mb-1" id="stat-adulto">0</div>
+                        <div class="text-sm font-semibold uppercase tracking-wider opacity-80">Adulto/Família</div>
+                    </div>
+                    <div onclick="setFilter('Arquivo')" class="p-4 rounded-xl border-2 cursor-pointer bg-gray-100 border-gray-300 text-gray-600 hover:shadow-md transition-all">
+                        <div class="text-3xl font-black mb-1" id="stat-arquivo">0</div>
+                        <div class="text-sm font-semibold uppercase tracking-wider opacity-80">Arquivo</div>
+                    </div>
                 </div>
-              </div>
-            </div>
-          )}
-        </div>
 
-        {/* Footer */}
-        {activeTab === 'editar' && (
-          <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2">
-            <button onClick={onClose} className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors">Cancelar</button>
-            <button onClick={handleSave} className="px-6 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors shadow-sm">
-              Salvar Alterações
-            </button>
-          </div>
-        )}
-      </div>
+                <!-- Barra de Ferramentas -->
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
+                    <div class="relative w-full sm:w-96">
+                        <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="search-input" onkeyup="handleSearch()" placeholder="Buscar por nome ou telefone..." class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500 outline-none transition-all">
+                    </div>
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <button class="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors">
+                            <i class="fa-solid fa-filter"></i> Filtros
+                        </button>
+                        <button onclick="openStudentModal()" class="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors shadow-sm">
+                            <i class="fa-solid fa-plus"></i> Novo Aluno
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabela de Alunos -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-500 text-sm uppercase tracking-wider border-b border-gray-100">
+                                <th class="p-4 font-semibold">Aluno</th>
+                                <th class="p-4 font-semibold hidden md:table-cell">Contato</th>
+                                <th class="p-4 font-semibold text-center">Graduação</th>
+                                <th class="p-4 font-semibold text-center">Status</th>
+                                <th class="p-4 font-semibold text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alunos-tbody" class="divide-y divide-gray-100">
+                            <!-- Injetado via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- VIEW: CHECKIN -->
+            <section id="view-checkin" class="view-section">
+                <div class="max-w-4xl mx-auto space-y-6">
+                    <div class="text-center space-y-2 mb-8">
+                        <h2 class="text-3xl font-black text-gray-800">Auto Check-in</h2>
+                        <p class="text-gray-500">Mantenha esta tela aberta na recepção para leitura de QR Code.</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col md:flex-row gap-8 items-center">
+                        <!-- Câmera Simulador -->
+                        <div class="flex-1 w-full max-w-sm">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Turma Atual</label>
+                                <select class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg font-semibold text-gray-800 focus:ring-2 focus:ring-red-500 outline-none">
+                                    <option>Adulto - 18h00</option>
+                                    <option>Adulto - 19h00 (Competição)</option>
+                                    <option>Infantil - 17h00</option>
+                                </select>
+                            </div>
+
+                            <div id="camera-screen" class="relative aspect-[4/3] rounded-xl overflow-hidden border-4 border-gray-800 bg-gray-900 transition-colors duration-300 flex items-center justify-center">
+                                <div id="camera-idle" class="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+                                    <i class="fa-solid fa-qrcode text-5xl mb-2 opacity-50"></i>
+                                    <p class="text-sm font-medium">Câmera Ativa</p>
+                                    <div class="absolute w-full h-1 bg-red-500/50 blur-sm top-1/2 -translate-y-1/2 animate-pulse"></div>
+                                </div>
+                                <div id="camera-success" class="absolute inset-0 bg-green-500 flex-col items-center justify-center text-white z-10 hidden">
+                                    <i class="fa-solid fa-circle-check text-5xl mb-4"></i>
+                                    <h3 class="text-2xl font-bold">ACESSO LIBERADO</h3>
+                                    <p id="checkin-name-success" class="text-green-100 text-lg mt-2"></p>
+                                </div>
+                                <div id="camera-error" class="absolute inset-0 bg-red-600 flex-col items-center justify-center text-white z-10 hidden">
+                                    <i class="fa-solid fa-circle-xmark text-5xl mb-4"></i>
+                                    <h3 class="text-2xl font-bold">ACESSO BLOQUEADO</h3>
+                                    <p id="checkin-name-error" class="text-red-200 text-lg mt-2"></p>
+                                    <p class="text-sm font-bold bg-red-800 px-3 py-1 rounded-full mt-4">Pagamento Pendente</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lista de Simulação -->
+                        <div class="flex-1 w-full bg-gray-50 p-6 rounded-xl border border-gray-200">
+                            <h4 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-gear"></i> Simulador de Leitura (Admin)
+                            </h4>
+                            <p class="text-sm text-gray-500 mb-4">Clique num aluno abaixo para simular a passagem dele na catraca virtual.</p>
+                            <div class="space-y-3" id="simulator-list">
+                                <!-- Injetado via JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: VISITANTES -->
+            <section id="view-visitantes" class="view-section">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">Aulas Experimentais</h2>
+                        <p class="text-gray-500 text-sm">Gerencie potenciais novos alunos (Leads).</p>
+                    </div>
+                </div>
+                <div class="bg-white p-8 rounded-xl border border-gray-100 text-center text-gray-500 shadow-sm">
+                    <i class="fa-solid fa-users-slash text-4xl mb-3 opacity-30"></i>
+                    <p>Nenhum visitante registado no momento.</p>
+                </div>
+            </section>
+
+            <!-- VIEW: MURAL -->
+            <section id="view-mural" class="view-section">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">Mural de Recados</h2>
+                        <p class="text-gray-500 text-sm">Publique avisos para todos os alunos.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-8 rounded-xl border border-gray-100 text-center text-gray-500 shadow-sm">
+                    <i class="fa-solid fa-bullhorn text-4xl mb-3 opacity-30"></i>
+                    <p>O mural está vazio.</p>
+                </div>
+            </section>
+
+            <!-- VIEW: RELATÓRIOS -->
+            <section id="view-relatorios" class="view-section">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Relatórios e Documentos</h2>
+                    <p class="text-gray-500 text-sm">Gere listas em PDF ou imprima documentos.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col items-start">
+                        <div class="p-3 rounded-xl mb-4 bg-blue-50 text-blue-600"><i class="fa-solid fa-users text-2xl"></i></div>
+                        <h3 class="font-bold text-gray-900 mb-2">Lista de Chamada</h3>
+                        <p class="text-gray-500 text-sm mb-6 flex-1">Imprime a relação completa de alunos ativos.</p>
+                        <button onclick="window.print()" class="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
+                            <i class="fa-solid fa-print"></i> Imprimir Relação
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Oculto na tela, visível na impressão -->
+                <div id="printable-area" class="hidden print-only bg-white p-8">
+                    <div class="text-center border-b-2 border-black pb-4 mb-8">
+                        <h1 class="text-3xl font-black uppercase">Tanque Team BJJ</h1>
+                        <p class="text-lg">Relatório Oficial - Alunos Ativos</p>
+                    </div>
+                    <table class="w-full text-left border-collapse border border-gray-300">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="border border-gray-300 p-2">Nome do Aluno</th>
+                                <th class="border border-gray-300 p-2">Faixa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="print-tbody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- MODAL DO ALUNO (EDITAR/CRIAR) -->
+    <div id="student-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4 no-print">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col">
+            <div class="bg-gray-900 text-white p-6 relative flex gap-4 items-center">
+                <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+                <div class="w-16 h-16 rounded-full bg-gray-800 border-2 border-gray-700 flex items-center justify-center text-2xl font-bold shrink-0">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div>
+                    <h2 id="modal-title" class="text-2xl font-bold">Novo Aluno</h2>
+                    <p class="text-gray-400 text-sm">Ficha de Cadastro</p>
+                </div>
+            </div>
+            
+            <form id="student-form" onsubmit="saveStudent(event)" class="p-6">
+                <input type="hidden" name="id" id="form-id">
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                        <input type="text" name="nome" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Telefone / WhatsApp</label>
+                        <input type="text" name="telefone" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                        <select name="tipo" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
+                            <option value="Adulto">Adulto</option>
+                            <option value="Infantil">Infantil</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h3 class="font-bold text-gray-800 mb-3 text-sm uppercase">Situação na Academia</h3>
+                <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Faixa Atual</label>
+                        <select name="faixa" id="form-faixa" class="w-full p-2 border border-gray-300 rounded-lg outline-none font-medium">
+                            <option value="Branca">Branca</option>
+                            <option value="Cinza">Cinza</option>
+                            <option value="Amarela">Amarela</option>
+                            <option value="Laranja">Laranja</option>
+                            <option value="Verde">Verde</option>
+                            <option value="Azul">Azul</option>
+                            <option value="Roxa">Roxa</option>
+                            <option value="Marrom">Marrom</option>
+                            <option value="Preta">Preta</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Graus (0 a 4)</label>
+                        <input type="number" min="0" max="4" value="0" name="graus" class="w-full p-2 border border-gray-300 rounded-lg outline-none">
+                    </div>
+                    <div class="col-span-2 mt-2">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Status Financeiro (Acesso Catraca)</label>
+                        <select name="status" class="w-full p-2 border border-gray-300 rounded-lg outline-none font-medium text-gray-900">
+                            <option value="Ativo">Ativo (Permitir Entrada)</option>
+                            <option value="Pendente">Pendente (Bloquear Entrada)</option>
+                            <option value="Arquivo">Arquivado (Desistente)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-200">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors">Cancelar</button>
+                    <button type="submit" class="px-6 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors">Guardar Aluno</button>
+                </div>
+            </form>
+        </div>
     </div>
-  );
-}
+
+    <!-- FIREBASE & LÓGICA DO SISTEMA (Vanilla JS) -->
+    <script type="module">
+        // 1. Importar Firebase via CDN (Módulos Nativos do Navegador)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // 2. Configuração exata do seu projeto
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
+            authDomain: "tanqueteambjj.firebaseapp.com",
+            projectId: "tanqueteambjj",
+            storageBucket: "tanqueteambjj.firebasestorage.app",
+            messagingSenderId: "410605992451",
+            appId: "1:410605992451:web:f0f341f4594fe75f376c36"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- ESTADO GLOBAL ---
+        const STATE = {
+            alunos: [],
+            filterStr: '',
+            filterType: 'Todos',
+            isCanvas: typeof __app_id !== 'undefined'
+        };
+
+        // Função auxiliar para determinar o caminho correto da coleção 
+        // (Isso permite que o código rode no meu ambiente de testes e no seu site real sem quebrar)
+        const getCollectionRef = (name) => {
+            return STATE.isCanvas 
+                ? collection(db, 'artifacts', __app_id, 'public', 'data', name) 
+                : collection(db, name);
+        };
+        const getDocRef = (name, id) => {
+            return STATE.isCanvas 
+                ? doc(db, 'artifacts', __app_id, 'public', 'data', name, id) 
+                : doc(db, name, id);
+        };
+
+        // --- INICIALIZAÇÃO E LISTENERS ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("Utilizador autenticado no Firebase:", user.uid);
+                loadData();
+            } else {
+                console.log("Nenhum utilizador logado. Redirecionando...");
+                // Se testar fora do painel de login, descomente a linha abaixo
+                // window.location.href = 'https://www.tanqueteambjj.com.br/login.html';
+                
+                // Para demonstração, carrega os dados mesmo sem login se não for forçado
+                loadData(); 
+            }
+        });
+
+        function loadData() {
+            onSnapshot(getCollectionRef('alunos'), (snapshot) => {
+                STATE.alunos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderAlunos();
+                renderCheckinSimulator();
+                renderPrintList();
+            });
+        }
+
+        // --- RENDERIZAÇÃO DA INTERFACE ---
+        const BELT_STYLES = {
+            'Branca': 'bg-white text-gray-800 border-gray-300',
+            'Cinza': 'bg-gray-400 text-white border-gray-500',
+            'Amarela': 'bg-yellow-400 text-gray-900 border-yellow-500',
+            'Laranja': 'bg-orange-500 text-white border-orange-600',
+            'Verde': 'bg-green-600 text-white border-green-700',
+            'Azul': 'bg-blue-600 text-white border-blue-700',
+            'Roxa': 'bg-purple-600 text-white border-purple-700',
+            'Marrom': 'bg-amber-800 text-white border-amber-900',
+            'Preta': 'bg-gray-900 text-white border-black'
+        };
+
+        function renderAlunos() {
+            // Filtragem
+            let filtrados = STATE.alunos.filter(a => {
+                const matchBusca = a.nome.toLowerCase().includes(STATE.filterStr.toLowerCase()) || 
+                                   (a.telefone && a.telefone.includes(STATE.filterStr));
+                
+                let matchTipo = true;
+                if(STATE.filterType === 'Ativos') matchTipo = a.status === 'Ativo';
+                if(STATE.filterType === 'Infantil') matchTipo = a.tipo === 'Infantil';
+                if(STATE.filterType === 'Adulto') matchTipo = a.tipo === 'Adulto';
+                if(STATE.filterType === 'Arquivo') matchTipo = a.status === 'Arquivo';
+                if(STATE.filterType === 'Todos') matchTipo = a.status !== 'Arquivo';
+
+                return matchBusca && matchTipo;
+            });
+
+            // Atualizar contadores
+            document.getElementById('stat-ativos').textContent = STATE.alunos.filter(a => a.status === 'Ativo').length;
+            document.getElementById('stat-infantil').textContent = STATE.alunos.filter(a => a.tipo === 'Infantil' && a.status !== 'Arquivo').length;
+            document.getElementById('stat-adulto').textContent = STATE.alunos.filter(a => a.tipo === 'Adulto' && a.status !== 'Arquivo').length;
+            document.getElementById('stat-arquivo').textContent = STATE.alunos.filter(a => a.status === 'Arquivo').length;
+
+            // Renderizar Tabela
+            const tbody = document.getElementById('alunos-tbody');
+            if(filtrados.length === 0) {
+                tbody.innerHTML = `<tr><td colSpan="5" class="p-8 text-center text-gray-500">Nenhum aluno encontrado.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtrados.map(aluno => {
+                const corFaixa = BELT_STYLES[aluno.faixa] || BELT_STYLES['Branca'];
+                const badgeStatus = aluno.status === 'Ativo' 
+                    ? `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"><i class="fa-solid fa-check mr-1"></i>Ativo</span>`
+                    : aluno.status === 'Pendente' 
+                    ? `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Pendente</span>`
+                    : `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Arquivo</span>`;
+
+                return `
+                <tr class="hover:bg-gray-50 transition-colors border-b border-gray-50">
+                    <td class="p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600 border border-gray-300">
+                                ${aluno.nome.charAt(0)}
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-900">${aluno.nome}</div>
+                                <div class="text-xs text-gray-500">${aluno.tipo || 'Adulto'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-4 hidden md:table-cell text-sm text-gray-600">${aluno.telefone || '-'}</td>
+                    <td class="p-4 text-center">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full border ${corFaixa}">
+                            ${aluno.faixa} ${aluno.graus > 0 ? `- ${aluno.graus}º` : ''}
+                        </span>
+                    </td>
+                    <td class="p-4 text-center">${badgeStatus}</td>
+                    <td class="p-4 text-right">
+                        <button onclick="openStudentModal('${aluno.id}')" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                            <i class="fa-solid fa-pen-to-square"></i> Editar
+                        </button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        function renderCheckinSimulator() {
+            const list = document.getElementById('simulator-list');
+            // Pega os 6 primeiros alunos para simular
+            const alunosSimulacao = STATE.alunos.slice(0, 6);
+            
+            list.innerHTML = alunosSimulacao.map(aluno => `
+                <button onclick="simulateCheckin('${aluno.id}', '${aluno.status}', '${aluno.nome}')" class="w-full flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-400 transition-all text-left">
+                    <span class="font-medium text-gray-800 flex-1">${aluno.nome}</span>
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full ${aluno.status === 'Ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                        ${aluno.status}
+                    </span>
+                </button>
+            `).join('');
+        }
+
+        function renderPrintList() {
+            const tbody = document.getElementById('print-tbody');
+            tbody.innerHTML = STATE.alunos.filter(a => a.status === 'Ativo').map(a => `
+                <tr>
+                    <td class="border border-gray-300 p-2 text-sm">${a.nome}</td>
+                    <td class="border border-gray-300 p-2 text-sm">${a.faixa}</td>
+                </tr>
+            `).join('');
+        }
+
+        // --- FUNÇÕES EXPOSTAS AO WINDOW (Para o HTML conseguir chamar) ---
+
+        window.changeTab = function(tabId, btnElement) {
+            // Atualizar botões
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.className = "nav-btn w-full flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors";
+            });
+            btnElement.className = "nav-btn w-full flex items-center gap-3 px-6 py-3 text-sm font-medium bg-red-600 text-white border-r-4 border-red-400";
+            
+            // Atualizar secções
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById('view-' + tabId).classList.add('active');
+            
+            // Atualizar título
+            document.getElementById('header-title').textContent = btnElement.textContent.trim();
+        };
+
+        window.setFilter = function(tipo) {
+            STATE.filterType = tipo;
+            renderAlunos();
+        };
+
+        window.handleSearch = function() {
+            STATE.filterStr = document.getElementById('search-input').value;
+            renderAlunos();
+        };
+
+        window.openStudentModal = function(id = null) {
+            const form = document.getElementById('student-form');
+            form.reset();
+            
+            if(id) {
+                const aluno = STATE.alunos.find(a => a.id === id);
+                document.getElementById('modal-title').textContent = "Editar Aluno";
+                form.id.value = aluno.id;
+                form.nome.value = aluno.nome || '';
+                form.telefone.value = aluno.telefone || '';
+                form.tipo.value = aluno.tipo || 'Adulto';
+                form.faixa.value = aluno.faixa || 'Branca';
+                form.graus.value = aluno.graus || 0;
+                form.status.value = aluno.status || 'Ativo';
+            } else {
+                document.getElementById('modal-title').textContent = "Novo Aluno";
+                form.id.value = '';
+            }
+            
+            document.getElementById('student-modal').classList.remove('hidden');
+            document.getElementById('student-modal').classList.add('flex');
+        };
+
+        window.closeModal = function() {
+            document.getElementById('student-modal').classList.add('hidden');
+            document.getElementById('student-modal').classList.remove('flex');
+        };
+
+        window.saveStudent = async function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = {
+                nome: form.nome.value,
+                telefone: form.telefone.value,
+                tipo: form.tipo.value,
+                faixa: form.faixa.value,
+                graus: parseInt(form.graus.value),
+                status: form.status.value
+            };
+
+            const id = form.id.value;
+            try {
+                if (id) {
+                    await updateDoc(getDocRef('alunos', id), data);
+                } else {
+                    data.dt_matricula = new Date().toISOString().split('T')[0];
+                    await addDoc(getCollectionRef('alunos'), data);
+                }
+                closeModal();
+            } catch (error) {
+                console.error("Erro ao salvar:", error);
+                alert("Ocorreu um erro ao gravar no banco de dados.");
+            }
+        };
+
+        window.simulateCheckin = async function(id, status, nome) {
+            const idle = document.getElementById('camera-idle');
+            const success = document.getElementById('camera-success');
+            const error = document.getElementById('camera-error');
+            const screen = document.getElementById('camera-screen');
+
+            idle.classList.add('hidden');
+            
+            if (status === 'Pendente') {
+                screen.classList.remove('border-gray-800');
+                screen.classList.add('border-red-500', 'shadow-[0_0_30px_rgba(239,68,68,0.4)]');
+                document.getElementById('checkin-name-error').textContent = nome;
+                error.classList.remove('hidden');
+                error.classList.add('flex');
+            } else {
+                screen.classList.remove('border-gray-800');
+                screen.classList.add('border-green-500', 'shadow-[0_0_30px_rgba(34,197,94,0.4)]');
+                document.getElementById('checkin-name-success').textContent = nome;
+                success.classList.remove('hidden');
+                success.classList.add('flex');
+                
+                // Gravar presença no banco de dados (Opcional, pode descomentar se quiser)
+                /*
+                await addDoc(getCollectionRef('presencas'), {
+                    aluno_id: id, timestamp: serverTimestamp()
+                });
+                */
+            }
+
+            // Resetar após 3.5 segundos
+            setTimeout(() => {
+                screen.className = "relative aspect-[4/3] rounded-xl overflow-hidden border-4 border-gray-800 bg-gray-900 transition-colors duration-300 flex items-center justify-center";
+                success.classList.add('hidden'); success.classList.remove('flex');
+                error.classList.add('hidden'); error.classList.remove('flex');
+                idle.classList.remove('hidden');
+            }, 3500);
+        };
+
+        window.handleLogout = function() {
+            signOut(auth).then(() => {
+                // Redireciona para o login do seu site original
+                window.location.href = 'https://www.tanqueteambjj.com.br/login.html';
+            }).catch((error) => console.error("Erro ao sair", error));
+        };
+
+    </script>
+</body>
+</html>
