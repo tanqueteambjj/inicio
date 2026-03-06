@@ -162,7 +162,7 @@
                                 </tr>
                             </thead>
                             <tbody id="contracts-table-body" class="text-sm text-gray-700 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
-                                <tr><td colspan="6" class="px-6 py-4 text-center">A carregar dados...</td></tr>
+                                <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500 italic">Aguardando dados...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -304,40 +304,38 @@
     <!-- Firebase Logic & Application Code -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDocs, collection, query, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // === FUNÇÕES GLOBAIS ===
+        // Configuração de ambiente e escopo Global
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
+            authDomain: "tanqueteambjj.firebaseapp.com",
+            projectId: "tanqueteambjj",
+            storageBucket: "tanqueteambjj.firebasestorage.app",
+            messagingSenderId: "410605992451",
+            appId: "1:410605992451:web:f0f341f4594fe75f376c36"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj";
+
+        window.students = []; 
+        window.experimentalList = [];
+
+        // === FUNÇÕES DE UI GLOBAIS ===
         window.toggleTheme = function() {
             const docEl = document.documentElement;
             const themeIcons = ['theme-icon-sidebar', 'theme-icon-topbar'];
-            
             if (docEl.classList.contains('dark')) {
-                docEl.classList.remove('dark');
-                localStorage.setItem('tanque_theme', 'light');
-                themeIcons.forEach(id => {
-                    const el = document.getElementById(id);
-                    if(el) { el.classList.remove('fa-sun'); el.classList.add('fa-moon'); }
-                });
+                docEl.classList.remove('dark'); localStorage.setItem('tanque_theme', 'light');
+                themeIcons.forEach(id => { const el = document.getElementById(id); if(el) { el.classList.remove('fa-sun'); el.classList.add('fa-moon'); } });
             } else {
-                docEl.classList.add('dark');
-                localStorage.setItem('tanque_theme', 'dark');
-                themeIcons.forEach(id => {
-                    const el = document.getElementById(id);
-                    if(el) { el.classList.remove('fa-moon'); el.classList.add('fa-sun'); }
-                });
+                docEl.classList.add('dark'); localStorage.setItem('tanque_theme', 'dark');
+                themeIcons.forEach(id => { const el = document.getElementById(id); if(el) { el.classList.remove('fa-moon'); el.classList.add('fa-sun'); } });
             }
         };
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const themeIcons = ['theme-icon-sidebar', 'theme-icon-topbar'];
-            if (document.documentElement.classList.contains('dark')) {
-                themeIcons.forEach(id => {
-                    const el = document.getElementById(id);
-                    if(el) { el.classList.remove('fa-moon'); el.classList.add('fa-sun'); }
-                });
-            }
-        });
 
         window.toggleMobileMenu = function() {
             document.getElementById('sidebar-menu').classList.toggle('-translate-x-full');
@@ -345,9 +343,7 @@
         };
 
         window.switchMainView = function(viewName) {
-            if(window.innerWidth < 768 && !document.getElementById('sidebar-menu').classList.contains('-translate-x-full')) {
-                window.toggleMobileMenu();
-            }
+            if(window.innerWidth < 768 && !document.getElementById('sidebar-menu').classList.contains('-translate-x-full')) window.toggleMobileMenu();
             
             document.getElementById('view-contracts').classList.toggle('hidden', viewName !== 'contracts');
             document.getElementById('view-reports').classList.toggle('hidden', viewName !== 'reports');
@@ -369,17 +365,11 @@
             window.location.href = "https://www.tanqueteambjj.com.br/login.html";
         };
 
-        // --- Formatação ---
-        function formatCurrency(val) {
-            return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        }
+        // --- Utilitários de Formatação ---
+        function formatCurrency(val) { return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
         function formatDateBR(isoString) {
             if(!isoString) return '--';
-            try {
-                const date = new Date(isoString);
-                if(isNaN(date)) return '--';
-                return date.toLocaleDateString('pt-BR');
-            } catch(e) { return '--'; }
+            try { const date = new Date(isoString); if(isNaN(date)) return '--'; return date.toLocaleDateString('pt-BR'); } catch(e) { return '--'; }
         }
 
         const PLAN_DICT = {
@@ -395,117 +385,53 @@
             'dependente': { price: 0.00, short: 'Dependente' }
         };
 
-        window.getPlanInfo = (planKey) => window.PLAN_DICT[planKey] || { price: 0, short: String(planKey||'').toUpperCase() };
+        window.getPlanInfo = (planKey) => PLAN_DICT[planKey] || { price: 0, short: String(planKey||'').toUpperCase() };
 
         // Máscara CPF
         document.addEventListener('DOMContentLoaded', () => {
-            const cpfEl = document.getElementById('edit-cpf');
-            if(cpfEl) {
-                cpfEl.addEventListener('input', e => {
-                    let v = e.target.value.replace(/\D/g, '');
-                    if (v.length > 11) v = v.slice(0, 11);
-                    if (v.length > 9) v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{2}).*/, '$1.$2.$3-$4');
-                    else if (v.length > 6) v = v.replace(/^(\d{3})(\d{3})(\d{3}).*/, '$1.$2.$3');
-                    else if (v.length > 3) v = v.replace(/^(\d{3})(\d{3}).*/, '$1.$2');
-                    e.target.value = v;
-                });
-            }
-            const guardianCpfEl = document.getElementById('edit-guardian-cpf');
-            if(guardianCpfEl) {
-                guardianCpfEl.addEventListener('input', e => {
-                    let v = e.target.value.replace(/\D/g, '');
-                    if (v.length > 11) v = v.slice(0, 11);
-                    if (v.length > 9) v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{2}).*/, '$1.$2.$3-$4');
-                    else if (v.length > 6) v = v.replace(/^(\d{3})(\d{3})(\d{3}).*/, '$1.$2.$3');
-                    else if (v.length > 3) v = v.replace(/^(\d{3})(\d{3}).*/, '$1.$2');
-                    e.target.value = v;
-                });
-            }
+            const applyCPFMask = (id) => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.addEventListener('input', e => {
+                        let v = e.target.value.replace(/\D/g, '');
+                        if (v.length > 11) v = v.slice(0, 11);
+                        if (v.length > 9) v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{2}).*/, '$1.$2.$3-$4');
+                        else if (v.length > 6) v = v.replace(/^(\d{3})(\d{3})(\d{3}).*/, '$1.$2.$3');
+                        else if (v.length > 3) v = v.replace(/^(\d{3})(\d{3}).*/, '$1.$2');
+                        e.target.value = v;
+                    });
+                }
+            };
+            applyCPFMask('edit-cpf');
+            applyCPFMask('edit-guardian-cpf');
         });
 
-        // --- Configuração Firebase ---
-        const manualConfig = {
-            apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
-            authDomain: "tanqueteambjj.firebaseapp.com",
-            projectId: "tanqueteambjj",
-            storageBucket: "tanqueteambjj.firebasestorage.app",
-            messagingSenderId: "410605992451",
-            appId: "1:410605992451:web:f0f341f4594fe75f376c36"
-        };
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : manualConfig;
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj";
-
-        window.students = []; 
-        window.experimentalList = [];
-
-        const isCanvasPreview = typeof __app_id !== 'undefined';
-        let sessionData = localStorage.getItem('tanque_user_session');
-
-        if (!sessionData && isCanvasPreview) {
-            sessionData = JSON.stringify({ role: 'juridico', name: 'Departamento Jurídico' });
-            localStorage.setItem('tanque_user_session', sessionData);
-        }
-
-        if (!sessionData) {
-            window.location.href = "https://www.tanqueteambjj.com.br/login.html";
-        } else {
-            const user = JSON.parse(sessionData);
-            if (user.role !== 'admin' && user.role !== 'juridico' && !isCanvasPreview) {
-                window.location.href = "https://www.tanqueteambjj.com.br/login.html";
-            } else {
-                
-                // Configuração inicial direta - garante carregamento!
-                const initApp = async () => {
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token); 
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch(e) { 
-                        console.error(e); 
-                        await signInAnonymously(auth); 
-                    }
-                    
-                    // Logo após a validação do token, forçamos o carregamento imediato dos dados
-                    window.loadData();
-                    window.loadExperimentalData();
-                };
-
-                initApp();
-            }
-        }
-
-        // CARREGA ALUNOS E ATUALIZA TABELA IMEDIATAMENTE
+        // --- CARREGAMENTO DE DADOS (DB) ---
         window.loadData = async function() {
             try {
                 const querySnapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'students'));
                 window.students = [];
-                querySnapshot.forEach(doc => {
-                    window.students.push({ id: doc.id, ...doc.data() });
+                querySnapshot.forEach(d => {
+                    window.students.push({ id: d.id, ...d.data() });
                 });
-                
                 window.students.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                 document.getElementById('list-count').innerText = window.students.length;
                 window.renderTable();
             } catch (error) {
-                console.error("Erro ao carregar dados:", error);
+                console.error("Erro ao carregar alunos:", error);
             }
-        }
-        
-        window.loadExperimentalData = async () => { 
+        };
+
+        window.loadExperimentalData = async function() { 
             try { 
                 const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'experimental')); 
                 const snap = await getDocs(q); 
                 window.experimentalList = []; 
-                snap.forEach((doc) => window.experimentalList.push({ id: doc.id, ...doc.data() })); 
-            } catch (error) { console.error(error); } 
+                snap.forEach((d) => window.experimentalList.push({ id: d.id, ...d.data() })); 
+            } catch (error) { console.error("Erro exp:", error); } 
         };
 
+        // --- RENDERIZAÇÃO DA TABELA ---
         window.filterTable = () => { window.renderTable(); };
 
         window.renderTable = function() {
@@ -513,7 +439,13 @@
             if(!tbody) return; 
             tbody.innerHTML = '';
             
-            const search = (document.getElementById('searchInput')?.value || document.getElementById('searchInputMobile')?.value || "").toLowerCase();
+            const searchDesktop = document.getElementById('searchInput');
+            const searchMobile = document.getElementById('searchInputMobile');
+            
+            if (document.activeElement === searchMobile && searchDesktop) searchDesktop.value = searchMobile.value;
+            else if (document.activeElement === searchDesktop && searchMobile) searchMobile.value = searchDesktop.value;
+
+            const search = (searchDesktop ? searchDesktop.value : "").toLowerCase();
             const statusFilter = document.getElementById('filter-status')?.value || "";
 
             let filtered = window.students.filter(s => {
@@ -594,79 +526,39 @@
             });
         };
 
-        // --- IMPRESSÃO DE CONTRATO PADRÃO ABNT ---
+        // --- IMPRESSÃO E RELATÓRIOS ---
         window.printHtmlContent = function(htmlContent, titleStr) {
             const iframe = document.createElement('iframe');
-            iframe.style.position = 'absolute';
-            iframe.style.width = '0px';
-            iframe.style.height = '0px';
-            iframe.style.border = 'none';
+            iframe.style.position = 'absolute'; iframe.style.width = '0px'; iframe.style.height = '0px'; iframe.style.border = 'none';
             document.body.appendChild(iframe);
-
             const docIframe = iframe.contentWindow.document;
             docIframe.open();
-            docIframe.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>${titleStr}</title>
-                    <style>
-                        @media print {
-                            @page { 
-                                margin: 3cm 2cm 2cm 3cm; /* Margens ABNT */
-                                size: A4 portrait;
-                            }
-                            body { 
-                                -webkit-print-color-adjust: exact; 
-                                print-color-adjust: exact; 
-                                font-family: 'Times New Roman', Times, serif; 
-                            }
-                        }
-                        body { font-family: 'Times New Roman', Times, serif; margin: 0; padding: 0; }
-                    </style>
-                </head>
-                <body>
-                    ${htmlContent}
-                </body>
-                </html>
-            `);
+            docIframe.write(`<!DOCTYPE html><html><head><title>${titleStr}</title><style>@media print { @page { margin: 3cm 2cm 2cm 3cm; size: A4 portrait; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; font-family: 'Times New Roman', Times, serif; } } body { font-family: 'Times New Roman', Times, serif; margin: 0; padding: 0; }</style></head><body>${htmlContent}</body></html>`);
             docIframe.close();
-
-            setTimeout(() => {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-                setTimeout(() => { document.body.removeChild(iframe); }, 2000);
-            }, 500);
+            setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); setTimeout(() => { document.body.removeChild(iframe); }, 2000); }, 500);
         };
 
         window.printStudentContract = async function(id) {
-            const s = window.students.find(st => st.id === id);
-            if (!s) return;
-            
+            const s = window.students.find(st => st.id === id); if (!s) return;
             const isCombo = String(s.plan).includes('combo'); 
             let myDependents = [];
             if (isCombo) {
                 const qSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'students'));
                 qSnap.forEach(docSnap => {
                     const data = docSnap.data();
-                    if(data.titularId === s.id && data.plan === 'dependente' && !data.archived) {
-                        myDependents.push(data);
-                    }
+                    if(data.titularId === s.id && data.plan === 'dependente' && !data.archived) myDependents.push(data);
                 });
             }
 
             const pInfo = window.getPlanInfo(s.plan);
-            let price = formatCurrency(pInfo.price);
-            let displayName = pInfo.short;
+            let price = formatCurrency(pInfo.price); let displayName = pInfo.short;
 
             let formattedDob = '--/--/----';
             if (s.dob) { 
                 if (s.dob.includes('-')) {
                     const parts = s.dob.split('-');
                     if (parts.length === 3) formattedDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
-                } else {
-                    formattedDob = s.dob;
-                }
+                } else formattedDob = s.dob;
             }
 
             let contratanteText = s.name || "NÃO INFORMADO";
@@ -681,8 +573,8 @@
             const printDateStr = regDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
             
             const isFidelity = String(s.plan).includes('semestral') || String(s.plan).includes('trimestral') || isCombo;
-            
             let clauseNum = 3;
+            
             let clausesHtmlABNT = `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify; line-height: 1.5;"><strong>CLÁUSULA 1ª – DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
             clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify; line-height: 1.5;"><strong>CLÁUSULA 2ª – DO PLANO E DOS VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong style="text-transform: uppercase; text-decoration: underline;">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong>${price}</strong>. As mensalidades deverão ser pagas pontualmente conforme a data de vencimento acordada no ato da matrícula.</p>`;
 
@@ -716,33 +608,26 @@
 
             const contractHtml = `
                 <div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.5; color: #000; max-width: 100%; margin: 0; padding: 0; text-align: justify;">
-                    
                     <div style="text-align: center; margin-bottom: 0.5cm;">
                         <img src="https://iili.io/qC543c7.png" alt="Logo" style="height: 3cm; margin-bottom: 0.2cm; filter: grayscale(100%);">
                         <h1 style="font-weight: bold; text-transform: uppercase; font-size: 16pt; margin: 0;">TANQUE TEAM BJJ</h1>
                     </div>
-                    
                     <div style="text-align: left; margin-bottom: 0.5cm; font-size: 10pt;">
                         <p style="margin: 0; line-height: 1.5;"><strong>Razão Social:</strong> TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA</p>
                         <p style="margin: 0; line-height: 1.5;"><strong>CNPJ:</strong> 00.000.000/0001-00 | <strong>Tel:</strong> (91) 99819-2610</p>
                         <p style="margin: 0; line-height: 1.5;"><strong>Endereço:</strong> Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</p>
                     </div>
-                    
                     <hr style="border: none; border-top: 1px solid #000; margin-bottom: 1cm;">
-                    
                     <h2 style="text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 1.5cm; text-transform: uppercase;">CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS</h2>
-                    
                     <div style="margin-bottom: 1.5cm; text-align: justify; line-height: 1.5;">
                         <p style="text-indent: 1.25cm; margin-bottom: 0.5cm;"><strong>1. CONTRATADA:</strong> TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA, com sede na Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, inscrita no CNPJ sob o nº 00.000.000/0001-00.</p>
                         <p style="text-indent: 1.25cm; margin-bottom: 0.5cm;"><strong>2. CONTRATANTE:</strong> ${contratanteText}, portador(a) do CPF nº ${s.cpf || "Não informado"}, residente e domiciliado(a) no endereço: ${s.address || "Não informado"}, telefone para contato: ${s.phone || "Não informado"}, endereço eletrônico (e-mail): ${s.email || "Não informado"}.</p>
                         <p style="text-indent: 1.25cm; margin-bottom: 0.5cm;"><strong>3. ALUNO(A) BENEFICIÁRIO(A):</strong> ${s.name || "NÃO INFORMADO"}, data de nascimento: ${formattedDob}. ${beltInfo}</p>
                         ${dependentsHtmlABNT}
                     </div>
-
                     <div style="margin-bottom: 2cm;">
                         ${clausesHtmlABNT}
                     </div>
-
                     <div style="margin-top: 2cm; page-break-inside: avoid;">
                         <p style="text-align: right; margin-bottom: 2.5cm;">Belém-PA, ${printDateStr}.</p>
                         <table style="width: 100%; text-align: center; border: none;">
@@ -761,39 +646,27 @@
                     </div>
                 </div>
             `;
-            
-            window.printHtmlContent(contractHtml, `Contrato_Matricula_TanqueTeam_${s.name.replace(/\s+/g, '_')}`);
+            window.printHtmlContent(contractHtml, `Contrato_${s.name.replace(/\s+/g, '_')}`);
         };
 
-        // --- EDIÇÃO DE CONTRATO ---
         window.openEditModal = (id) => {
             const s = window.students.find(st => st.id === id); if(!s) return;
-            document.getElementById('edit-id').value = id;
-            document.getElementById('edit-name').value = s.name || '';
-            document.getElementById('edit-cpf').value = s.cpf || '';
-            document.getElementById('edit-address').value = s.address || '';
-            document.getElementById('edit-guardian').value = s.guardian || '';
-            document.getElementById('edit-guardian-cpf').value = s.guardianCpf || '';
+            document.getElementById('edit-id').value = id; document.getElementById('edit-name').value = s.name || '';
+            document.getElementById('edit-cpf').value = s.cpf || ''; document.getElementById('edit-address').value = s.address || '';
+            document.getElementById('edit-guardian').value = s.guardian || ''; document.getElementById('edit-guardian-cpf').value = s.guardianCpf || '';
             document.getElementById('edit-plan').value = s.plan || 'infantil-mensal';
             
-            let endDate = '';
-            if (s.contractEndDate) endDate = s.contractEndDate.split('T')[0];
-            document.getElementById('edit-end-date').value = endDate;
+            if (s.contractEndDate) document.getElementById('edit-end-date').value = s.contractEndDate.split('T')[0];
+            else document.getElementById('edit-end-date').value = '';
 
-            let startDate = '';
-            if (s.registrationDate) startDate = s.registrationDate.split('T')[0];
-            document.getElementById('edit-start-date').value = startDate;
+            if (s.registrationDate) document.getElementById('edit-start-date').value = s.registrationDate.split('T')[0];
+            else document.getElementById('edit-start-date').value = '';
 
             document.getElementById('edit-enrollment-status').value = s.enrollmentStatus || 'Ativo';
-
-            document.getElementById('edit-contract-modal').classList.remove('hidden');
-            document.getElementById('edit-contract-modal').classList.add('flex');
+            document.getElementById('edit-contract-modal').classList.remove('hidden'); document.getElementById('edit-contract-modal').classList.add('flex');
         };
 
-        window.closeEditModal = () => {
-            document.getElementById('edit-contract-modal').classList.add('hidden');
-            document.getElementById('edit-contract-modal').classList.remove('flex');
-        };
+        window.closeEditModal = () => { document.getElementById('edit-contract-modal').classList.add('hidden'); document.getElementById('edit-contract-modal').classList.remove('flex'); };
 
         window.saveContractChanges = async () => {
             const id = document.getElementById('edit-id').value;
@@ -806,37 +679,25 @@
                 plan: document.getElementById('edit-plan').value,
                 enrollmentStatus: document.getElementById('edit-enrollment-status').value
             };
-
-            const endD = document.getElementById('edit-end-date').value;
-            if(endD) updates.contractEndDate = new Date(endD + 'T12:00:00.000Z').toISOString();
-
-            const startD = document.getElementById('edit-start-date').value;
-            if(startD) updates.registrationDate = new Date(startD + 'T12:00:00.000Z').toISOString();
+            const endD = document.getElementById('edit-end-date').value; if(endD) updates.contractEndDate = new Date(endD + 'T12:00:00.000Z').toISOString();
+            const startD = document.getElementById('edit-start-date').value; if(startD) updates.registrationDate = new Date(startD + 'T12:00:00.000Z').toISOString();
 
             try {
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id), updates);
-                alert("Contrato atualizado com sucesso!");
-                window.closeEditModal();
-                window.loadData();
-            } catch(e) {
-                console.error(e);
-                alert("Erro ao salvar.");
-            }
+                alert("Contrato atualizado com sucesso!"); window.closeEditModal(); window.loadData();
+            } catch(e) { console.error(e); alert("Erro ao salvar."); }
         };
 
-        // --- GERAÇÃO DE RELATÓRIOS ---
         window.generateReport = async (type) => {
             const container = document.getElementById('report-container');
             container.classList.remove('hidden');
             let html = `<div style="text-align:center; margin-bottom:20px; border-bottom:2px solid #000; padding-bottom:10px;"><h2 style="font-size:24px; font-weight:bold; margin:0; text-transform:uppercase;">TANQUE TEAM BJJ</h2><h3 style="font-size:16px; color:#555; margin:5px 0; text-transform:uppercase;">Departamento Jurídico</h3><p style="font-size:12px; color:#777;">Gerado em: ${new Date().toLocaleString('pt-BR')}</p></div>`;
             let tableRows = '';
-
-            const today = new Date();
-            today.setHours(0,0,0,0);
+            const today = new Date(); today.setHours(0,0,0,0);
 
             if (type === 'ativos') {
                 html += `<h3 style="font-size:18px; font-weight:bold; margin-bottom:15px;">ALUNOS ATIVOS</h3><table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:left;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Nome</th><th style="border: 1px solid #ddd; padding: 8px;">Plano</th><th style="border: 1px solid #ddd; padding: 8px;">Vencimento Contrato</th><th style="border: 1px solid #ddd; padding: 8px;">CPF</th></tr></thead><tbody>`;
-                window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(s => { 
+                window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).forEach(s => { 
                     tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${s.name}</td><td style="border: 1px solid #ddd; padding: 8px; text-transform:uppercase;">${window.getPlanInfo(s.plan).short}</td><td style="border: 1px solid #ddd; padding: 8px;">${formatDateBR(s.contractEndDate)}</td><td style="border: 1px solid #ddd; padding: 8px;">${s.cpf||'-'}</td></tr>`; 
                 });
                 if(tableRows === '') tableRows = '<tr><td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: center;">Nenhum registro.</td></tr>';
@@ -858,7 +719,6 @@
                 html += tableRows + `</tbody></table>`;
             } else if (type === 'vencimento') {
                 html += `<h3 style="font-size:18px; font-weight:bold; margin-bottom:15px; color:#c2410c;">CONTRATOS A VENCER (OU EXPIRADOS)</h3><table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:left;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Aluno</th><th style="border: 1px solid #ddd; padding: 8px;">Plano</th><th style="border: 1px solid #ddd; padding: 8px;">Vencimento</th><th style="border: 1px solid #ddd; padding: 8px;">Dias p/ Expirar</th></tr></thead><tbody>`;
-                
                 let expContracts = [];
                 window.students.filter(s => !s.archived && s.enrollmentStatus !== 'Inativo').forEach(s => {
                     if (s.contractEndDate) {
@@ -866,36 +726,26 @@
                         if(!isNaN(endDate.getTime())) {
                             const timeDiff = endDate.getTime() - today.getTime();
                             const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-                            if (daysDiff <= 30) {
-                                expContracts.push({ name: s.name, plan: s.plan, endDateStr: formatDateBR(s.contractEndDate), daysDiff: daysDiff });
-                            }
+                            if (daysDiff <= 30) expContracts.push({ name: s.name, plan: s.plan, endDateStr: formatDateBR(s.contractEndDate), daysDiff: daysDiff });
                         }
                     }
                 });
-
                 expContracts.sort((a,b) => a.daysDiff - b.daysDiff).forEach(c => {
                     let color = c.daysDiff < 0 ? 'color: red; font-weight: bold;' : '';
                     let daysText = c.daysDiff < 0 ? `Expirado há ${Math.abs(c.daysDiff)} dias` : `${c.daysDiff} dias`;
                     tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${c.name}</td><td style="border: 1px solid #ddd; padding: 8px; text-transform:uppercase;">${window.getPlanInfo(c.plan).short}</td><td style="border: 1px solid #ddd; padding: 8px; ${color}">${c.endDateStr}</td><td style="border: 1px solid #ddd; padding: 8px; ${color}">${daysText}</td></tr>`;
                 });
-                
                 if(tableRows === '') tableRows = '<tr><td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: center;">Nenhum contrato vencendo nos próximos 30 dias.</td></tr>';
                 html += tableRows + `</tbody></table>`;
             } else if (type === 'inativos') {
                 html += `<h3 style="font-size:18px; font-weight:bold; margin-bottom:15px; color:#4b5563;">ALUNOS INATIVOS E ARQUIVADOS</h3><table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:left;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Nome</th><th style="border: 1px solid #ddd; padding: 8px;">CPF</th><th style="border: 1px solid #ddd; padding: 8px;">Telefone</th><th style="border: 1px solid #ddd; padding: 8px;">Status Final</th></tr></thead><tbody>`;
-                
                 const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'students'));
                 let inativos = [];
-                snap.forEach(d => {
-                    const data = d.data();
-                    if (data.archived || data.enrollmentStatus === 'Inativo') inativos.push(data);
-                });
-                
+                snap.forEach(d => { const data = d.data(); if (data.archived || data.enrollmentStatus === 'Inativo') inativos.push(data); });
                 inativos.sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(s => {
                     let status = s.archived ? 'Arquivado' : 'Inativo';
                     tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${s.name}</td><td style="border: 1px solid #ddd; padding: 8px;">${s.cpf||'-'}</td><td style="border: 1px solid #ddd; padding: 8px;">${s.phone||'-'}</td><td style="border: 1px solid #ddd; padding: 8px; text-transform:uppercase;">${status}</td></tr>`;
                 });
-                
                 if(tableRows === '') tableRows = '<tr><td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: center;">Nenhum aluno inativo.</td></tr>';
                 html += tableRows + `</tbody></table>`;
             }
@@ -904,6 +754,29 @@
             document.body.classList.add('printing-report');
             setTimeout(() => { window.print(); setTimeout(() => { document.body.classList.remove('printing-report'); container.classList.add('hidden'); }, 2000); }, 800);
         };
+
+        // INICIALIZAÇÃO
+        const startApp = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Erro na autenticação:", error);
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.loadData();
+                window.loadExperimentalData();
+            }
+        });
+
+        startApp();
+
     </script>
 </body>
 </html>
