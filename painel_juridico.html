@@ -304,7 +304,7 @@
     <!-- Firebase Logic & Application Code -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDocs, collection, query, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // === FUNÇÕES GLOBAIS ===
@@ -458,7 +458,7 @@
                 window.location.href = "https://www.tanqueteambjj.com.br/login.html";
             } else {
                 
-                // Configuração inicial com onAuthStateChanged
+                // Configuração inicial direta - garante carregamento!
                 const initApp = async () => {
                     try {
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -470,15 +470,11 @@
                         console.error(e); 
                         await signInAnonymously(auth); 
                     }
+                    
+                    // Logo após a validação do token, forçamos o carregamento imediato dos dados
+                    window.loadData();
+                    window.loadExperimentalData();
                 };
-
-                // Apenas após login executamos o fetch dos dados
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        window.loadData();
-                        window.loadExperimentalData();
-                    }
-                });
 
                 initApp();
             }
