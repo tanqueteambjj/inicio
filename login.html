@@ -8,7 +8,7 @@
     <!-- Favicon -->
     <link rel="icon" href="https://iili.io/qC543c7.png" type="image/png">
 
-    <!-- PWA Manifest Inline (Faz o navegador reconhecer o site como App) -->
+    <!-- PWA Manifest Inline -->
     <link rel="manifest" href='data:application/manifest+json;utf-8,%7B%22name%22%3A%20%22Tanque%20Team%20BJJ%22%2C%20%22short_name%22%3A%20%22TanqueTeam%22%2C%20%22start_url%22%3A%20%22.%2Flogin.html%22%2C%20%22display%22%3A%20%22standalone%22%2C%20%22background_color%22%3A%20%22%231B1B1B%22%2C%20%22theme_color%22%3A%20%22%23D90429%22%2C%20%22icons%22%3A%20%5B%7B%22src%22%3A%20%22https%3A%2F%2Fiili.io%2FqC543c7.png%22%2C%20%22sizes%22%3A%20%22192x192%22%2C%20%22type%22%3A%20%22image%2Fpng%22%7D%2C%20%7B%22src%22%3A%20%22https%3A%2F%2Fiili.io%2FqC543c7.png%22%2C%20%22sizes%22%3A%20%22512x512%22%2C%20%22type%22%3A%20%22image%2Fpng%22%7D%5D%7D'>
     <!-- Tags para iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -97,7 +97,7 @@
             </div>
 
             <!-- Login Form -->
-            <form id="loginForm" onsubmit="handleLogin(event)" class="shrink-0">
+            <form id="loginForm" class="shrink-0">
                 <div class="space-y-5">
                     
                     <!-- Email/Login Input -->
@@ -123,7 +123,7 @@
                             <input type="password" id="password" required 
                                 class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-red focus:border-brand-red block pl-10 p-3 transition-colors outline-none" 
                                 placeholder="••••••••">
-                            <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-brand-red cursor-pointer">
+                            <button type="button" onclick="window.togglePassword()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-brand-red cursor-pointer">
                                 <i class="fa-solid fa-eye" id="eye-icon"></i>
                             </button>
                         </div>
@@ -181,7 +181,7 @@
     <!-- Modal de Instalação (App Prompt) -->
     <div id="install-prompt-modal" class="fixed inset-0 z-[100] hidden bg-black/80 flex items-end justify-center sm:items-center p-4 pb-10 sm:pb-4 backdrop-blur-sm transition-opacity duration-300 opacity-0">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform translate-y-full sm:translate-y-0 transition-transform duration-500 relative" id="install-prompt-card">
-            <button onclick="closeInstallPrompt()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-800 bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center transition"><i class="fa-solid fa-times"></i></button>
+            <button onclick="window.closeInstallPrompt()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-800 bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center transition"><i class="fa-solid fa-times"></i></button>
             <div class="p-6 text-center">
                 <div class="w-16 h-16 bg-gradient-to-br from-brand-red to-red-800 text-white rounded-2xl flex items-center justify-center mx-auto mb-5 text-3xl shadow-lg transform -rotate-3">
                     <i class="fa-solid fa-mobile-screen"></i>
@@ -206,95 +206,85 @@
                     </ol>
                 </div>
 
-                <button onclick="closeInstallPrompt()" class="w-full mt-6 bg-brand-dark text-white font-bold py-3 rounded-xl shadow-md hover:bg-gray-800 transition active:scale-95">Entendi, vou adicionar!</button>
+                <button onclick="window.closeInstallPrompt()" class="w-full mt-6 bg-brand-dark text-white font-bold py-3 rounded-xl shadow-md hover:bg-gray-800 transition active:scale-95">Entendi, vou adicionar!</button>
             </div>
         </div>
     </div>
 
-    <!-- Firebase Logic -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Firebase de Segurança Reforçada
-        const manualConfig = {
-            apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
-            authDomain: "tanqueteambjj.firebaseapp.com",
-            projectId: "tanqueteambjj",
-            storageBucket: "tanqueteambjj.firebasestorage.app",
-            messagingSenderId: "410605992451",
-            appId: "1:410605992451:web:f0f341f4594fe75f376c36",
-            measurementId: "G-SW8PP8X7WM"
-        };
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : manualConfig;
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj";
-
-        window.dbInstance = db;
-        window.dbCollection = collection;
-        window.dbQuery = query;
-        window.dbWhere = where;
-        window.dbGetDocs = getDocs;
-        window.appIdVar = appId;
-        
-        const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (e) {
-                console.error("Auth erro:", e);
+    <!-- UI Interaction Scripts -->
+    <script>
+        window.togglePassword = function() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eye-icon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
             }
         };
-        initAuth();
-    </script>
 
-    <script>
+        window.safeRedirect = function(url) {
+            try {
+                const protocol = window.location.protocol;
+                if (protocol.startsWith('http')) {
+                    window.location.href = url;
+                } else {
+                    console.warn("Redirecionamento bloqueado (Preview Mode). URL de destino:", url);
+                    alert("Sucesso! Redirecionando para: " + url);
+                }
+            } catch (e) {
+                console.warn("Redirecionamento bloqueado:", e);
+                alert("Sucesso! Redirecionando para: " + url);
+            }
+        };
+
+        window.closeInstallPrompt = function() {
+            const modal = document.getElementById('install-prompt-modal');
+            const card = document.getElementById('install-prompt-card');
+            
+            modal.classList.add('opacity-0');
+            card.classList.add('translate-y-full');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+
+            localStorage.setItem('tanque_pwa_prompt_dismissed', 'true');
+        };
+
         // --- PWA NATIVE INSTALL PROMPT ---
         let deferredPrompt;
         const installBtn = document.getElementById('btn-install-pwa');
 
-        // Captura o evento nativo de instalação do navegador
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Impede que o mini-infobar do Chrome apareça instantaneamente
             e.preventDefault();
-            // Guarda o evento para disparar quando clicarem no botão
             deferredPrompt = e;
-            // Exibe o nosso botão personalizado
-            installBtn.classList.remove('hidden');
+            if(installBtn) installBtn.classList.remove('hidden');
         });
 
-        // Quando o aluno clica no botão "Instalar Aplicativo"
-        installBtn.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                // Exibe o prompt nativo oficial do Android/Desktop
-                deferredPrompt.prompt();
-                
-                // Aguarda a resposta do usuário
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    console.log('App instalado com sucesso!');
-                    installBtn.classList.add('hidden'); // Esconde o botão após aceitar
+        if(installBtn) {
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        installBtn.classList.add('hidden');
+                    }
+                    deferredPrompt = null;
                 }
-                
-                // Limpa o evento
-                deferredPrompt = null;
-            }
-        });
+            });
+        }
 
-        // Evento escutado quando o app é finalmente instalado com sucesso
         window.addEventListener('appinstalled', () => {
-            installBtn.classList.add('hidden');
+            if(installBtn) installBtn.classList.add('hidden');
             console.log('PWA está instalado!');
         });
 
-        // --- REGISTRO DE SERVICE WORKER FAKE (Obrigatório para PWA funcionar) ---
         if ('serviceWorker' in navigator) {
             const swCode = `
                 self.addEventListener('install', () => self.skipWaiting());
@@ -305,16 +295,12 @@
             navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(console.error);
         }
 
-        // --- LÓGICA DO ALERTA DE INSTALAÇÃO (APP) ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Verifica se o utilizador já fechou este alerta no passado
             if (localStorage.getItem('tanque_pwa_prompt_dismissed')) return;
 
-            // Verifica se já está instalado/rodando como App
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
             if (isStandalone) return;
 
-            // Deteta o dispositivo para dar as instruções certas
             const userAgent = window.navigator.userAgent.toLowerCase();
             const isIOS = /iphone|ipad|ipod/.test(userAgent);
             const isAndroid = /android/.test(userAgent);
@@ -328,69 +314,60 @@
                     const androidInst = document.getElementById('android-instructions');
 
                     if (isIOS) {
-                        iosInst.classList.remove('hidden');
+                        if(iosInst) iosInst.classList.remove('hidden');
                     } else {
-                        androidInst.classList.remove('hidden'); // Default para o resto
+                        if(androidInst) androidInst.classList.remove('hidden');
                     }
 
-                    modal.classList.remove('hidden');
-                    
-                    // Pequeno atraso para a animação CSS fluir
-                    setTimeout(() => {
-                        modal.classList.remove('opacity-0');
-                        card.classList.remove('translate-y-full');
-                    }, 50);
-                }, 2000); // Mostra 2 segundos após carregar a página
+                    if(modal) {
+                        modal.classList.remove('hidden');
+                        setTimeout(() => {
+                            modal.classList.remove('opacity-0');
+                            card.classList.remove('translate-y-full');
+                        }, 50);
+                    }
+                }, 2000); 
             }
         });
+    </script>
 
-        window.closeInstallPrompt = () => {
-            const modal = document.getElementById('install-prompt-modal');
-            const card = document.getElementById('install-prompt-card');
-            
-            modal.classList.add('opacity-0');
-            card.classList.add('translate-y-full');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
+    <!-- Firebase Authentication Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-            // Grava na memória para não chatear o aluno sempre que ele entrar
-            localStorage.setItem('tanque_pwa_prompt_dismissed', 'true');
+        // Configuração de Segurança Padrão
+        const manualConfig = {
+            apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
+            authDomain: "tanqueteambjj.firebaseapp.com",
+            projectId: "tanqueteambjj",
+            storageBucket: "tanqueteambjj.firebasestorage.app",
+            messagingSenderId: "410605992451",
+            appId: "1:410605992451:web:f0f341f4594fe75f376c36"
         };
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : manualConfig;
 
-        // --- LÓGICA DE LOGIN NORMAL ---
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const eyeIcon = document.getElementById('eye-icon');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                eyeIcon.classList.remove('fa-eye');
-                eyeIcon.classList.add('fa-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                eyeIcon.classList.remove('fa-eye-slash');
-                eyeIcon.classList.add('fa-eye');
-            }
-        }
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj";
 
-        function safeRedirect(url) {
+        const initAuth = async () => {
             try {
-                const protocol = window.location.protocol;
-                if (protocol.startsWith('http')) {
-                    window.location.href = url;
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
-                    console.warn("Redirecionamento bloqueado (Preview Mode). URL de destino:", url);
-                    alert("Sucesso! Redirecionando para: " + url);
+                    await signInAnonymously(auth);
                 }
             } catch (e) {
-                console.warn("Redirecionamento bloqueado:", e);
-                alert("Sucesso! Redirecionando para: " + url);
+                console.error("Auth erro:", e);
             }
-        }
+        };
+        initAuth();
 
-        window.handleLogin = async function(e) {
+        // Tratamento do Formulário de Login isolado e seguro no Firebase
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const loginInput = document.getElementById('login').value.trim(); 
@@ -416,9 +393,7 @@
                 btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
                 btn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> PAINEL ADMIN';
                 
-                setTimeout(() => {
-                    safeRedirect("painel_admin.html");
-                }, 1000);
+                setTimeout(() => { window.safeRedirect("painel_admin.html"); }, 1000);
                 return;
             }
 
@@ -434,9 +409,7 @@
                 btn.classList.add('bg-green-600', 'hover:bg-green-700');
                 btn.innerHTML = '<i class="fa-solid fa-sack-dollar"></i> PAINEL FINANCEIRO';
                 
-                setTimeout(() => {
-                    safeRedirect("painel_financeiro.html");
-                }, 1000);
+                setTimeout(() => { window.safeRedirect("painel_financeiro.html"); }, 1000);
                 return;
             }
 
@@ -452,29 +425,27 @@
                 btn.classList.add('bg-purple-600', 'hover:bg-purple-700');
                 btn.innerHTML = '<i class="fa-solid fa-scale-balanced"></i> PAINEL JURÍDICO';
                 
-                setTimeout(() => {
-                    safeRedirect("painel_juridico.html");
-                }, 1000);
+                setTimeout(() => { window.safeRedirect("painel_juridico.html"); }, 1000);
                 return;
             }
 
             // --- 3. VERIFICAÇÃO DE ALUNO (Firestore) ---
             try {
-                const studentsRef = window.dbCollection(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'students');
+                const studentsRef = collection(db, 'artifacts', appId, 'public', 'data', 'students');
                 
                 // Buscar por studentLogin
-                let q = window.dbQuery(studentsRef, window.dbWhere('studentLogin', '==', loginInput), window.dbWhere('studentPassword', '==', passwordInput));
-                let snapshot = await window.dbGetDocs(q);
+                let q = query(studentsRef, where('studentLogin', '==', loginInput), where('studentPassword', '==', passwordInput));
+                let snapshot = await getDocs(q);
 
                 // Buscar por email se a primeira falhar
                 if (snapshot.empty) {
-                    q = window.dbQuery(studentsRef, window.dbWhere('email', '==', loginInput), window.dbWhere('studentPassword', '==', passwordInput));
-                    snapshot = await window.dbGetDocs(q);
+                    q = query(studentsRef, where('email', '==', loginInput), where('studentPassword', '==', passwordInput));
+                    snapshot = await getDocs(q);
                 }
 
                 if (!snapshot.empty) {
-                    const doc = snapshot.docs[0];
-                    const studentData = { id: doc.id, ...doc.data(), role: 'student' };
+                    const docSnap = snapshot.docs[0];
+                    const studentData = { id: docSnap.id, ...docSnap.data(), role: 'student' };
 
                     localStorage.setItem('tanque_user_session', JSON.stringify(studentData));
 
@@ -482,9 +453,7 @@
                     btn.classList.add('bg-green-600', 'hover:bg-green-700');
                     btn.innerHTML = '<i class="fa-solid fa-check"></i> SUCESSO!';
                     
-                    setTimeout(() => {
-                        safeRedirect("painel_aluno.html");
-                    }, 1000);
+                    setTimeout(() => { window.safeRedirect("painel_aluno.html"); }, 1000);
 
                 } else {
                     throw new Error("Credenciais inválidas");
@@ -504,7 +473,7 @@
                 card.classList.add('animate-pulse'); 
                 setTimeout(() => card.classList.remove('animate-pulse'), 500);
             }
-        }
+        });
     </script>
 </body>
 </html>
