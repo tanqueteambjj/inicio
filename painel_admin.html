@@ -2,11 +2,20 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name
-="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tanque Team | Painel Administrativo</title>
     
     <link rel="icon" href="https://iili.io/qC543c7.png" type="image/png">
+    
+    <!-- FOUC Script: Previne ecrã branco antes de aplicar o modo escuro -->
+    <script>
+        if (localStorage.getItem('tanque_theme') === 'dark' || (!('tanque_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- EmailJS SDK -->
@@ -20,6 +29,7 @@
 
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
@@ -38,26 +48,25 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
 
-        /* Estilo para Card Ativo */
         .card-active {
             transform: translateY(-4px);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             border-bottom-width: 4px;
         }
 
-        /* Contêineres Restritos à Impressão */
         .print-only-element { display: none !important; }
 
-        /* CSS BLINDADO PARA IMPRESSÃO EM MOBILE E PC */
         @media print {
             @page { margin: 15mm; size: A4 portrait; }
             html, body { height: auto !important; min-height: 100% !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; background-color: #fff !important; color: #000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             body > *:not(.print-only-element) { display: none !important; }
             
-            body.printing-progress #printable-progress { 
+            body.printing-progress #printable-progress, body.printing-qr #print-only-qr { 
                 display: block !important; position: static !important; width: 100% !important; height: auto !important; visibility: visible !important; background: #fff !important; color: #000 !important; margin: 0 !important; padding: 0 !important;
             }
-            body.printing-progress #printable-progress * { visibility: visible !important; color: #000 !important; }
+            body.printing-progress #printable-progress *, body.printing-qr #print-only-qr * { visibility: visible !important; color: #000 !important; }
+            
+            body.printing-qr #print-only-qr { display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: flex-start !important; padding: 2cm 0 !important; }
             
             table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 15px; page-break-inside: auto; }
             tr { page-break-inside: avoid; page-break-after: auto; }
@@ -70,13 +79,13 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 font-sans antialiased h-screen flex overflow-hidden">
+<body class="bg-gray-100 dark:bg-gray-900 font-sans antialiased h-screen flex overflow-hidden text-gray-800 dark:text-gray-200 transition-colors duration-300">
 
     <!-- Mobile Sidebar Overlay -->
     <div id="mobile-sidebar-overlay" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden backdrop-blur-sm transition-opacity" onclick="window.toggleMobileMenu()"></div>
 
     <!-- Sidebar -->
-    <aside id="sidebar-menu" class="fixed md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 w-64 bg-brand-dark text-white flex flex-col shadow-2xl z-40 transition-transform duration-300 ease-in-out no-print h-full">
+    <aside id="sidebar-menu" class="fixed md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 w-64 bg-brand-dark text-white flex flex-col shadow-2xl z-40 transition-transform duration-300 ease-in-out no-print h-full border-r border-gray-800">
         <div class="p-6 flex items-center justify-center border-b border-gray-800 relative">
             <img src="https://iili.io/qC543c7.png" alt="Logo" class="h-10 w-auto mr-3">
             <span class="font-display font-bold text-lg tracking-wider text-brand-red">ADMIN</span>
@@ -110,47 +119,51 @@
     <!-- Main Content -->
     <div id="admin-dashboard" class="flex-1 flex flex-col h-full overflow-hidden relative w-full">
         <!-- Topbar -->
-        <header class="bg-white shadow-sm h-16 flex items-center justify-between px-4 md:px-6 z-10 no-print shrink-0">
+        <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 md:px-6 z-10 no-print shrink-0 transition-colors duration-300">
             <div class="flex items-center md:hidden gap-3">
-                <button onclick="window.toggleMobileMenu()" class="text-brand-dark hover:text-brand-red focus:outline-none text-2xl transition"><i class="fa-solid fa-bars"></i></button>
-                <img src="https://iili.io/qC543c7.png" class="h-8 w-auto">
+                <button onclick="window.toggleMobileMenu()" class="text-brand-dark dark:text-white hover:text-brand-red focus:outline-none text-2xl transition"><i class="fa-solid fa-bars"></i></button>
+                <img src="https://iili.io/qC543c7.png" class="h-8 w-auto filter dark:brightness-200">
             </div>
             <div class="hidden md:flex relative w-96">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-search"></i></span>
-                <input type="text" id="searchInput" onkeyup="window.filterTable()" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border rounded-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-red transition">
+                <input type="text" id="searchInput" onkeyup="window.filterTable()" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border dark:border-gray-600 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red transition-colors">
             </div>
             <div class="flex items-center gap-3">
+                <!-- Botão Modo Noturno -->
+                <button onclick="window.toggleTheme()" class="text-gray-400 hover:text-brand-red dark:text-yellow-400 dark:hover:text-yellow-300 focus:outline-none text-xl transition-colors w-10 h-10 flex items-center justify-center">
+                    <i class="fa-solid fa-moon" id="theme-icon"></i>
+                </button>
                 <button onclick="window.openCheckinModal()" class="md:hidden w-10 h-10 flex items-center justify-center bg-green-600 text-white rounded-full shadow-lg"><i class="fa-solid fa-camera"></i></button>
-                <button onclick="window.handleLogout()" class="md:hidden w-10 h-10 flex items-center justify-center bg-red-100 text-red-600 rounded-full shadow-sm hover:bg-red-200 transition"><i class="fa-solid fa-right-from-bracket"></i></button>
-                <span class="text-sm font-bold text-red-700 bg-red-100 px-3 py-1 rounded-full hidden md:block border border-red-200"><i class="fa-solid fa-shield-halved mr-1"></i> Painel Administrativo</span>
+                <button onclick="window.handleLogout()" class="md:hidden w-10 h-10 flex items-center justify-center bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full shadow-sm hover:bg-red-200 transition"><i class="fa-solid fa-right-from-bracket"></i></button>
+                <span class="text-sm font-bold text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400 px-3 py-1 rounded-full hidden md:block border border-red-200 dark:border-red-800"><i class="fa-solid fa-shield-halved mr-1"></i> Painel Administrativo</span>
                 <div class="hidden md:flex w-8 h-8 rounded-full bg-brand-red text-white items-center justify-center font-bold shadow-sm">A</div>
             </div>
         </header>
 
         <!-- Content Area -->
-        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-6 relative">
+        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 relative">
             <!-- VIEW: ALUNOS -->
             <div id="view-students" class="animate-fade-in">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 stats-container">
-                    <div id="card-all" class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-blue-50 transition-all card-active" onclick="window.switchTab('all')">
+                    <div id="card-all" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-blue-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 transition-all card-active" onclick="window.switchTab('all')">
                         <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-blue-500 pointer-events-none"><i class="fa-solid fa-users"></i></div>
-                        <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Total Ativos</p>
-                        <p class="text-3xl font-bold text-gray-800" id="stat-total">0</p>
+                        <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Total Ativos</p>
+                        <p class="text-3xl font-bold text-gray-800 dark:text-white" id="stat-total">0</p>
                     </div>
-                    <div id="card-kids" class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-brand-red border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-red-50 transition-all" onclick="window.switchTab('kids')">
+                    <div id="card-kids" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-brand-red border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-red-50 dark:hover:bg-gray-700 transition-all" onclick="window.switchTab('kids')">
                         <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-brand-red pointer-events-none"><i class="fa-solid fa-child"></i></div>
-                        <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Infantil (Ativos)</p>
-                        <p class="text-3xl font-bold text-gray-800" id="stat-infantil">0</p>
+                        <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Infantil (Ativos)</p>
+                        <p class="text-3xl font-bold text-gray-800 dark:text-white" id="stat-infantil">0</p>
                     </div>
-                    <div id="card-adults" class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-green-50 transition-all" onclick="window.switchTab('adults')">
+                    <div id="card-adults" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-green-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-green-50 dark:hover:bg-gray-700 transition-all" onclick="window.switchTab('adults')">
                         <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-green-500 pointer-events-none"><i class="fa-solid fa-user"></i></div>
-                        <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Adulto/Admin</p>
-                        <p class="text-3xl font-bold text-gray-800" id="stat-adulto">0</p>
+                        <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Adulto/Admin</p>
+                        <p class="text-3xl font-bold text-gray-800 dark:text-white" id="stat-adulto">0</p>
                     </div>
-                    <div id="card-archived" class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-gray-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-gray-100 transition-all" onclick="window.switchTab('archived')">
+                    <div id="card-archived" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-gray-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-all" onclick="window.switchTab('archived')">
                         <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-gray-500 pointer-events-none"><i class="fa-solid fa-box-archive"></i></div>
-                        <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Arquivo</p>
-                        <p class="text-3xl font-bold text-gray-800" id="stat-archived">0</p>
+                        <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Arquivo</p>
+                        <p class="text-3xl font-bold text-gray-800 dark:text-white" id="stat-archived">0</p>
                     </div>
                 </div>
 
@@ -158,34 +171,34 @@
                     <button id="tab-all"></button><button id="tab-adults"></button><button id="tab-kids"></button><button id="tab-archived"></button>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center no-print flex-wrap gap-2">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex justify-between items-center no-print flex-wrap gap-2">
                         <div class="flex items-center gap-4">
-                            <h3 class="font-bold text-gray-700 uppercase text-sm flex items-center gap-2">
+                            <h3 class="font-bold text-gray-700 dark:text-gray-200 uppercase text-sm flex items-center gap-2">
                                 <span id="list-title">Lista de Alunos</span>
-                                <span class="bg-gray-200 text-gray-600 py-0.5 px-2 rounded-full text-xs" id="list-count">0</span>
+                                <span class="bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 py-0.5 px-2 rounded-full text-xs" id="list-count">0</span>
                             </h3>
                             <div id="bulk-actions" class="hidden flex items-center gap-2 animate-fade-in">
-                                <button onclick="window.archiveSelectedStudents()" id="btn-bulk-archive" class="flex items-center gap-1 bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs font-bold hover:bg-gray-300 transition border border-gray-300"><i class="fa-solid fa-box-archive"></i> Arquivar (<span id="selected-count-archive">0</span>)</button>
-                                <button onclick="window.deleteSelectedStudents()" id="btn-bulk-delete" class="hidden flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition border border-red-300"><i class="fa-solid fa-trash"></i> Excluir (<span id="selected-count-delete">0</span>)</button>
+                                <button onclick="window.archiveSelectedStudents()" id="btn-bulk-archive" class="flex items-center gap-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded text-xs font-bold hover:bg-gray-300 dark:hover:bg-gray-500 transition border border-gray-300 dark:border-gray-500"><i class="fa-solid fa-box-archive"></i> Arquivar (<span id="selected-count-archive">0</span>)</button>
+                                <button onclick="window.deleteSelectedStudents()" id="btn-bulk-delete" class="hidden flex items-center gap-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 dark:hover:bg-red-800 transition border border-red-300 dark:border-red-700"><i class="fa-solid fa-trash"></i> Excluir (<span id="selected-count-delete">0</span>)</button>
                             </div>
                         </div>
                         <div class="flex gap-2">
                              <button onclick="window.openAdminRegisterModal()" class="bg-brand-red text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-red-700 shadow-sm transition transform active:scale-95"><i class="fa-solid fa-plus mr-1"></i> NOVO ALUNO</button>
-                             <button onclick="window.loadData()" class="text-gray-500 hover:text-black text-sm flex items-center gap-1 bg-white border px-3 py-1.5 rounded shadow-sm"><i class="fa-solid fa-rotate" id="icon-refresh"></i> Atualizar</button>
+                             <button onclick="window.loadData()" class="text-gray-500 dark:text-gray-300 hover:text-black dark:hover:text-white text-sm flex items-center gap-1 bg-white dark:bg-gray-600 border dark:border-gray-500 px-3 py-1.5 rounded shadow-sm"><i class="fa-solid fa-rotate" id="icon-refresh"></i> Atualizar</button>
                         </div>
                     </div>
                     
-                    <div class="px-6 py-3 border-b border-gray-200 bg-white flex flex-wrap gap-4 items-center text-sm no-print">
+                    <div class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-wrap gap-4 items-center text-sm no-print">
                         <div class="w-full md:hidden relative mb-2">
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-search"></i></span>
-                            <input type="text" id="searchInputMobile1" onkeyup="window.filterTable()" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-red transition">
+                            <input type="text" id="searchInputMobile1" onkeyup="window.filterTable()" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red transition">
                         </div>
-                        <span class="font-bold text-gray-500"><i class="fa-solid fa-filter"></i> Filtros:</span>
-                        <select id="sort-order" onchange="window.filterTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
+                        <span class="font-bold text-gray-500 dark:text-gray-400"><i class="fa-solid fa-filter"></i> Filtros:</span>
+                        <select id="sort-order" onchange="window.filterTable()" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-1.5 text-gray-700 dark:text-gray-300 focus:outline-none focus:border-brand-red bg-gray-50 dark:bg-gray-700 font-medium">
                             <option value="recent">⏱️ Mais Recentes</option><option value="az">🔤 Ordem Alfabética (A-Z)</option><option value="za">🔤 Ordem Alfabética (Z-A)</option>
                         </select>
-                        <select id="filter-belt" onchange="window.filterTable()" class="border border-gray-300 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-brand-red bg-gray-50 font-medium">
+                        <select id="filter-belt" onchange="window.filterTable()" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-1.5 text-gray-700 dark:text-gray-300 focus:outline-none focus:border-brand-red bg-gray-50 dark:bg-gray-700 font-medium">
                             <option value="">🥋 Todas as Faixas</option><option value="branca">Branca</option><option value="cinza">Cinza</option><option value="amarela">Amarela</option><option value="laranja">Laranja</option><option value="verde">Verde</option><option value="azul">Azul</option><option value="roxa">Roxa</option><option value="marrom">Marrom</option><option value="preta">Preta</option>
                         </select>
                     </div>
@@ -193,9 +206,9 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider" id="table-headers"></tr>
+                                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider" id="table-headers"></tr>
                             </thead>
-                            <tbody id="students-table-body" class="text-sm text-gray-700 divide-y divide-gray-100">
+                            <tbody id="students-table-body" class="text-sm text-gray-700 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
                                 <tr><td colspan="7" class="px-6 py-4 text-center">A carregar dados...</td></tr>
                             </tbody>
                         </table>
@@ -205,26 +218,26 @@
 
             <!-- VIEW: AULA EXPERIMENTAL -->
             <div id="view-experimental" class="hidden animate-fade-in">
-                <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center no-print">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex justify-between items-center no-print">
                         <div>
-                            <h3 class="font-bold text-gray-800 uppercase text-lg"><i class="fa-solid fa-fire text-yellow-500 mr-2"></i> Gestão de Aulas Experimentais</h3>
-                            <p class="text-xs text-gray-500">Controle os visitantes que agendaram pelo site</p>
+                            <h3 class="font-bold text-gray-800 dark:text-white uppercase text-lg"><i class="fa-solid fa-fire text-yellow-500 mr-2"></i> Gestão de Aulas Experimentais</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Controle os visitantes que agendaram pelo site</p>
                         </div>
-                        <button onclick="window.loadExperimentalData()" class="text-gray-500 hover:text-black text-sm bg-white border px-3 py-1.5 rounded shadow-sm"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+                        <button onclick="window.loadExperimentalData()" class="text-gray-500 dark:text-gray-300 hover:text-black dark:hover:text-white text-sm bg-white dark:bg-gray-600 border dark:border-gray-500 px-3 py-1.5 rounded shadow-sm"><i class="fa-solid fa-rotate"></i> Atualizar</button>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
-                                    <th class="px-6 py-3 border-b font-semibold">Data / Hora</th>
-                                    <th class="px-6 py-3 border-b font-semibold">Nome do Visitante</th>
-                                    <th class="px-6 py-3 border-b font-semibold">Contato</th>
-                                    <th class="px-6 py-3 border-b font-semibold">Status</th>
-                                    <th class="px-6 py-3 border-b text-center font-semibold no-print-col">Ações</th>
+                                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider">
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Data / Hora</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Nome do Visitante</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Contato</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Status</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 text-center font-semibold no-print-col">Ações</th>
                                 </tr>
                             </thead>
-                            <tbody id="experimental-table-body" class="text-sm text-gray-700 divide-y divide-gray-100">
+                            <tbody id="experimental-table-body" class="text-sm text-gray-700 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
                                 <tr><td colspan="5" class="px-6 py-4 text-center">A carregar dados...</td></tr>
                             </tbody>
                         </table>
@@ -234,25 +247,25 @@
 
             <!-- VIEW: MURAL DE AVISOS -->
             <div id="view-notices" class="hidden animate-fade-in">
-                <div class="bg-white rounded-xl shadow-sm p-6 border-t-4 border-yellow-500 max-w-5xl mx-auto border border-gray-200">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-t-4 border-yellow-500 max-w-5xl mx-auto border border-gray-200 dark:border-gray-700">
                     <div class="flex justify-between items-center mb-6">
                         <div>
-                            <h3 class="font-display text-xl font-bold text-gray-800"><i class="fa-solid fa-bullhorn mr-2 text-yellow-500"></i> Mural de Avisos</h3>
-                            <p class="text-sm text-gray-500">Publique comunicados ou novidades para todos os alunos verem no painel.</p>
+                            <h3 class="font-display text-xl font-bold text-gray-800 dark:text-white"><i class="fa-solid fa-bullhorn mr-2 text-yellow-500"></i> Mural de Avisos</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Publique comunicados ou novidades para todos os alunos verem no painel.</p>
                         </div>
-                        <button onclick="window.openNoticeModal()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded text-sm font-bold shadow-sm transition"><i class="fa-solid fa-plus mr-1"></i> Novo Aviso</button>
+                        <button onclick="window.openNoticeModal()" class="bg-yellow-500 hover:bg-yellow-600 text-brand-dark px-4 py-2 rounded text-sm font-bold shadow-sm transition"><i class="fa-solid fa-plus mr-1"></i> Novo Aviso</button>
                     </div>
 
                     <!-- WIDGET DE ANIVERSARIANTES DO MÊS -->
-                    <div id="admin-birthdays-widget" class="mb-6 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-4 shadow-sm hidden">
-                         <h4 class="font-bold text-blue-800 flex items-center gap-2 mb-3"><i class="fa-solid fa-cake-candles text-blue-500"></i> Aniversariantes do Mês (<span id="birthday-month-name"></span>)</h4>
+                    <div id="admin-birthdays-widget" class="mb-6 bg-gradient-to-r from-blue-50 dark:from-blue-900/30 to-blue-100 dark:to-blue-800/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 shadow-sm hidden">
+                         <h4 class="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-3"><i class="fa-solid fa-cake-candles text-blue-500"></i> Aniversariantes do Mês (<span id="birthday-month-name"></span>)</h4>
                          <div id="birthday-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                              <!-- JS injetará os aniversariantes aqui -->
                          </div>
                     </div>
                     
                     <div id="admin-notices-list" class="space-y-4">
-                        <div class="text-center py-8 text-gray-400 italic text-sm">A carregar avisos...</div>
+                        <div class="text-center py-8 text-gray-400 dark:text-gray-500 italic text-sm">A carregar avisos...</div>
                     </div>
                 </div>
             </div>
@@ -293,57 +306,81 @@
         </table>
     </div>
 
+    <!-- CARTEIRINHA IMPRESSA -->
+    <div id="print-only-qr" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen flex items-center justify-center">
+        <div class="border-2 border-black rounded-xl overflow-hidden relative shadow-md" style="width: 6.5cm; height: 10.5cm;">
+            <div class="bg-[#1B1B1B] text-white p-3 flex items-center justify-center gap-2 shrink-0 w-full" style="-webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                <!-- BRIGHTNESS E INVERT GARANTEM LOGO BRANCA -->
+                <img src="https://iili.io/qC543c7.png" style="height: 24px; filter: brightness(0) invert(1);">
+                <span class="font-display font-bold text-sm tracking-widest uppercase">Tanque Team</span>
+            </div>
+            <div class="p-4 flex flex-col items-center flex-1 relative bg-white w-full h-full">
+                <!-- MARCA D'ÁGUA -->
+                <img src="https://iili.io/qC543c7.png" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; opacity: 0.05; pointer-events: none; filter: grayscale(100%);">
+                
+                <div class="text-center z-10 w-full mb-2 mt-2">
+                    <h4 class="font-bold text-base text-black leading-tight uppercase" id="qr-student-name">Nome</h4>
+                    <p class="text-xs text-[#D90429] font-bold uppercase mt-1" id="qr-belt">Faixa Branca</p>
+                    <p class="text-[10px] text-gray-600 uppercase font-bold tracking-wider mt-1" id="qr-plan">Plano</p>
+                </div>
+                <div class="mt-auto bg-white p-2 border border-gray-300 rounded z-10 inline-block mb-4">
+                    <img id="qr-image" src="" alt="QR Code" class="w-32 h-32">
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAIS DO SISTEMA -->
 
     <!-- Modal: Evolução e Anotações (Com Inserção Manual de Frequência Embutida) -->
     <div id="progress-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-teal-600">
-            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b shrink-0">
-                <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-book-journal-whills text-teal-600 mr-2"></i> Evolução e Histórico</h3>
-                <button onclick="window.closeProgressModal()" class="text-gray-400 hover:text-gray-800"><i class="fa-solid fa-times"></i></button>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-teal-600">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b dark:border-gray-600 shrink-0">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white"><i class="fa-solid fa-book-journal-whills text-teal-600 mr-2"></i> Evolução e Histórico</h3>
+                <button onclick="window.closeProgressModal()" class="text-gray-400 hover:text-gray-800 dark:hover:text-white"><i class="fa-solid fa-times"></i></button>
             </div>
-            <div class="p-6 overflow-y-auto flex-1 bg-white">
+            <div class="p-6 overflow-y-auto flex-1 bg-white dark:bg-gray-800">
                 <div class="flex justify-between items-end mb-4">
                     <div>
-                        <h4 class="font-bold text-xl text-gray-900" id="prog-student-name">--</h4>
-                        <p class="text-sm text-gray-500">Início: <span id="prog-start-date" class="font-medium text-gray-700">--</span> | Faixa Atual: <span id="prog-current-belt" class="font-medium text-gray-700">--</span></p>
+                        <h4 class="font-bold text-xl text-gray-900 dark:text-white" id="prog-student-name">--</h4>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Início: <span id="prog-start-date" class="font-medium text-gray-700 dark:text-gray-300">--</span> | Faixa Atual: <span id="prog-current-belt" class="font-medium text-gray-700 dark:text-gray-300">--</span></p>
                     </div>
-                    <button onclick="window.printProgressReport()" class="bg-gray-800 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-black transition shadow-sm whitespace-nowrap"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
+                    <button onclick="window.printProgressReport()" class="bg-gray-800 dark:bg-gray-700 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-black dark:hover:bg-gray-600 transition shadow-sm whitespace-nowrap"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
                 </div>
                 <input type="hidden" id="prog-student-id">
                 
-                <div class="bg-teal-50 p-4 rounded-lg border border-teal-100 mb-6">
-                    <label class="block text-xs font-bold text-teal-800 mb-2 uppercase tracking-wider">Adicionar Anotação / Ocorrência</label>
+                <div class="bg-teal-50 dark:bg-teal-900/20 p-4 rounded-lg border border-teal-100 dark:border-teal-800 mb-6">
+                    <label class="block text-xs font-bold text-teal-800 dark:text-teal-400 mb-2 uppercase tracking-wider">Adicionar Anotação / Ocorrência</label>
                     <div class="flex gap-2">
-                        <input type="text" id="prog-new-note" class="w-full border border-teal-200 rounded p-2 text-sm focus:border-teal-500 focus:outline-none" placeholder="Ex: Excelente desempenho hoje...">
+                        <input type="text" id="prog-new-note" class="w-full border border-teal-200 dark:border-teal-700 rounded p-2 text-sm focus:border-teal-500 dark:bg-gray-700 dark:text-white focus:outline-none" placeholder="Ex: Excelente desempenho hoje...">
                         <button onclick="window.saveProgressNote()" class="bg-teal-600 text-white px-4 py-2 rounded font-bold hover:bg-teal-700 transition shadow-sm">Salvar</button>
                     </div>
                 </div>
 
-                <h5 class="font-bold text-gray-700 mb-4 border-b pb-1 text-sm uppercase">Anotações e Graduações</h5>
-                <div id="prog-timeline" class="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-300 before:to-transparent mb-8">
+                <h5 class="font-bold text-gray-700 dark:text-gray-300 mb-4 border-b dark:border-gray-700 pb-1 text-sm uppercase">Anotações e Graduações</h5>
+                <div id="prog-timeline" class="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-300 dark:before:via-gray-600 before:to-transparent mb-8">
                     <!-- Timeline items -->
                 </div>
 
                 <!-- SEÇÃO: HISTÓRICO DE PRESENÇAS EMBUTIDO -->
-                <div class="mt-8 border-t border-gray-200 pt-6">
+                <div class="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
                     <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
-                        <h5 class="font-bold text-gray-700 text-sm uppercase flex-1 mr-4">
+                        <h5 class="font-bold text-gray-700 dark:text-gray-300 text-sm uppercase flex-1 mr-4">
                             <i class="fa-solid fa-calendar-check text-green-600 mr-2"></i> Histórico de Presenças
                         </h5>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <label class="text-xs text-gray-500 font-bold">PERÍODO:</label>
-                            <input type="date" id="prog-start-filter" class="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:border-teal-500" onchange="window.filterProgressAttendance()">
-                            <span class="text-xs text-gray-500">até</span>
-                            <input type="date" id="prog-end-filter" class="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:border-teal-500" onchange="window.filterProgressAttendance()">
-                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-bold whitespace-nowrap" id="prog-att-total">0 aulas</span>
+                            <label class="text-xs text-gray-500 dark:text-gray-400 font-bold">PERÍODO:</label>
+                            <input type="date" id="prog-start-filter" class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-teal-500" onchange="window.filterProgressAttendance()">
+                            <span class="text-xs text-gray-500 dark:text-gray-400">até</span>
+                            <input type="date" id="prog-end-filter" class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-teal-500" onchange="window.filterProgressAttendance()">
+                            <span class="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-xs px-2 py-1 rounded font-bold whitespace-nowrap" id="prog-att-total">0 aulas</span>
                         </div>
                     </div>
 
                     <!-- ADICIONAR FREQUÊNCIA MANUAL (Novo) -->
-                    <div class="flex gap-2 items-center mb-4 bg-gray-50 p-3 rounded border border-gray-200 shadow-inner">
-                        <input type="date" id="prog-add-date" class="border border-gray-300 rounded px-2 py-1.5 text-sm flex-grow focus:outline-none focus:border-green-500">
-                        <select id="prog-add-class" class="border border-gray-300 rounded px-2 py-1.5 text-sm flex-grow focus:outline-none focus:border-green-500">
+                    <div class="flex gap-2 items-center mb-4 bg-gray-50 dark:bg-gray-700 p-3 rounded border border-gray-200 dark:border-gray-600 shadow-inner">
+                        <input type="date" id="prog-add-date" class="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded px-2 py-1.5 text-sm flex-grow focus:outline-none focus:border-green-500">
+                        <select id="prog-add-class" class="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded px-2 py-1.5 text-sm flex-grow focus:outline-none focus:border-green-500">
                             <option value="Turma Mista (Livre)">Geral / Mista</option>
                             <option value="Adulto - 10h30">Adulto - 10h30</option>
                             <option value="Adulto - 12h30">Adulto - 12h30</option>
@@ -355,29 +392,29 @@
                         <button onclick="window.addManualAttendanceFromProg()" class="bg-green-600 text-white px-4 py-1.5 rounded text-sm font-bold hover:bg-green-700 shadow-sm transition">Adicionar</button>
                     </div>
 
-                    <div id="prog-attendance-list" class="max-h-48 overflow-y-auto bg-gray-50 border border-gray-200 rounded p-2 space-y-1">
+                    <div id="prog-attendance-list" class="max-h-48 overflow-y-auto bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded p-2 space-y-1">
                         <!-- Attendances -->
                     </div>
                 </div>
 
             </div>
-            <div class="bg-gray-50 px-6 py-3 flex justify-end border-t border-gray-200 shrink-0">
-                <button onclick="window.closeProgressModal()" class="px-5 py-2 bg-white border border-gray-300 shadow-sm rounded text-sm font-bold text-gray-700 hover:bg-gray-50 transition">Fechar</button>
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-3 flex justify-end border-t border-gray-200 dark:border-gray-600 shrink-0">
+                <button onclick="window.closeProgressModal()" class="px-5 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm rounded text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">Fechar</button>
             </div>
         </div>
     </div>
 
     <!-- Modal: Leitor de Check-in da Câmera (CÂMARA CONTÍNUA SEM PARAR) -->
     <div id="checkin-modal" class="fixed inset-0 z-[100] hidden bg-brand-dark flex-col justify-center items-center p-4">
-        <div class="w-full max-w-lg bg-white rounded-xl overflow-hidden shadow-2xl flex flex-col animate-fade-in">
+        <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-2xl flex flex-col animate-fade-in">
             <div class="bg-green-600 px-6 py-4 flex justify-between items-center text-white shrink-0">
                 <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-camera"></i> Leitor de Check-in</h3>
                 <button onclick="window.closeCheckinModal()" class="hover:text-green-200 text-xl"><i class="fa-solid fa-times"></i></button>
             </div>
             
-            <div class="bg-gray-100 p-4 shrink-0 border-b border-gray-200">
-                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Selecione a Turma Atual</label>
-                <select id="checkin-class-selector" class="w-full border-2 border-green-500 rounded-lg p-3 font-bold text-gray-800 bg-white shadow-sm focus:outline-none">
+            <div class="bg-gray-100 dark:bg-gray-700 p-4 shrink-0 border-b border-gray-200 dark:border-gray-600">
+                <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase mb-1">Selecione a Turma Atual</label>
+                <select id="checkin-class-selector" class="w-full border-2 border-green-500 rounded-lg p-3 font-bold text-gray-800 dark:text-white bg-white dark:bg-gray-800 shadow-sm focus:outline-none">
                     <option value="Turma Mista (Livre)">Geral / Mista</option>
                     <option value="Adulto - 10h30">Adulto - 10h30</option>
                     <option value="Adulto - 12h30">Adulto - 12h30</option>
@@ -386,14 +423,14 @@
                     <option value="Infantil - 15h00">Infantil - 15h00</option>
                     <option value="Infantil - 16h30">Infantil - 16h30</option>
                 </select>
-                <p class="text-[10px] text-gray-500 mt-1"><i class="fa-solid fa-circle-info"></i> O sistema bloqueará check-ins repetidos na mesma turma no mesmo dia.</p>
+                <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1"><i class="fa-solid fa-circle-info"></i> O sistema bloqueará check-ins repetidos na mesma turma no mesmo dia.</p>
             </div>
 
-            <div class="p-6 flex-1 flex flex-col items-center">
-                <div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-4 border-gray-200 shadow-inner mb-4" style="min-height: 250px; display: flex; align-items: center; justify-content: center;">
+            <div class="p-6 flex-1 flex flex-col items-center bg-white dark:bg-gray-800">
+                <div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-4 border-gray-200 dark:border-gray-700 shadow-inner mb-4" style="min-height: 250px; display: flex; align-items: center; justify-content: center;">
                     <i class="fa-solid fa-camera text-4xl text-gray-700"></i>
                 </div>
-                <div id="checkin-result" class="text-center py-4 w-full rounded-lg bg-gray-50 border border-gray-200 font-medium text-gray-600 min-h-[100px] flex flex-col items-center justify-center transition-all duration-300">
+                <div id="checkin-result" class="text-center py-4 w-full rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 font-medium text-gray-600 dark:text-gray-300 min-h-[100px] flex flex-col items-center justify-center transition-all duration-300">
                     <i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o QR Code...
                 </div>
             </div>
@@ -402,23 +439,23 @@
 
     <!-- Edit Experimental Modal -->
     <div id="edit-exp-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md animate-fade-in border-t-4 border-yellow-500">
-            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-200">
-                <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-pen text-yellow-500 mr-2"></i> Editar Aula Exp.</h3>
-                <button onclick="window.closeEditExperimentalModal()"><i class="fa-solid fa-times text-gray-400 hover:text-gray-800"></i></button>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-md animate-fade-in border-t-4 border-yellow-500">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white"><i class="fa-solid fa-pen text-yellow-500 mr-2"></i> Editar Aula Exp.</h3>
+                <button onclick="window.closeEditExperimentalModal()"><i class="fa-solid fa-times text-gray-400 hover:text-gray-800 dark:hover:text-white"></i></button>
             </div>
             <div class="p-6 space-y-4">
                 <input type="hidden" id="edit-exp-id">
-                <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome Completo</label><input type="text" id="edit-exp-name" class="w-full border rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
+                <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nome Completo</label><input type="text" id="edit-exp-name" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-bold text-gray-500 mb-1">WhatsApp</label><input type="text" id="edit-exp-phone" class="w-full border rounded p-2 text-sm focus:border-yellow-500 focus:outline-none" placeholder="(91) 90000-0000"></div>
-                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Nascimento</label><input type="text" id="edit-exp-dob" class="w-full border rounded p-2 text-sm focus:border-yellow-500 focus:outline-none" placeholder="DD/MM/AAAA"></div>
-                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Data Agendada</label><input type="date" id="edit-exp-date" class="w-full border rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
-                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Horário</label><input type="time" id="edit-exp-time" class="w-full border rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">WhatsApp</label><input type="text" id="edit-exp-phone" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none" placeholder="(91) 90000-0000"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nascimento</label><input type="text" id="edit-exp-dob" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none" placeholder="DD/MM/AAAA"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data Agendada</label><input type="date" id="edit-exp-date" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Horário</label><input type="time" id="edit-exp-time" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
                 </div>
-                <div class="mt-6 flex justify-end gap-2 border-t border-gray-100 pt-4">
-                    <button onclick="window.closeEditExperimentalModal()" class="px-4 py-2 border rounded text-sm font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
-                    <button onclick="window.saveExperimentalChanges()" class="px-5 py-2 bg-yellow-500 text-white rounded text-sm font-bold hover:bg-yellow-600 shadow-md">Salvar</button>
+                <div class="mt-6 flex justify-end gap-2 border-t border-gray-100 dark:border-gray-700 pt-4">
+                    <button onclick="window.closeEditExperimentalModal()" class="px-4 py-2 border dark:border-gray-600 rounded text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Cancelar</button>
+                    <button onclick="window.saveExperimentalChanges()" class="px-5 py-2 bg-yellow-500 text-brand-dark rounded text-sm font-bold hover:bg-yellow-400 shadow-md">Salvar</button>
                 </div>
             </div>
         </div>
@@ -426,17 +463,17 @@
 
     <!-- Edit Student Modal (FULL EDIT) -->
     <div id="edit-modal" class="fixed inset-0 z-[70] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-brand-dark">
-            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-200 shrink-0">
-                <h3 class="font-display font-bold text-lg tracking-wider text-gray-800">EDITAR ALUNO E GRADUAR</h3>
-                <button onclick="window.closeEditModal()" class="hover:text-red-500 text-gray-400 text-xl transition"><i class="fa-solid fa-times"></i></button>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-brand-red">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
+                <h3 class="font-display font-bold text-lg tracking-wider text-gray-800 dark:text-white">EDITAR ALUNO E GRADUAR</h3>
+                <button onclick="window.closeEditModal()" class="hover:text-red-500 text-gray-400 dark:text-gray-300 text-xl transition"><i class="fa-solid fa-times"></i></button>
             </div>
-            <div class="p-6 overflow-y-auto flex-1 bg-white">
+            <div class="p-6 overflow-y-auto flex-1 bg-white dark:bg-gray-800">
                 <input type="hidden" id="edit-id">
                 <input type="hidden" id="edit-original-belt">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     
-                    <div class="md:col-span-2 pb-4 border-b border-gray-200 mb-2">
+                    <div class="md:col-span-2 pb-4 border-b border-gray-200 dark:border-gray-700 mb-2">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="relative w-20 h-20 group cursor-pointer" onclick="document.getElementById('edit-photo').click()">
                                 <img id="edit-photo-preview" src="" class="w-full h-full rounded-full object-cover border-2 border-gray-200 shadow-sm hidden">
@@ -447,35 +484,35 @@
                         </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome Completo</label><input type="text" id="edit-name" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
-                            <div><label class="block text-xs font-bold text-gray-500 mb-1">Data de Nascimento</label><input type="text" id="edit-dob" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="DD/MM/AAAA" maxlength="10"></div>
-                            <div><label class="block text-xs font-bold text-gray-500 mb-1">CPF</label><input type="text" id="edit-cpf" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="000.000.000-00"></div>
-                            <div><label class="block text-xs font-bold text-gray-500 mb-1">Telefone / WhatsApp</label><input type="text" id="edit-phone" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
-                            <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 mb-1">E-mail</label><input type="email" id="edit-email" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
+                            <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nome Completo</label><input type="text" id="edit-name" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none"></div>
+                            <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data de Nascimento</label><input type="text" id="edit-dob" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none" placeholder="DD/MM/AAAA" maxlength="10"></div>
+                            <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">CPF</label><input type="text" id="edit-cpf" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none" placeholder="000.000.000-00"></div>
+                            <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Telefone / WhatsApp</label><input type="text" id="edit-phone" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none"></div>
+                            <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">E-mail</label><input type="email" id="edit-email" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none"></div>
                             
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Status da Matrícula</label>
-                                <select id="edit-enrollment-status" class="w-full border rounded p-2 font-bold text-gray-700 focus:outline-none">
-                                    <option value="Ativo" class="text-green-600">Ativo</option><option value="Inativo" class="text-red-600">Inativo</option>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Status da Matrícula</label>
+                                <select id="edit-enrollment-status" class="w-full border dark:border-gray-600 dark:bg-gray-700 rounded p-2 font-bold text-gray-700 dark:text-gray-200 focus:outline-none">
+                                    <option value="Ativo" class="text-green-600 dark:text-green-400">Ativo</option><option value="Inativo" class="text-red-600 dark:text-red-400">Inativo</option>
                                 </select>
                             </div>
                             
-                            <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 mb-1">Endereço Completo</label><input type="text" id="edit-address" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
+                            <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Endereço Completo</label><input type="text" id="edit-address" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none"></div>
                             
-                            <div id="admin-edit-guardian-container" class="md:col-span-2 bg-yellow-50 p-4 rounded border border-yellow-200 hidden">
-                                <h4 class="text-xs font-bold text-yellow-800 mb-3 uppercase border-b border-yellow-200 pb-1"><i class="fa-solid fa-triangle-exclamation"></i> Dados do Responsável Legal</h4>
+                            <div id="admin-edit-guardian-container" class="md:col-span-2 bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded border border-yellow-200 dark:border-yellow-800 hidden">
+                                <h4 class="text-xs font-bold text-yellow-800 dark:text-yellow-500 mb-3 uppercase border-b border-yellow-200 dark:border-yellow-800 pb-1"><i class="fa-solid fa-triangle-exclamation"></i> Dados do Responsável Legal</h4>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-[10px] font-bold text-yellow-800 mb-1 uppercase">Nome do Pai/Mãe/Responsável</label>
-                                        <input type="text" id="edit-guardian" class="w-full border border-yellow-300 rounded p-2 focus:border-yellow-500 focus:outline-none text-sm">
+                                        <label class="block text-[10px] font-bold text-yellow-800 dark:text-yellow-500 mb-1 uppercase">Nome do Pai/Mãe/Responsável</label>
+                                        <input type="text" id="edit-guardian" class="w-full border border-yellow-300 dark:border-yellow-700 dark:bg-gray-800 dark:text-white rounded p-2 focus:border-yellow-500 focus:outline-none text-sm">
                                     </div>
                                     <div>
-                                        <label class="block text-[10px] font-bold text-yellow-800 mb-1 uppercase">CPF do Responsável</label>
-                                        <input type="text" id="edit-guardian-cpf" class="w-full border border-yellow-300 rounded p-2 focus:border-yellow-500 focus:outline-none text-sm">
+                                        <label class="block text-[10px] font-bold text-yellow-800 dark:text-yellow-500 mb-1 uppercase">CPF do Responsável</label>
+                                        <input type="text" id="edit-guardian-cpf" class="w-full border border-yellow-300 dark:border-yellow-700 dark:bg-gray-800 dark:text-white rounded p-2 focus:border-yellow-500 focus:outline-none text-sm">
                                     </div>
                                     <div class="md:col-span-2">
-                                        <label class="block text-[10px] font-bold text-yellow-800 mb-1 uppercase">Parentesco</label>
-                                        <select id="edit-guardian-kinship" class="w-full border border-yellow-300 rounded p-2 focus:border-yellow-500 focus:outline-none text-sm">
+                                        <label class="block text-[10px] font-bold text-yellow-800 dark:text-yellow-500 mb-1 uppercase">Parentesco</label>
+                                        <select id="edit-guardian-kinship" class="w-full border border-yellow-300 dark:border-yellow-700 dark:bg-gray-800 dark:text-white rounded p-2 focus:border-yellow-500 focus:outline-none text-sm">
                                             <option value="">-- Parentesco --</option><option value="Pai">Pai</option><option value="Mãe">Mãe</option><option value="Avô/Avó">Avô/Avó</option><option value="Tio/Tia">Tio/Tia</option><option value="Outro">Outro</option>
                                         </select>
                                     </div>
@@ -483,8 +520,8 @@
                             </div>
 
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Plano Atual</label>
-                                <select id="edit-plan" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" onchange="window.handleEditPlanChange()">
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Plano Atual</label>
+                                <select id="edit-plan" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none" onchange="window.handleEditPlanChange()">
                                     <option value="infantil-mensal">Infantil Mensal</option><option value="infantil-trimestral">Infantil Trimestral</option><option value="infantil-semestral">Infantil Semestral</option>
                                     <option value="adulto-mensal">Adulto Mensal</option><option value="adulto-trimestral">Adulto Trimestral</option><option value="adulto-semestral">Adulto Semestral</option>
                                     <option value="combo-dupla">Combo Dupla</option><option value="combo-casal">Combo Casal</option><option value="combo-familia">Combo Família</option>
@@ -492,42 +529,40 @@
                                 </select>
                             </div>
                             
-                            <!-- CAMPO TITULAR (VINCULAÇÃO) -->
                             <div class="col-span-1 hidden" id="edit-titular-container">
-                                <label class="block text-xs font-bold text-purple-600 mb-1">Titular (Se Dependente)</label>
-                                <select id="edit-titular" class="w-full border border-purple-200 rounded p-2 bg-purple-50 focus:outline-none"><option value="">-- Selecione o Titular --</option></select>
+                                <label class="block text-xs font-bold text-purple-600 dark:text-purple-400 mb-1">Titular (Se Dependente)</label>
+                                <select id="edit-titular" class="w-full border border-purple-200 dark:border-purple-800 rounded p-2 bg-purple-50 dark:bg-gray-800 dark:text-white focus:outline-none"><option value="">-- Selecione o Titular --</option></select>
                             </div>
 
                         </div>
                     </div>
 
-                    <!-- GRADUAÇÃO -->
-                    <div class="bg-yellow-50 p-3 rounded border border-yellow-200 md:col-span-2 grid grid-cols-2 gap-4">
-                        <div class="col-span-2"><h4 class="text-xs font-bold text-yellow-700 uppercase"><i class="fa-solid fa-medal"></i> Graduação do Aluno</h4></div>
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded border border-yellow-200 dark:border-yellow-800 md:col-span-2 grid grid-cols-2 gap-4">
+                        <div class="col-span-2"><h4 class="text-xs font-bold text-yellow-700 dark:text-yellow-500 uppercase"><i class="fa-solid fa-medal"></i> Graduação do Aluno</h4></div>
                         <div>
-                            <label class="block text-xs font-bold text-yellow-800 mb-1">Cor da Faixa</label>
-                            <select id="edit-belt-color" class="w-full border border-yellow-300 rounded p-2 focus:border-yellow-500 focus:outline-none">
+                            <label class="block text-xs font-bold text-yellow-800 dark:text-yellow-600 mb-1">Cor da Faixa</label>
+                            <select id="edit-belt-color" class="w-full border border-yellow-300 dark:border-yellow-700 dark:bg-gray-800 dark:text-white rounded p-2 focus:border-yellow-500 focus:outline-none">
                                 <option value="Branca">Branca</option><option value="Cinza">Cinza</option><option value="Amarela">Amarela</option><option value="Laranja">Laranja</option><option value="Verde">Verde</option><option value="Azul">Azul</option><option value="Roxa">Roxa</option><option value="Marrom">Marrom</option><option value="Preta">Preta</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-yellow-800 mb-1">Graus</label>
-                            <select id="edit-belt-degree" class="w-full border border-yellow-300 rounded p-2 focus:border-yellow-500 focus:outline-none">
+                            <label class="block text-xs font-bold text-yellow-800 dark:text-yellow-600 mb-1">Graus</label>
+                            <select id="edit-belt-degree" class="w-full border border-yellow-300 dark:border-yellow-700 dark:bg-gray-800 dark:text-white rounded p-2 focus:border-yellow-500 focus:outline-none">
                                 <option value="0">0º</option><option value="1">1º</option><option value="2">2º</option><option value="3">3º</option><option value="4">4º</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="col-span-1 md:col-span-2 pt-2">
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Vencimento Contrato (Fidelidade)</label>
-                        <input type="date" id="edit-end-date" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none">
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Vencimento Contrato (Fidelidade)</label>
+                        <input type="date" id="edit-end-date" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none">
                     </div>
 
-                    <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 bg-blue-50 p-4 rounded-lg">
-                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-3 flex items-center gap-2"><i class="fa-solid fa-key"></i> Acesso ao Portal do Aluno</h4>
+                    <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                        <h4 class="text-xs font-bold text-blue-700 dark:text-blue-400 uppercase mb-3 flex items-center gap-2"><i class="fa-solid fa-key"></i> Acesso ao Portal do Aluno</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-bold text-blue-600 mb-1">Utilizador (Login)</label><input type="text" id="edit-login" class="w-full border border-blue-200 rounded p-2 focus:outline-none"></div>
-                            <div><label class="block text-xs font-bold text-blue-600 mb-1">Senha</label><input type="text" id="edit-password" class="w-full border border-blue-200 rounded p-2 focus:outline-none"></div>
+                            <div><label class="block text-xs font-bold text-blue-600 dark:text-blue-500 mb-1">Utilizador (Login)</label><input type="text" id="edit-login" class="w-full border border-blue-200 dark:border-blue-800 dark:bg-gray-800 dark:text-white rounded p-2 focus:outline-none"></div>
+                            <div><label class="block text-xs font-bold text-blue-600 dark:text-blue-500 mb-1">Senha</label><input type="text" id="edit-password" class="w-full border border-blue-200 dark:border-blue-800 dark:bg-gray-800 dark:text-white rounded p-2 focus:outline-none"></div>
                         </div>
                         <div class="mt-3">
                              <button type="button" onclick="window.sendCredsEmail(document.getElementById('edit-name').value, document.getElementById('edit-email').value, document.getElementById('edit-login').value, document.getElementById('edit-password').value, this)" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 rounded flex items-center justify-center gap-2 shadow-sm transition">
@@ -538,8 +573,8 @@
 
                 </div>
             </div>
-            <div class="bg-gray-100 px-6 py-4 flex justify-end gap-3 shrink-0 border-t border-gray-200">
-                <button onclick="window.closeEditModal()" class="px-5 py-2 border border-gray-300 rounded font-bold text-gray-700 hover:bg-gray-200 transition">Cancelar</button>
+            <div class="bg-gray-100 dark:bg-gray-700 px-6 py-4 flex justify-end gap-3 shrink-0 border-t border-gray-200 dark:border-gray-600">
+                <button onclick="window.closeEditModal()" class="px-5 py-2 border border-gray-300 dark:border-gray-600 dark:text-gray-300 rounded font-bold text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition">Cancelar</button>
                 <button onclick="window.saveStudentChanges()" class="px-6 py-2 bg-brand-red text-white rounded font-bold hover:bg-red-700 transition shadow-md">Salvar Alterações</button>
             </div>
         </div>
@@ -547,12 +582,12 @@
 
     <!-- DETAILS MODAL (READ ONLY) -->
     <div id="details-modal" class="fixed inset-0 z-[60] hidden bg-black/70 flex-col items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all relative border-t-4 border-brand-dark">
-            <button onclick="window.closeDetailsModal()" class="absolute top-3 right-3 bg-white/80 hover:bg-white text-gray-600 hover:text-black rounded-full w-8 h-8 flex items-center justify-center z-20 shadow-sm transition"><i class="fa-solid fa-times text-lg"></i></button>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all relative border-t-4 border-brand-red">
+            <button onclick="window.closeDetailsModal()" class="absolute top-3 right-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full w-8 h-8 flex items-center justify-center z-20 shadow-sm transition"><i class="fa-solid fa-times text-lg"></i></button>
             <div id="detail-header-bg" class="h-24 bg-gray-200 w-full relative">
                 <div class="absolute -bottom-10 left-6">
-                    <div class="w-20 h-20 bg-white rounded-full p-1 shadow-lg">
-                        <div class="w-full h-full bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-3xl overflow-hidden">
+                    <div class="w-20 h-20 bg-white dark:bg-gray-800 rounded-full p-1 shadow-lg">
+                        <div class="w-full h-full bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-gray-400 text-3xl overflow-hidden">
                             <img id="detail-photo" src="" class="w-full h-full object-cover hidden">
                             <i id="detail-icon" class="fa-solid fa-user"></i>
                         </div>
@@ -560,183 +595,183 @@
                 </div>
             </div>
             <div class="pt-12 px-6 pb-6">
-                <h2 class="text-2xl font-bold text-gray-800 leading-tight" id="detail-name">Nome do Aluno</h2>
-                <p class="text-sm text-gray-500 font-bold uppercase tracking-wide mb-4" id="detail-belt">Faixa Branca</p>
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white leading-tight" id="detail-name">Nome do Aluno</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wide mb-4" id="detail-belt">Faixa Branca</p>
                 <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-gray-50 p-3 rounded border border-gray-100 text-center">
-                            <p class="text-xs text-gray-400 uppercase font-bold">Frequência Total</p>
-                            <p class="text-xl font-bold text-brand-dark" id="detail-attendance">0 aulas</p>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded border border-gray-100 dark:border-gray-600 text-center">
+                            <p class="text-xs text-gray-400 dark:text-gray-500 uppercase font-bold">Frequência Total</p>
+                            <p class="text-xl font-bold text-brand-dark dark:text-white" id="detail-attendance">0 aulas</p>
                         </div>
-                        <div class="bg-gray-50 p-3 rounded border border-gray-100 text-center">
-                            <p class="text-xs text-gray-400 uppercase font-bold">Status do Aluno</p>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded border border-gray-100 dark:border-gray-600 text-center">
+                            <p class="text-xs text-gray-400 dark:text-gray-500 uppercase font-bold">Status do Aluno</p>
                             <p class="text-sm font-bold mt-1" id="detail-status">--</p>
                         </div>
                     </div>
                     <div class="grid md:grid-cols-3 gap-4">
                         <div class="md:col-span-2">
-                            <h4 class="text-xs font-bold text-gray-400 uppercase border-b pb-1 mb-2">Informações Cadastrais</h4>
+                            <h4 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase border-b dark:border-gray-700 pb-1 mb-2">Informações Cadastrais</h4>
                             <div class="grid grid-cols-2 gap-y-2 text-sm">
-                                <div><span class="text-gray-500 block text-xs font-bold">CPF</span><span class="font-medium text-gray-800" id="detail-cpf">--</span></div>
-                                <div><span class="text-gray-500 block text-xs font-bold">Idade</span><span class="font-medium text-gray-800" id="detail-age">--</span></div>
-                                <div><span class="text-gray-500 block text-xs font-bold">Telefone / WhatsApp</span><span class="font-medium" id="detail-phone">--</span></div>
-                                <div class="col-span-2"><span class="text-gray-500 block text-xs font-bold">E-mail</span><span class="font-medium text-gray-800" id="detail-email">--</span></div>
-                                <div class="col-span-2"><span class="text-gray-500 block text-xs font-bold">Endereço</span><span class="font-medium text-gray-800" id="detail-address">--</span></div>
-                                <div class="col-span-2 mt-2"><span class="text-blue-500 block text-[10px] font-bold uppercase tracking-wider">Origem / Captação</span><span class="font-bold text-blue-900" id="detail-origin">--</span></div>
+                                <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">CPF</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-cpf">--</span></div>
+                                <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Idade</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-age">--</span></div>
+                                <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Telefone / WhatsApp</span><span class="font-medium" id="detail-phone">--</span></div>
+                                <div class="col-span-2"><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">E-mail</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-email">--</span></div>
+                                <div class="col-span-2"><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Endereço</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-address">--</span></div>
+                                <div class="col-span-2 mt-2"><span class="text-blue-500 dark:text-blue-400 block text-[10px] font-bold uppercase tracking-wider">Origem / Captação</span><span class="font-bold text-blue-900 dark:text-blue-300" id="detail-origin">--</span></div>
                             </div>
                         </div>
-                        <div class="bg-gray-50 p-3 rounded border border-gray-200 flex flex-col items-center justify-center text-center shadow-inner">
-                            <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-2"><i class="fa-solid fa-qrcode mr-1"></i> QR de Acesso</h4>
-                            <div class="bg-white p-1 rounded shadow-sm border border-gray-300">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded border border-gray-200 dark:border-gray-600 flex flex-col items-center justify-center text-center shadow-inner">
+                            <h4 class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-2"><i class="fa-solid fa-qrcode mr-1"></i> QR de Acesso</h4>
+                            <div class="bg-white p-1 rounded shadow-sm border border-gray-300 dark:border-gray-500">
                                 <img id="detail-qr-image" src="" alt="QR Code" class="w-20 h-20 opacity-80">
                             </div>
                             <input type="hidden" id="detail-qr-id">
                             <button onclick="window.closeDetailsModal(); window.printAdminQrCard()" class="mt-2 text-[10px] font-bold text-brand-red hover:underline"><i class="fa-solid fa-print"></i> Carteirinha</button>
                         </div>
                     </div>
-                    <div class="bg-gray-50 p-3 rounded border border-gray-100 relative mt-4">
-                        <div class="flex justify-between items-start border-b pb-1 mb-2">
-                            <h4 class="text-xs font-bold text-gray-400 uppercase">Detalhes do Plano</h4>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded border border-gray-100 dark:border-gray-600 relative mt-4">
+                        <div class="flex justify-between items-start border-b dark:border-gray-600 pb-1 mb-2">
+                            <h4 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase">Detalhes do Plano</h4>
                         </div>
                         <input type="hidden" id="detail-student-id">
                         <div class="grid grid-cols-1 gap-y-2 text-sm">
-                            <div><span class="text-gray-500 block text-xs font-bold">Plano Registrado</span><span class="font-medium font-bold text-brand-dark uppercase" id="detail-plan">--</span></div>
+                            <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Plano Registrado</span><span class="font-medium font-bold text-brand-dark dark:text-white uppercase" id="detail-plan">--</span></div>
                         </div>
-                        <div id="detail-titular-box" class="hidden mt-3 p-2 bg-purple-100 text-purple-800 rounded border border-purple-200 text-xs">
+                        <div id="detail-titular-box" class="hidden mt-3 p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded border border-purple-200 dark:border-purple-800 text-xs">
                             <span class="font-bold">Titular do Plano Família:</span> <span id="detail-titular-name">--</span>
                         </div>
                     </div>
-                    <div id="detail-guardian-box" class="hidden bg-yellow-50 p-3 rounded border border-yellow-100">
-                        <h4 class="text-xs font-bold text-yellow-700 uppercase mb-1 flex items-center gap-1"><i class="fa-solid fa-people-roof"></i> Responsável Legal (Menor)</h4>
-                        <p class="text-sm font-bold text-yellow-900" id="detail-guardian-name">--</p>
+                    <div id="detail-guardian-box" class="hidden bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded border border-yellow-100 dark:border-yellow-800">
+                        <h4 class="text-xs font-bold text-yellow-700 dark:text-yellow-500 uppercase mb-1 flex items-center gap-1"><i class="fa-solid fa-people-roof"></i> Responsável Legal (Menor)</h4>
+                        <p class="text-sm font-bold text-yellow-900 dark:text-yellow-400" id="detail-guardian-name">--</p>
                     </div>
-                    <div class="bg-blue-50 p-3 rounded border border-blue-100">
-                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-1">Acesso ao Portal do Aluno</h4>
-                        <p class="text-sm text-blue-900">
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded border border-blue-100 dark:border-blue-800">
+                        <h4 class="text-xs font-bold text-blue-700 dark:text-blue-500 uppercase mb-1">Acesso ao Portal do Aluno</h4>
+                        <p class="text-sm text-blue-900 dark:text-blue-300">
                             <span class="font-bold">Login:</span> <span id="detail-login">--</span>
-                            <span class="mx-2 text-blue-300">|</span>
+                            <span class="mx-2 text-blue-300 dark:text-blue-700">|</span>
                             <span class="font-bold">Senha:</span> <span id="detail-pass">--</span>
                         </p>
                     </div>
-                    <div id="detail-family-box" class="hidden mt-3 bg-purple-50 p-3 rounded border border-purple-200"></div>
+                    <div id="detail-family-box" class="hidden mt-3 bg-purple-50 dark:bg-purple-900/30 p-3 rounded border border-purple-200 dark:border-purple-800"></div>
                 </div>
             </div>
-            <div class="bg-gray-100 px-6 py-3 flex justify-end border-t border-gray-200">
-                <button onclick="window.closeDetailsModal()" class="px-5 py-2 bg-white border border-gray-300 shadow-sm rounded text-sm font-bold text-gray-700 hover:bg-gray-50 transition">Fechar Detalhes</button>
+            <div class="bg-gray-100 dark:bg-gray-700 px-6 py-3 flex justify-end border-t border-gray-200 dark:border-gray-600">
+                <button onclick="window.closeDetailsModal()" class="px-5 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm rounded text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">Fechar Detalhes</button>
             </div>
         </div>
     </div>
 
     <!-- NEW REGISTER MODAL -->
     <div id="admin-register-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex-col items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-brand-dark">
-            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-200 shrink-0">
-                <h3 class="font-display font-bold text-lg tracking-wider text-gray-800">NOVA MATRÍCULA</h3>
-                <button onclick="window.closeAdminRegisterModal()" class="hover:text-red-500 text-gray-400 text-xl transition"><i class="fa-solid fa-times"></i></button>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-brand-red">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
+                <h3 class="font-display font-bold text-lg tracking-wider text-gray-800 dark:text-white">NOVA MATRÍCULA</h3>
+                <button onclick="window.closeAdminRegisterModal()" class="hover:text-red-500 text-gray-400 dark:text-gray-300 text-xl transition"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="p-6 overflow-y-auto flex-1">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2 pb-4 border-b border-gray-200 mb-2">
+                    <div class="md:col-span-2 pb-4 border-b border-gray-200 dark:border-gray-700 mb-2">
                         <h4 class="text-xs font-bold text-brand-red uppercase mb-3"><i class="fa-solid fa-id-card mr-1"></i> Dados do Aluno</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="md:col-span-2">
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Nome Completo</label>
-                                <input type="text" id="reg-name" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="Ex: João da Silva">
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nome Completo</label>
+                                <input type="text" id="reg-name" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none" placeholder="Ex: João da Silva">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Data de Nascimento</label>
-                                <input type="text" id="reg-dob" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="DD/MM/AAAA" maxlength="10">
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data de Nascimento</label>
+                                <input type="text" id="reg-dob" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none" placeholder="DD/MM/AAAA" maxlength="10">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">CPF</label>
-                                <input type="text" id="reg-cpf" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="000.000.000-00">
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">CPF</label>
+                                <input type="text" id="reg-cpf" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none" placeholder="000.000.000-00">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">E-mail</label>
-                                <input type="email" id="reg-email" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="email@exemplo.com">
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">E-mail</label>
+                                <input type="email" id="reg-email" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none" placeholder="email@exemplo.com">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Telefone / WhatsApp</label>
-                                <input type="text" id="reg-phone" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="(00) 00000-0000">
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Telefone / WhatsApp</label>
+                                <input type="text" id="reg-phone" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none" placeholder="(00) 00000-0000">
                             </div>
                             <div class="md:col-span-2">
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Endereço Completo</label>
-                                <input type="text" id="reg-address" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="Rua, Bairro, Cidade">
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Endereço Completo</label>
+                                <input type="text" id="reg-address" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none" placeholder="Rua, Bairro, Cidade">
                             </div>
                             <div class="md:col-span-2">
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Como nos conheceu?</label>
-                                <select id="reg-origin" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none">
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Como nos conheceu?</label>
+                                <select id="reg-origin" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none">
                                     <option value="" disabled selected>Selecione uma opção...</option><option value="Instagram">Instagram</option><option value="Facebook">Facebook</option><option value="Google">Pesquisa no Google</option><option value="Indicação de Aluno/Amigo">Indicação de um Aluno/Amigo</option><option value="Passou em frente">Passei em frente à Escola</option><option value="Outros">Outros</option>
                                 </select>
                             </div>
                             <!-- PAINEL RESPONSÁVEL LEGAL (Apenas para < 18) -->
-                            <div id="admin-reg-guardian-container" class="md:col-span-2 bg-yellow-50 p-4 rounded border border-yellow-200 hidden">
-                                <h4 class="text-xs font-bold text-yellow-800 mb-3 uppercase border-b border-yellow-200 pb-1"><i class="fa-solid fa-triangle-exclamation"></i> Dados do Responsável Legal (Obrigatório para Menores)</h4>
+                            <div id="admin-reg-guardian-container" class="md:col-span-2 bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded border border-yellow-200 dark:border-yellow-800 hidden">
+                                <h4 class="text-xs font-bold text-yellow-800 dark:text-yellow-500 mb-3 uppercase border-b border-yellow-200 dark:border-yellow-800 pb-1"><i class="fa-solid fa-triangle-exclamation"></i> Dados do Responsável Legal (Obrigatório para Menores)</h4>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div><label class="block text-[10px] font-bold text-yellow-800 mb-1 uppercase">Nome do Pai/Mãe/Responsável</label><input type="text" id="reg-guardian" class="w-full border border-yellow-300 rounded p-2 focus:border-yellow-500 focus:outline-none text-sm" placeholder="Nome completo do responsável"></div>
-                                    <div><label class="block text-[10px] font-bold text-yellow-800 mb-1 uppercase">CPF do Responsável</label><input type="text" id="reg-guardian-cpf" class="w-full border border-yellow-300 rounded p-2 focus:border-yellow-500 focus:outline-none text-sm" placeholder="000.000.000-00"></div>
+                                    <div><label class="block text-[10px] font-bold text-yellow-800 dark:text-yellow-500 mb-1 uppercase">Nome do Pai/Mãe/Responsável</label><input type="text" id="reg-guardian" class="w-full border border-yellow-300 dark:border-yellow-700 dark:bg-gray-800 dark:text-white rounded p-2 focus:border-yellow-500 focus:outline-none text-sm" placeholder="Nome completo do responsável"></div>
+                                    <div><label class="block text-[10px] font-bold text-yellow-800 dark:text-yellow-500 mb-1 uppercase">CPF do Responsável</label><input type="text" id="reg-guardian-cpf" class="w-full border border-yellow-300 dark:border-yellow-700 dark:bg-gray-800 dark:text-white rounded p-2 focus:border-yellow-500 focus:outline-none text-sm" placeholder="000.000.000-00"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Selecione o Plano</label>
-                        <select id="reg-plan" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none font-bold text-gray-700" onchange="window.handleAdminPlanChange()">
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Selecione o Plano</label>
+                        <select id="reg-plan" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none font-bold" onchange="window.handleAdminPlanChange()">
                             <option value="infantil-mensal">Infantil Mensal</option><option value="infantil-trimestral">Infantil Trimestral</option><option value="infantil-semestral">Infantil Semestral</option><option value="adulto-mensal">Adulto Mensal</option><option value="adulto-trimestral">Adulto Trimestral</option><option value="adulto-semestral">Adulto Semestral</option><option value="combo-dupla">Combo Dupla (1 Ad + 1 Inf)</option><option value="combo-casal">Combo Casal (2 Adultos)</option><option value="combo-familia">Combo Família (3 Pessoas)</option><option value="dependente">Dependente (Isento no Combo)</option><option value="administracao">Administração (Isento)</option>
                         </select>
                     </div>
                     <div class="col-span-1 hidden" id="admin-reg-titular-container">
-                        <label class="block text-xs font-bold text-purple-600 mb-1">Vincular a um Titular</label>
-                        <select id="reg-titular" class="w-full border border-purple-300 rounded p-2 bg-purple-50 focus:outline-none focus:border-purple-600 font-bold text-purple-800"><option value="">-- Selecione o Titular --</option></select>
+                        <label class="block text-xs font-bold text-purple-600 dark:text-purple-400 mb-1">Vincular a um Titular</label>
+                        <select id="reg-titular" class="w-full border border-purple-300 dark:border-purple-800 dark:bg-gray-800 dark:text-white rounded p-2 focus:outline-none focus:border-purple-600 font-bold text-purple-800 dark:text-purple-300"><option value="">-- Selecione o Titular --</option></select>
                     </div>
                     <div class="md:col-span-2 grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 mb-1">Cor da Faixa Inicial</label>
-                            <select id="reg-belt-color" class="w-full border rounded p-2 text-sm focus:border-brand-red focus:outline-none">
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Cor da Faixa Inicial</label>
+                            <select id="reg-belt-color" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-brand-red focus:outline-none">
                                 <option value="Branca">Branca (Iniciante)</option><option value="Cinza">Cinza</option><option value="Amarela">Amarela</option><option value="Laranja">Laranja</option><option value="Verde">Verde</option><option value="Azul">Azul</option><option value="Roxa">Roxa</option><option value="Marrom">Marrom</option><option value="Preta">Preta</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 mb-1">Grau (Se já tiver)</label>
-                            <select id="reg-belt-degree" class="w-full border rounded p-2 text-sm focus:border-brand-red focus:outline-none">
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Grau (Se já tiver)</label>
+                            <select id="reg-belt-degree" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-brand-red focus:outline-none">
                                 <option value="0">0º Grau (Liso)</option><option value="1">1º Grau</option><option value="2">2º Grau</option><option value="3">3º Grau</option><option value="4">4º Grau</option>
                             </select>
                         </div>
                     </div>
-                    <div id="admin-reg-deps-container" class="md:col-span-2 hidden border-t-2 border-purple-200 pt-4 mt-2">
-                        <h4 class="text-sm font-bold text-purple-700 uppercase mb-3"><i class="fa-solid fa-users"></i> Cadastrar Dependentes Simultaneamente</h4>
-                        <div id="admin-reg-dep1" class="hidden bg-purple-50 p-4 rounded-lg border border-purple-200 mb-3 shadow-inner">
-                            <h5 class="font-bold text-xs text-purple-800 mb-2 border-b border-purple-200 pb-1">Dependente 1</h5>
+                    <div id="admin-reg-deps-container" class="md:col-span-2 hidden border-t-2 border-purple-200 dark:border-purple-800 pt-4 mt-2">
+                        <h4 class="text-sm font-bold text-purple-700 dark:text-purple-400 uppercase mb-3"><i class="fa-solid fa-users"></i> Cadastrar Dependentes Simultaneamente</h4>
+                        <div id="admin-reg-dep1" class="hidden bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800 mb-3 shadow-inner">
+                            <h5 class="font-bold text-xs text-purple-800 dark:text-purple-300 mb-2 border-b border-purple-200 dark:border-purple-800 pb-1">Dependente 1</h5>
                             <div class="grid md:grid-cols-3 gap-3 mb-2">
-                                <div class="md:col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Nome Completo</label><input type="text" id="admin-dep1-name" class="w-full border rounded p-2 text-sm focus:border-purple-500 focus:outline-none"></div>
-                                <div><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Nascimento</label><input type="text" id="admin-dep1-dob" placeholder="DD/MM/AAAA" maxlength="10" class="w-full border rounded p-2 text-sm focus:border-purple-500 focus:outline-none"></div>
-                                <div><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Parentesco</label>
-                                    <select id="admin-dep1-kinship" class="w-full border rounded p-2 text-sm focus:border-purple-500 focus:outline-none"><option value="Filho(a)">Filho(a)</option><option value="Cônjuge">Cônjuge</option><option value="Irmão/Irmã">Irmão/Irmã</option><option value="Outro">Outro</option></select>
+                                <div class="md:col-span-1"><label class="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Nome Completo</label><input type="text" id="admin-dep1-name" class="w-full border dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded p-2 text-sm focus:border-purple-500 focus:outline-none"></div>
+                                <div><label class="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Nascimento</label><input type="text" id="admin-dep1-dob" placeholder="DD/MM/AAAA" maxlength="10" class="w-full border dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded p-2 text-sm focus:border-purple-500 focus:outline-none"></div>
+                                <div><label class="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Parentesco</label>
+                                    <select id="admin-dep1-kinship" class="w-full border dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded p-2 text-sm focus:border-purple-500 focus:outline-none"><option value="Filho(a)">Filho(a)</option><option value="Cônjuge">Cônjuge</option><option value="Irmão/Irmã">Irmão/Irmã</option><option value="Outro">Outro</option></select>
                                 </div>
                             </div>
                         </div>
-                        <div id="admin-reg-dep2" class="hidden bg-purple-50 p-4 rounded-lg border border-purple-200 mb-3 shadow-inner">
-                            <h5 class="font-bold text-xs text-purple-800 mb-2 border-b border-purple-200 pb-1">Dependente 2</h5>
+                        <div id="admin-reg-dep2" class="hidden bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800 mb-3 shadow-inner">
+                            <h5 class="font-bold text-xs text-purple-800 dark:text-purple-300 mb-2 border-b border-purple-200 dark:border-purple-800 pb-1">Dependente 2</h5>
                             <div class="grid md:grid-cols-3 gap-3 mb-2">
-                                <div class="md:col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Nome Completo</label><input type="text" id="admin-dep2-name" class="w-full border rounded p-2 text-sm focus:border-purple-500 focus:outline-none"></div>
-                                <div><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Nascimento</label><input type="text" id="admin-dep2-dob" placeholder="DD/MM/AAAA" maxlength="10" class="w-full border rounded p-2 text-sm focus:border-purple-500 focus:outline-none"></div>
-                                <div><label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Parentesco</label>
-                                    <select id="admin-dep2-kinship" class="w-full border rounded p-2 text-sm focus:border-purple-500 focus:outline-none"><option value="Filho(a)">Filho(a)</option><option value="Cônjuge">Cônjuge</option><option value="Irmão/Irmã">Irmão/Irmã</option><option value="Outro">Outro</option></select>
+                                <div class="md:col-span-1"><label class="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Nome Completo</label><input type="text" id="admin-dep2-name" class="w-full border dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded p-2 text-sm focus:border-purple-500 focus:outline-none"></div>
+                                <div><label class="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Nascimento</label><input type="text" id="admin-dep2-dob" placeholder="DD/MM/AAAA" maxlength="10" class="w-full border dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded p-2 text-sm focus:border-purple-500 focus:outline-none"></div>
+                                <div><label class="block text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase mb-1">Parentesco</label>
+                                    <select id="admin-dep2-kinship" class="w-full border dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded p-2 text-sm focus:border-purple-500 focus:outline-none"><option value="Filho(a)">Filho(a)</option><option value="Cônjuge">Cônjuge</option><option value="Irmão/Irmã">Irmão/Irmã</option><option value="Outro">Outro</option></select>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 bg-blue-50 p-4 rounded-lg shadow-inner border border-blue-100">
-                        <h4 class="text-xs font-bold text-blue-800 uppercase mb-3 flex items-center gap-2"><i class="fa-solid fa-key"></i> Definir Acesso ao Portal do Aluno</h4>
+                    <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg shadow-inner border border-blue-100 dark:border-blue-800">
+                        <h4 class="text-xs font-bold text-blue-800 dark:text-blue-400 uppercase mb-3 flex items-center gap-2"><i class="fa-solid fa-key"></i> Definir Acesso ao Portal do Aluno</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-bold text-blue-700 mb-1">Utilizador (Login)</label><input type="text" id="reg-student-login" class="w-full border border-blue-300 rounded p-2 focus:outline-none focus:border-blue-600" placeholder="Ex: joao.silva"></div>
-                            <div><label class="block text-xs font-bold text-blue-700 mb-1">Senha Padrão</label><input type="text" id="reg-student-pass" class="w-full border border-blue-300 rounded p-2 focus:outline-none focus:border-blue-600" placeholder="Crie uma senha inicial"></div>
+                            <div><label class="block text-xs font-bold text-blue-700 dark:text-blue-300 mb-1">Utilizador (Login)</label><input type="text" id="reg-student-login" class="w-full border border-blue-300 dark:border-blue-700 dark:bg-gray-800 dark:text-white rounded p-2 focus:outline-none focus:border-blue-600" placeholder="Ex: joao.silva"></div>
+                            <div><label class="block text-xs font-bold text-blue-700 dark:text-blue-300 mb-1">Senha Padrão</label><input type="text" id="reg-student-pass" class="w-full border border-blue-300 dark:border-blue-700 dark:bg-gray-800 dark:text-white rounded p-2 focus:outline-none focus:border-blue-600" placeholder="Crie uma senha inicial"></div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="bg-gray-100 px-6 py-4 flex justify-end gap-3 shrink-0 border-t border-gray-200">
-                <button onclick="window.closeAdminRegisterModal()" class="px-5 py-2 bg-white border border-gray-300 rounded font-bold text-gray-700 hover:bg-gray-50 transition shadow-sm">Cancelar</button>
+            <div class="bg-gray-100 dark:bg-gray-700 px-6 py-4 flex justify-end gap-3 shrink-0 border-t border-gray-200 dark:border-gray-600">
+                <button onclick="window.closeAdminRegisterModal()" class="px-5 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm">Cancelar</button>
                 <button onclick="window.saveAdminNewStudent()" class="px-6 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-700 transition shadow-md flex items-center gap-2"><i class="fa-solid fa-user-check"></i> Finalizar Matrícula</button>
             </div>
         </div>
@@ -744,26 +779,26 @@
 
     <!-- NOTICE MODAL -->
     <div id="notice-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in border-t-4 border-yellow-500">
-            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-200">
-                <h3 class="font-bold text-lg text-gray-800" id="notice-modal-title"><i class="fa-solid fa-bullhorn text-yellow-500 mr-2"></i> Publicar Aviso</h3>
-                <button onclick="window.closeNoticeModal()" class="text-gray-400 hover:text-gray-800"><i class="fa-solid fa-times"></i></button>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in border-t-4 border-yellow-500">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white" id="notice-modal-title"><i class="fa-solid fa-bullhorn text-yellow-500 mr-2"></i> Publicar Aviso</h3>
+                <button onclick="window.closeNoticeModal()" class="text-gray-400 hover:text-gray-800 dark:hover:text-white"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="p-6 space-y-4">
                 <input type="hidden" id="notice-id">
-                <div><label class="block text-xs font-bold text-gray-600 mb-1">Título do Aviso</label><input type="text" id="notice-title" class="w-full border rounded p-3 text-sm focus:border-yellow-500 focus:outline-none"></div>
-                <div><label class="block text-xs font-bold text-gray-600 mb-1">Mensagem</label><textarea id="notice-text" rows="4" class="w-full border rounded p-3 text-sm focus:border-yellow-500 focus:outline-none"></textarea></div>
+                <div><label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Título do Aviso</label><input type="text" id="notice-title" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-3 text-sm focus:border-yellow-500 focus:outline-none"></div>
+                <div><label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Mensagem</label><textarea id="notice-text" rows="4" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-3 text-sm focus:border-yellow-500 focus:outline-none"></textarea></div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-bold text-gray-600 mb-1">Tipo de Etiqueta</label>
-                        <select id="notice-type" class="w-full border rounded p-2 text-sm focus:border-yellow-500 focus:outline-none font-bold">
+                    <div><label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Tipo de Etiqueta</label>
+                        <select id="notice-type" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none font-bold">
                             <option value="info" class="text-blue-600">ℹ️ Informativo</option><option value="alert" class="text-yellow-600">⚠️ Importante</option><option value="success" class="text-green-600">🎉 Comemoração</option><option value="danger" class="text-red-600">🚨 Urgente</option>
                         </select>
                     </div>
-                    <div><label class="block text-xs font-bold text-gray-600 mb-1">Data de Expiração</label><input type="date" id="notice-expiry" class="w-full border rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
+                    <div><label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Data de Expiração</label><input type="date" id="notice-expiry" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
                 </div>
                 <div class="mt-6 flex justify-end gap-3">
-                    <button onclick="window.closeNoticeModal()" class="px-5 py-2 border rounded text-sm hover:bg-gray-100 font-bold text-gray-600 transition">Cancelar</button>
-                    <button onclick="window.saveNotice()" class="px-6 py-2 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600 font-bold shadow-md transition">Publicar no Mural</button>
+                    <button onclick="window.closeNoticeModal()" class="px-5 py-2 border dark:border-gray-600 rounded text-sm hover:bg-gray-100 dark:hover:bg-gray-700 font-bold text-gray-600 dark:text-gray-300 transition">Cancelar</button>
+                    <button onclick="window.saveNotice()" class="px-6 py-2 bg-yellow-500 text-brand-dark rounded text-sm hover:bg-yellow-400 font-bold shadow-md transition">Publicar no Mural</button>
                 </div>
             </div>
         </div>
@@ -812,9 +847,33 @@
 
         window.getPlanInfo = (planKey) => window.PLAN_DICT[planKey] || { price: 0, short: String(planKey||'').toUpperCase(), long: 'NÃO INFORMADO' };
 
-        // ==========================================
-        // LÓGICA DE IMPRESSÃO (Nativa - Iframe)
-        // ==========================================
+        // TOGGLE MODO NOTURNO
+        window.toggleTheme = function() {
+            const docEl = document.documentElement;
+            const themeIconDesktop = document.getElementById('theme-icon');
+            const themeIconMobile = document.getElementById('theme-icon-mobile');
+            if (docEl.classList.contains('dark')) {
+                docEl.classList.remove('dark');
+                localStorage.setItem('tanque_theme', 'light');
+                if(themeIconDesktop) { themeIconDesktop.classList.remove('fa-sun'); themeIconDesktop.classList.add('fa-moon'); }
+                if(themeIconMobile) { themeIconMobile.classList.remove('fa-sun'); themeIconMobile.classList.add('fa-moon'); }
+            } else {
+                docEl.classList.add('dark');
+                localStorage.setItem('tanque_theme', 'dark');
+                if(themeIconDesktop) { themeIconDesktop.classList.remove('fa-moon'); themeIconDesktop.classList.add('fa-sun'); }
+                if(themeIconMobile) { themeIconMobile.classList.remove('fa-moon'); themeIconMobile.classList.add('fa-sun'); }
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeIconDesktop = document.getElementById('theme-icon');
+            const themeIconMobile = document.getElementById('theme-icon-mobile');
+            if (document.documentElement.classList.contains('dark')) {
+                if(themeIconDesktop) { themeIconDesktop.classList.remove('fa-moon'); themeIconDesktop.classList.add('fa-sun'); }
+                if(themeIconMobile) { themeIconMobile.classList.remove('fa-moon'); themeIconMobile.classList.add('fa-sun'); }
+            }
+        });
+
         window.printHtmlContent = function(htmlContent, titleStr) {
             const iframe = document.createElement('iframe');
             iframe.style.position = 'absolute';
@@ -871,9 +930,9 @@
 
             const htmlContent = `
                 <div style="width: 6.5cm; height: 10.5cm; border: 2px solid #1B1B1B; border-radius: 12px; margin: 0 auto; text-align: center; font-family: 'Arial', sans-serif; overflow: hidden; background: #fff; position: relative; box-sizing: border-box; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                    <!-- HEADER -->
+                    <!-- HEADER COM BRIGHTNESS 0 INVERT 1 PARA LOGO FICAR BRANCA NO FUNDO PRETO -->
                     <div style="background-color: #1B1B1B; color: #fff; padding: 12px 10px; font-weight: bold; text-transform: uppercase; font-size: 13px; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-                        <img src="https://iili.io/qC543c7.png" style="height: 22px; filter: invert(1);"> 
+                        <img src="https://iili.io/qC543c7.png" style="height: 22px; filter: brightness(0) invert(1);"> 
                         TANQUE TEAM
                     </div>
                     <!-- WATERMARK -->
@@ -1042,7 +1101,7 @@
                 const photoImg = document.getElementById('detail-photo'); const photoIcon = document.getElementById('detail-icon');
                 if(s.photoBase64) { photoImg.src = s.photoBase64; photoImg.classList.remove('hidden'); photoIcon.classList.add('hidden'); } 
                 else { photoImg.classList.add('hidden'); photoIcon.classList.remove('hidden'); }
-                const belt = (s.belt || "").toLowerCase(); let headerColor = "bg-gray-200"; 
+                const belt = (s.belt || "").toLowerCase(); let headerColor = "bg-gray-200 dark:bg-gray-600"; 
                 if(belt.includes("azul")) headerColor = "bg-blue-600"; else if(belt.includes("roxa")) headerColor = "bg-purple-600"; else if(belt.includes("marrom")) headerColor = "bg-amber-800"; else if(belt.includes("preta")) headerColor = "bg-black"; else if(belt.includes("amarela")) headerColor = "bg-yellow-400"; else if(belt.includes("laranja")) headerColor = "bg-orange-500"; else if(belt.includes("verde")) headerColor = "bg-green-600";
                 document.getElementById('detail-header-bg').className = `h-24 w-full relative ${headerColor}`;
                 document.getElementById('detail-attendance').innerText = (s.attendance ? s.attendance.length : 0) + " aulas";
@@ -1062,13 +1121,13 @@
                 const familyBox = document.getElementById('detail-family-box'); familyBox.innerHTML = '';
                 if (s.plan === 'dependente' && s.titularId) {
                     const titular = window.students.find(t => t.id === s.titularId); const tName = titular ? titular.name : 'Titular Desconhecido';
-                    familyBox.innerHTML = `<h4 class="text-xs font-bold text-purple-700 uppercase mb-2"><i class="fa-solid fa-link"></i> Vínculo Familiar</h4><p class="text-sm text-purple-900 mb-2">Este aluno é dependente de <strong>${tName}</strong>.</p>`;
+                    familyBox.innerHTML = `<h4 class="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase mb-2"><i class="fa-solid fa-link"></i> Vínculo Familiar</h4><p class="text-sm text-purple-900 dark:text-purple-200 mb-2">Este aluno é dependente de <strong>${tName}</strong>.</p>`;
                     familyBox.classList.remove('hidden');
                 } else {
                     const deps = window.students.filter(d => d.titularId === s.id && d.plan === 'dependente');
                     if (deps.length > 0) {
-                        let html = `<h4 class="text-xs font-bold text-purple-700 uppercase mb-2"><i class="fa-solid fa-users"></i> Dependentes Vinculados (${deps.length})</h4><ul class="space-y-2">`;
-                        deps.forEach(d => { html += `<li class="flex justify-between items-center bg-white p-2 rounded shadow-sm border border-purple-100"><div><p class="font-bold text-xs text-purple-900">${d.name}</p><p class="text-[10px] text-purple-600">${d.belt || 'Branca'} • Freq: ${d.attendance ? d.attendance.length : 0}</p></div></li>`; });
+                        let html = `<h4 class="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase mb-2"><i class="fa-solid fa-users"></i> Dependentes Vinculados (${deps.length})</h4><ul class="space-y-2">`;
+                        deps.forEach(d => { html += `<li class="flex justify-between items-center bg-white dark:bg-gray-700 p-2 rounded shadow-sm border border-purple-100 dark:border-purple-800"><div><p class="font-bold text-xs text-purple-900 dark:text-purple-200">${d.name}</p><p class="text-[10px] text-purple-600 dark:text-purple-400">${d.belt || 'Branca'} • Freq: ${d.attendance ? d.attendance.length : 0}</p></div></li>`; });
                         html += `</ul>`; familyBox.innerHTML = html; familyBox.classList.remove('hidden');
                     } else familyBox.classList.add('hidden');
                 }
@@ -1180,10 +1239,10 @@
             const tl = document.getElementById('prog-timeline'); tl.innerHTML = '';
             let logs = s.progressLog ? [...s.progressLog] : []; logs.push({ type: 'info', text: 'Matrícula realizada.', date: s.registrationDate || new Date().toISOString() }); logs.sort((a, b) => new Date(b.date) - new Date(a.date));
             logs.forEach(log => {
-                const d = new Date(log.date).toLocaleDateString('pt-BR'); let icon = '<i class="fa-solid fa-comment-dots text-teal-500"></i>'; let bg = 'bg-teal-50 border-teal-200';
-                if(log.type === 'graduation') { icon = '<i class="fa-solid fa-medal text-yellow-500"></i>'; bg = 'bg-yellow-50 border-yellow-200'; }
-                if(log.type === 'info') { icon = '<i class="fa-solid fa-flag-checkered text-blue-500"></i>'; bg = 'bg-blue-50 border-blue-200'; }
-                tl.innerHTML += `<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active"><div class="flex items-center justify-center w-8 h-8 rounded-full border border-white bg-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">${icon}</div><div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-3 rounded border shadow-sm ${bg}"><div class="flex items-center justify-between mb-1"><div class="font-bold text-gray-800 text-xs">${log.type === 'graduation' ? 'Graduação' : (log.type === 'note' ? 'Anotação' : 'Sistema')}</div><time class="text-[10px] font-medium text-gray-500">${d}</time></div><div class="text-sm text-gray-600">${log.text}</div></div></div>`;
+                const d = new Date(log.date).toLocaleDateString('pt-BR'); let icon = '<i class="fa-solid fa-comment-dots text-teal-500"></i>'; let bg = 'bg-teal-50 border-teal-200 dark:bg-teal-900/20 dark:border-teal-800';
+                if(log.type === 'graduation') { icon = '<i class="fa-solid fa-medal text-yellow-500"></i>'; bg = 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800'; }
+                if(log.type === 'info') { icon = '<i class="fa-solid fa-flag-checkered text-blue-500"></i>'; bg = 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'; }
+                tl.innerHTML += `<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active"><div class="flex items-center justify-center w-8 h-8 rounded-full border border-white dark:border-gray-800 bg-white dark:bg-gray-800 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">${icon}</div><div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-3 rounded border shadow-sm ${bg}"><div class="flex items-center justify-between mb-1"><div class="font-bold text-gray-800 dark:text-gray-200 text-xs">${log.type === 'graduation' ? 'Graduação' : (log.type === 'note' ? 'Anotação' : 'Sistema')}</div><time class="text-[10px] font-medium text-gray-500 dark:text-gray-400">${d}</time></div><div class="text-sm text-gray-600 dark:text-gray-300">${log.text}</div></div></div>`;
             });
             window.filterProgressAttendance();
             document.getElementById('progress-modal').classList.remove('hidden'); document.getElementById('progress-modal').classList.add('flex');
@@ -1208,8 +1267,8 @@
                 const grouped = {}; attendances.forEach(log => { if(!grouped[log.date]) grouped[log.date] = []; if(!grouped[log.date].some(existing => existing.time === log.time)){ grouped[log.date].push(log); } });
                 Object.keys(grouped).sort((a,b) => new Date(b) - new Date(a)).forEach(dateStr => {
                     const formatted = formatDate(dateStr + 'T12:00:00');
-                    let classesHtml = grouped[dateStr].map(log => `<span class="text-[10px] bg-white px-2 py-1 rounded font-bold text-gray-700 border border-gray-300 inline-flex items-center gap-1 mb-1 mr-1 shadow-sm">${log.time || 'Manual'} <button onclick="window.removeSpecificAttendance('${id}', '${log.date}', '${log.time}')" class="text-red-400 hover:text-red-600 transition ml-1"><i class="fa-solid fa-times"></i></button></span>`).join('');
-                    attList.innerHTML += `<div class="py-2 px-3 hover:bg-white transition border-b border-gray-100 flex flex-col gap-1"><span class="text-sm font-bold text-gray-800"><i class="fa-regular fa-calendar-check text-green-600 mr-1"></i> ${formatted}</span><div class="flex flex-wrap">${classesHtml}</div></div>`;
+                    let classesHtml = grouped[dateStr].map(log => `<span class="text-[10px] bg-white dark:bg-gray-800 px-2 py-1 rounded font-bold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 inline-flex items-center gap-1 mb-1 mr-1 shadow-sm">${log.time || 'Manual'} <button onclick="window.removeSpecificAttendance('${id}', '${log.date}', '${log.time}')" class="text-red-400 hover:text-red-600 transition ml-1"><i class="fa-solid fa-times"></i></button></span>`).join('');
+                    attList.innerHTML += `<div class="py-2 px-3 hover:bg-white dark:hover:bg-gray-600 transition border-b border-gray-100 dark:border-gray-600 flex flex-col gap-1"><span class="text-sm font-bold text-gray-800 dark:text-gray-200"><i class="fa-regular fa-calendar-check text-green-600 mr-1"></i> ${formatted}</span><div class="flex flex-wrap">${classesHtml}</div></div>`;
                 });
             }
         };
@@ -1353,33 +1412,33 @@
             if (sortOrder === 'az') filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '')); else if (sortOrder === 'za') filtered.sort((a, b) => (b.name || '').localeCompare(a.name || '')); else filtered.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
             document.getElementById('list-count').innerText = filtered.length; document.getElementById('list-title').innerText = (window.currentTab === 'all') ? "Todos (Ativos)" : (window.currentTab === 'adults') ? "Adultos e Família" : (window.currentTab === 'kids') ? "Infantil (Ativos)" : "Arquivo de Alunos";
 
-            thead.innerHTML = `<th class="px-6 py-3 border-b font-semibold w-10 text-center"><input type="checkbox" id="cb-select-all" onclick="window.toggleSelectAll(this)" class="rounded text-brand-red cursor-pointer"></th><th class="px-6 py-3 border-b font-semibold">Aluno</th>${window.currentTab === 'kids' || window.currentTab === 'all' ? '<th class="px-6 py-3 border-b font-semibold">Responsável/Titular</th>' : ''}<th class="px-6 py-3 border-b font-semibold">Faixa</th><th class="px-6 py-3 border-b font-semibold">Frequência</th><th class="px-6 py-3 border-b font-semibold text-center">Acesso</th><th class="px-6 py-3 border-b font-semibold text-center">Ações</th>`;
-            if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="${window.currentTab === 'kids' || window.currentTab === 'all' ? 7 : 6}" class="px-6 py-8 text-center text-gray-400 italic">Nenhum aluno encontrado.</td></tr>`; return; }
+            thead.innerHTML = `<th class="px-6 py-3 border-b dark:border-gray-600 font-semibold w-10 text-center"><input type="checkbox" id="cb-select-all" onclick="window.toggleSelectAll(this)" class="rounded text-brand-red cursor-pointer"></th><th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Aluno</th>${window.currentTab === 'kids' || window.currentTab === 'all' ? '<th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Responsável/Titular</th>' : ''}<th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Faixa</th><th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Frequência</th><th class="px-6 py-3 border-b dark:border-gray-600 font-semibold text-center">Acesso</th><th class="px-6 py-3 border-b dark:border-gray-600 font-semibold text-center">Ações</th>`;
+            if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="${window.currentTab === 'kids' || window.currentTab === 'all' ? 7 : 6}" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500 italic">Nenhum aluno encontrado.</td></tr>`; return; }
 
             const renderRow = (s, isDepRow = false, parentId = null) => {
-                const attendanceCount = s.attendance ? s.attendance.length : 0; const hasLogin = (s.studentLogin && s.studentPassword) ? '<span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-lock"></i> OK</span>' : '<span class="text-gray-400 text-xs italic">--</span>'; const safePlan = String(s.plan || '').toLowerCase();
-                let avatarHtml = s.photoBase64 ? `<img src="${s.photoBase64}" class="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200">` : `<div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 mr-3 font-bold text-xs">${(s.name || '?').charAt(0).toUpperCase()}</div>`;
-                const age = getAge(s.dob); let nameHtml = isDepRow ? `<i class="fa-solid fa-level-up-alt fa-rotate-90 text-purple-300 mr-2 text-xs"></i>${s.name}` : s.name || 'Sem Nome';
+                const attendanceCount = s.attendance ? s.attendance.length : 0; const hasLogin = (s.studentLogin && s.studentPassword) ? '<span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-lock"></i> OK</span>' : '<span class="text-gray-400 dark:text-gray-500 text-xs italic">--</span>'; const safePlan = String(s.plan || '').toLowerCase();
+                let avatarHtml = s.photoBase64 ? `<img src="${s.photoBase64}" class="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200 dark:border-gray-600">` : `<div class="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 mr-3 font-bold text-xs">${(s.name || '?').charAt(0).toUpperCase()}</div>`;
+                const age = getAge(s.dob); let nameHtml = isDepRow ? `<i class="fa-solid fa-level-up-alt fa-rotate-90 text-purple-300 dark:text-purple-500 mr-2 text-xs"></i>${s.name}` : s.name || 'Sem Nome';
                 
-                let nameDisplay = `<div class="font-medium text-gray-900 flex items-center group-hover:text-brand-red transition ${isDepRow ? 'pl-4 border-l-2 border-purple-200' : ''}">${nameHtml} ${((window.currentTab === 'adults' || window.currentTab === 'all') && age !== null && age < 18 && !isStudentKid(s)) ? `<span class="ml-2 text-[10px] text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200 font-bold">Menor (${age})</span>` : ''} ${(safePlan.includes('combo') && safePlan !== 'dependente') ? `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase">Combo</span>` : ''} ${(safePlan === 'administracao') ? `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-bold uppercase">Admin</span>` : ''} ${(safePlan === 'dependente') ? `<span class="ml-2 text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 font-bold uppercase" title="Dependente"><i class="fa-solid fa-link"></i> DEP</span>` : ''} ${(s.archived) ? `<span class="ml-2 text-[10px] text-gray-800 bg-gray-300 px-1.5 py-0.5 rounded border border-gray-400 font-bold uppercase">ARQUIVADO</span>` : ''}`;
+                let nameDisplay = `<div class="font-medium text-gray-900 dark:text-gray-100 flex items-center group-hover:text-brand-red transition ${isDepRow ? 'pl-4 border-l-2 border-purple-200 dark:border-purple-800' : ''}">${nameHtml} ${((window.currentTab === 'adults' || window.currentTab === 'all') && age !== null && age < 18 && !isStudentKid(s)) ? `<span class="ml-2 text-[10px] text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 px-1.5 py-0.5 rounded border border-orange-200 dark:border-orange-800 font-bold">Menor (${age})</span>` : ''} ${(safePlan.includes('combo') && safePlan !== 'dependente') ? `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-800 font-bold uppercase">Combo</span>` : ''} ${(safePlan === 'administracao') ? `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-800 font-bold uppercase">Admin</span>` : ''} ${(safePlan === 'dependente') ? `<span class="ml-2 text-[10px] text-purple-600 bg-purple-50 dark:bg-purple-900/20 dark:text-purple-400 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-800 font-bold uppercase" title="Dependente"><i class="fa-solid fa-link"></i> DEP</span>` : ''} ${(s.archived) ? `<span class="ml-2 text-[10px] text-gray-800 bg-gray-300 dark:bg-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded border border-gray-400 dark:border-gray-600 font-bold uppercase">ARQUIVADO</span>` : ''}`;
                 const myFilteredDeps = filtered.filter(d => d.plan === 'dependente' && d.titularId === s.id);
-                if (!isDepRow && myFilteredDeps.length > 0) { nameDisplay += `<button onclick="event.stopPropagation(); window.toggleDepRows('${s.id}')" class="ml-2 bg-purple-100 text-purple-700 w-5 h-5 rounded flex items-center justify-center shadow-sm hover:bg-purple-200 transition" title="Expandir/Recolher"><i id="icon-dep-${s.id}" class="fa-solid fa-plus text-[10px]"></i></button>`; }
+                if (!isDepRow && myFilteredDeps.length > 0) { nameDisplay += `<button onclick="event.stopPropagation(); window.toggleDepRows('${s.id}')" class="ml-2 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-400 w-5 h-5 rounded flex items-center justify-center shadow-sm hover:bg-purple-200 dark:hover:bg-purple-800 transition" title="Expandir/Recolher"><i id="icon-dep-${s.id}" class="fa-solid fa-plus text-[10px]"></i></button>`; }
                 nameDisplay += `</div>`;
 
                 const beltSVG = renderBeltSVG(s.belt || 'Faixa Branca - 0º Grau');
-                const guardianCell = (window.currentTab === 'kids' || window.currentTab === 'all') ? `<td class="px-6 py-4 align-middle text-sm text-gray-700"><i class="fa-solid fa-user-shield text-gray-400 mr-1"></i> ${s.guardian || s.titularName || '-'}</td>` : '';
+                const guardianCell = (window.currentTab === 'kids' || window.currentTab === 'all') ? `<td class="px-6 py-4 align-middle text-sm text-gray-700 dark:text-gray-300"><i class="fa-solid fa-user-shield text-gray-400 dark:text-gray-500 mr-1"></i> ${s.guardian || s.titularName || '-'}</td>` : '';
                 
                 let actionsHtml = '';
                 if (s.archived) {
-                    actionsHtml = `<button onclick="window.restoreStudent('${s.id}')" class="text-green-600 hover:text-green-900 mx-1 w-8 h-8 rounded-full bg-green-50 transition" title="Reativar Aluno"><i class="fa-solid fa-box-open"></i></button><button onclick="window.deleteStudent('${s.id}')" class="text-red-600 hover:text-red-900 mx-1 w-8 h-8 rounded-full bg-red-50 transition" title="Excluir Permanentemente"><i class="fa-solid fa-trash"></i></button>`;
+                    actionsHtml = `<button onclick="window.restoreStudent('${s.id}')" class="text-green-600 hover:text-green-900 dark:text-green-500 dark:hover:text-green-400 mx-1 w-8 h-8 rounded-full bg-green-50 dark:bg-green-900/20 transition" title="Reativar Aluno"><i class="fa-solid fa-box-open"></i></button><button onclick="window.deleteStudent('${s.id}')" class="text-red-600 hover:text-red-900 dark:text-red-500 dark:hover:text-red-400 mx-1 w-8 h-8 rounded-full bg-red-50 dark:bg-red-900/20 transition" title="Excluir Permanentemente"><i class="fa-solid fa-trash"></i></button>`;
                 } else {
-                    actionsHtml = `<button onclick="window.openProgressModal('${s.id}')" class="text-teal-600 hover:text-teal-900 mx-1 w-8 h-8 rounded-full hover:bg-teal-50 transition flex items-center justify-center" title="Evolução e Histórico"><i class="fa-solid fa-book-journal-whills"></i></button><button onclick="window.openEditModal('${s.id}')" class="text-orange-500 hover:text-orange-700 mx-1 w-8 h-8 rounded-full hover:bg-orange-50 transition flex items-center justify-center" title="Editar / Graduar"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="window.archiveStudent('${s.id}')" class="text-gray-500 hover:text-gray-800 mx-1 w-8 h-8 rounded-full hover:bg-gray-200 transition flex items-center justify-center" title="Arquivar Aluno"><i class="fa-solid fa-box-archive"></i></button>`;
+                    actionsHtml = `<button onclick="window.openProgressModal('${s.id}')" class="text-teal-600 hover:text-teal-900 dark:text-teal-500 dark:hover:text-teal-400 mx-1 w-8 h-8 rounded-full hover:bg-teal-50 dark:hover:bg-teal-900/30 transition flex items-center justify-center" title="Evolução e Histórico"><i class="fa-solid fa-book-journal-whills"></i></button><button onclick="window.openEditModal('${s.id}')" class="text-orange-500 hover:text-orange-700 dark:text-orange-500 dark:hover:text-orange-400 mx-1 w-8 h-8 rounded-full hover:bg-orange-50 dark:hover:bg-orange-900/30 transition flex items-center justify-center" title="Editar / Graduar"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="window.archiveStudent('${s.id}')" class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-300 mx-1 w-8 h-8 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center" title="Arquivar Aluno"><i class="fa-solid fa-box-archive"></i></button>`;
                 }
 
-                let attendanceBtnHtml = s.archived ? `<span class="text-gray-400 text-xs italic">--</span>` : `<div class="flex items-center gap-2"><span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded w-16 text-center">${attendanceCount} aulas</span></div>`;
+                let attendanceBtnHtml = s.archived ? `<span class="text-gray-400 dark:text-gray-500 text-xs italic">--</span>` : `<div class="flex items-center gap-2"><span class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 text-xs font-bold px-2 py-1 rounded w-16 text-center">${attendanceCount} aulas</span></div>`;
 
-                const tr = document.createElement('tr'); tr.className = isDepRow ? `hidden dep-row-${parentId} bg-purple-50/40 hover:bg-purple-50 transition border-b border-purple-100` : `border-b hover:bg-red-50 transition border-gray-100`;
-                tr.innerHTML = `<td class="px-6 py-4 align-middle text-center"><input type="checkbox" class="student-cb rounded text-brand-red cursor-pointer" value="${s.id}" onclick="window.updateBulkActions()"></td><td class="px-6 py-4 align-middle"><div onclick="window.viewStudentDetails('${s.id}')" class="flex items-center cursor-pointer group" title="Ver Detalhes do Aluno">${avatarHtml}<div>${nameDisplay}<div class="text-xs text-gray-500 mt-0.5">${window.getPlanInfo(s.plan).short}</div></div></div></td>${guardianCell}<td class="px-6 py-4 align-middle"><div class="w-32 h-8 flex items-center">${beltSVG}</div><div class="text-xs text-gray-400 mt-1">${s.belt || 'Branca'}</div></td><td class="px-6 py-4 align-middle">${attendanceBtnHtml}</td><td class="px-6 py-4 align-middle text-center">${hasLogin}</td><td class="px-6 py-4 align-middle text-center whitespace-nowrap flex justify-center">${actionsHtml}</td>`;
+                const tr = document.createElement('tr'); tr.className = isDepRow ? `hidden dep-row-${parentId} bg-purple-50/40 dark:bg-purple-900/10 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition border-b border-purple-100 dark:border-purple-800/50` : `border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition`;
+                tr.innerHTML = `<td class="px-6 py-4 align-middle text-center"><input type="checkbox" class="student-cb rounded text-brand-red cursor-pointer" value="${s.id}" onclick="window.updateBulkActions()"></td><td class="px-6 py-4 align-middle"><div onclick="window.viewStudentDetails('${s.id}')" class="flex items-center cursor-pointer group" title="Ver Detalhes do Aluno">${avatarHtml}<div>${nameDisplay}<div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${window.getPlanInfo(s.plan).short}</div></div></div></td>${guardianCell}<td class="px-6 py-4 align-middle"><div class="w-32 h-8 flex items-center">${beltSVG}</div><div class="text-xs text-gray-400 dark:text-gray-500 mt-1">${s.belt || 'Branca'}</div></td><td class="px-6 py-4 align-middle">${attendanceBtnHtml}</td><td class="px-6 py-4 align-middle text-center">${hasLogin}</td><td class="px-6 py-4 align-middle text-center whitespace-nowrap flex justify-center">${actionsHtml}</td>`;
                 tbody.appendChild(tr);
             };
 
@@ -1398,17 +1457,17 @@
             const tbody = document.getElementById('experimental-table-body'); const search = (document.getElementById('searchInput')?.value || "").toLowerCase(); if(!tbody) return; tbody.innerHTML = '';
             let filtered = window.experimentalList.filter(e => (e.name || '').toLowerCase().includes(search) || (e.phone || '').includes(search));
             filtered.sort((a,b) => { const wA = (a.status === 'Matriculado' || a.status === 'Faltou' || a.status === 'Cancelado') ? 2 : 1; const wB = (b.status === 'Matriculado' || b.status === 'Faltou' || b.status === 'Cancelado') ? 2 : 1; if (wA !== wB) return wA - wB; return new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00')); });
-            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">Nenhum agendamento encontrado.</td></tr>`; return; }
+            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500">Nenhum agendamento encontrado.</td></tr>`; return; }
             const t = new Date(); const todayLocal = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
             filtered.forEach(exp => {
                 const age = getAge(exp.dob); const isMinor = age !== null && age < 18; const cleanPhone = (exp.phone || '').replace(/\D/g, ''); let dateFormatted = exp.date ? new Date(exp.date + 'T12:00:00').toLocaleDateString('pt-BR') : '--';
-                let statusColor = 'bg-gray-100 text-gray-800'; if(exp.status === 'Agendado') statusColor = 'bg-yellow-100 text-yellow-800'; else if(exp.status === 'Concluído') statusColor = 'bg-green-100 text-green-800'; else if(exp.status === 'Matriculado') statusColor = 'bg-blue-100 text-blue-800'; else if(exp.status === 'Cancelado' || exp.status === 'Faltou') statusColor = 'bg-red-100 text-red-800';
+                let statusColor = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'; if(exp.status === 'Agendado') statusColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'; else if(exp.status === 'Concluído') statusColor = 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'; else if(exp.status === 'Matriculado') statusColor = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'; else if(exp.status === 'Cancelado' || exp.status === 'Faltou') statusColor = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
                 const isInactive = (exp.status === 'Matriculado' || exp.status === 'Faltou' || exp.status === 'Cancelado');
-                const tr = document.createElement('tr'); if (isInactive) { tr.className = "border-b bg-gray-50 opacity-60 transition border-gray-100"; } else if (exp.date === todayLocal) { tr.className = "border-b bg-yellow-50 hover:bg-yellow-100 transition border-gray-100"; } else { tr.className = "border-b hover:bg-yellow-50 transition border-gray-100"; }
+                const tr = document.createElement('tr'); if (isInactive) { tr.className = "border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 opacity-60 transition"; } else if (exp.date === todayLocal) { tr.className = "border-b border-gray-100 dark:border-gray-700 bg-yellow-50 dark:bg-yellow-900/10 hover:bg-yellow-100 dark:hover:bg-yellow-900/20 transition"; } else { tr.className = "border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"; }
                 let actionsHtml = '';
-                if (isInactive) { actionsHtml = `<button onclick="window.deleteExperimental('${exp.id}')" class="text-red-400 hover:text-red-700 mx-1 w-8 h-8 rounded-full hover:bg-red-50 transition" title="Excluir Registro"><i class="fa-solid fa-trash"></i></button>`; } 
-                else { actionsHtml = `<button onclick="window.convertToStudent('${exp.id}')" class="text-blue-500 hover:text-blue-700 mx-1 w-8 h-8 rounded-full hover:bg-blue-50 transition" title="Matricular como Aluno"><i class="fa-solid fa-user-plus"></i></button><button onclick="window.openEditExperimentalModal('${exp.id}')" class="text-gray-500 hover:text-gray-700 mx-1 w-8 h-8 rounded-full hover:bg-gray-100 transition" title="Editar"><i class="fa-solid fa-pen"></i></button><button onclick="window.deleteExperimental('${exp.id}')" class="text-red-500 hover:text-red-700 mx-1 w-8 h-8 rounded-full hover:bg-red-50 transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>`; }
-                tr.innerHTML = `<td class="px-6 py-4 align-middle"><div class="font-bold text-gray-800">${dateFormatted} ${exp.date === todayLocal && !isInactive ? '<span class="ml-1 text-[9px] bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Hoje</span>' : ''}</div><div class="text-xs text-brand-red font-bold"><i class="fa-regular fa-clock"></i> ${exp.time || '--'}</div></td><td class="px-6 py-4 align-middle"><div class="font-bold text-gray-900">${exp.name} <span class="text-xs font-normal text-gray-500">(${age !== null ? age + 'a' : '-'})</span></div>${isMinor && exp.guardian ? `<div class="text-xs text-gray-500"><i class="fa-solid fa-user-shield text-gray-400"></i> Resp: ${exp.guardian}</div>` : ''}</td><td class="px-6 py-4 align-middle"><a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${exp.phone}</a></td><td class="px-6 py-4 align-middle"><select onchange="window.changeExpStatus('${exp.id}', this.value)" class="border rounded px-2 py-1 text-xs font-bold ${statusColor} outline-none cursor-pointer"><option value="Agendado" ${exp.status === 'Agendado' ? 'selected' : ''}>Agendado</option><option value="Concluído" ${exp.status === 'Concluído' ? 'selected' : ''}>Compareceu</option><option value="Matriculado" ${exp.status === 'Matriculado' ? 'selected' : ''}>Matriculado</option><option value="Faltou" ${exp.status === 'Faltou' ? 'selected' : ''}>Faltou</option><option value="Cancelado" ${exp.status === 'Cancelado' ? 'selected' : ''}>Cancelou</option></select></td><td class="px-6 py-4 align-middle text-center whitespace-nowrap">${actionsHtml}</td>`;
+                if (isInactive) { actionsHtml = `<button onclick="window.deleteExperimental('${exp.id}')" class="text-red-400 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 mx-1 w-8 h-8 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition" title="Excluir Registro"><i class="fa-solid fa-trash"></i></button>`; } 
+                else { actionsHtml = `<button onclick="window.convertToStudent('${exp.id}')" class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mx-1 w-8 h-8 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 transition" title="Matricular como Aluno"><i class="fa-solid fa-user-plus"></i></button><button onclick="window.openEditExperimentalModal('${exp.id}')" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 mx-1 w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition" title="Editar"><i class="fa-solid fa-pen"></i></button><button onclick="window.deleteExperimental('${exp.id}')" class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 mx-1 w-8 h-8 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>`; }
+                tr.innerHTML = `<td class="px-6 py-4 align-middle"><div class="font-bold text-gray-800 dark:text-gray-200">${dateFormatted} ${exp.date === todayLocal && !isInactive ? '<span class="ml-1 text-[9px] bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Hoje</span>' : ''}</div><div class="text-xs text-brand-red font-bold"><i class="fa-regular fa-clock"></i> ${exp.time || '--'}</div></td><td class="px-6 py-4 align-middle"><div class="font-bold text-gray-900 dark:text-gray-100">${exp.name} <span class="text-xs font-normal text-gray-500 dark:text-gray-400">(${age !== null ? age + 'a' : '-'})</span></div>${isMinor && exp.guardian ? `<div class="text-xs text-gray-500 dark:text-gray-400"><i class="fa-solid fa-user-shield text-gray-400 dark:text-gray-500"></i> Resp: ${exp.guardian}</div>` : ''}</td><td class="px-6 py-4 align-middle"><a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${exp.phone}</a></td><td class="px-6 py-4 align-middle"><select onchange="window.changeExpStatus('${exp.id}', this.value)" class="border dark:border-gray-600 rounded px-2 py-1 text-xs font-bold ${statusColor} outline-none cursor-pointer"><option value="Agendado" ${exp.status === 'Agendado' ? 'selected' : ''}>Agendado</option><option value="Concluído" ${exp.status === 'Concluído' ? 'selected' : ''}>Compareceu</option><option value="Matriculado" ${exp.status === 'Matriculado' ? 'selected' : ''}>Matriculado</option><option value="Faltou" ${exp.status === 'Faltou' ? 'selected' : ''}>Faltou</option><option value="Cancelado" ${exp.status === 'Cancelado' ? 'selected' : ''}>Cancelou</option></select></td><td class="px-6 py-4 align-middle text-center whitespace-nowrap">${actionsHtml}</td>`;
                 tbody.appendChild(tr);
             });
         };
@@ -1481,26 +1540,26 @@
                 }).forEach(s => {
                     let day = s.dob.includes('/') ? Number(s.dob.split('/')[0]) : (s.dob.includes('T') ? new Date(s.dob).getDate() : Number(s.dob.split('-')[2]));
                     const cleanPhone = (s.phone || '').replace(/\D/g, '');
-                    list.innerHTML += `<div class="bg-white p-2 rounded shadow-sm flex items-center gap-3 border-l-4 border-blue-400"><div class="bg-blue-100 text-blue-800 font-bold w-10 h-10 rounded flex flex-col items-center justify-center leading-tight shrink-0"><span class="text-[10px] font-normal uppercase">Dia</span><span>${day}</span></div><div class="flex-1 truncate"><p class="font-bold text-sm text-gray-800 truncate">${s.name.split(' ')[0]} ${s.name.split(' ').length > 1 ? s.name.split(' ').pop() : ''}</p><p class="text-[10px] text-gray-500 uppercase truncate">${(s.plan || '').replace('-', ' ')}</p></div><div class="flex items-center gap-1 border-l border-gray-100 pl-2">${cleanPhone ? `<button onclick="window.sendBirthdayWhatsApp('${s.name}', '${cleanPhone}')" class="text-green-500 hover:text-green-700 p-1"><i class="fa-brands fa-whatsapp text-lg"></i></button>` : ''}<button onclick="window.publishBirthdayNotice('${s.name}')" class="text-blue-500 hover:text-blue-700 p-1"><i class="fa-solid fa-bullhorn text-lg"></i></button></div></div>`;
+                    list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-2 rounded shadow-sm flex items-center gap-3 border-l-4 border-blue-400 dark:border-blue-600"><div class="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 font-bold w-10 h-10 rounded flex flex-col items-center justify-center leading-tight shrink-0"><span class="text-[10px] font-normal uppercase">Dia</span><span>${day}</span></div><div class="flex-1 truncate"><p class="font-bold text-sm text-gray-800 dark:text-white truncate">${s.name.split(' ')[0]} ${s.name.split(' ').length > 1 ? s.name.split(' ').pop() : ''}</p><p class="text-[10px] text-gray-500 dark:text-gray-400 uppercase truncate">${(s.plan || '').replace('-', ' ')}</p></div><div class="flex items-center gap-1 border-l border-gray-100 dark:border-gray-700 pl-2">${cleanPhone ? `<button onclick="window.sendBirthdayWhatsApp('${s.name}', '${cleanPhone}')" class="text-green-500 hover:text-green-700 p-1"><i class="fa-brands fa-whatsapp text-lg"></i></button>` : ''}<button onclick="window.publishBirthdayNotice('${s.name}')" class="text-blue-500 hover:text-blue-700 p-1"><i class="fa-solid fa-bullhorn text-lg"></i></button></div></div>`;
                 });
             }
         };
 
         window.renderAdminNotices = () => {
             const list = document.getElementById('admin-notices-list'); list.innerHTML = '';
-            if (window.noticesList.length === 0) { list.innerHTML = '<div class="text-center py-8 text-gray-400 italic text-sm">Nenhum aviso publicado.</div>'; return; }
+            if (window.noticesList.length === 0) { list.innerHTML = '<div class="text-center py-8 text-gray-400 dark:text-gray-500 italic text-sm">Nenhum aviso publicado.</div>'; return; }
             window.noticesList.forEach(notice => {
                 const d = new Date(notice.date).toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
-                let bg = 'bg-blue-50 border-blue-200'; let icon = '<i class="fa-solid fa-circle-info text-blue-500"></i>';
-                if(notice.type === 'alert') { bg = 'bg-yellow-50 border-yellow-200'; icon = '<i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>'; }
-                if(notice.type === 'success') { bg = 'bg-green-50 border-green-200'; icon = '<i class="fa-solid fa-check-circle text-green-500"></i>'; }
-                if(notice.type === 'danger') { bg = 'bg-red-50 border-red-200'; icon = '<i class="fa-solid fa-circle-xmark text-red-500"></i>'; }
-                list.innerHTML += `<div class="p-4 border rounded-lg ${bg} flex justify-between items-start"><div><h4 class="font-bold text-gray-800 flex items-center gap-2">${icon} ${notice.title}</h4><p class="text-sm text-gray-600 mt-1 whitespace-pre-wrap">${notice.text}</p><p class="text-[10px] text-gray-500 mt-2 font-medium">Publicado em: ${d} ${notice.expiresAt ? (new Date() > new Date(notice.expiresAt) ? '<span class="text-red-500 font-bold ml-2">(Expirado)</span>' : `<span class="text-orange-500 font-bold ml-2">(Expira em: ${new Date(notice.expiresAt).toLocaleDateString('pt-BR')})</span>`) : ''}</p></div><div class="flex gap-3"><button onclick="window.editNotice('${notice.id}')" class="text-blue-400 hover:text-blue-600 transition" title="Editar"><i class="fa-solid fa-pen"></i></button><button onclick="window.deleteNotice('${notice.id}')" class="text-red-400 hover:text-red-600 transition" title="Excluir"><i class="fa-solid fa-trash"></i></button></div></div>`;
+                let bg = 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'; let icon = '<i class="fa-solid fa-circle-info text-blue-500"></i>';
+                if(notice.type === 'alert') { bg = 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800'; icon = '<i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>'; }
+                if(notice.type === 'success') { bg = 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800'; icon = '<i class="fa-solid fa-check-circle text-green-500"></i>'; }
+                if(notice.type === 'danger') { bg = 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'; icon = '<i class="fa-solid fa-circle-xmark text-red-500"></i>'; }
+                list.innerHTML += `<div class="p-4 border rounded-lg ${bg} flex justify-between items-start text-gray-800 dark:text-gray-200"><div><h4 class="font-bold flex items-center gap-2">${icon} ${notice.title}</h4><p class="text-sm mt-1 whitespace-pre-wrap">${notice.text}</p><p class="text-[10px] opacity-70 mt-2 font-medium">Publicado em: ${d} ${notice.expiresAt ? (new Date() > new Date(notice.expiresAt) ? '<span class="text-red-500 font-bold ml-2">(Expirado)</span>' : `<span class="text-orange-500 font-bold ml-2">(Expira em: ${new Date(notice.expiresAt).toLocaleDateString('pt-BR')})</span>`) : ''}</p></div><div class="flex gap-3"><button onclick="window.editNotice('${notice.id}')" class="text-blue-500 hover:text-blue-700 transition" title="Editar"><i class="fa-solid fa-pen"></i></button><button onclick="window.deleteNotice('${notice.id}')" class="text-red-500 hover:text-red-700 transition" title="Excluir"><i class="fa-solid fa-trash"></i></button></div></div>`;
             });
         };
 
-        window.openNoticeModal = () => { document.getElementById('notice-id').value = ''; document.getElementById('notice-title').value = ''; document.getElementById('notice-text').value = ''; document.getElementById('notice-type').value = 'info'; document.getElementById('notice-expiry').value = ''; document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-bullhorn mr-2"></i> Publicar Aviso'; document.getElementById('notice-modal').classList.remove('hidden'); document.getElementById('notice-modal').classList.add('flex'); };
-        window.editNotice = (id) => { const notice = window.noticesList.find(n => n.id === id); if (!notice) return; document.getElementById('notice-id').value = notice.id; document.getElementById('notice-title').value = notice.title; document.getElementById('notice-text').value = notice.text; document.getElementById('notice-type').value = notice.type || 'info'; document.getElementById('notice-expiry').value = notice.expiresAt ? notice.expiresAt.split('T')[0] : ''; document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-pen mr-2"></i> Editar Aviso'; document.getElementById('notice-modal').classList.remove('hidden'); document.getElementById('notice-modal').classList.add('flex'); };
+        window.openNoticeModal = () => { document.getElementById('notice-id').value = ''; document.getElementById('notice-title').value = ''; document.getElementById('notice-text').value = ''; document.getElementById('notice-type').value = 'info'; document.getElementById('notice-expiry').value = ''; document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-bullhorn mr-2 text-yellow-500"></i> Publicar Aviso'; document.getElementById('notice-modal').classList.remove('hidden'); document.getElementById('notice-modal').classList.add('flex'); };
+        window.editNotice = (id) => { const notice = window.noticesList.find(n => n.id === id); if (!notice) return; document.getElementById('notice-id').value = notice.id; document.getElementById('notice-title').value = notice.title; document.getElementById('notice-text').value = notice.text; document.getElementById('notice-type').value = notice.type || 'info'; document.getElementById('notice-expiry').value = notice.expiresAt ? notice.expiresAt.split('T')[0] : ''; document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-pen mr-2 text-yellow-500"></i> Editar Aviso'; document.getElementById('notice-modal').classList.remove('hidden'); document.getElementById('notice-modal').classList.add('flex'); };
         window.closeNoticeModal = () => { document.getElementById('notice-modal').classList.add('hidden'); document.getElementById('notice-modal').classList.remove('flex'); };
 
         window.saveNotice = async () => {
