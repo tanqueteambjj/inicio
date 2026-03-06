@@ -424,14 +424,16 @@
         });
 
         // --- Configuração Firebase ---
-        const firebaseConfig = {
+        const manualConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
             authDomain: "tanqueteambjj.firebaseapp.com",
             projectId: "tanqueteambjj",
             storageBucket: "tanqueteambjj.firebasestorage.app",
             messagingSenderId: "410605992451",
-            appId: "1:410605992451:web:f0f341f4594fe75f376c36"
+            appId: "1:410605992451:web:f0f341f4594fe75f376c36",
+            measurementId: "G-SW8PP8X7WM"
         };
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : manualConfig;
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -464,18 +466,21 @@
                     }
                 };
 
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        window.loadData();
-                        window.loadExperimentalData();
-                    }
+                // ESTE BLOCO GARANTE QUE OS DADOS SÓ SÃO CARREGADOS APÓS O LOGIN SER CONFIRMADO
+                initApp().then(() => {
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            window.loadData();
+                            window.loadExperimentalData();
+                        }
+                    });
                 });
-
-                initApp();
             }
         }
 
+        // CARREGA ALUNOS SEGURAMENTE
         window.loadData = async function() {
+            if (!auth.currentUser) return; // Bloqueia execução sem token
             try {
                 const querySnapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'students'));
                 window.students = [];
@@ -492,6 +497,7 @@
         }
         
         window.loadExperimentalData = async () => { 
+            if (!auth.currentUser) return;
             try { 
                 const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'experimental')); 
                 const snap = await getDocs(q); 
@@ -588,7 +594,7 @@
             });
         };
 
-        // --- IMPRESSÃO DE CONTRATO (ABNT) ---
+        // --- IMPRESSÃO DE CONTRATO PADRÃO ABNT ---
         window.printHtmlContent = function(htmlContent, titleStr) {
             const iframe = document.createElement('iframe');
             iframe.style.position = 'absolute';
@@ -711,26 +717,39 @@
             const contractHtml = `
                 <div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.5; color: #000; max-width: 100%; margin: 0; padding: 0; text-align: justify;">
                     
-                    <div style="text-align: center; margin-bottom: 2cm;">
-                        <img src="https://iili.io/qC543c7.png" alt="Logo" style="height: 3cm; margin-bottom: 0.5cm; filter: grayscale(100%);">
-                        <p style="font-weight: bold; text-transform: uppercase; margin: 0;">TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA</p>
-                        <p style="margin: 0;">CNPJ: 00.000.000/0001-00 | Tel: (91) 99819-2610</p>
-                        <p style="margin: 0;">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</p>
+                    <!-- Topo: Logo Centralizada e Nome da Escola -->
+                    <div style="text-align: center; margin-bottom: 0.5cm;">
+                        <img src="https://iili.io/qC543c7.png" alt="Logo" style="height: 3cm; margin-bottom: 0.2cm; filter: grayscale(100%);">
+                        <h1 style="font-weight: bold; text-transform: uppercase; font-size: 16pt; margin: 0;">TANQUE TEAM BJJ</h1>
                     </div>
                     
-                    <h2 style="text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 1.5cm; text-transform: uppercase;">CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS</h2>
+                    <!-- Cabeçalho: Alinhado à Esquerda -->
+                    <div style="text-align: left; margin-bottom: 0.5cm; font-size: 10pt;">
+                        <p style="margin: 0; line-height: 1.5;"><strong>Razão Social:</strong> TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA</p>
+                        <p style="margin: 0; line-height: 1.5;"><strong>CNPJ:</strong> 00.000.000/0001-00 | <strong>Tel:</strong> (91) 99819-2610</p>
+                        <p style="margin: 0; line-height: 1.5;"><strong>Endereço:</strong> Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</p>
+                    </div>
                     
-                    <div style="margin-bottom: 1.5cm;">
+                    <!-- Linha Divisória -->
+                    <hr style="border: none; border-top: 1px solid #000; margin-bottom: 1cm;">
+                    
+                    <!-- Título -->
+                    <h2 style="text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 1.5cm; text-transform: uppercase;">CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS</h2>
+                    
+                    <!-- Qualificação das Partes -->
+                    <div style="margin-bottom: 1.5cm; text-align: justify; line-height: 1.5;">
                         <p style="text-indent: 1.25cm; margin-bottom: 0.5cm;"><strong>1. CONTRATADA:</strong> TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA, com sede na Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, inscrita no CNPJ sob o nº 00.000.000/0001-00.</p>
                         <p style="text-indent: 1.25cm; margin-bottom: 0.5cm;"><strong>2. CONTRATANTE:</strong> ${contratanteText}, portador(a) do CPF nº ${s.cpf || "Não informado"}, residente e domiciliado(a) no endereço: ${s.address || "Não informado"}, telefone para contato: ${s.phone || "Não informado"}, endereço eletrônico (e-mail): ${s.email || "Não informado"}.</p>
                         <p style="text-indent: 1.25cm; margin-bottom: 0.5cm;"><strong>3. ALUNO(A) BENEFICIÁRIO(A):</strong> ${s.name || "NÃO INFORMADO"}, data de nascimento: ${formattedDob}. ${beltInfo}</p>
                         ${dependentsHtmlABNT}
                     </div>
 
+                    <!-- Cláusulas -->
                     <div style="margin-bottom: 2cm;">
                         ${clausesHtmlABNT}
                     </div>
 
+                    <!-- Assinaturas -->
                     <div style="margin-top: 2cm; page-break-inside: avoid;">
                         <p style="text-align: right; margin-bottom: 2.5cm;">Belém-PA, ${printDateStr}.</p>
                         <table style="width: 100%; text-align: center; border: none;">
@@ -750,7 +769,7 @@
                 </div>
             `;
             
-            window.printHtmlContent(contractHtml, "Contrato_Matricula_TanqueTeam_ABNT");
+            window.printHtmlContent(contractHtml, `Contrato_${s.name.replace(/\s+/g, '_')}`);
         };
 
         // --- EDIÇÃO DE CONTRATO ---
@@ -814,6 +833,8 @@
 
         // --- GERAÇÃO DE RELATÓRIOS ---
         window.generateReport = async (type) => {
+            if(!auth.currentUser) return; // Bloqueio de segurança
+            
             const container = document.getElementById('report-container');
             container.classList.remove('hidden');
             let html = `<div style="text-align:center; margin-bottom:20px; border-bottom:2px solid #000; padding-bottom:10px;"><h2 style="font-size:24px; font-weight:bold; margin:0; text-transform:uppercase;">TANQUE TEAM BJJ</h2><h3 style="font-size:16px; color:#555; margin:5px 0; text-transform:uppercase;">Departamento Jurídico</h3><p style="font-size:12px; color:#777;">Gerado em: ${new Date().toLocaleString('pt-BR')}</p></div>`;
