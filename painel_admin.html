@@ -37,25 +37,26 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
 
+        /* Estilo para Card Ativo */
         .card-active {
             transform: translateY(-4px);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             border-bottom-width: 4px;
         }
 
+        /* Contêineres Restritos à Impressão */
         .print-only-element { display: none !important; }
 
+        /* CSS BLINDADO PARA IMPRESSÃO EM MOBILE E PC */
         @media print {
             @page { margin: 15mm; size: A4 portrait; }
             html, body { height: auto !important; min-height: 100% !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; background-color: #fff !important; color: #000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             body > *:not(.print-only-element) { display: none !important; }
             
-            body.printing-progress #printable-progress, body.printing-qr #print-only-qr { 
+            body.printing-progress #printable-progress { 
                 display: block !important; position: static !important; width: 100% !important; height: auto !important; visibility: visible !important; background: #fff !important; color: #000 !important; margin: 0 !important; padding: 0 !important;
             }
-            body.printing-progress #printable-progress *, body.printing-qr #print-only-qr * { visibility: visible !important; color: #000 !important; }
-            
-            body.printing-qr #print-only-qr { display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: flex-start !important; padding: 2cm 0 !important; }
+            body.printing-progress #printable-progress * { visibility: visible !important; color: #000 !important; }
             
             table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 15px; page-break-inside: auto; }
             tr { page-break-inside: avoid; page-break-after: auto; }
@@ -70,6 +71,7 @@
 </head>
 <body class="bg-gray-100 font-sans antialiased h-screen flex overflow-hidden">
 
+    <!-- Mobile Sidebar Overlay -->
     <div id="mobile-sidebar-overlay" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden backdrop-blur-sm transition-opacity" onclick="window.toggleMobileMenu()"></div>
 
     <!-- Sidebar -->
@@ -77,7 +79,9 @@
         <div class="p-6 flex items-center justify-center border-b border-gray-800 relative">
             <img src="https://iili.io/qC543c7.png" alt="Logo" class="h-10 w-auto mr-3">
             <span class="font-display font-bold text-lg tracking-wider text-brand-red">ADMIN</span>
-            <button onclick="window.toggleMobileMenu()" class="md:hidden absolute top-4 right-4 text-gray-400 hover:text-white focus:outline-none"><i class="fa-solid fa-times text-xl"></i></button>
+            <button onclick="window.toggleMobileMenu()" class="md:hidden absolute top-4 right-4 text-gray-400 hover:text-white focus:outline-none">
+                <i class="fa-solid fa-times text-xl"></i>
+            </button>
         </div>
         <div class="px-4 mt-6">
             <button onclick="window.openCheckinModal()" class="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg shadow-md transition-transform transform hover:-translate-y-1">
@@ -237,19 +241,27 @@
                         </div>
                         <button onclick="window.openNoticeModal()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded text-sm font-bold shadow-sm transition"><i class="fa-solid fa-plus mr-1"></i> Novo Aviso</button>
                     </div>
+
+                    <!-- WIDGET DE ANIVERSARIANTES DO MÊS -->
                     <div id="admin-birthdays-widget" class="mb-6 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-4 shadow-sm hidden">
                          <h4 class="font-bold text-blue-800 flex items-center gap-2 mb-3"><i class="fa-solid fa-cake-candles text-blue-500"></i> Aniversariantes do Mês (<span id="birthday-month-name"></span>)</h4>
-                         <div id="birthday-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+                         <div id="birthday-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                             <!-- JS injetará os aniversariantes aqui -->
+                         </div>
                     </div>
+                    
                     <div id="admin-notices-list" class="space-y-4">
                         <div class="text-center py-8 text-gray-400 italic text-sm">A carregar avisos...</div>
                     </div>
                 </div>
             </div>
+
         </main>
     </div>
 
     <!-- PRINTABLE CONTAINERS -->
+
+    <!-- RELATÓRIO DE PROGRESSO DO ALUNO -->
     <div id="printable-progress" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen">
         <div class="text-center mb-6 border-b-2 border-black pb-4">
             <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
@@ -261,39 +273,28 @@
             <div><strong>Faixa Atual:</strong> <span id="print-prog-belt"></span></div>
             <div><strong>Plano:</strong> <span id="print-prog-plan"></span></div>
         </div>
+        
         <h3 class="font-bold text-md mb-3 border-b border-gray-300 pb-1">Histórico de Atividades e Anotações</h3>
         <table class="w-full text-sm text-left border-collapse mb-8">
-            <thead><tr class="bg-gray-100"><th class="p-2 border">Data</th><th class="p-2 border">Tipo</th><th class="p-2 border">Descrição</th></tr></thead>
+            <thead>
+                <tr class="bg-gray-100"><th class="p-2 border">Data</th><th class="p-2 border">Tipo</th><th class="p-2 border">Descrição</th></tr>
+            </thead>
             <tbody id="print-prog-table-body"></tbody>
         </table>
+
+        <!-- TABELA DE PRESENÇAS NA IMPRESSÃO -->
         <h3 class="font-bold text-md mb-3 border-b border-gray-300 pb-1 mt-6">Extrato de Presenças <span class="text-sm font-normal text-gray-600 ml-2" id="print-prog-att-total">Total: 0 aulas</span></h3>
         <table class="w-full text-sm text-left border-collapse">
-            <thead><tr class="bg-gray-100"><th class="p-2 border w-1/3">Data</th><th class="p-2 border">Horário / Turma</th></tr></thead>
+            <thead>
+                <tr class="bg-gray-100"><th class="p-2 border w-1/3">Data</th><th class="p-2 border">Horário / Turma</th></tr>
+            </thead>
             <tbody id="print-prog-attendance-body"></tbody>
         </table>
     </div>
 
-    <div id="print-only-qr" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen flex items-center justify-center">
-        <div class="border-2 border-black rounded-xl overflow-hidden relative shadow-md" style="width: 6.5cm; height: 10.5cm;">
-            <div class="bg-black text-white p-3 flex items-center justify-center gap-2 shrink-0 w-full" style="-webkit-print-color-adjust: exact; print-color-adjust: exact;">
-                <span class="font-display font-bold text-sm tracking-widest uppercase">Tanque Team</span>
-            </div>
-            <div class="p-4 flex flex-col items-center flex-1 relative bg-white w-full h-full">
-                <div class="text-center z-10 w-full mb-2 mt-4">
-                    <h4 class="font-bold text-base text-black leading-tight uppercase" id="qr-student-name">Nome</h4>
-                    <p class="text-xs text-red-600 font-bold uppercase mt-1" id="qr-belt">Faixa Branca</p>
-                    <p class="text-[10px] text-gray-600 uppercase font-bold tracking-wider mt-1" id="qr-plan">Plano</p>
-                </div>
-                <div class="mt-auto bg-white p-2 border border-gray-300 rounded z-10 inline-block mb-4">
-                    <img id="qr-image" src="" alt="QR Code" class="w-32 h-32">
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- MODAIS DO SISTEMA -->
 
-    <!-- MODAIS -->
-
-    <!-- Modal: Evolução e Anotações (Com Frequência Embutida) -->
+    <!-- Modal: Evolução e Anotações (Com Inserção Manual de Frequência Embutida) -->
     <div id="progress-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-teal-600">
             <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b shrink-0">
@@ -319,11 +320,16 @@
                 </div>
 
                 <h5 class="font-bold text-gray-700 mb-4 border-b pb-1 text-sm uppercase">Anotações e Graduações</h5>
-                <div id="prog-timeline" class="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-300 before:to-transparent mb-8"></div>
+                <div id="prog-timeline" class="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-300 before:to-transparent mb-8">
+                    <!-- Timeline items -->
+                </div>
 
+                <!-- SEÇÃO: HISTÓRICO DE PRESENÇAS EMBUTIDO -->
                 <div class="mt-8 border-t border-gray-200 pt-6">
                     <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
-                        <h5 class="font-bold text-gray-700 text-sm uppercase flex-1 mr-4"><i class="fa-solid fa-calendar-check text-green-600 mr-2"></i> Histórico de Presenças</h5>
+                        <h5 class="font-bold text-gray-700 text-sm uppercase flex-1 mr-4">
+                            <i class="fa-solid fa-calendar-check text-green-600 mr-2"></i> Histórico de Presenças
+                        </h5>
                         <div class="flex items-center gap-2 flex-wrap">
                             <label class="text-xs text-gray-500 font-bold">PERÍODO:</label>
                             <input type="date" id="prog-start-filter" class="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:border-teal-500" onchange="window.filterProgressAttendance()">
@@ -333,6 +339,7 @@
                         </div>
                     </div>
 
+                    <!-- ADICIONAR FREQUÊNCIA MANUAL (Novo) -->
                     <div class="flex gap-2 items-center mb-4 bg-gray-50 p-3 rounded border border-gray-200 shadow-inner">
                         <input type="date" id="prog-add-date" class="border border-gray-300 rounded px-2 py-1.5 text-sm flex-grow focus:outline-none focus:border-green-500">
                         <select id="prog-add-class" class="border border-gray-300 rounded px-2 py-1.5 text-sm flex-grow focus:outline-none focus:border-green-500">
@@ -347,8 +354,11 @@
                         <button onclick="window.addManualAttendanceFromProg()" class="bg-green-600 text-white px-4 py-1.5 rounded text-sm font-bold hover:bg-green-700 shadow-sm transition">Adicionar</button>
                     </div>
 
-                    <div id="prog-attendance-list" class="max-h-48 overflow-y-auto bg-gray-50 border border-gray-200 rounded p-2 space-y-1"></div>
+                    <div id="prog-attendance-list" class="max-h-48 overflow-y-auto bg-gray-50 border border-gray-200 rounded p-2 space-y-1">
+                        <!-- Attendances -->
+                    </div>
                 </div>
+
             </div>
             <div class="bg-gray-50 px-6 py-3 flex justify-end border-t border-gray-200 shrink-0">
                 <button onclick="window.closeProgressModal()" class="px-5 py-2 bg-white border border-gray-300 shadow-sm rounded text-sm font-bold text-gray-700 hover:bg-gray-50 transition">Fechar</button>
@@ -356,13 +366,14 @@
         </div>
     </div>
 
-    <!-- Modal: Leitor de Check-in da Câmera (CONTÍNUA) -->
+    <!-- Modal: Leitor de Check-in da Câmera (CÂMARA CONTÍNUA SEM PARAR) -->
     <div id="checkin-modal" class="fixed inset-0 z-[100] hidden bg-brand-dark flex-col justify-center items-center p-4">
         <div class="w-full max-w-lg bg-white rounded-xl overflow-hidden shadow-2xl flex flex-col animate-fade-in">
             <div class="bg-green-600 px-6 py-4 flex justify-between items-center text-white shrink-0">
                 <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-camera"></i> Leitor de Check-in</h3>
                 <button onclick="window.closeCheckinModal()" class="hover:text-green-200 text-xl"><i class="fa-solid fa-times"></i></button>
             </div>
+            
             <div class="bg-gray-100 p-4 shrink-0 border-b border-gray-200">
                 <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Selecione a Turma Atual</label>
                 <select id="checkin-class-selector" class="w-full border-2 border-green-500 rounded-lg p-3 font-bold text-gray-800 bg-white shadow-sm focus:outline-none">
@@ -376,6 +387,7 @@
                 </select>
                 <p class="text-[10px] text-gray-500 mt-1"><i class="fa-solid fa-circle-info"></i> O sistema bloqueará check-ins repetidos na mesma turma no mesmo dia.</p>
             </div>
+
             <div class="p-6 flex-1 flex flex-col items-center">
                 <div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-4 border-gray-200 shadow-inner mb-4" style="min-height: 250px; display: flex; align-items: center; justify-content: center;">
                     <i class="fa-solid fa-camera text-4xl text-gray-700"></i>
@@ -411,7 +423,7 @@
         </div>
     </div>
 
-    <!-- Edit Student Modal -->
+    <!-- Edit Student Modal (FULL EDIT) -->
     <div id="edit-modal" class="fixed inset-0 z-[70] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-brand-dark">
             <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-200 shrink-0">
@@ -422,6 +434,7 @@
                 <input type="hidden" id="edit-id">
                 <input type="hidden" id="edit-original-belt">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
                     <div class="md:col-span-2 pb-4 border-b border-gray-200 mb-2">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="relative w-20 h-20 group cursor-pointer" onclick="document.getElementById('edit-photo').click()">
@@ -431,32 +444,43 @@
                             </div>
                             <div><h4 class="text-sm font-bold text-brand-red uppercase">Dados Cadastrais</h4><p class="text-xs text-gray-400">Altere as informações básicas do aluno.</p></div>
                         </div>
+                        
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome Completo</label><input type="text" id="edit-name" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
                             <div><label class="block text-xs font-bold text-gray-500 mb-1">Data de Nascimento</label><input type="text" id="edit-dob" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="DD/MM/AAAA" maxlength="10"></div>
                             <div><label class="block text-xs font-bold text-gray-500 mb-1">CPF</label><input type="text" id="edit-cpf" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="000.000.000-00"></div>
                             <div><label class="block text-xs font-bold text-gray-500 mb-1">Telefone / WhatsApp</label><input type="text" id="edit-phone" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
                             <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 mb-1">E-mail</label><input type="email" id="edit-email" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
+                            
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1">Status da Matrícula</label>
                                 <select id="edit-enrollment-status" class="w-full border rounded p-2 font-bold text-gray-700 focus:outline-none">
                                     <option value="Ativo" class="text-green-600">Ativo</option><option value="Inativo" class="text-red-600">Inativo</option>
                                 </select>
                             </div>
+                            
                             <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 mb-1">Endereço Completo</label><input type="text" id="edit-address" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none"></div>
                             
                             <div id="admin-edit-guardian-container" class="md:col-span-2 bg-yellow-50 p-4 rounded border border-yellow-200 hidden">
                                 <h4 class="text-xs font-bold text-yellow-800 mb-3 uppercase border-b border-yellow-200 pb-1"><i class="fa-solid fa-triangle-exclamation"></i> Dados do Responsável Legal</h4>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div><label class="block text-[10px] font-bold text-yellow-800 mb-1 uppercase">Nome do Pai/Mãe/Responsável</label><input type="text" id="edit-guardian" class="w-full border border-yellow-300 rounded p-2 focus:border-yellow-500 focus:outline-none text-sm"></div>
-                                    <div><label class="block text-[10px] font-bold text-yellow-800 mb-1 uppercase">CPF do Responsável</label><input type="text" id="edit-guardian-cpf" class="w-full border border-yellow-300 rounded p-2 focus:border-yellow-500 focus:outline-none text-sm"></div>
-                                    <div class="md:col-span-2"><label class="block text-[10px] font-bold text-yellow-800 mb-1 uppercase">Parentesco</label>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-yellow-800 mb-1 uppercase">Nome do Pai/Mãe/Responsável</label>
+                                        <input type="text" id="edit-guardian" class="w-full border border-yellow-300 rounded p-2 focus:border-yellow-500 focus:outline-none text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-yellow-800 mb-1 uppercase">CPF do Responsável</label>
+                                        <input type="text" id="edit-guardian-cpf" class="w-full border border-yellow-300 rounded p-2 focus:border-yellow-500 focus:outline-none text-sm">
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label class="block text-[10px] font-bold text-yellow-800 mb-1 uppercase">Parentesco</label>
                                         <select id="edit-guardian-kinship" class="w-full border border-yellow-300 rounded p-2 focus:border-yellow-500 focus:outline-none text-sm">
                                             <option value="">-- Parentesco --</option><option value="Pai">Pai</option><option value="Mãe">Mãe</option><option value="Avô/Avó">Avô/Avó</option><option value="Tio/Tia">Tio/Tia</option><option value="Outro">Outro</option>
                                         </select>
                                     </div>
                                 </div>
                             </div>
+
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 mb-1">Plano Atual</label>
                                 <select id="edit-plan" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" onchange="window.handleEditPlanChange()">
@@ -466,12 +490,17 @@
                                     <option value="dependente">Dependente (Isento)</option><option value="administracao">Administração (Isento)</option>
                                 </select>
                             </div>
+                            
+                            <!-- CAMPO TITULAR (VINCULAÇÃO) -->
                             <div class="col-span-1 hidden" id="edit-titular-container">
                                 <label class="block text-xs font-bold text-purple-600 mb-1">Titular (Se Dependente)</label>
                                 <select id="edit-titular" class="w-full border border-purple-200 rounded p-2 bg-purple-50 focus:outline-none"><option value="">-- Selecione o Titular --</option></select>
                             </div>
+
                         </div>
                     </div>
+
+                    <!-- GRADUAÇÃO -->
                     <div class="bg-yellow-50 p-3 rounded border border-yellow-200 md:col-span-2 grid grid-cols-2 gap-4">
                         <div class="col-span-2"><h4 class="text-xs font-bold text-yellow-700 uppercase"><i class="fa-solid fa-medal"></i> Graduação do Aluno</h4></div>
                         <div>
@@ -487,6 +516,12 @@
                             </select>
                         </div>
                     </div>
+
+                    <div class="col-span-1 md:col-span-2 pt-2">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Vencimento Contrato (Fidelidade)</label>
+                        <input type="date" id="edit-end-date" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none">
+                    </div>
+
                     <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 bg-blue-50 p-4 rounded-lg">
                         <h4 class="text-xs font-bold text-blue-700 uppercase mb-3 flex items-center gap-2"><i class="fa-solid fa-key"></i> Acesso ao Portal do Aluno</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -499,6 +534,7 @@
                             </button>
                         </div>
                     </div>
+
                 </div>
             </div>
             <div class="bg-gray-100 px-6 py-4 flex justify-end gap-3 shrink-0 border-t border-gray-200">
@@ -775,7 +811,94 @@
 
         window.getPlanInfo = (planKey) => window.PLAN_DICT[planKey] || { price: 0, short: String(planKey||'').toUpperCase(), long: 'NÃO INFORMADO' };
 
-        // MÁSCARAS
+        // ==========================================
+        // LÓGICA DE IMPRESSÃO (Nativa - Iframe)
+        // ==========================================
+        window.printHtmlContent = function(htmlContent, titleStr) {
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.width = '0px';
+            iframe.style.height = '0px';
+            iframe.style.border = 'none';
+            document.body.appendChild(iframe);
+
+            const docIframe = iframe.contentWindow.document;
+            docIframe.open();
+            docIframe.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${titleStr}</title>
+                    <style>
+                        @media print {
+                            @page { margin: 1cm; }
+                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        }
+                        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+                    </style>
+                </head>
+                <body>
+                    ${htmlContent}
+                </body>
+                </html>
+            `);
+            docIframe.close();
+
+            setTimeout(() => {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+                setTimeout(() => { document.body.removeChild(iframe); }, 2000);
+            }, 500);
+        };
+
+        window.printAdminQrCard = () => {
+            const studentId = document.getElementById('detail-student-id').value;
+            const s = window.students.find(st => st.id === studentId);
+            if(!s) return;
+            
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${s.id}`;
+            const name = s.name;
+            const belt = s.belt || "Faixa Branca";
+            const plan = window.getPlanInfo(s.plan).short || "Plano";
+            
+            let photoHtml = '';
+            if (s.photoBase64) {
+                photoHtml = `<img src="${s.photoBase64}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            } else {
+                photoHtml = `<span style="font-size: 24px; font-weight: bold; color: #9ca3af; line-height: 70px;">${name.charAt(0).toUpperCase()}</span>`;
+            }
+
+            const htmlContent = `
+                <div style="width: 6.5cm; height: 10.5cm; border: 2px solid #1B1B1B; border-radius: 12px; margin: 0 auto; text-align: center; font-family: 'Arial', sans-serif; overflow: hidden; background: #fff; position: relative; box-sizing: border-box; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    <!-- HEADER -->
+                    <div style="background-color: #1B1B1B; color: #fff; padding: 12px 10px; font-weight: bold; text-transform: uppercase; font-size: 13px; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                        <img src="https://iili.io/qC543c7.png" style="height: 22px; filter: invert(1);"> 
+                        TANQUE TEAM
+                    </div>
+                    <!-- WATERMARK -->
+                    <img src="https://iili.io/qC543c7.png" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; opacity: 0.05; pointer-events: none; filter: grayscale(100%);">
+                    <div style="padding: 15px; display: flex; flex-direction: column; align-items: center; height: calc(100% - 46px); box-sizing: border-box; position: relative; z-index: 10;">
+                        <!-- PHOTO -->
+                        <div style="width: 70px; height: 70px; border-radius: 50%; overflow: hidden; border: 2px solid #D90429; margin-bottom: 8px; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center;">
+                            ${photoHtml}
+                        </div>
+                        <!-- INFO -->
+                        <h4 style="margin: 0 0 4px 0; font-size: 15px; font-weight: 800; text-transform: uppercase; color: #1B1B1B; line-height: 1.1;">${name}</h4>
+                        <p style="margin: 0 0 2px 0; color: #D90429; font-size: 11px; font-weight: 900; text-transform: uppercase;">${belt}</p>
+                        <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${plan}</p>
+                        <!-- QR CODE -->
+                        <div style="border: 1px solid #e5e7eb; padding: 4px; border-radius: 8px; background: white; margin-top: auto;">
+                            <img src="${qrUrl}" style="width: 110px; height: 110px; display: block;">
+                        </div>
+                        <p style="margin: 8px 0 0 0; font-size: 8px; color: #9ca3af; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px;">Apresente no Check-in</p>
+                    </div>
+                </div>
+            `;
+            
+            window.printHtmlContent(htmlContent, "Carteirinha_TanqueTeam");
+        };
+
+        // FORMATAÇÃO E MÁSCARAS
         document.addEventListener('DOMContentLoaded', () => {
             const maskInput = (id, regexStr, replacement) => {
                 const el = document.getElementById(id);
@@ -801,6 +924,7 @@
                         if (v.length > 4) v = v.replace(/^(\d{2})(\d{2})(\d{4}).*/, '$1/$2/$3');
                         else if (v.length > 2) v = v.replace(/^(\d{2})(\d{0,2}).*/, '$1/$2');
                         e.target.value = v;
+
                         if (id === 'reg-dob' && e.target.value.length === 10) window.checkAdminRegAge();
                         if (id === 'edit-dob' && e.target.value.length === 10) window.checkAdminEditAge();
                     });
@@ -1259,13 +1383,6 @@
             };
 
             filtered.forEach(s => { if (s.plan === 'dependente' && filtered.some(t => t.id === s.titularId)) return; renderRow(s, false); filtered.filter(d => d.plan === 'dependente' && d.titularId === s.id).forEach(dep => renderRow(dep, true, s.id)); });
-        };
-
-        // FUNÇÕES EM MASSA
-        window.toggleSelectAll = (source) => { document.querySelectorAll('.student-cb').forEach(cb => cb.checked = source.checked); window.updateBulkActions(); };
-        window.updateBulkActions = () => {
-            const count = document.querySelectorAll('.student-cb:checked').length; const bulkDiv = document.getElementById('bulk-actions'); const btnBulkArchive = document.getElementById('btn-bulk-archive'); const btnBulkDelete = document.getElementById('btn-bulk-delete');
-            if(count > 0) { bulkDiv.classList.remove('hidden'); if (window.currentTab === 'archived') { if(btnBulkDelete) { btnBulkDelete.classList.remove('hidden'); document.getElementById('selected-count-delete').innerText = count; } if(btnBulkArchive) btnBulkArchive.classList.add('hidden'); } else { if(btnBulkArchive) { btnBulkArchive.classList.remove('hidden'); document.getElementById('selected-count-archive').innerText = count; } if(btnBulkDelete) btnBulkDelete.classList.add('hidden'); } } else { bulkDiv.classList.add('hidden'); }
         };
 
         window.archiveSelectedStudents = async () => { const ids = Array.from(document.querySelectorAll('.student-cb:checked')).map(cb => cb.value); if(ids.length === 0) return; if(confirm(`Tem certeza que deseja ARQUIVAR ${ids.length} alunos selecionados?`)) { try { await Promise.all(ids.map(id => updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { archived: true }))); document.getElementById('cb-select-all').checked = false; window.updateBulkActions(); window.loadData(); } catch(e) { alert('Erro ao arquivar.'); } } };
