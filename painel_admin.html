@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tanque Team | Painel Administrativo</title>
     
-    <link rel="icon" href="https://i.ibb.co/chV1Wv8t/1772237028768.png" type="image/png">
+    <link rel="icon" href="https://iili.io/qC543c7.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- EmailJS SDK -->
@@ -37,11 +37,12 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
 
-        /* KANBAN STYLES */
-        .kanban-col { min-height: 400px; }
-        .kanban-card { cursor: grab; transition: transform 0.2s, box-shadow 0.2s; border-left-width: 4px; }
-        .kanban-card:active { cursor: grabbing; transform: scale(0.98); box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
-        .kanban-card.dragging { opacity: 0.5; }
+        /* Estilo para Card Ativo */
+        .card-active {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-bottom-width: 4px;
+        }
 
         /* CSS OTIMIZADO PARA IMPRESSÃO */
         @media print {
@@ -49,31 +50,25 @@
             body, html { height: auto !important; min-height: auto !important; overflow: visible !important; background: white !important; }
             body > * { display: none !important; }
 
-            body.printing-contract #printable-contract { display: block !important; position: relative !important; width: 100% !important; margin: 0 !important; padding: 0 !important; visibility: visible !important; }
-            body.printing-contract #printable-contract * { visibility: visible !important; }
-
-            body.printing-report #report-container { display: block !important; position: relative !important; width: 100% !important; margin: 0 !important; padding: 0 !important; visibility: visible !important; background-color: white !important; color: black !important; }
-            body.printing-report #report-container * { visibility: visible !important; }
-
-            body.printing-progress #printable-progress { 
+            body.printing-contract #printable-contract,
+            body.printing-report #report-container,
+            body.printing-progress #printable-progress,
+            body.printing-qr #printable-qr-card { 
                 display: block !important; 
-                position: absolute !important; 
-                left: 0 !important; 
-                top: 0 !important; 
-                transform: none !important; 
+                position: relative !important; 
                 width: 100% !important; 
-                height: auto !important; 
-                visibility: visible !important; 
-                background: white !important; 
-                color: black !important; 
                 margin: 0 !important; 
-                padding: 20px !important; 
+                padding: 0 !important; 
+                visibility: visible !important; 
+                background-color: white !important; 
+                color: black !important; 
             }
-            body.printing-progress #printable-progress * { visibility: visible !important; }
-
-            body.printing-qr #qr-modal { display: block !important; visibility: hidden !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; }
-            body.printing-qr #printable-qr-card { display: flex !important; position: absolute !important; left: 50% !important; top: 2cm !important; transform: translateX(-50%) !important; width: 6.5cm !important; height: 10.5cm !important; visibility: visible !important; background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; border: 1px solid #ccc !important; border-radius: 12px !important; box-shadow: none !important; margin: 0 !important; }
-            body.printing-qr #printable-qr-card * { visibility: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            body.printing-contract #printable-contract *,
+            body.printing-report #report-container *,
+            body.printing-progress #printable-progress *,
+            body.printing-qr #printable-qr-card * { 
+                visibility: visible !important; 
+            }
             
             p { text-align: justify; line-height: 1.6; orphans: 3; widows: 3; margin-bottom: 12px; }
             h1, h2, h3, h4 { page-break-after: avoid; }
@@ -95,34 +90,34 @@
     <!-- Sidebar -->
     <aside id="sidebar-menu" class="fixed md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 w-64 bg-brand-dark text-white flex flex-col shadow-2xl z-40 transition-transform duration-300 ease-in-out no-print h-full">
         <div class="p-6 flex items-center justify-center border-b border-gray-800 relative">
-            <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" alt="Logo" class="h-10 w-auto mr-3">
-            <span class="font-display font-bold text-lg tracking-wider">ADMIN</span>
+            <img src="https://iili.io/qC543c7.png" alt="Logo" class="h-10 w-auto mr-3">
+            <span class="font-display font-bold text-lg tracking-wider text-brand-red">ADMIN</span>
             <button onclick="window.toggleMobileMenu()" class="md:hidden absolute top-4 right-4 text-gray-400 hover:text-white focus:outline-none">
                 <i class="fa-solid fa-times text-xl"></i>
             </button>
         </div>
-        <div class="px-4 mt-4">
-            <button onclick="window.openCheckinModal()" class="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg shadow-lg transition-transform transform hover:-translate-y-1">
+        <div class="px-4 mt-6">
+            <button onclick="window.openCheckinModal()" class="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg shadow-md transition-transform transform hover:-translate-y-1">
                 <i class="fa-solid fa-camera"></i> Check-in (Leitor)
             </button>
         </div>
-        <nav class="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
-            <a href="#" onclick="window.switchMainView('students')" id="nav-students" class="flex items-center px-4 py-3 bg-brand-red text-white rounded-lg shadow-md transition-all">
-                <i class="fa-solid fa-users w-6"></i> <span class="font-bold">Alunos</span>
+        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+            <a href="#" onclick="window.switchMainView('students')" id="nav-students" class="flex items-center px-4 py-3 bg-brand-red text-white rounded-lg shadow-md transition-all font-bold">
+                <i class="fa-solid fa-users w-6"></i> <span class="ml-2">Alunos</span>
             </a>
-            <a href="#" onclick="window.switchMainView('experimental')" id="nav-experimental" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
-                <i class="fa-solid fa-fire w-6"></i> <span class="font-bold">Aulas Exp.</span>
+            <a href="#" onclick="window.switchMainView('experimental')" id="nav-experimental" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
+                <i class="fa-solid fa-fire w-6"></i> <span class="ml-2">Aulas Exp.</span>
             </a>
-            <a href="#" onclick="window.switchMainView('reports')" id="nav-reports" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
-                <i class="fa-solid fa-chart-pie w-6"></i> <span class="font-bold">Relatórios</span>
+            <a href="#" onclick="window.switchMainView('reports')" id="nav-reports" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
+                <i class="fa-solid fa-chart-pie w-6"></i> <span class="ml-2">Relatórios</span>
             </a>
-            <a href="#" onclick="window.switchMainView('notices')" id="nav-notices" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
-                <i class="fa-solid fa-bullhorn w-6"></i> <span class="font-bold">Mural de Avisos</span>
+            <a href="#" onclick="window.switchMainView('notices')" id="nav-notices" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
+                <i class="fa-solid fa-bullhorn w-6"></i> <span class="ml-2">Mural de Avisos</span>
             </a>
         </nav>
         <div class="p-4 border-t border-gray-800">
-            <button onclick="window.handleLogout()" class="flex items-center w-full px-4 py-2 text-red-400 hover:text-red-300 transition">
-                <i class="fa-solid fa-right-from-bracket w-6"></i> <span>Sair</span>
+            <button onclick="window.handleLogout()" class="flex items-center w-full px-4 py-2 text-red-400 hover:text-red-300 transition font-bold">
+                <i class="fa-solid fa-right-from-bracket w-6"></i> <span class="ml-2">Sair</span>
             </button>
         </div>
     </aside>
@@ -136,7 +131,7 @@
                 <button onclick="window.toggleMobileMenu()" class="text-brand-dark hover:text-brand-red focus:outline-none text-2xl transition">
                     <i class="fa-solid fa-bars"></i>
                 </button>
-                <img src="https://i.ibb.co/chV1Wv8t/1772237028768.png" class="h-8 w-auto">
+                <img src="https://iili.io/qC543c7.png" class="h-8 w-auto">
             </div>
             
             <div class="hidden md:flex relative w-96">
@@ -151,74 +146,50 @@
                 <button onclick="window.handleLogout()" class="md:hidden w-10 h-10 flex items-center justify-center bg-red-100 text-red-600 rounded-full shadow-sm hover:bg-red-200 transition">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
-                <span class="text-sm text-gray-500 hidden md:block">Gestão Administrativa</span>
-                <div class="hidden md:flex w-8 h-8 rounded-full bg-brand-dark text-white items-center justify-center font-bold">A</div>
+                <span class="text-sm font-bold text-red-700 bg-red-100 px-3 py-1 rounded-full hidden md:block border border-red-200"><i class="fa-solid fa-shield-halved mr-1"></i> Painel Administrativo</span>
+                <div class="hidden md:flex w-8 h-8 rounded-full bg-brand-red text-white items-center justify-center font-bold shadow-sm">A</div>
             </div>
         </header>
 
         <!-- Content Area -->
-        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6 relative">
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-6 relative">
 
             <!-- VIEW: ALUNOS -->
             <div id="view-students" class="animate-fade-in">
-                <!-- Stats Row -->
+                <!-- Stats Row (Cards como botões de navegação) -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 stats-container">
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500">
-                        <div class="flex justify-between">
-                            <div>
-                                <p class="text-gray-400 text-xs font-bold uppercase">Total Ativos</p>
-                                <p class="text-2xl font-bold text-gray-800" id="stat-total">0</p>
-                            </div>
-                            <div class="text-blue-500 text-2xl"><i class="fa-solid fa-users"></i></div>
-                        </div>
+                    <div id="card-all" class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-blue-50 transition-all card-active" onclick="window.switchTab('all')">
+                        <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-blue-500 pointer-events-none"><i class="fa-solid fa-users"></i></div>
+                        <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Total Ativos</p>
+                        <p class="text-3xl font-bold text-gray-800" id="stat-total">0</p>
                     </div>
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-brand-red">
-                        <div class="flex justify-between">
-                            <div>
-                                <p class="text-gray-400 text-xs font-bold uppercase">Infantil (Ativos)</p>
-                                <p class="text-2xl font-bold text-gray-800" id="stat-infantil">0</p>
-                            </div>
-                            <div class="text-brand-red text-2xl"><i class="fa-solid fa-child"></i></div>
-                        </div>
+                    <div id="card-kids" class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-brand-red border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-red-50 transition-all" onclick="window.switchTab('kids')">
+                        <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-brand-red pointer-events-none"><i class="fa-solid fa-child"></i></div>
+                        <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Infantil (Ativos)</p>
+                        <p class="text-3xl font-bold text-gray-800" id="stat-infantil">0</p>
                     </div>
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-green-500">
-                        <div class="flex justify-between">
-                            <div>
-                                <p class="text-gray-400 text-xs font-bold uppercase">Adulto/Admin</p>
-                                <p class="text-2xl font-bold text-gray-800" id="stat-adulto">0</p>
-                            </div>
-                            <div class="text-green-500 text-2xl"><i class="fa-solid fa-user"></i></div>
-                        </div>
+                    <div id="card-adults" class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-green-50 transition-all" onclick="window.switchTab('adults')">
+                        <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-green-500 pointer-events-none"><i class="fa-solid fa-user"></i></div>
+                        <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Adulto/Admin</p>
+                        <p class="text-3xl font-bold text-gray-800" id="stat-adulto">0</p>
                     </div>
-                    <div class="bg-white rounded-xl shadow p-5 border-l-4 border-gray-500 cursor-pointer hover:bg-gray-50 transition" onclick="window.switchTab('archived')">
-                        <div class="flex justify-between">
-                            <div>
-                                <p class="text-gray-400 text-xs font-bold uppercase">Arquivo</p>
-                                <p class="text-2xl font-bold text-gray-800" id="stat-archived">0</p>
-                            </div>
-                            <div class="text-gray-500 text-2xl"><i class="fa-solid fa-box-archive"></i></div>
-                        </div>
+                    <div id="card-archived" class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-gray-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-gray-100 transition-all" onclick="window.switchTab('archived')">
+                        <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-gray-500 pointer-events-none"><i class="fa-solid fa-box-archive"></i></div>
+                        <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Arquivo</p>
+                        <p class="text-3xl font-bold text-gray-800" id="stat-archived">0</p>
                     </div>
                 </div>
 
-                <!-- Tabs Container -->
-                <div class="flex flex-wrap mb-0 tabs-container">
-                    <button onclick="window.switchTab('all')" id="tab-all" class="px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative">
-                        <i class="fa-solid fa-users mr-2"></i> TODOS
-                    </button>
-                    <button onclick="window.switchTab('adults')" id="tab-adults" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
-                        <i class="fa-solid fa-user mr-2"></i> ADULTOS / FAMÍLIA
-                    </button>
-                    <button onclick="window.switchTab('kids')" id="tab-kids" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
-                        <i class="fa-solid fa-child mr-2"></i> INFANTIL
-                    </button>
-                    <button onclick="window.switchTab('archived')" id="tab-archived" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1">
-                        <i class="fa-solid fa-box-archive mr-2"></i> ARQUIVO
-                    </button>
+                <!-- Tabs Container (Hidden - mantido apenas para referência lógica se necessário) -->
+                <div class="flex flex-wrap mb-0 tabs-container hidden">
+                    <button id="tab-all"></button>
+                    <button id="tab-adults"></button>
+                    <button id="tab-kids"></button>
+                    <button id="tab-archived"></button>
                 </div>
 
                 <!-- Student Table -->
-                <div class="bg-white rounded-b-xl rounded-tr-xl shadow overflow-hidden relative top-[-1px] border border-gray-200">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center no-print flex-wrap gap-2">
                         <div class="flex items-center gap-4">
                             <h3 class="font-bold text-gray-700 uppercase text-sm flex items-center gap-2">
@@ -279,8 +250,8 @@
                                     <!-- Headers injetados via JS -->
                                 </tr>
                             </thead>
-                            <tbody id="students-table-body" class="text-sm text-gray-700 divide-y divide-gray-200">
-                                <tr><td colspan="7" class="px-6 py-4 text-center">Carregando dados...</td></tr>
+                            <tbody id="students-table-body" class="text-sm text-gray-700 divide-y divide-gray-100">
+                                <tr><td colspan="7" class="px-6 py-4 text-center">A carregar dados...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -289,41 +260,43 @@
 
             <!-- VIEW: RELATÓRIOS -->
             <div id="view-reports" class="hidden animate-fade-in">
-                <div class="bg-white rounded-xl shadow p-6 border-t-4 border-gray-800 max-w-4xl mx-auto">
-                    <h3 class="font-display text-xl font-bold text-gray-800 mb-2"><i class="fa-solid fa-print mr-2 text-brand-red"></i> Relatórios Administrativos</h3>
-                    <p class="text-sm text-gray-500 mb-6">Gere e imprima relatórios dos alunos da escola rapidamente.</p>
+                <div class="mb-6 flex justify-between items-center">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-gray-800">Relatórios Administrativos</h2>
+                        <p class="text-sm text-gray-500">Gere e imprima relatórios dos alunos da escola rapidamente.</p>
+                    </div>
+                </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="window.generateReport('ativos')">
-                            <div>
-                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-users text-blue-500 mr-1"></i> Alunos Ativos</h4>
-                                <p class="text-xs text-gray-500 mt-1">Lista completa de alunos matriculados, separada por plano e faixa.</p>
-                            </div>
-                            <button class="mt-4 bg-gray-800 hover:bg-black text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-start justify-between hover:shadow-md transition cursor-pointer" onclick="window.generateReport('ativos')">
+                        <div>
+                            <h4 class="font-bold text-blue-600 mb-2"><i class="fa-solid fa-users mr-2"></i> Alunos Ativos</h4>
+                            <p class="text-xs text-gray-500">Lista completa de alunos matriculados, separada por plano e faixa.</p>
                         </div>
-                        
-                        <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="window.generateReport('frequencia')">
-                            <div>
-                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-calendar-check text-purple-500 mr-1"></i> Frequência (Top 15)</h4>
-                                <p class="text-xs text-gray-500 mt-1">Os 15 alunos mais frequentes e dedicados da escola nos últimos 30 dias.</p>
-                            </div>
-                            <button class="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
+                        <button class="mt-4 bg-blue-100 text-blue-700 hover:bg-blue-200 px-4 py-2 rounded text-xs font-bold w-full transition"><i class="fa-solid fa-print mr-1"></i> Imprimir Relatório</button>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-start justify-between hover:shadow-md transition cursor-pointer" onclick="window.generateReport('frequencia')">
+                        <div>
+                            <h4 class="font-bold text-purple-600 mb-2"><i class="fa-solid fa-calendar-check mr-2"></i> Frequência (Top 15)</h4>
+                            <p class="text-xs text-gray-500">Os 15 alunos mais frequentes e dedicados da escola nos últimos 30 dias.</p>
                         </div>
+                        <button class="mt-4 bg-purple-100 text-purple-700 hover:bg-purple-200 px-4 py-2 rounded text-xs font-bold w-full transition"><i class="fa-solid fa-print mr-1"></i> Imprimir Relatório</button>
+                    </div>
 
-                        <div class="border rounded p-4 flex flex-col items-start justify-between bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="window.generateReport('experimental')">
-                            <div>
-                                <h4 class="font-bold text-gray-700"><i class="fa-solid fa-fire text-yellow-500 mr-1"></i> Aulas Experimentais</h4>
-                                <p class="text-xs text-gray-500 mt-1">Relatório de visitantes agendados, presentes e já matriculados.</p>
-                            </div>
-                            <button class="mt-4 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1.5 rounded text-xs font-bold w-full transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Gerar e Imprimir</button>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-start justify-between hover:shadow-md transition cursor-pointer" onclick="window.generateReport('experimental')">
+                        <div>
+                            <h4 class="font-bold text-yellow-600 mb-2"><i class="fa-solid fa-fire mr-2"></i> Aulas Experimentais</h4>
+                            <p class="text-xs text-gray-500">Relatório de visitantes agendados, presentes e já matriculados.</p>
                         </div>
+                        <button class="mt-4 bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-4 py-2 rounded text-xs font-bold w-full transition"><i class="fa-solid fa-print mr-1"></i> Imprimir Relatório</button>
                     </div>
                 </div>
             </div>
 
             <!-- VIEW: AULA EXPERIMENTAL -->
             <div id="view-experimental" class="hidden animate-fade-in">
-                <div class="bg-white rounded-xl shadow overflow-hidden border border-gray-200">
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
                     <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center no-print">
                         <div>
                             <h3 class="font-bold text-gray-800 uppercase text-lg"><i class="fa-solid fa-fire text-yellow-500 mr-2"></i> Gestão de Aulas Experimentais</h3>
@@ -335,15 +308,15 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
-                                    <th class="px-6 py-3 border-b">Data / Hora</th>
-                                    <th class="px-6 py-3 border-b">Nome do Visitante</th>
-                                    <th class="px-6 py-3 border-b">Contato</th>
-                                    <th class="px-6 py-3 border-b">Status</th>
-                                    <th class="px-6 py-3 border-b text-center no-print-col">Ações</th>
+                                    <th class="px-6 py-3 border-b font-semibold">Data / Hora</th>
+                                    <th class="px-6 py-3 border-b font-semibold">Nome do Visitante</th>
+                                    <th class="px-6 py-3 border-b font-semibold">Contato</th>
+                                    <th class="px-6 py-3 border-b font-semibold">Status</th>
+                                    <th class="px-6 py-3 border-b text-center font-semibold no-print-col">Ações</th>
                                 </tr>
                             </thead>
-                            <tbody id="experimental-table-body" class="text-sm text-gray-700 divide-y divide-gray-200">
-                                <tr><td colspan="5" class="px-6 py-4 text-center">Carregando dados...</td></tr>
+                            <tbody id="experimental-table-body" class="text-sm text-gray-700 divide-y divide-gray-100">
+                                <tr><td colspan="5" class="px-6 py-4 text-center">A carregar dados...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -352,7 +325,7 @@
 
             <!-- VIEW: MURAL DE AVISOS -->
             <div id="view-notices" class="hidden animate-fade-in">
-                <div class="bg-white rounded-xl shadow p-6 border-t-4 border-yellow-500 max-w-5xl mx-auto">
+                <div class="bg-white rounded-xl shadow-sm p-6 border-t-4 border-yellow-500 max-w-5xl mx-auto border border-gray-200">
                     <div class="flex justify-between items-center mb-6">
                         <div>
                             <h3 class="font-display text-xl font-bold text-gray-800"><i class="fa-solid fa-bullhorn mr-2 text-yellow-500"></i> Mural de Avisos</h3>
@@ -370,7 +343,7 @@
                     </div>
                     
                     <div id="admin-notices-list" class="space-y-4">
-                        <div class="text-center py-8 text-gray-400 italic text-sm">Carregando avisos...</div>
+                        <div class="text-center py-8 text-gray-400 italic text-sm">A carregar avisos...</div>
                     </div>
                 </div>
             </div>
@@ -378,10 +351,10 @@
         </main>
     </div>
 
-    <!-- PRINTABLE CONTAINERS (Hidden completely unless printing) -->
-    <div id="report-container" class="hidden"></div>
+    <!-- PRINTABLE CONTAINERS (Absolutos para cobrir a tela antes da impressão) -->
+    <div id="report-container" class="hidden bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen"></div>
 
-    <div id="printable-progress" class="hidden">
+    <div id="printable-progress" class="hidden bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen">
         <div class="text-center mb-6 border-b-2 border-black pb-4">
             <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
             <h2 class="text-lg font-bold mt-2 uppercase">Relatório de Evolução do Aluno</h2>
@@ -409,17 +382,15 @@
             </thead>
             <tbody id="print-prog-attendance-body"></tbody>
         </table>
-
-        <div class="mt-12 pt-4 border-t border-black text-center w-64 mx-auto page-break-inside-avoid">
-            <p class="font-bold text-sm uppercase">Tanque Team BJJ</p>
-            <p class="text-[10px] text-gray-500">Assinatura do Professor</p>
-        </div>
     </div>
 
-    <div id="printable-contract" class="hidden">
+    <div id="printable-contract" class="hidden bg-white text-black p-10 font-serif text-[11pt] leading-relaxed absolute inset-0 z-[100] min-h-screen">
         <div class="header-section text-center mb-6 border-b-2 border-black pb-4">
+            <img src="https://iili.io/qC543c7.png" alt="Logo" class="h-16 mx-auto mb-2" style="filter: grayscale(100%);">
             <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
-            <p class="text-xs">CNPJ: 00.000.000/0001-00 | Tel: (91) 99819-2610</p>
+            <p class="text-xs">CNPJ: 00.000.000/0001-00</p>
+            <p class="text-xs">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, CEP 66635-110</p>
+            <p class="text-xs">Tel: (91) 99819-2610 | E-mail: tanqueteambjj@gmail.com</p>
         </div>
         <h2 class="text-center font-bold text-lg mb-6 uppercase underline tracking-wide">Contrato de Prestação de Serviços Esportivos</h2>
         
@@ -442,20 +413,21 @@
     </div>
     
     <!-- CARTEIRINHA IMPRESSA -->
-    <div id="printable-qr-card" class="hidden">
-        <div class="bg-brand-dark text-white p-3 flex items-center justify-center gap-2 shrink-0 w-full">
-            <span class="font-display font-bold text-sm tracking-widest uppercase">Tanque Team</span>
-        </div>
-        <div class="p-4 flex flex-col items-center flex-1 relative bg-white w-full">
-            <div class="text-center z-10 w-full mb-2">
-                <h4 class="font-bold text-base text-gray-900 leading-tight uppercase truncate" id="qr-student-name">Nome</h4>
-                <p class="text-xs text-brand-red font-bold uppercase truncate mt-1" id="qr-belt">Faixa Branca</p>
-                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider truncate mt-1" id="qr-plan">Plano</p>
+    <div id="printable-qr-card" class="hidden bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen flex items-center justify-center">
+        <div class="border-2 border-black rounded-xl overflow-hidden relative shadow-md" style="width: 6.5cm; height: 10.5cm;">
+            <div class="bg-black text-white p-3 flex items-center justify-center gap-2 shrink-0 w-full" style="-webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                <span class="font-display font-bold text-sm tracking-widest uppercase">Tanque Team</span>
             </div>
-            <div class="mt-auto bg-white p-1.5 border border-gray-200 rounded shadow-sm z-10 inline-block">
-                <img id="qr-image" src="" alt="QR Code" class="w-24 h-24">
+            <div class="p-4 flex flex-col items-center flex-1 relative bg-white w-full h-full">
+                <div class="text-center z-10 w-full mb-2 mt-4">
+                    <h4 class="font-bold text-base text-black leading-tight uppercase" id="qr-student-name">Nome</h4>
+                    <p class="text-xs text-red-600 font-bold uppercase mt-1" id="qr-belt">Faixa Branca</p>
+                    <p class="text-[10px] text-gray-600 uppercase font-bold tracking-wider mt-1" id="qr-plan">Plano</p>
+                </div>
+                <div class="mt-auto bg-white p-2 border border-gray-300 rounded z-10 inline-block mb-4">
+                    <img id="qr-image" src="" alt="QR Code" class="w-32 h-32">
+                </div>
             </div>
-            <p class="text-[8px] text-gray-400 mt-2 z-10 font-bold uppercase tracking-wider">Apresente no Check-in</p>
         </div>
     </div>
 
@@ -575,21 +547,21 @@
 
     <!-- Edit Experimental Modal -->
     <div id="edit-exp-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md animate-fade-in">
-            <div class="bg-yellow-500 px-6 py-4 flex justify-between text-white">
-                <h3 class="font-bold text-lg"><i class="fa-solid fa-pen mr-2"></i> Editar Aula Exp.</h3>
-                <button onclick="window.closeEditExperimentalModal()"><i class="fa-solid fa-times"></i></button>
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md animate-fade-in border-t-4 border-yellow-500">
+            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-200">
+                <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-pen text-yellow-500 mr-2"></i> Editar Aula Exp.</h3>
+                <button onclick="window.closeEditExperimentalModal()"><i class="fa-solid fa-times text-gray-400 hover:text-gray-800"></i></button>
             </div>
             <div class="p-6 space-y-4">
                 <input type="hidden" id="edit-exp-id">
-                <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome Completo</label><input type="text" id="edit-exp-name" class="w-full border rounded p-2 text-sm focus:border-yellow-500"></div>
+                <div><label class="block text-xs font-bold text-gray-500 mb-1">Nome Completo</label><input type="text" id="edit-exp-name" class="w-full border rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-bold text-gray-500 mb-1">WhatsApp</label><input type="text" id="edit-exp-phone" class="w-full border rounded p-2 text-sm focus:border-yellow-500" placeholder="(91) 90000-0000"></div>
-                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Nascimento</label><input type="text" id="edit-exp-dob" class="w-full border rounded p-2 text-sm focus:border-yellow-500" placeholder="DD/MM/AAAA"></div>
-                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Data Agendada</label><input type="date" id="edit-exp-date" class="w-full border rounded p-2 text-sm focus:border-yellow-500"></div>
-                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Horário</label><input type="time" id="edit-exp-time" class="w-full border rounded p-2 text-sm focus:border-yellow-500"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">WhatsApp</label><input type="text" id="edit-exp-phone" class="w-full border rounded p-2 text-sm focus:border-yellow-500 focus:outline-none" placeholder="(91) 90000-0000"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Nascimento</label><input type="text" id="edit-exp-dob" class="w-full border rounded p-2 text-sm focus:border-yellow-500 focus:outline-none" placeholder="DD/MM/AAAA"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Data Agendada</label><input type="date" id="edit-exp-date" class="w-full border rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Horário</label><input type="time" id="edit-exp-time" class="w-full border rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
                 </div>
-                <div class="mt-6 flex justify-end gap-2">
+                <div class="mt-6 flex justify-end gap-2 border-t border-gray-100 pt-4">
                     <button onclick="window.closeEditExperimentalModal()" class="px-4 py-2 border rounded text-sm font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
                     <button onclick="window.saveExperimentalChanges()" class="px-5 py-2 bg-yellow-500 text-white rounded text-sm font-bold hover:bg-yellow-600 shadow-md">Salvar</button>
                 </div>
@@ -599,10 +571,10 @@
 
     <!-- Edit Student Modal (FULL EDIT) -->
     <div id="edit-modal" class="fixed inset-0 z-[70] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in">
-            <div class="bg-brand-dark px-6 py-4 flex justify-between text-white shrink-0">
-                <h3 class="font-display font-bold text-lg tracking-wider">EDITAR ALUNO E GRADUAR</h3>
-                <button onclick="window.closeEditModal()" class="hover:text-gray-300"><i class="fa-solid fa-times"></i></button>
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-brand-dark">
+            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-200 shrink-0">
+                <h3 class="font-display font-bold text-lg tracking-wider text-gray-800">EDITAR ALUNO E GRADUAR</h3>
+                <button onclick="window.closeEditModal()" class="hover:text-red-500 text-gray-400 text-xl transition"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="p-6 overflow-y-auto flex-1 bg-white">
                 <input type="hidden" id="edit-id">
@@ -725,7 +697,7 @@
 
     <!-- DETAILS MODAL (READ ONLY) -->
     <div id="details-modal" class="fixed inset-0 z-[60] hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all relative">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all relative border-t-4 border-brand-dark">
             <button onclick="window.closeDetailsModal()" class="absolute top-3 right-3 bg-white/80 hover:bg-white text-gray-600 hover:text-black rounded-full w-8 h-8 flex items-center justify-center z-20 shadow-sm transition"><i class="fa-solid fa-times text-lg"></i></button>
             <div id="detail-header-bg" class="h-24 bg-gray-200 w-full relative">
                 <div class="absolute -bottom-10 left-6">
@@ -762,6 +734,7 @@
                                 <div><span class="text-gray-500 block text-xs font-bold">Telefone / WhatsApp</span><span class="font-medium" id="detail-phone">--</span></div>
                                 <div class="col-span-2"><span class="text-gray-500 block text-xs font-bold">E-mail</span><span class="font-medium text-gray-800" id="detail-email">--</span></div>
                                 <div class="col-span-2"><span class="text-gray-500 block text-xs font-bold">Endereço</span><span class="font-medium text-gray-800" id="detail-address">--</span></div>
+                                <div class="col-span-2 mt-2"><span class="text-blue-500 block text-[10px] font-bold uppercase tracking-wider">Origem / Captação</span><span class="font-bold text-blue-900" id="detail-origin">--</span></div>
                             </div>
                         </div>
                         
@@ -814,10 +787,10 @@
 
     <!-- NEW REGISTER MODAL -->
     <div id="admin-register-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in">
-            <div class="bg-brand-dark px-6 py-4 flex justify-between items-center text-white shrink-0">
-                <h3 class="font-display font-bold text-lg tracking-wider">NOVA MATRÍCULA</h3>
-                <button onclick="window.closeAdminRegisterModal()" class="hover:text-gray-300"><i class="fa-solid fa-times"></i></button>
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-brand-dark">
+            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-200 shrink-0">
+                <h3 class="font-display font-bold text-lg tracking-wider text-gray-800">NOVA MATRÍCULA</h3>
+                <button onclick="window.closeAdminRegisterModal()" class="hover:text-red-500 text-gray-400 text-xl transition"><i class="fa-solid fa-times"></i></button>
             </div>
             
             <div class="p-6 overflow-y-auto flex-1">
@@ -849,6 +822,18 @@
                             <div class="md:col-span-2">
                                 <label class="block text-xs font-bold text-gray-500 mb-1">Endereço Completo</label>
                                 <input type="text" id="reg-address" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none" placeholder="Rua, Bairro, Cidade">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Como nos conheceu?</label>
+                                <select id="reg-origin" class="w-full border rounded p-2 focus:border-brand-red focus:outline-none">
+                                    <option value="" disabled selected>Selecione uma opção...</option>
+                                    <option value="Instagram">Instagram</option>
+                                    <option value="Facebook">Facebook</option>
+                                    <option value="Google">Pesquisa no Google</option>
+                                    <option value="Indicação de Aluno/Amigo">Indicação de um Aluno/Amigo</option>
+                                    <option value="Passou em frente">Passei em frente à Escola</option>
+                                    <option value="Outros">Outros</option>
+                                </select>
                             </div>
                             
                             <!-- PAINEL RESPONSÁVEL LEGAL (Apenas para < 18) -->
@@ -905,36 +890,6 @@
                                 <option value="0">0º Grau (Liso)</option><option value="1">1º Grau</option><option value="2">2º Grau</option><option value="3">3º Grau</option><option value="4">4º Grau</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200">
-                        <h4 class="text-sm font-bold text-green-700 uppercase mb-3"><i class="fa-solid fa-cash-register"></i> Primeiro Pagamento (Opcional)</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Status Inicial</label>
-                                <select id="reg-payment" class="w-full border rounded p-2 text-sm bg-gray-50 focus:outline-none focus:border-green-500">
-                                    <option value="Pendente">Pendente (Paga depois)</option>
-                                    <option value="Em dia">Em dia (Já pagou)</option>
-                                    <option value="Isento">Isento</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Valor Pago (R$)</label>
-                                <input type="number" id="reg-pay-amount" class="w-full border rounded p-2 text-sm font-bold text-gray-700 focus:outline-none focus:border-green-500" placeholder="Ex: 189.90" step="0.01">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Forma de Pagamento</label>
-                                <select id="reg-pay-method" class="w-full border rounded p-2 text-sm bg-gray-50 focus:outline-none focus:border-green-500">
-                                    <option value="Pix">Pix</option>
-                                    <option value="Dinheiro">Dinheiro</option>
-                                    <option value="Débito">Débito</option>
-                                    <option value="Crédito à vista">Crédito à vista</option>
-                                    <option value="Crédito 2x">Crédito 2x</option>
-                                    <option value="Crédito 3x">Crédito 3x</option>
-                                </select>
-                            </div>
-                        </div>
-                        <p class="text-[10px] text-gray-400 mt-1">Se preencher o Valor Pago, o sistema já registrará o recibo inicial e deixará o aluno "Em dia".</p>
                     </div>
 
                     <div id="admin-reg-deps-container" class="md:col-span-2 hidden border-t-2 border-purple-200 pt-4 mt-2">
@@ -1147,7 +1102,7 @@
         }
 
         // EmailJS Init
-        (function(){ emailjs.init("joP6USyQXdqGI3GN5"); })();
+        try { emailjs.init("joP6USyQXdqGI3GN5"); } catch(e) { console.warn("EmailJS", e); }
 
         window.handleLogout = () => { localStorage.removeItem('tanque_user_session'); window.location.href = "https://www.tanqueteambjj.com.br/login.html"; }
 
@@ -1191,7 +1146,9 @@
         }
 
         window.checkAdminRegAge = function() {
-            const dob = document.getElementById('reg-dob').value;
+            const dobEl = document.getElementById('reg-dob');
+            if(!dobEl) return;
+            const dob = dobEl.value;
             const container = document.getElementById('admin-reg-guardian-container');
             const guardianName = document.getElementById('reg-guardian');
             const guardianCpf = document.getElementById('reg-guardian-cpf');
@@ -1199,34 +1156,36 @@
             if(dob && dob.length === 10) {
                 const age = getAge(dob);
                 if(age !== null && age < 18) {
-                    container.classList.remove('hidden');
-                    guardianName.setAttribute('required', 'true');
-                    guardianCpf.setAttribute('required', 'true');
+                    if(container) container.classList.remove('hidden');
+                    if(guardianName) guardianName.setAttribute('required', 'true');
+                    if(guardianCpf) guardianCpf.setAttribute('required', 'true');
                 } else {
-                    container.classList.add('hidden');
-                    guardianName.removeAttribute('required');
-                    guardianCpf.removeAttribute('required');
+                    if(container) container.classList.add('hidden');
+                    if(guardianName) guardianName.removeAttribute('required');
+                    if(guardianCpf) guardianCpf.removeAttribute('required');
                 }
             } else {
-                container.classList.add('hidden');
-                guardianName.removeAttribute('required');
-                guardianCpf.removeAttribute('required');
+                if(container) container.classList.add('hidden');
+                if(guardianName) guardianName.removeAttribute('required');
+                if(guardianCpf) guardianCpf.removeAttribute('required');
             }
         };
 
         window.checkAdminEditAge = function() {
-            const dob = document.getElementById('edit-dob').value;
+            const dobEl = document.getElementById('edit-dob');
+            if(!dobEl) return;
+            const dob = dobEl.value;
             const container = document.getElementById('admin-edit-guardian-container');
             
             if(dob && dob.length === 10) {
                 const age = getAge(dob);
                 if(age !== null && age < 18) {
-                    container.classList.remove('hidden');
+                    if(container) container.classList.remove('hidden');
                 } else {
-                    container.classList.add('hidden');
+                    if(container) container.classList.add('hidden');
                 }
             } else {
-                container.classList.remove('hidden'); 
+                if(container) container.classList.remove('hidden'); 
             }
         };
 
@@ -1276,7 +1235,6 @@
             document.getElementById('prog-start-filter').value = '';
             document.getElementById('prog-end-filter').value = '';
             
-            // 1. Linha do Tempo (Anotações e Graduações)
             const tl = document.getElementById('prog-timeline');
             tl.innerHTML = '';
             let logs = s.progressLog ? [...s.progressLog] : [];
@@ -1306,9 +1264,7 @@
                 `;
             });
 
-            // 2. Histórico de Presenças (Lista Separada)
             window.filterProgressAttendance();
-            
             document.getElementById('progress-modal').classList.remove('hidden'); 
             document.getElementById('progress-modal').classList.add('flex');
         };
@@ -1331,17 +1287,13 @@
                 attendances = s.attendance.map(dateStr => ({ date: dateStr, time: 'Check-in manual' }));
             }
 
-            if (startFilter) {
-                attendances = attendances.filter(att => att.date >= startFilter);
-            }
-            if (endFilter) {
-                attendances = attendances.filter(att => att.date <= endFilter);
-            }
+            if (startFilter) attendances = attendances.filter(att => att.date >= startFilter);
+            if (endFilter) attendances = attendances.filter(att => att.date <= endFilter);
 
             document.getElementById('prog-att-total').innerText = `${attendances.length} aulas`;
 
             if (attendances.length === 0) {
-                attList.innerHTML = '<div class="text-xs text-gray-500 text-center py-4 italic">Nenhuma presença encontrada para este período.</div>';
+                attList.innerHTML = '<div class="text-xs text-gray-500 text-center py-4 italic">Nenhuma presença encontrada.</div>';
             } else {
                 attendances.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(att => {
                     const dateFmt = formatDate(att.date + 'T12:00:00');
@@ -1385,7 +1337,6 @@
             document.getElementById('print-prog-belt').innerText = s.belt || 'Branca';
             document.getElementById('print-prog-plan').innerText = window.getPlanInfo(s.plan).short;
             
-            // Render Tabela Anotações
             const tbodyLogs = document.getElementById('print-prog-table-body');
             tbodyLogs.innerHTML = '';
             
@@ -1399,34 +1350,26 @@
                 tbodyLogs.innerHTML += `<tr><td class="p-2 border">${d}</td><td class="p-2 border font-bold">${typeStr}</td><td class="p-2 border">${log.text}</td></tr>`;
             });
 
-            // Render Tabela Presenças
             const tbodyAtt = document.getElementById('print-prog-attendance-body');
             tbodyAtt.innerHTML = '';
             let attendances = [];
             
-            if (s.attendanceLog && s.attendanceLog.length > 0) {
-                attendances = [...s.attendanceLog];
-            } else if (s.attendance && s.attendance.length > 0) {
-                attendances = s.attendance.map(dateStr => ({ date: dateStr, time: 'Check-in manual' }));
-            }
+            if (s.attendanceLog && s.attendanceLog.length > 0) attendances = [...s.attendanceLog];
+            else if (s.attendance && s.attendance.length > 0) attendances = s.attendance.map(dateStr => ({ date: dateStr, time: 'Check-in manual' }));
 
             let printMonthLabel = "";
             if (startFilter || endFilter) {
                 if (startFilter) attendances = attendances.filter(att => att.date >= startFilter);
                 if (endFilter) attendances = attendances.filter(att => att.date <= endFilter);
-                
                 const sDate = startFilter ? formatDate(startFilter + 'T12:00:00') : 'Início';
                 const eDate = endFilter ? formatDate(endFilter + 'T12:00:00') : 'Hoje';
                 printMonthLabel = `(Período: ${sDate} até ${eDate})`;
-            } else {
-                printMonthLabel = "(Todo o Período)";
-            }
+            } else printMonthLabel = "(Todo o Período)";
 
             document.getElementById('print-prog-att-total').innerText = `Total: ${attendances.length} aulas ${printMonthLabel}`;
 
-            if (attendances.length === 0) {
-                tbodyAtt.innerHTML = '<tr><td colspan="2" class="p-2 border text-center text-gray-500 italic">Nenhuma presença registrada neste período.</td></tr>';
-            } else {
+            if (attendances.length === 0) tbodyAtt.innerHTML = '<tr><td colspan="2" class="p-2 border text-center text-gray-500 italic">Nenhuma presença registrada.</td></tr>';
+            else {
                 attendances.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(att => {
                     const dateFmt = formatDate(att.date + 'T12:00:00');
                     tbodyAtt.innerHTML += `<tr><td class="p-2 border">${dateFmt}</td><td class="p-2 border">${att.time || '--'}</td></tr>`;
@@ -1436,11 +1379,85 @@
             document.body.classList.add('printing-progress'); 
             setTimeout(() => { 
                 window.print(); 
-                setTimeout(() => { document.body.classList.remove('printing-progress'); }, 2000); 
-            }, 800);
+                setTimeout(() => { document.body.classList.remove('printing-progress'); }, 1000); 
+            }, 500);
         };
 
-        // FUNÇÕES EM MASSA E ARQUIVAMENTO
+        // LÓGICA DO LEITOR DE QR CODE
+        let html5QrcodeScanner = null;
+
+        window.openCheckinModal = () => {
+            document.getElementById('checkin-modal').classList.remove('hidden');
+            document.getElementById('checkin-modal').classList.add('flex');
+            const resDiv = document.getElementById('checkin-result');
+            resDiv.innerHTML = '<i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o QR Code...';
+            resDiv.className = "text-center py-4 w-full rounded-lg bg-gray-50 border border-gray-200 font-medium text-gray-600 min-h-[100px] flex flex-col items-center justify-center";
+            
+            if (typeof Html5QrcodeScanner !== "undefined" && !html5QrcodeScanner) {
+                html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+                html5QrcodeScanner.render(window.onScanSuccess, window.onScanFailure);
+            }
+        };
+
+        window.closeCheckinModal = () => {
+            document.getElementById('checkin-modal').classList.add('hidden');
+            document.getElementById('checkin-modal').classList.remove('flex');
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear().then(() => { html5QrcodeScanner = null; }).catch(e => console.error(e));
+            }
+        };
+
+        window.onScanSuccess = async (decodedText, decodedResult) => {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear().then(() => { html5QrcodeScanner = null; }).catch(e => console.error(e));
+            }
+            const resDiv = document.getElementById('checkin-result');
+            resDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-blue-500 mb-2"></i> Processando...';
+            resDiv.className = "text-center py-4 w-full rounded-lg bg-blue-50 border border-blue-200 font-medium text-blue-700 min-h-[100px] flex flex-col items-center justify-center";
+            
+            try {
+                const studentId = decodedText;
+                const student = window.students.find(s => s.id === studentId);
+                
+                if (!student) {
+                    resDiv.innerHTML = '<i class="fa-solid fa-circle-xmark text-3xl text-red-500 mb-2"></i> QR Code Inválido ou Aluno não encontrado.';
+                    resDiv.className = "text-center py-4 w-full rounded-lg bg-red-50 border border-red-200 font-medium text-red-700 min-h-[100px] flex flex-col items-center justify-center";
+                    setTimeout(() => { if(!document.getElementById('checkin-modal').classList.contains('hidden')) window.openCheckinModal(); }, 3000);
+                    return;
+                }
+
+                if (student.paymentStatus === 'Pendente') {
+                    resDiv.innerHTML = `<i class="fa-solid fa-lock text-3xl text-red-500 mb-2"></i> Acesso Bloqueado!<br><span class="text-sm font-bold text-gray-800">${student.name}</span><br><span class="text-xs">Mensalidade Pendente. Direcione à recepção.</span>`;
+                    resDiv.className = "text-center py-4 w-full rounded-lg bg-red-50 border border-red-300 font-medium text-red-700 min-h-[100px] flex flex-col items-center justify-center";
+                    setTimeout(() => { if(!document.getElementById('checkin-modal').classList.contains('hidden')) window.openCheckinModal(); }, 4000);
+                    return;
+                }
+
+                const todayISO = new Date().toISOString().split('T')[0];
+                const className = document.getElementById('checkin-class-selector').value;
+
+                await updateDoc(doc(window.db, 'artifacts', window.appId, 'public', 'data', 'students', studentId), {
+                    attendance: arrayUnion(todayISO),
+                    attendanceLog: arrayUnion({ date: todayISO, time: className, timestamp: new Date().toISOString() })
+                });
+
+                resDiv.innerHTML = `<i class="fa-solid fa-check-circle text-4xl text-green-500 mb-2"></i> Check-in Confirmado!<br><span class="text-lg font-bold text-gray-800">${student.name}</span><br><span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded mt-1 inline-block">${className}</span>`;
+                resDiv.className = "text-center py-4 w-full rounded-lg bg-green-50 border border-green-300 font-medium text-green-700 min-h-[100px] flex flex-col items-center justify-center shadow-inner";
+                
+                window.loadData();
+                setTimeout(() => { if(!document.getElementById('checkin-modal').classList.contains('hidden')) window.openCheckinModal(); }, 3500);
+
+            } catch(e) {
+                console.error(e);
+                resDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-3xl text-orange-500 mb-2"></i> Erro de Conexão.';
+                resDiv.className = "text-center py-4 w-full rounded-lg bg-orange-50 border border-orange-200 font-medium text-orange-700 min-h-[100px] flex flex-col items-center justify-center";
+                setTimeout(() => { if(!document.getElementById('checkin-modal').classList.contains('hidden')) window.openCheckinModal(); }, 3000);
+            }
+        };
+
+        window.onScanFailure = (error) => { /* Ignorar erros de background */ };
+
+        // FUNÇÕES EM MASSA
         window.toggleSelectAll = (source) => { document.querySelectorAll('.student-cb').forEach(cb => cb.checked = source.checked); window.updateBulkActions(); };
 
         window.updateBulkActions = () => {
@@ -1461,11 +1478,8 @@
                     if(btnBulkDelete) btnBulkDelete.classList.add('hidden');
                     if(btnAddPresence) btnAddPresence.classList.remove('hidden');
                 }
-            } 
-            else { 
+            } else { 
                 bulkDiv.classList.add('hidden'); 
-                if(btnBulkArchive) btnBulkArchive.classList.add('hidden');
-                if(btnBulkDelete) btnBulkDelete.classList.add('hidden');
             }
         };
 
@@ -1483,14 +1497,11 @@
         window.deleteSelectedStudents = async () => {
             const ids = Array.from(document.querySelectorAll('.student-cb:checked')).map(cb => cb.value);
             if(ids.length === 0) return;
-            if(confirm(`Tem a certeza absoluta que deseja EXCLUIR PERMANENTEMENTE ${ids.length} aluno(s) selecionados do arquivo? Esta ação apagará todos os dados de forma irrecuperável.`)) {
+            if(confirm(`Tem a certeza absoluta que deseja EXCLUIR PERMANENTEMENTE ${ids.length} aluno(s) selecionados do arquivo?`)) {
                 try {
                     await Promise.all(ids.map(id => deleteDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id))));
                     document.getElementById('cb-select-all').checked = false; window.updateBulkActions(); window.loadData();
-                } catch(e) { 
-                    console.error("Erro na exclusão em massa:", e);
-                    alert('Erro ao excluir definitivamente: ' + e.message); 
-                }
+                } catch(e) { alert('Erro ao excluir definitivamente: ' + e.message); }
             }
         };
 
@@ -1513,7 +1524,7 @@
             const ids = Array.from(document.querySelectorAll('.student-cb:checked')).map(cb => cb.value);
             if(ids.length === 0) return;
             const todayISO = new Date().toISOString().split('T')[0];
-            if(confirm(`Confirmar presença de hoje (${todayISO}) para ${ids.length} alunos?`)) {
+            if(confirm(`Confirmar presença de hoje para ${ids.length} alunos?`)) {
                 try {
                     await Promise.all(ids.map(id => updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { attendance: arrayUnion(todayISO), attendanceLog: arrayUnion({ date: todayISO, time: 'Check-in rápido em massa', timestamp: new Date().toISOString() }) })));
                     document.getElementById('cb-select-all').checked = false; window.updateBulkActions(); window.loadData();
@@ -1521,7 +1532,6 @@
             }
         };
 
-        // GESTÃO DE FREQUÊNCIA INDIVIDUAL RÁPIDA
         window.openAttendanceModal = (id) => {
             const s = window.students.find(st => st.id === id); if(!s) return;
             document.getElementById('att-student-name').innerText = s.name || 'Aluno'; document.getElementById('att-student-id').value = id; document.getElementById('att-date-input').valueAsDate = new Date();
@@ -1546,17 +1556,12 @@
             if(!dateVal) return;
             try { 
                 await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { attendance: arrayUnion(dateVal), attendanceLog: arrayUnion({ date: dateVal, time: 'Check-in manual', timestamp: new Date().toISOString() }) }); 
-                
                 const s = window.students.find(st => st.id === id);
                 if (s) {
-                    if (!s.attendance) s.attendance = [];
-                    s.attendance.push(dateVal);
-                    if (!s.attendanceLog) s.attendanceLog = [];
-                    s.attendanceLog.push({ date: dateVal, time: 'Check-in manual', timestamp: new Date().toISOString() });
+                    if (!s.attendance) s.attendance = []; s.attendance.push(dateVal);
+                    if (!s.attendanceLog) s.attendanceLog = []; s.attendanceLog.push({ date: dateVal, time: 'Check-in manual', timestamp: new Date().toISOString() });
                 }
-
-                window.openAttendanceModal(id); 
-                window.loadData(); 
+                window.openAttendanceModal(id); window.loadData(); 
             } catch(e) { alert("Erro."); }
         };
 
@@ -1569,22 +1574,14 @@
                 let logEntryToRemove = null;
                 if (s && s.attendanceLog) {
                     const logEntry = s.attendanceLog.find(l => l.date === dateStr);
-                    if (logEntry) {
-                        updates.attendanceLog = arrayRemove(logEntry);
-                        logEntryToRemove = logEntry;
-                    }
+                    if (logEntry) { updates.attendanceLog = arrayRemove(logEntry); logEntryToRemove = logEntry; }
                 }
                 await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), updates); 
-                
                 if (s) {
                     s.attendance = s.attendance.filter(d => d !== dateStr);
-                    if (s.attendanceLog && logEntryToRemove) {
-                        s.attendanceLog = s.attendanceLog.filter(l => l !== logEntryToRemove);
-                    }
+                    if (s.attendanceLog && logEntryToRemove) s.attendanceLog = s.attendanceLog.filter(l => l !== logEntryToRemove);
                 }
-
-                window.openAttendanceModal(id); 
-                window.loadData(); 
+                window.openAttendanceModal(id); window.loadData(); 
             } catch(e) { alert("Erro."); }
         };
 
@@ -1593,7 +1590,7 @@
             try { await updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', id), { attendance: arrayUnion(todayISO), attendanceLog: arrayUnion({ date: todayISO, time: 'Check-in rápido', timestamp: new Date().toISOString() }) }); window.loadData(); alert(`Presença confirmada para hoje!`); } catch(e) { alert("Erro."); }
         };
 
-        // NAVEGAÇÃO
+        // NAVEGAÇÃO MAIN E ABAS
         window.toggleMobileMenu = () => { document.getElementById('sidebar-menu').classList.toggle('-translate-x-full'); document.getElementById('mobile-sidebar-overlay').classList.toggle('hidden'); };
 
         window.switchMainView = (viewName) => {
@@ -1609,9 +1606,25 @@
 
         window.switchTab = (tab) => {
             window.currentTab = tab;
-            const activeClass = "px-6 py-3 bg-white font-bold text-brand-dark border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative";
-            const inactiveClass = "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1";
-            ['all', 'adults', 'kids', 'archived'].forEach(t => { const el = document.getElementById('tab-' + t); if (el) el.className = (t === tab) ? activeClass : inactiveClass; });
+            const cardIds = ['all', 'adults', 'kids', 'archived'];
+            
+            cardIds.forEach(t => { 
+                const card = document.getElementById('card-' + t);
+                if(card) {
+                    card.classList.remove('card-active', 'border-b-blue-500', 'border-b-brand-red', 'border-b-green-500', 'border-b-gray-500');
+                    card.classList.add('border-b-transparent');
+                    
+                    if (t === tab) {
+                        card.classList.add('card-active');
+                        card.classList.remove('border-b-transparent');
+                        if(t === 'all') card.classList.add('border-b-blue-500');
+                        else if(t === 'kids') card.classList.add('border-b-brand-red');
+                        else if(t === 'adults') card.classList.add('border-b-green-500');
+                        else if(t === 'archived') card.classList.add('border-b-gray-500');
+                    }
+                }
+            });
+            
             window.renderTable();
         };
 
@@ -1656,7 +1669,7 @@
             document.getElementById('list-count').innerText = filtered.length;
             document.getElementById('list-title').innerText = (window.currentTab === 'all') ? "Todos (Ativos)" : (window.currentTab === 'adults') ? "Adultos e Família" : (window.currentTab === 'kids') ? "Infantil (Ativos)" : "Arquivo de Alunos";
 
-            thead.innerHTML = `<th class="px-6 py-3 border-b w-10 text-center"><input type="checkbox" id="cb-select-all" onclick="window.toggleSelectAll(this)" class="rounded text-brand-red cursor-pointer"></th><th class="px-6 py-3 border-b">Aluno</th>${window.currentTab === 'kids' || window.currentTab === 'all' ? '<th class="px-6 py-3 border-b">Responsável/Titular</th>' : ''}<th class="px-6 py-3 border-b">Faixa</th><th class="px-6 py-3 border-b">Frequência</th><th class="px-6 py-3 border-b text-center">Acesso</th><th class="px-6 py-3 border-b text-center">Ações</th>`;
+            thead.innerHTML = `<th class="px-6 py-3 border-b font-semibold w-10 text-center"><input type="checkbox" id="cb-select-all" onclick="window.toggleSelectAll(this)" class="rounded text-brand-red cursor-pointer"></th><th class="px-6 py-3 border-b font-semibold">Aluno</th>${window.currentTab === 'kids' || window.currentTab === 'all' ? '<th class="px-6 py-3 border-b font-semibold">Responsável/Titular</th>' : ''}<th class="px-6 py-3 border-b font-semibold">Faixa</th><th class="px-6 py-3 border-b font-semibold">Frequência</th><th class="px-6 py-3 border-b font-semibold text-center">Acesso</th><th class="px-6 py-3 border-b font-semibold text-center">Ações</th>`;
             if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="${window.currentTab === 'kids' || window.currentTab === 'all' ? 7 : 6}" class="px-6 py-8 text-center text-gray-400 italic">Nenhum aluno encontrado.</td></tr>`; return; }
 
             const renderRow = (s, isDepRow = false, parentId = null) => {
@@ -1686,21 +1699,21 @@
                 let actionsHtml = '';
                 if (s.archived) {
                     actionsHtml = `
-                        <button onclick="window.restoreStudent('${s.id}')" class="text-green-600 hover:text-green-900 mr-3" title="Reativar Aluno"><i class="fa-solid fa-box-open"></i></button>
-                        <button onclick="window.deleteStudent('${s.id}')" class="text-red-600 hover:text-red-900" title="Excluir Permanentemente"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="window.restoreStudent('${s.id}')" class="text-green-600 hover:text-green-900 mx-1 w-8 h-8 rounded-full bg-green-50 transition" title="Reativar Aluno"><i class="fa-solid fa-box-open"></i></button>
+                        <button onclick="window.deleteStudent('${s.id}')" class="text-red-600 hover:text-red-900 mx-1 w-8 h-8 rounded-full bg-red-50 transition" title="Excluir Permanentemente"><i class="fa-solid fa-trash"></i></button>
                     `;
                 } else {
                     actionsHtml = `
-                        <button onclick="window.openAttendanceModal('${s.id}')" class="text-gray-500 hover:text-black mr-3" title="Frequência"><i class="fa-solid fa-list-check"></i></button>
-                        <button onclick="window.openProgressModal('${s.id}')" class="text-teal-600 hover:text-teal-900 mr-3" title="Evolução e Histórico"><i class="fa-solid fa-book-journal-whills"></i></button>
-                        <button onclick="window.openEditModal('${s.id}')" class="text-orange-500 hover:text-orange-700 mr-3" title="Editar / Graduar"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <button onclick="window.archiveStudent('${s.id}')" class="text-gray-500 hover:text-gray-800" title="Arquivar Aluno"><i class="fa-solid fa-box-archive"></i></button>
+                        <button onclick="window.openAttendanceModal('${s.id}')" class="text-gray-500 hover:text-black mx-1 w-8 h-8 rounded-full hover:bg-gray-100 transition" title="Frequência"><i class="fa-solid fa-list-check"></i></button>
+                        <button onclick="window.openProgressModal('${s.id}')" class="text-teal-600 hover:text-teal-900 mx-1 w-8 h-8 rounded-full hover:bg-teal-50 transition" title="Evolução e Histórico"><i class="fa-solid fa-book-journal-whills"></i></button>
+                        <button onclick="window.openEditModal('${s.id}')" class="text-orange-500 hover:text-orange-700 mx-1 w-8 h-8 rounded-full hover:bg-orange-50 transition" title="Editar / Graduar"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="window.archiveStudent('${s.id}')" class="text-gray-500 hover:text-gray-800 mx-1 w-8 h-8 rounded-full hover:bg-gray-200 transition" title="Arquivar Aluno"><i class="fa-solid fa-box-archive"></i></button>
                     `;
                 }
 
                 let attendanceBtnHtml = s.archived ? `<span class="text-gray-400 text-xs italic">--</span>` : `<div class="flex items-center gap-2"><span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded w-16 text-center">${attendanceCount} aulas</span><button onclick="window.addPresence('${s.id}')" class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow"><i class="fa-solid fa-plus text-xs"></i></button></div>`;
 
-                const tr = document.createElement('tr'); tr.className = isDepRow ? `hidden dep-row-${parentId} bg-purple-50/40 hover:bg-purple-50 transition border-b border-purple-100` : `border-b hover:bg-gray-50 transition`;
+                const tr = document.createElement('tr'); tr.className = isDepRow ? `hidden dep-row-${parentId} bg-purple-50/40 hover:bg-purple-50 transition border-b border-purple-100` : `border-b hover:bg-red-50 transition border-gray-100`;
                 tr.innerHTML = `
                     <td class="px-6 py-4 align-middle text-center"><input type="checkbox" class="student-cb rounded text-brand-red cursor-pointer" value="${s.id}" onclick="window.updateBulkActions()"></td>
                     
@@ -1735,25 +1748,25 @@
         // GERAÇÃO DE RELATÓRIOS
         window.generateReport = (type) => {
             const container = document.getElementById('report-container'); container.classList.remove('hidden');
-            let html = `<div class="text-center mb-6 border-b pb-4"><h2 class="text-2xl font-bold uppercase tracking-wider">TANQUE TEAM BJJ</h2><h3 class="text-lg text-gray-600 uppercase mt-1">Relatório Administrativo</h3><p class="text-xs text-gray-500 mt-2">Gerado em: ${new Date().toLocaleString('pt-BR')}</p></div>`;
+            let html = `<div style="text-align:center; margin-bottom:20px; border-bottom:2px solid #000; padding-bottom:10px;"><h2 style="font-size:24px; font-weight:bold; margin:0;">TANQUE TEAM BJJ</h2><h3 style="font-size:16px; color:#555; margin:5px 0;">Relatório Administrativo</h3><p style="font-size:12px; color:#777;">Gerado em: ${new Date().toLocaleString('pt-BR')}</p></div>`;
             let tableRows = '';
             
             if (type === 'ativos') {
-                html += `<h3 class="font-bold text-lg mb-4">ALUNOS ATIVOS</h3><table><thead><tr><th>Nome</th><th>Plano</th><th>Faixa</th><th>Contato</th></tr></thead><tbody>`;
-                window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(s => { tableRows += `<tr><td class="font-bold">${s.name}</td><td class="uppercase">${(s.plan||'-').replace('-',' ')}</td><td>${s.belt||'Branca'}</td><td>${s.phone||'-'}</td></tr>`; });
+                html += `<h3 style="font-size:18px; font-weight:bold; margin-bottom:15px; color:#0056b3;">ALUNOS ATIVOS</h3><table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:left;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Nome</th><th style="border: 1px solid #ddd; padding: 8px;">Plano</th><th style="border: 1px solid #ddd; padding: 8px;">Faixa</th><th style="border: 1px solid #ddd; padding: 8px;">Contato</th></tr></thead><tbody>`;
+                window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(s => { tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${s.name}</td><td style="border: 1px solid #ddd; padding: 8px; text-transform:uppercase;">${(s.plan||'-').replace('-',' ')}</td><td style="border: 1px solid #ddd; padding: 8px;">${s.belt||'Branca'}</td><td style="border: 1px solid #ddd; padding: 8px;">${s.phone||'-'}</td></tr>`; });
                 html += tableRows + `</tbody></table>`;
             } else if (type === 'frequencia') {
-                html += `<h3 class="font-bold text-lg mb-4 text-purple-600">FREQUÊNCIA - TOP 15 ALUNOS (Últimos 30 dias)</h3><table><thead><tr><th>Posição</th><th>Nome</th><th>Aulas nos últimos 30 dias</th><th>Faixa</th></tr></thead><tbody>`;
+                html += `<h3 style="font-size:18px; font-weight:bold; margin-bottom:15px; color:#6f42c1;">FREQUÊNCIA - TOP 15 ALUNOS (Últimos 30 dias)</h3><table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:left;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Posição</th><th style="border: 1px solid #ddd; padding: 8px;">Nome</th><th style="border: 1px solid #ddd; padding: 8px; text-align:center;">Aulas (30 dias)</th><th style="border: 1px solid #ddd; padding: 8px;">Faixa</th></tr></thead><tbody>`;
                 const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).map(s => ({ name: s.name, belt: s.belt, classes: s.attendance ? s.attendance.filter(d => new Date(d) >= thirtyDaysAgo).length : 0 })).sort((a,b) => b.classes - a.classes).slice(0, 15).forEach((d, i) => { tableRows += `<tr><td>#${i+1}</td><td class="font-bold">${d.name}</td><td class="text-center">${d.classes}</td><td>${d.belt||'-'}</td></tr>`; });
+                window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).map(s => ({ name: s.name, belt: s.belt, classes: s.attendance ? s.attendance.filter(d => new Date(d) >= thirtyDaysAgo).length : 0 })).sort((a,b) => b.classes - a.classes).slice(0, 15).forEach((d, i) => { tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px;">#${i+1}</td><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${d.name}</td><td style="border: 1px solid #ddd; padding: 8px; text-align:center;">${d.classes}</td><td style="border: 1px solid #ddd; padding: 8px;">${d.belt||'-'}</td></tr>`; });
                 html += tableRows + `</tbody></table>`;
             } else if (type === 'experimental') {
-                html += `<h3 class="font-bold text-lg mb-4 text-yellow-600">RELATÓRIO DE AULAS EXPERIMENTAIS</h3><table><thead><tr><th>Data/Hora</th><th>Nome</th><th>Contato</th><th>Status</th></tr></thead><tbody>`;
+                html += `<h3 style="font-size:18px; font-weight:bold; margin-bottom:15px; color:#d39e00;">RELATÓRIO DE AULAS EXPERIMENTAIS</h3><table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:left;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Data/Hora</th><th style="border: 1px solid #ddd; padding: 8px;">Nome</th><th style="border: 1px solid #ddd; padding: 8px;">Contato</th><th style="border: 1px solid #ddd; padding: 8px;">Status</th></tr></thead><tbody>`;
                 let expSorted = [...window.experimentalList].sort((a,b) => new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00')));
-                if (expSorted.length === 0) tableRows += `<tr><td colspan="4" class="text-center">Nenhum registro encontrado.</td></tr>`;
+                if (expSorted.length === 0) tableRows += `<tr><td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: center;">Nenhum registro encontrado.</td></tr>`;
                 expSorted.forEach(e => {
                     let dateFormatted = e.date ? new Date(e.date + 'T12:00:00').toLocaleDateString('pt-BR') : '--';
-                    tableRows += `<tr><td>${dateFormatted} às ${e.time || '--'}</td><td class="font-bold">${e.name}</td><td>${e.phone || '-'}</td><td class="uppercase">${e.status || 'Agendado'}</td></tr>`;
+                    tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px;">${dateFormatted} às ${e.time || '--'}</td><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${e.name}</td><td style="border: 1px solid #ddd; padding: 8px;">${e.phone || '-'}</td><td style="border: 1px solid #ddd; padding: 8px; text-transform:uppercase;">${e.status || 'Agendado'}</td></tr>`;
                 });
                 html += tableRows + `</tbody></table>`;
             }
@@ -1796,8 +1809,11 @@
             setText('printContratante', contratanteText); setText('printStudent', s.name || "NÃO INFORMADO"); setText('printDob', formattedDob); setText('printCPF', s.cpf || "Não informado"); setText('printEmail', s.email || "Não informado"); setText('printPhone', s.phone || "Não informado"); setText('printAddress', s.address || "Não informado");
             let beltInfo = ""; const safeBelt = String(s.belt || ""); if(safeBelt && !safeBelt.includes("Branca - 0º Grau") && !safeBelt.includes("Iniciante")) beltInfo = `| Graduação Atual: ${safeBelt}`;
             setText('printBeltInfo', beltInfo);
-            let regDate = new Date(); if (s.registrationDate) { const parsed = new Date(s.registrationDate); if (!isNaN(parsed)) regDate = parsed; }
+            
+            let regDate = new Date(); 
+            if (s.registrationDate) { const parsed = new Date(s.registrationDate); if (!isNaN(parsed)) regDate = parsed; }
             document.getElementById('printContractDate').innerText = regDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+            
             const isCombo = safePlan.includes('combo'); const isFidelity = safePlan.includes('semestral') || safePlan.includes('trimestral') || isCombo;
             let clausesHtml = `<p><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
             clausesHtml += `<p><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong class="uppercase underline">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong class="bg-yellow-100 px-1">${price}</strong>. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.</p>`;
@@ -1861,6 +1877,9 @@
                 document.getElementById('detail-login').innerText = s.studentLogin || 'Não configurado'; 
                 document.getElementById('detail-pass').innerText = s.studentPassword || '---';
                 
+                const originEl = document.getElementById('detail-origin');
+                if (originEl) originEl.innerText = s.howDidYouFindUs || 'Não informado';
+                
                 const guardianBox = document.getElementById('detail-guardian-box');
                 if (s.guardian && String(s.guardian).trim() !== "") { document.getElementById('detail-guardian-name').innerText = s.guardian; guardianBox.classList.remove('hidden'); } else guardianBox.classList.add('hidden');
                 
@@ -1919,8 +1938,8 @@
                 document.getElementById('edit-cpf').value = s.cpf || ''; 
                 document.getElementById('edit-address').value = s.address || ''; 
                 document.getElementById('edit-guardian').value = s.guardian || ''; 
-                document.getElementById('edit-guardian-kinship').value = s.guardianKinship || ''; 
-                if(document.getElementById('edit-guardian-cpf')) document.getElementById('edit-guardian-cpf').value = s.guardianCpf || '';
+                if (document.getElementById('edit-guardian-kinship')) document.getElementById('edit-guardian-kinship').value = s.guardianKinship || ''; 
+                if (document.getElementById('edit-guardian-cpf')) document.getElementById('edit-guardian-cpf').value = s.guardianCpf || '';
 
                 document.getElementById('edit-plan').value = s.plan || 'infantil-mensal'; 
                 document.getElementById('edit-titular').value = s.titularName || ''; 
@@ -1989,7 +2008,9 @@
             const cpf = document.getElementById('edit-cpf').value;
             const address = document.getElementById('edit-address').value;
             const guardian = document.getElementById('edit-guardian').value;
-            const guardianKinship = document.getElementById('edit-guardian-kinship').value;
+            
+            let guardianKinship = '';
+            if(document.getElementById('edit-guardian-kinship')) guardianKinship = document.getElementById('edit-guardian-kinship').value;
             
             let guardianCpf = '';
             if(document.getElementById('edit-guardian-cpf')) guardianCpf = document.getElementById('edit-guardian-cpf').value;
@@ -2056,6 +2077,8 @@
         window.saveAdminNewStudent = async () => {
             const name = document.getElementById('reg-name').value; const dob = toISODate(document.getElementById('reg-dob').value); const cpf = document.getElementById('reg-cpf').value; const email = document.getElementById('reg-email').value; const phone = document.getElementById('reg-phone').value; const address = document.getElementById('reg-address').value; const guardian = document.getElementById('reg-guardian').value; const guardianCpf = document.getElementById('reg-guardian-cpf') ? document.getElementById('reg-guardian-cpf').value : ''; const plan = document.getElementById('reg-plan').value; const titular = plan === 'dependente' ? document.getElementById('reg-titular').value : ""; 
             const beltColor = document.getElementById('reg-belt-color').value; const beltDegree = document.getElementById('reg-belt-degree').value; const login = document.getElementById('reg-student-login').value; const pass = document.getElementById('reg-student-pass').value;
+            const origin = document.getElementById('reg-origin') ? document.getElementById('reg-origin').value : 'Não informado';
+            
             if(!name || !plan) { alert("Preencha nome e plano."); return; }
             if(plan === 'dependente' && !titular) { alert("Selecione o Titular do plano para este dependente."); return; }
             const beltStr = `Faixa ${beltColor} - ${beltDegree}º Grau`; const regDate = new Date(); let endDate = new Date(regDate);
@@ -2066,14 +2089,14 @@
             let initialPaymentHistory = [];
 
             try {
-                const titularDocRef = await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name, dob, cpf, email, phone, address, guardian, guardianCpf, plan, titularName: titular, paymentStatus: paymentStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
+                const titularDocRef = await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name, dob, cpf, email, phone, address, guardian, guardianCpf, plan, titularName: titular, paymentStatus: paymentStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 if (plan === 'combo-dupla' || plan === 'combo-casal' || plan === 'combo-familia') {
                     const d1Name = document.getElementById('admin-dep1-name').value;
-                    if(d1Name) await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name: d1Name, dob: toISODate(document.getElementById('admin-dep1-dob').value), titularName: name, titularId: titularDocRef.id, parentesco: document.getElementById('admin-dep1-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', category: 'Dependente', registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
+                    if(d1Name) await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name: d1Name, dob: toISODate(document.getElementById('admin-dep1-dob').value), titularName: name, titularId: titularDocRef.id, parentesco: document.getElementById('admin-dep1-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', category: 'Dependente', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 }
                 if (plan === 'combo-familia') {
                     const d2Name = document.getElementById('admin-dep2-name').value;
-                    if(d2Name) await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name: d2Name, dob: toISODate(document.getElementById('admin-dep2-dob').value), titularName: name, titularId: titularDocRef.id, parentesco: document.getElementById('admin-dep2-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', category: 'Dependente', registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
+                    if(d2Name) await addDoc(collection(window.db, 'artifacts', appId, 'public', 'data', 'students'), { name: d2Name, dob: toISODate(document.getElementById('admin-dep2-dob').value), titularName: name, titularId: titularDocRef.id, parentesco: document.getElementById('admin-dep2-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', category: 'Dependente', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 }
                 window.closeAdminRegisterModal(); window.loadData(); alert("Aluno(s) cadastrado(s) com sucesso!");
             } catch(e) { console.error(e); alert("Erro ao cadastrar."); }
@@ -2084,7 +2107,7 @@
             if(!login || !pass) { alert("Preencha o login e senha antes de enviar."); return; }
             const originalText = btnElement.innerHTML; btnElement.disabled = true; btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
             const messageContent = `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;"><div style="background-color: #D90429; color: white; padding: 20px; text-align: center;"><h2 style="margin: 0; text-transform: uppercase; letter-spacing: 1px;">Bem-vindo(a) à Tanque Team! \uD83E\uDD4B</h2></div><div style="padding: 25px;"><p style="font-size: 16px;">Fala, <strong>${name.split(' ')[0]}</strong>! Oss!</p><p style="font-size: 14px; line-height: 1.5;">O seu acesso ao nosso <strong>Portal do Aluno</strong> acabou de ser liberado.</p><div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #D90429; margin: 25px 0;"><p style="margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; color: #777; font-weight: bold;">Suas credenciais de acesso:</p><p style="margin: 5px 0; font-size: 16px;"><strong>Login:</strong> ${login}</p><p style="margin: 5px 0; font-size: 16px;"><strong>Senha:</strong> ${pass}</p></div><div style="text-align: center; margin: 30px 0;"><a href="https://www.tanqueteambjj.com.br/login.html" style="background-color: #D90429; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Acessar Portal do Aluno</a></div><p style="font-size: 14px; margin-top: 20px;">Nos vemos no tatame!</p><p style="font-size: 14px; font-weight: bold; color: #D90429;">Equipe Tanque Team BJJ</p></div></div>`;
-            try { await emailjs.send("service_2twa33d", "template_few5bna", { from_name: "Tanque Team BJJ", from_email: "administrativo@tanqueteambjj.com.br", to_name: name, to_email: email, subject: "Seu Acesso ao Portal + QR Code de Check-in", message: messageContent, reply_to: "administrativo@tanqueteambjj.com.br" }); alert("E-mail enviado!"); } catch (error) { alert("Erro ao enviar e-mail."); } finally { btnElement.disabled = false; btnElement.innerHTML = originalText; }
+            try { await emailjs.send("service_2twa33d", "template_few5bna", { from_name: "Tanque Team BJJ", from_email: "tanqueteambjj@gmail.com", to_name: name, to_email: email, subject: "Seu Acesso ao Portal + QR Code de Check-in", message: messageContent, reply_to: "tanqueteambjj@gmail.com" }); alert("E-mail enviado!"); } catch (error) { alert("Erro ao enviar e-mail."); } finally { btnElement.disabled = false; btnElement.innerHTML = originalText; }
         };
 
         window.loadNotices = async () => {
@@ -2226,21 +2249,21 @@
                 const tr = document.createElement('tr'); 
                 
                 if (isInactive) {
-                    tr.className = "border-b bg-gray-50 opacity-60 transition";
+                    tr.className = "border-b bg-gray-50 opacity-60 transition border-gray-100";
                 } else if (exp.date === todayLocal) {
-                    tr.className = "border-b bg-yellow-50 hover:bg-yellow-100 transition";
+                    tr.className = "border-b bg-yellow-50 hover:bg-yellow-100 transition border-gray-100";
                 } else {
-                    tr.className = "border-b hover:bg-gray-50 transition";
+                    tr.className = "border-b hover:bg-yellow-50 transition border-gray-100";
                 }
 
                 let actionsHtml = '';
                 if (isInactive) {
-                    actionsHtml = `<button onclick="window.deleteExperimental('${exp.id}')" class="text-red-400 hover:text-red-700 p-2 rounded transition" title="Excluir Registro"><i class="fa-solid fa-trash"></i></button>`;
+                    actionsHtml = `<button onclick="window.deleteExperimental('${exp.id}')" class="text-red-400 hover:text-red-700 mx-1 w-8 h-8 rounded-full hover:bg-red-50 transition" title="Excluir Registro"><i class="fa-solid fa-trash"></i></button>`;
                 } else {
                     actionsHtml = `
-                        <button onclick="window.convertToStudent('${exp.id}')" class="text-blue-500 hover:text-blue-700 p-2 rounded transition" title="Matricular como Aluno"><i class="fa-solid fa-user-plus"></i></button>
-                        <button onclick="window.openEditExperimentalModal('${exp.id}')" class="text-gray-500 hover:text-gray-700 p-2 rounded transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="window.deleteExperimental('${exp.id}')" class="text-red-500 hover:text-red-700 p-2 rounded transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="window.convertToStudent('${exp.id}')" class="text-blue-500 hover:text-blue-700 mx-1 w-8 h-8 rounded-full hover:bg-blue-50 transition" title="Matricular como Aluno"><i class="fa-solid fa-user-plus"></i></button>
+                        <button onclick="window.openEditExperimentalModal('${exp.id}')" class="text-gray-500 hover:text-gray-700 mx-1 w-8 h-8 rounded-full hover:bg-gray-100 transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="window.deleteExperimental('${exp.id}')" class="text-red-500 hover:text-red-700 mx-1 w-8 h-8 rounded-full hover:bg-red-50 transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>
                     `;
                 }
 
