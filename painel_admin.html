@@ -310,7 +310,8 @@
     <div id="print-only-qr" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen flex items-center justify-center">
         <div class="border-2 border-black rounded-xl overflow-hidden relative shadow-md" style="width: 6.5cm; height: 10.5cm;">
             <div class="bg-[#1B1B1B] text-white p-3 flex items-center justify-center gap-2 shrink-0 w-full" style="-webkit-print-color-adjust: exact; print-color-adjust: exact;">
-                <img src="https://iili.io/qC543c7.png" style="height: 24px;">
+                <!-- BRIGHTNESS E INVERT GARANTEM LOGO BRANCA -->
+                <img src="https://iili.io/qC543c7.png" style="height: 24px; filter: brightness(0) invert(1);">
                 <span class="font-display font-bold text-sm tracking-widest uppercase">Tanque Team</span>
             </div>
             <div class="p-4 flex flex-col items-center flex-1 relative bg-white w-full h-full">
@@ -737,6 +738,35 @@
                             </select>
                         </div>
                     </div>
+                    
+                    <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 dark:border-gray-700">
+                        <h4 class="text-sm font-bold text-green-700 dark:text-green-500 uppercase mb-3"><i class="fa-solid fa-cash-register"></i> Primeiro Pagamento (Opcional)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Status Inicial</label>
+                                <select id="reg-payment-status" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
+                                    <option value="Pendente">Pendente (Paga depois)</option>
+                                    <option value="Em dia">Em dia (Já pagou)</option>
+                                    <option value="Isento">Isento</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Valor Pago (R$)</label>
+                                <input type="number" id="reg-pay-amount" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none" placeholder="Ex: 189.90" step="0.01">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Forma de Pagamento</label>
+                                <select id="reg-pay-method" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
+                                    <option value="Pix">Pix</option>
+                                    <option value="Dinheiro">Dinheiro</option>
+                                    <option value="Débito">Cartão de Débito</option>
+                                    <option value="Crédito à vista">Cartão de Crédito</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-2"><i class="fa-solid fa-circle-info"></i> Se marcar "Em dia" e preencher o valor, o sistema já registrará o recebimento no histórico.</p>
+                    </div>
+
                     <div id="admin-reg-deps-container" class="md:col-span-2 hidden border-t-2 border-purple-200 dark:border-purple-800 pt-4 mt-2">
                         <h4 class="text-sm font-bold text-purple-700 dark:text-purple-400 uppercase mb-3"><i class="fa-solid fa-users"></i> Cadastrar Dependentes Simultaneamente</h4>
                         <div id="admin-reg-dep1" class="hidden bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800 mb-3 shadow-inner">
@@ -929,9 +959,9 @@
 
             const htmlContent = `
                 <div style="width: 6.5cm; height: 10.5cm; border: 2px solid #1B1B1B; border-radius: 12px; margin: 0 auto; text-align: center; font-family: 'Arial', sans-serif; overflow: hidden; background: #fff; position: relative; box-sizing: border-box; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                    <!-- HEADER  -->
+                    <!-- HEADER -->
                     <div style="background-color: #1B1B1B; color: #fff; padding: 12px 10px; font-weight: bold; text-transform: uppercase; font-size: 13px; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-                        <img src="https://iili.io/qC543c7.png" style="height: 22px;"> 
+                        <img src="https://iili.io/qC543c7.png" style="height: 22px; filter: brightness(0) invert(1);"> 
                         TANQUE TEAM
                     </div>
                     <!-- WATERMARK -->
@@ -1150,6 +1180,12 @@
             document.getElementById('reg-name').value = ''; document.getElementById('reg-dob').value = ''; document.getElementById('reg-cpf').value = ''; document.getElementById('reg-email').value = ''; document.getElementById('reg-phone').value = ''; document.getElementById('reg-address').value = '';
             if(document.getElementById('reg-guardian')) document.getElementById('reg-guardian').value = ''; if(document.getElementById('reg-guardian-cpf')) document.getElementById('reg-guardian-cpf').value = '';
             document.getElementById('reg-plan').value = 'infantil-mensal'; document.getElementById('reg-belt-color').value = 'Branca'; document.getElementById('reg-belt-degree').value = '0'; document.getElementById('reg-student-login').value = ''; document.getElementById('reg-student-pass').value = '';
+            
+            // Reset Payment Fields
+            document.getElementById('reg-payment-status').value = 'Pendente';
+            document.getElementById('reg-pay-amount').value = '';
+            document.getElementById('reg-pay-method').value = 'Pix';
+            
             window.handleAdminPlanChange();
         };
 
@@ -1191,6 +1227,11 @@
             const beltColor = document.getElementById('reg-belt-color').value; const beltDegree = document.getElementById('reg-belt-degree').value; const login = document.getElementById('reg-student-login').value; const pass = document.getElementById('reg-student-pass').value;
             const origin = document.getElementById('reg-origin') ? document.getElementById('reg-origin').value : 'Não informado';
             
+            // Payment logic
+            const payStatus = document.getElementById('reg-payment-status').value;
+            const payAmount = document.getElementById('reg-pay-amount').value;
+            const payMethod = document.getElementById('reg-pay-method').value;
+
             if(!name || !plan) { alert("Preencha nome e plano."); return; }
             if(plan === 'dependente' && !titular) { alert("Selecione o Titular do plano."); return; }
             
@@ -1198,8 +1239,18 @@
             if(plan.includes('mensal')) endDate.setMonth(endDate.getMonth() + 1); else if(plan.includes('trimestral')) endDate.setMonth(endDate.getMonth() + 3); else if(plan.includes('semestral') || plan.includes('combo') || plan === 'dependente') endDate.setMonth(endDate.getMonth() + 6); else if(plan === 'administracao') endDate.setFullYear(endDate.getFullYear() + 1); else endDate.setMonth(endDate.getMonth() + 1);
             let category = 'Adulto'; if (plan.includes('infantil')) category = 'Infantil'; if (plan.includes('combo')) category = 'Combo Família'; if (plan === 'administracao') category = 'Administração'; if (plan === 'dependente') category = 'Dependente (Combo)';
 
+            let initialPaymentHistory = [];
+            if (payStatus === 'Em dia' && payAmount) {
+                initialPaymentHistory.push({
+                    amount: parseFloat(payAmount),
+                    method: payMethod,
+                    timestamp: new Date().toISOString(),
+                    date: new Date().toISOString().split('T')[0]
+                });
+            }
+
             try {
-                const titularDocRef = await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name, dob, cpf, email, phone, address, guardian, guardianCpf, plan, titularName: titular, paymentStatus: 'Pendente', enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
+                const titularDocRef = await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name, dob, cpf, email, phone, address, guardian, guardianCpf, plan, titularName: titular, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 
                 if (plan === 'combo-dupla' || plan === 'combo-casal' || plan === 'combo-familia') {
                     const d1Name = document.getElementById('admin-dep1-name').value;
