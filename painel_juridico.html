@@ -162,7 +162,7 @@
                                 </tr>
                             </thead>
                             <tbody id="contracts-table-body" class="text-sm text-gray-700 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
-                                <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500 italic">Aguardando dados...</td></tr>
+                                <tr><td colspan="6" class="px-6 py-4 text-center">A carregar dados...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -526,39 +526,79 @@
             });
         };
 
-        // --- IMPRESSÃO E RELATÓRIOS ---
+        // --- IMPRESSÃO DE CONTRATO (FORMATO ORIGINAL SOLICITADO) ---
         window.printHtmlContent = function(htmlContent, titleStr) {
             const iframe = document.createElement('iframe');
-            iframe.style.position = 'absolute'; iframe.style.width = '0px'; iframe.style.height = '0px'; iframe.style.border = 'none';
+            iframe.style.position = 'absolute';
+            iframe.style.width = '0px';
+            iframe.style.height = '0px';
+            iframe.style.border = 'none';
             document.body.appendChild(iframe);
+
             const docIframe = iframe.contentWindow.document;
             docIframe.open();
-            docIframe.write(`<!DOCTYPE html><html><head><title>${titleStr}</title><style>@media print { @page { margin: 3cm 2cm 2cm 3cm; size: A4 portrait; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; font-family: 'Times New Roman', Times, serif; } } body { font-family: 'Times New Roman', Times, serif; margin: 0; padding: 0; }</style></head><body>${htmlContent}</body></html>`);
+            docIframe.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${titleStr}</title>
+                    <style>
+                        @media print {
+                            @page { 
+                                margin: 1.5cm; 
+                                size: A4 portrait;
+                            }
+                            body { 
+                                -webkit-print-color-adjust: exact; 
+                                print-color-adjust: exact; 
+                                font-family: 'Times New Roman', Times, serif; 
+                            }
+                        }
+                        body { font-family: 'Times New Roman', Times, serif; margin: 0; padding: 0; }
+                    </style>
+                </head>
+                <body>
+                    ${htmlContent}
+                </body>
+                </html>
+            `);
             docIframe.close();
-            setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); setTimeout(() => { document.body.removeChild(iframe); }, 2000); }, 500);
+
+            setTimeout(() => {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+                setTimeout(() => { document.body.removeChild(iframe); }, 2000);
+            }, 500);
         };
 
         window.printStudentContract = async function(id) {
-            const s = window.students.find(st => st.id === id); if (!s) return;
+            const s = window.students.find(st => st.id === id);
+            if (!s) return;
+            
             const isCombo = String(s.plan).includes('combo'); 
             let myDependents = [];
             if (isCombo) {
                 const qSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'students'));
                 qSnap.forEach(docSnap => {
                     const data = docSnap.data();
-                    if(data.titularId === s.id && data.plan === 'dependente' && !data.archived) myDependents.push(data);
+                    if(data.titularId === s.id && data.plan === 'dependente' && !data.archived) {
+                        myDependents.push(data);
+                    }
                 });
             }
 
             const pInfo = window.getPlanInfo(s.plan);
-            let price = formatCurrency(pInfo.price); let displayName = pInfo.short;
+            let price = formatCurrency(pInfo.price);
+            let displayName = pInfo.short;
 
             let formattedDob = '--/--/----';
             if (s.dob) { 
                 if (s.dob.includes('-')) {
                     const parts = s.dob.split('-');
                     if (parts.length === 3) formattedDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
-                } else formattedDob = s.dob;
+                } else {
+                    formattedDob = s.dob;
+                }
             }
 
             let contratanteText = s.name || "NÃO INFORMADO";
@@ -566,31 +606,26 @@
             else if (s.titularName && s.titularName.trim() !== "") contratanteText = `${s.titularName} (Titular)`;
 
             let beltInfo = ""; 
-            if(s.belt && !s.belt.includes("Branca - 0º") && !s.belt.includes("Iniciante")) beltInfo = `| Graduação: ${s.belt}`;
+            if(s.belt && !s.belt.includes("Branca - 0º") && !s.belt.includes("Iniciante")) beltInfo = `| Graduação Atual: ${s.belt}`;
             
             let regDate = new Date(); 
             if (s.registrationDate) { const parsed = new Date(s.registrationDate); if (!isNaN(parsed)) regDate = parsed; }
             const printDateStr = regDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
             
             const isFidelity = String(s.plan).includes('semestral') || String(s.plan).includes('trimestral') || isCombo;
-            let clauseNum = 3;
             
-            let clausesHtmlABNT = `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify; line-height: 1.5;"><strong>CLÁUSULA 1ª – DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify; line-height: 1.5;"><strong>CLÁUSULA 2ª – DO PLANO E DOS VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong style="text-transform: uppercase; text-decoration: underline;">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong>${price}</strong>. As mensalidades deverão ser pagas pontualmente conforme a data de vencimento acordada no ato da matrícula.</p>`;
+            let promoNote = "";
+            if (s.plan.includes('semestral') && !s.plan.includes('combo')) {
+                promoNote = "A 1ª Mensalidade terá o valor reduzido de R$ 29,90.";
+            } else if (s.plan === 'combo-dupla') {
+                promoNote = "A 1ª Mensalidade terá o valor reduzido de R$ 59,90.";
+            } else if (s.plan === 'combo-familia') {
+                promoNote = "A 1ª Mensalidade terá o valor reduzido de R$ 89,90.";
+            }
 
-            if (isFidelity) { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify; line-height: 1.5;"><strong>CLÁUSULA ${clauseNum}ª – DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade correspondente à sua nomenclatura. O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>`; clauseNum++; } 
-            else { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify; line-height: 1.5;"><strong>CLÁUSULA ${clauseNum}ª – DO CANCELAMENTO:</strong> O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.</p>`; clauseNum++; }
-            
-            if (isCombo) { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify; line-height: 1.5;"><strong>CLÁUSULA ${clauseNum}ª – DAS REGRAS DO PLANO FAMÍLIA (COMBO):</strong> O pagamento das mensalidades é unificado e de inteira responsabilidade do CONTRATANTE titular. O cancelamento ou afastamento de um dos beneficiários dependentes não dá direito a desconto ou reembolso parcial, revertendo automaticamente o plano dos membros restantes para o valor da tabela individual vigente.</p>`; clauseNum++; }
-            
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify; line-height: 1.5;"><strong>CLÁUSULA ${clauseNum}ª – DA INADIMPLÊNCIA:</strong> O atraso superior a 30 (trinta) dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e a cobrança dos valores devidos acrescidos de multa de 2% (dois por cento) e juros de mora legais.</p>`; clauseNum++;
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify; line-height: 1.5;"><strong>CLÁUSULA ${clauseNum}ª – DA SAÚDE E APTIDÃO FÍSICA:</strong> O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate, isentando a ESCOLA de qualquer responsabilidade sobre moléstias pré-existentes não declaradas formalmente no ato desta matrícula.</p>`; clauseNum++;
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify; line-height: 1.5;"><strong>CLÁUSULA ${clauseNum}ª – DAS REGRAS DE CONDUTA (DOJO KUN):</strong> É obrigatório o uso de uniforme (Kimono) estipulado pela escola, limpo e conservado. Atos de indisciplina, desrespeito à hierarquia, agressão fora do contexto do treino esportivo ou falta de higiene poderão acarretar na suspensão ou rescisão unilateral deste contrato por parte da ESCOLA, sem devolução de valores pagos.</p>`; clauseNum++;
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify; line-height: 1.5;"><strong>CLÁUSULA ${clauseNum}ª – DO DIREITO DE IMAGEM:</strong> O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da escola ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ em qualquer mídia.</p>`;
-            
-            let dependentsHtmlABNT = '';
+            let dependentsHtml = '';
             if (isCombo && myDependents.length > 0) {
-                dependentsHtmlABNT = `<p style="text-indent: 1.25cm; margin-bottom: 0.2cm;"><strong>4. DEPENDENTES VINCULADOS AO PLANO:</strong></p><ul style="padding-left: 2.5cm; margin-bottom: 0.5cm;">`;
+                dependentsHtml = `<p style="margin: 10px 0 5px 0;"><strong>DEPENDENTES VINCULADOS AO PLANO:</strong></p><ul style="padding-left: 20px; margin: 0; border-left: 2px solid #ccc;">`;
                 myDependents.forEach(d => {
                     let dDob = '--/--/----';
                     if (d.dob) { 
@@ -599,74 +634,110 @@
                             if(parts.length===3) dDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
                         } else dDob = d.dob;
                     }
-                    dependentsHtmlABNT += `<li style="margin-bottom: 0.2cm;"><strong>${d.name}</strong> - Nasc: ${dDob} | Parentesco: ${d.parentesco || '-'} | Graduação: ${d.belt || 'Branca'}</li>`;
+                    dependentsHtml += `<li style="margin-bottom: 3px;"><strong>${d.name}</strong> - Nasc: ${dDob} | Parentesco: ${d.parentesco || '-'} | Graduação: ${d.belt || 'Branca'}</li>`;
                 });
-                dependentsHtmlABNT += `</ul>`;
+                dependentsHtml += `</ul>`;
             }
 
             const signName = s.guardian || s.titularName || s.name || "CONTRATANTE";
 
             const contractHtml = `
-                <div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.5; color: #000; max-width: 100%; margin: 0; padding: 0; text-align: justify;">
-                    <div style="text-align: center; margin-bottom: 0.5cm;">
-                        <img src="https://iili.io/qC543c7.png" alt="Logo" style="height: 3cm; margin-bottom: 0.2cm; filter: grayscale(100%);">
-                        <h1 style="font-weight: bold; text-transform: uppercase; font-size: 16pt; margin: 0;">TANQUE TEAM BJJ</h1>
+                <div style="font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; line-height: 1.5; text-align: justify; max-width: 800px; margin: 0 auto;">
+                    
+                    <div style="text-align: center;">
+                        <img src="https://iili.io/qC543c7.png" alt="Logo" style="height: 60px; margin-bottom: 5px; filter: grayscale(100%);">
+                        <h1 style="font-size: 14pt; font-weight: bold; text-transform: uppercase; margin: 0 0 5px 0;">TANQUE TEAM BJJ</h1>
                     </div>
-                    <div style="text-align: left; margin-bottom: 0.5cm; font-size: 10pt;">
-                        <p style="margin: 0; line-height: 1.5;"><strong>Razão Social:</strong> TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA</p>
-                        <p style="margin: 0; line-height: 1.5;"><strong>CNPJ:</strong> 00.000.000/0001-00 | <strong>Tel:</strong> (91) 99819-2610</p>
-                        <p style="margin: 0; line-height: 1.5;"><strong>Endereço:</strong> Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</p>
+                    
+                    <div style="text-align: left; font-size: 9pt;">
+                        <p style="margin: 0;">CNPJ: 00.000.000/0001-00</p>
+                        <p style="margin: 0;">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, CEP 66635-110</p>
+                        <p style="margin: 0;">Tel: (91) 99819-2610 | Email: administrativo@tanqueteambjj.com.br</p>
                     </div>
-                    <hr style="border: none; border-top: 1px solid #000; margin-bottom: 1cm;">
-                    <h2 style="text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 1.5cm; text-transform: uppercase;">CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS</h2>
-                    <div style="margin-bottom: 1.5cm; text-align: justify; line-height: 1.5;">
-                        <p style="text-indent: 1.25cm; margin-bottom: 0.5cm;"><strong>1. CONTRATADA:</strong> TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA, com sede na Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, inscrita no CNPJ sob o nº 00.000.000/0001-00.</p>
-                        <p style="text-indent: 1.25cm; margin-bottom: 0.5cm;"><strong>2. CONTRATANTE:</strong> ${contratanteText}, portador(a) do CPF nº ${s.cpf || "Não informado"}, residente e domiciliado(a) no endereço: ${s.address || "Não informado"}, telefone para contato: ${s.phone || "Não informado"}, endereço eletrônico (e-mail): ${s.email || "Não informado"}.</p>
-                        <p style="text-indent: 1.25cm; margin-bottom: 0.5cm;"><strong>3. ALUNO(A) BENEFICIÁRIO(A):</strong> ${s.name || "NÃO INFORMADO"}, data de nascimento: ${formattedDob}. ${beltInfo}</p>
-                        ${dependentsHtmlABNT}
+                    
+                    <hr style="border: 0; border-top: 1px solid #000; margin: 15px 0;">
+                    
+                    <h2 style="text-align: center; font-size: 12pt; text-transform: uppercase; font-weight: bold; text-decoration: underline; margin-bottom: 20px;">CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS</h2>
+                    
+                    <p style="margin-bottom: 10px;"><strong>1. CONTRATADA:</strong> TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA.</p>
+                    <p style="margin-bottom: 10px;"><strong>2. CONTRATANTE:</strong> ${contratanteText}, CPF: ${s.cpf || "Não informado"}, Endereço: ${s.address || "Não informado"}, Tel: ${s.phone || "Não informado"}, E-mail: ${s.email || "Não informado"}.</p>
+                    <p style="margin-bottom: 10px;"><strong>3. ALUNO(A):</strong> ${s.name || "NÃO INFORMADO"}, Nasc: ${formattedDob}. ${beltInfo}</p>
+                    
+                    ${dependentsHtml}
+                    
+                    <div style="margin-top: 20px;">
+                        <p style="margin-bottom: 10px;"><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>
+                        
+                        <p style="margin-bottom: ${promoNote ? '5px' : '10px'};"><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong>${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong>${price}</strong>. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.</p>
+                        ${promoNote ? `<p style="margin-bottom: 10px; font-style: italic; font-size: 10pt;">OBS: Promoção de Inauguração aplicada. ${promoNote}</p>` : ''}
+
+                        ${isFidelity ? 
+                            `<p style="margin-bottom: 10px;"><strong>CLÁUSULA 3ª - DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade correspondente à sua nomenclatura (Trimestral ou Semestral). O cancelamento exige aviso prévio de 30 dias por escrito. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>` 
+                            : 
+                            `<p style="margin-bottom: 10px;"><strong>CLÁUSULA 3ª - DO CANCELAMENTO:</strong> O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.</p>`
+                        }
+                        
+                        ${isCombo ? `<p style="margin-bottom: 10px;"><strong>CLÁUSULA 4ª - DAS REGRAS DO PLANO FAMÍLIA (COMBO):</strong> O pagamento das mensalidades é unificado e de inteira responsabilidade do CONTRATANTE titular. O cancelamento ou afastamento de um dos beneficiários dependentes não dá direito a desconto ou reembolso parcial, e reverte automaticamente o plano dos membros restantes para o valor da tabela individual vigente.</p>` : ''}
+                        
+                        <p style="margin-bottom: 10px;"><strong>CLÁUSULA ${isCombo ? '5' : '4'}ª - DA INADIMPLÊNCIA:</strong> O atraso superior a 30 dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e cobrança dos valores devidos acrescidos de multa de 2% e juros de mora legais.</p>
+                        
+                        <p style="margin-bottom: 10px;"><strong>CLÁUSULA ${isCombo ? '6' : '5'}ª - DA SAÚDE E APTIDÃO FÍSICA:</strong> O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate, isentando a CONTRATADA de qualquer responsabilidade sobre moléstias pré-existentes não declaradas formalmente no ato desta matrícula.</p>
+                        
+                        <p style="margin-bottom: 10px;"><strong>CLÁUSULA ${isCombo ? '7' : '6'}ª - DAS REGRAS DE CONDUTA (DOJO KUN):</strong> É obrigatório o uso de uniforme (Kimono) estipulado pela escola, limpo e conservado. Atos de indisciplina, desrespeito à hierarquia, agressão fora do contexto do treino esportivo ou falta de higiene poderão acarretar na suspensão ou rescisão unilateral deste contrato por parte da CONTRATADA, sem devolução de valores.</p>
+                        
+                        <p style="margin-bottom: 10px;"><strong>CLÁUSULA ${isCombo ? '8' : '7'}ª - DO DIREITO DE IMAGEM:</strong> O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da escola ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.</p>
                     </div>
-                    <div style="margin-bottom: 2cm;">
-                        ${clausesHtmlABNT}
-                    </div>
-                    <div style="margin-top: 2cm; page-break-inside: avoid;">
-                        <p style="text-align: right; margin-bottom: 2.5cm;">Belém-PA, ${printDateStr}.</p>
+
+                    <div style="margin-top: 50px; page-break-inside: avoid;">
+                        <p style="text-align: right; margin-bottom: 40px; font-size: 10pt;">Belém-PA, ${printDateStr}.</p>
                         <table style="width: 100%; text-align: center; border: none;">
                             <tr>
                                 <td style="width: 45%; border-top: 1px solid #000; padding-top: 5px;">
-                                    <p style="font-weight: bold; text-transform: uppercase; font-size: 12pt; margin: 0;">Tanque Team BJJ</p>
-                                    <p style="font-size: 10pt; margin: 0;">CONTRATADA</p>
+                                    <p style="font-weight: bold; text-transform: uppercase; font-size: 10pt; margin: 0;">TANQUE TEAM BJJ</p>
                                 </td>
                                 <td style="width: 10%;"></td>
                                 <td style="width: 45%; border-top: 1px solid #000; padding-top: 5px;">
-                                    <p style="font-weight: bold; text-transform: uppercase; font-size: 12pt; margin: 0;">${signName}</p>
-                                    <p style="font-size: 10pt; margin: 0;">CONTRATANTE / RESP. FINANCEIRO</p>
+                                    <p style="font-weight: bold; font-size: 10pt; text-transform: uppercase; margin: 0;">${signName}</p>
+                                    <p style="font-size: 8pt; color: #555; margin: 0;">CONTRATANTE / RESP. FINANCEIRO</p>
                                 </td>
                             </tr>
                         </table>
                     </div>
                 </div>
             `;
-            window.printHtmlContent(contractHtml, `Contrato_${s.name.replace(/\s+/g, '_')}`);
+            
+            window.printHtmlContent(contractHtml, `Contrato_Matricula_TanqueTeam_${s.name.replace(/\s+/g, '_')}`);
         };
 
+        // --- EDIÇÃO DE CONTRATO ---
         window.openEditModal = (id) => {
             const s = window.students.find(st => st.id === id); if(!s) return;
-            document.getElementById('edit-id').value = id; document.getElementById('edit-name').value = s.name || '';
-            document.getElementById('edit-cpf').value = s.cpf || ''; document.getElementById('edit-address').value = s.address || '';
-            document.getElementById('edit-guardian').value = s.guardian || ''; document.getElementById('edit-guardian-cpf').value = s.guardianCpf || '';
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-name').value = s.name || '';
+            document.getElementById('edit-cpf').value = s.cpf || '';
+            document.getElementById('edit-address').value = s.address || '';
+            document.getElementById('edit-guardian').value = s.guardian || '';
+            document.getElementById('edit-guardian-cpf').value = s.guardianCpf || '';
             document.getElementById('edit-plan').value = s.plan || 'infantil-mensal';
             
-            if (s.contractEndDate) document.getElementById('edit-end-date').value = s.contractEndDate.split('T')[0];
-            else document.getElementById('edit-end-date').value = '';
+            let endDate = '';
+            if (s.contractEndDate) endDate = s.contractEndDate.split('T')[0];
+            document.getElementById('edit-end-date').value = endDate;
 
-            if (s.registrationDate) document.getElementById('edit-start-date').value = s.registrationDate.split('T')[0];
-            else document.getElementById('edit-start-date').value = '';
+            let startDate = '';
+            if (s.registrationDate) startDate = s.registrationDate.split('T')[0];
+            document.getElementById('edit-start-date').value = startDate;
 
             document.getElementById('edit-enrollment-status').value = s.enrollmentStatus || 'Ativo';
-            document.getElementById('edit-contract-modal').classList.remove('hidden'); document.getElementById('edit-contract-modal').classList.add('flex');
+
+            document.getElementById('edit-contract-modal').classList.remove('hidden');
+            document.getElementById('edit-contract-modal').classList.add('flex');
         };
 
-        window.closeEditModal = () => { document.getElementById('edit-contract-modal').classList.add('hidden'); document.getElementById('edit-contract-modal').classList.remove('flex'); };
+        window.closeEditModal = () => {
+            document.getElementById('edit-contract-modal').classList.add('hidden');
+            document.getElementById('edit-contract-modal').classList.remove('flex');
+        };
 
         window.saveContractChanges = async () => {
             const id = document.getElementById('edit-id').value;
@@ -679,25 +750,37 @@
                 plan: document.getElementById('edit-plan').value,
                 enrollmentStatus: document.getElementById('edit-enrollment-status').value
             };
-            const endD = document.getElementById('edit-end-date').value; if(endD) updates.contractEndDate = new Date(endD + 'T12:00:00.000Z').toISOString();
-            const startD = document.getElementById('edit-start-date').value; if(startD) updates.registrationDate = new Date(startD + 'T12:00:00.000Z').toISOString();
+
+            const endD = document.getElementById('edit-end-date').value;
+            if(endD) updates.contractEndDate = new Date(endD + 'T12:00:00.000Z').toISOString();
+
+            const startD = document.getElementById('edit-start-date').value;
+            if(startD) updates.registrationDate = new Date(startD + 'T12:00:00.000Z').toISOString();
 
             try {
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id), updates);
-                alert("Contrato atualizado com sucesso!"); window.closeEditModal(); window.loadData();
-            } catch(e) { console.error(e); alert("Erro ao salvar."); }
+                alert("Contrato atualizado com sucesso!");
+                window.closeEditModal();
+                window.loadData();
+            } catch(e) {
+                console.error(e);
+                alert("Erro ao salvar.");
+            }
         };
 
+        // --- GERAÇÃO DE RELATÓRIOS ---
         window.generateReport = async (type) => {
             const container = document.getElementById('report-container');
             container.classList.remove('hidden');
             let html = `<div style="text-align:center; margin-bottom:20px; border-bottom:2px solid #000; padding-bottom:10px;"><h2 style="font-size:24px; font-weight:bold; margin:0; text-transform:uppercase;">TANQUE TEAM BJJ</h2><h3 style="font-size:16px; color:#555; margin:5px 0; text-transform:uppercase;">Departamento Jurídico</h3><p style="font-size:12px; color:#777;">Gerado em: ${new Date().toLocaleString('pt-BR')}</p></div>`;
             let tableRows = '';
-            const today = new Date(); today.setHours(0,0,0,0);
+
+            const today = new Date();
+            today.setHours(0,0,0,0);
 
             if (type === 'ativos') {
                 html += `<h3 style="font-size:18px; font-weight:bold; margin-bottom:15px;">ALUNOS ATIVOS</h3><table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:left;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Nome</th><th style="border: 1px solid #ddd; padding: 8px;">Plano</th><th style="border: 1px solid #ddd; padding: 8px;">Vencimento Contrato</th><th style="border: 1px solid #ddd; padding: 8px;">CPF</th></tr></thead><tbody>`;
-                window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).forEach(s => { 
+                window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(s => { 
                     tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${s.name}</td><td style="border: 1px solid #ddd; padding: 8px; text-transform:uppercase;">${window.getPlanInfo(s.plan).short}</td><td style="border: 1px solid #ddd; padding: 8px;">${formatDateBR(s.contractEndDate)}</td><td style="border: 1px solid #ddd; padding: 8px;">${s.cpf||'-'}</td></tr>`; 
                 });
                 if(tableRows === '') tableRows = '<tr><td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: center;">Nenhum registro.</td></tr>';
@@ -719,6 +802,7 @@
                 html += tableRows + `</tbody></table>`;
             } else if (type === 'vencimento') {
                 html += `<h3 style="font-size:18px; font-weight:bold; margin-bottom:15px; color:#c2410c;">CONTRATOS A VENCER (OU EXPIRADOS)</h3><table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:left;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Aluno</th><th style="border: 1px solid #ddd; padding: 8px;">Plano</th><th style="border: 1px solid #ddd; padding: 8px;">Vencimento</th><th style="border: 1px solid #ddd; padding: 8px;">Dias p/ Expirar</th></tr></thead><tbody>`;
+                
                 let expContracts = [];
                 window.students.filter(s => !s.archived && s.enrollmentStatus !== 'Inativo').forEach(s => {
                     if (s.contractEndDate) {
@@ -726,56 +810,50 @@
                         if(!isNaN(endDate.getTime())) {
                             const timeDiff = endDate.getTime() - today.getTime();
                             const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-                            if (daysDiff <= 30) expContracts.push({ name: s.name, plan: s.plan, endDateStr: formatDateBR(s.contractEndDate), daysDiff: daysDiff });
+                            if (daysDiff <= 30) {
+                                expContracts.push({ name: s.name, plan: s.plan, endDateStr: formatDateBR(s.contractEndDate), daysDiff: daysDiff });
+                            }
                         }
                     }
                 });
+
                 expContracts.sort((a,b) => a.daysDiff - b.daysDiff).forEach(c => {
                     let color = c.daysDiff < 0 ? 'color: red; font-weight: bold;' : '';
                     let daysText = c.daysDiff < 0 ? `Expirado há ${Math.abs(c.daysDiff)} dias` : `${c.daysDiff} dias`;
                     tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${c.name}</td><td style="border: 1px solid #ddd; padding: 8px; text-transform:uppercase;">${window.getPlanInfo(c.plan).short}</td><td style="border: 1px solid #ddd; padding: 8px; ${color}">${c.endDateStr}</td><td style="border: 1px solid #ddd; padding: 8px; ${color}">${daysText}</td></tr>`;
                 });
+                
                 if(tableRows === '') tableRows = '<tr><td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: center;">Nenhum contrato vencendo nos próximos 30 dias.</td></tr>';
                 html += tableRows + `</tbody></table>`;
             } else if (type === 'inativos') {
                 html += `<h3 style="font-size:18px; font-weight:bold; margin-bottom:15px; color:#4b5563;">ALUNOS INATIVOS E ARQUIVADOS</h3><table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:left;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Nome</th><th style="border: 1px solid #ddd; padding: 8px;">CPF</th><th style="border: 1px solid #ddd; padding: 8px;">Telefone</th><th style="border: 1px solid #ddd; padding: 8px;">Status Final</th></tr></thead><tbody>`;
+                
                 const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'students'));
                 let inativos = [];
-                snap.forEach(d => { const data = d.data(); if (data.archived || data.enrollmentStatus === 'Inativo') inativos.push(data); });
+                snap.forEach(d => {
+                    const data = d.data();
+                    if (data.archived || data.enrollmentStatus === 'Inativo') inativos.push(data);
+                });
+                
                 inativos.sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(s => {
                     let status = s.archived ? 'Arquivado' : 'Inativo';
                     tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${s.name}</td><td style="border: 1px solid #ddd; padding: 8px;">${s.cpf||'-'}</td><td style="border: 1px solid #ddd; padding: 8px;">${s.phone||'-'}</td><td style="border: 1px solid #ddd; padding: 8px; text-transform:uppercase;">${status}</td></tr>`;
                 });
+                
                 if(tableRows === '') tableRows = '<tr><td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: center;">Nenhum aluno inativo.</td></tr>';
                 html += tableRows + `</tbody></table>`;
             }
 
             container.innerHTML = html;
             document.body.classList.add('printing-report');
-            setTimeout(() => { window.print(); setTimeout(() => { document.body.classList.remove('printing-report'); container.classList.add('hidden'); }, 2000); }, 800);
+            setTimeout(() => { 
+                window.print(); 
+                setTimeout(() => { 
+                    document.body.classList.remove('printing-report'); 
+                    container.classList.add('hidden'); 
+                }, 2000); 
+            }, 800);
         };
-
-        // INICIALIZAÇÃO
-        const startApp = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Erro na autenticação:", error);
-            }
-        };
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                window.loadData();
-                window.loadExperimentalData();
-            }
-        });
-
-        startApp();
 
     </script>
 </body>
