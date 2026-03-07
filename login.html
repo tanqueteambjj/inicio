@@ -39,13 +39,6 @@
     </script>
 
     <style>
-        .hero-bg {
-            background-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1564415315949-7a0c4c73aab4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }
-        
         .glass-effect {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -55,13 +48,32 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="bg-brand-dark font-sans antialiased h-screen overflow-hidden">
+<body class="bg-brand-dark font-sans antialiased h-screen overflow-hidden relative">
 
-    <div class="hero-bg w-full h-full flex items-center justify-center px-4 relative">
+    <!-- VÍDEO DE FUNDO VIMEO -->
+    <div class="fixed top-0 left-0 w-full h-full z-0 pointer-events-none overflow-hidden bg-black">
+        <iframe src="https://player.vimeo.com/video/1170395210?background=1&autoplay=1&loop=1&byline=0&title=0&muted=1&badge=0&autopause=0&player_id=0&app_id=58479" 
+                frameborder="0" 
+                allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media" 
+                style="position:absolute; top:50%; left:50%; width:100vw; height:56.25vw; min-height:100vh; min-width:177.77vh; transform:translate(-50%, -50%);"
+                title="ABERTURA_ABRIL">
+        </iframe>
+    </div>
+    <script src="https://player.vimeo.com/api/player.js"></script>
+
+    <!-- Camada Escura Overlay -->
+    <div class="fixed inset-0 bg-black/80 z-10 backdrop-blur-[2px]"></div>
+
+    <!-- Main Container centralizado -->
+    <div class="absolute inset-0 z-20 flex items-center justify-center px-4 w-full h-full">
+        
+        <!-- Decoration Elements -->
         <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-dark via-brand-red to-brand-dark"></div>
 
+        <!-- Login Card -->
         <div class="glass-effect w-full max-w-md p-8 rounded-2xl shadow-2xl fade-in relative overflow-hidden border-t-4 border-brand-red flex flex-col max-h-[95vh] overflow-y-auto">
             
+            <!-- Header / Logo -->
             <div class="text-center mb-8 shrink-0">
                 <div class="w-24 h-24 bg-brand-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg ring-4 ring-brand-red ring-opacity-20">
                     <img src="https://iili.io/qC543c7.png" alt="Logo" class="w-16 h-16 object-contain">
@@ -70,37 +82,46 @@
                 <p class="text-gray-500 text-sm mt-1 font-medium tracking-wide">ÁREA RESTRITA (ALUNO / ADMIN)</p>
             </div>
 
+            <!-- Error Message Box (Hidden by default) -->
             <div id="error-box" class="hidden bg-red-100 border-l-4 border-brand-red text-red-700 p-4 mb-6 rounded text-sm shrink-0" role="alert">
                 <p class="font-bold">Erro de Acesso</p>
                 <p id="error-msg">Usuário ou senha incorretos.</p>
             </div>
 
+            <!-- Login Form -->
             <form id="loginForm" class="shrink-0">
                 <div class="space-y-5">
                     
+                    <!-- Email/Login Input -->
                     <div class="relative">
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1 ml-1">Usuário ou E-mail</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                                 <i class="fa-solid fa-user"></i>
                             </div>
-                            <input type="text" id="login" required class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-red focus:border-brand-red block pl-10 p-3 transition-colors outline-none" placeholder="Digite seu login ou e-mail">
+                            <input type="text" id="login" required 
+                                class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-red focus:border-brand-red block pl-10 p-3 transition-colors outline-none" 
+                                placeholder="Digite seu login ou e-mail">
                         </div>
                     </div>
 
+                    <!-- Password Input -->
                     <div class="relative">
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1 ml-1">Senha</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                                 <i class="fa-solid fa-lock"></i>
                             </div>
-                            <input type="password" id="password" required class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-red focus:border-brand-red block pl-10 p-3 transition-colors outline-none" placeholder="••••••••">
+                            <input type="password" id="password" required 
+                                class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-red focus:border-brand-red block pl-10 p-3 transition-colors outline-none" 
+                                placeholder="••••••••">
                             <button type="button" onclick="window.togglePassword()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-brand-red cursor-pointer">
                                 <i class="fa-solid fa-eye" id="eye-icon"></i>
                             </button>
                         </div>
                     </div>
 
+                    <!-- Remember & Forgot Password -->
                     <div class="flex items-center justify-between text-sm">
                         <div class="flex items-center">
                             <input id="remember-me" type="checkbox" class="w-4 h-4 text-brand-red bg-gray-100 border-gray-300 rounded focus:ring-brand-red">
@@ -109,11 +130,13 @@
                         <a href="#" onclick="alert('Procure a secretaria para redefinir sua senha.')" class="font-bold text-brand-red hover:text-red-800 transition">Esqueceu a senha?</a>
                     </div>
 
+                    <!-- Submit Button -->
                     <button type="submit" id="btn-login" class="w-full text-white bg-brand-red hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold rounded-lg text-lg px-5 py-3 text-center transition-all duration-300 shadow-lg transform active:scale-95 flex justify-center items-center gap-2">
                         <span>ENTRAR</span>
                         <i class="fa-solid fa-arrow-right-to-bracket"></i>
                     </button>
                     
+                    <!-- PWA Native Install Button (Hidden by default) -->
                     <button type="button" id="btn-install-pwa" class="hidden w-full bg-gray-800 hover:bg-black text-white focus:ring-4 focus:outline-none focus:ring-gray-300 font-bold rounded-lg text-sm px-5 py-3 text-center transition-all duration-300 shadow-md transform active:scale-95 flex justify-center items-center gap-2">
                         <i class="fa-solid fa-download"></i>
                         <span>Instalar Aplicativo Tanque Team</span>
@@ -122,11 +145,13 @@
                 </div>
             </form>
 
+            <!-- Divider -->
             <div class="mt-8 mb-6 relative shrink-0">
                 <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div>
                 <div class="relative flex justify-center text-sm"><span class="px-2 bg-white text-gray-500 font-display tracking-wider">TANQUE TEAM BJJ</span></div>
             </div>
 
+            <!-- Footer Links -->
             <div class="text-center space-y-2 shrink-0 pb-2">
                 <p class="text-sm text-gray-600">Ainda não tem acesso?</p>
                 <a href="http://www.tanqueteambjj.com.br/#register" class="text-brand-dark font-bold hover:text-brand-red transition underline decoration-brand-red decoration-2 underline-offset-4">Fazer Matrícula Online</a>
@@ -138,9 +163,11 @@
             </div>
         </div>
         
-        <div class="absolute bottom-4 text-white/40 text-xs font-light tracking-wider">
+        <!-- Copyright -->
+        <div class="absolute bottom-4 text-white/40 text-xs font-light tracking-wider z-20 w-full text-center">
             &copy; 2026 TANQUE TEAM BJJ SYSTEM
         </div>
+
     </div>
 
     <!-- Modal de Instalação (App Prompt) -->
@@ -154,6 +181,7 @@
                 <h3 class="font-display font-bold text-2xl text-gray-800 mb-2">Instale o nosso App!</h3>
                 <p class="text-sm text-gray-600 mb-5 px-2">Tenha a sua carteirinha de check-in e horários com acesso rápido na tela inicial do seu celular.</p>
 
+                <!-- Instruções Dinâmicas (Mostradas via JS) -->
                 <div id="ios-instructions" class="hidden bg-gray-50 p-4 rounded-xl border border-gray-200 text-left text-sm text-gray-700 shadow-inner">
                     <p class="font-bold mb-3 text-brand-dark flex items-center gap-2"><i class="fa-brands fa-apple text-xl text-gray-800"></i> No iPhone (Safari):</p>
                     <ol class="list-decimal pl-5 space-y-2">
@@ -181,6 +209,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Configuração de Segurança Padrão
         const manualConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
             authDomain: "tanqueteambjj.firebaseapp.com",
