@@ -53,9 +53,6 @@
             body.printing-progress #printable-progress { display: block !important; position: static !important; width: 100% !important; height: auto !important; visibility: visible !important; background: #fff !important; color: #000 !important; margin: 0 !important; padding: 0 !important; }
             body.printing-progress #printable-progress * { visibility: visible !important; color: #000 !important; }
             
-            body.printing-qr #print-only-qr { display: flex !important; position: static !important; width: 100% !important; height: auto !important; visibility: visible !important; background: #fff !important; color: #000 !important; margin: 0 !important; padding: 2cm 0 !important; align-items: center; justify-content: center; }
-            body.printing-qr #print-only-qr * { visibility: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-
             table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 15px; page-break-inside: auto; }
             tr { page-break-inside: avoid; page-break-after: auto; }
             th, td { border: 1px solid #ddd; padding: 8px; text-align: left; color: black; }
@@ -278,9 +275,6 @@
             <tbody id="print-prog-attendance-body"></tbody>
         </table>
     </div>
-
-    <!-- CARTEIRINHA IMPRESSA -->
-    <div id="print-only-qr" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen flex items-center justify-center"></div>
 
     <!-- MODAIS GERAIS -->
 
@@ -613,6 +607,51 @@
         </div>
     </div>
 
+    <!-- Modal: Leitor de Check-in -->
+    <div id="checkin-modal" class="fixed inset-0 z-[100] hidden bg-brand-dark flex-col justify-center items-center p-4">
+        <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-2xl flex flex-col animate-fade-in">
+            <div class="bg-green-600 px-6 py-4 flex justify-between items-center text-white shrink-0">
+                <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-camera"></i> Leitor de Check-in</h3>
+                <button onclick="window.closeCheckinModal()" class="hover:text-green-200 text-xl"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="bg-gray-100 dark:bg-gray-700 p-4 shrink-0 border-b border-gray-200 dark:border-gray-600">
+                <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase mb-1">Selecione a Turma Atual</label>
+                <select id="checkin-class-selector" class="w-full border-2 border-green-500 rounded-lg p-3 font-bold text-gray-800 dark:text-white bg-white dark:bg-gray-800 shadow-sm focus:outline-none">
+                    <option value="Turma Mista (Livre)">Geral / Mista</option><option value="Adulto - 10h30">Adulto - 10h30</option><option value="Adulto - 12h30">Adulto - 12h30</option><option value="Adulto - 18h00">Adulto - 18h00</option><option value="Adulto - 21h00">Adulto - 21h00</option><option value="Infantil - 15h00">Infantil - 15h00</option><option value="Infantil - 16h30">Infantil - 16h30</option>
+                </select>
+                <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1"><i class="fa-solid fa-circle-info"></i> O sistema bloqueará check-ins repetidos na mesma turma no mesmo dia.</p>
+            </div>
+            <div class="p-6 flex-1 flex flex-col items-center bg-white dark:bg-gray-800">
+                <div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-4 border-gray-200 dark:border-gray-700 shadow-inner mb-4 flex items-center justify-center min-h-[250px]"><i class="fa-solid fa-camera text-4xl text-gray-700"></i></div>
+                <div id="checkin-result" class="text-center py-4 w-full rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 font-medium text-gray-600 dark:text-gray-300 min-h-[100px] flex flex-col items-center justify-center transition-all duration-300"><i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o QR Code...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Aula Exp -->
+    <div id="edit-exp-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-md animate-fade-in border-t-4 border-yellow-500">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white"><i class="fa-solid fa-pen text-yellow-500 mr-2"></i> Editar Aula Exp.</h3>
+                <button onclick="window.closeEditExperimentalModal()"><i class="fa-solid fa-times text-gray-400 hover:text-gray-800 dark:hover:text-white"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="edit-exp-id">
+                <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nome Completo</label><input type="text" id="edit-exp-name" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">WhatsApp</label><input type="text" id="edit-exp-phone" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nascimento</label><input type="text" id="edit-exp-dob" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data Agendada</label><input type="date" id="edit-exp-date" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Horário</label><input type="time" id="edit-exp-time" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
+                </div>
+                <div class="mt-6 flex justify-end gap-2 border-t border-gray-100 dark:border-gray-700 pt-4">
+                    <button onclick="window.closeEditExperimentalModal()" class="px-4 py-2 border dark:border-gray-600 rounded text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Cancelar</button>
+                    <button onclick="window.saveExperimentalChanges()" class="px-5 py-2 bg-yellow-500 text-brand-dark rounded text-sm font-bold hover:bg-yellow-400 shadow-md">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Publicar Aviso -->
     <div id="notice-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in border-t-4 border-yellow-500">
@@ -635,174 +674,505 @@
             </div>
         </div>
     </div>
-</div>
 
-<!-- Leitor QR Code -->
-<div id="checkin-modal" class="fixed inset-0 z-[100] hidden bg-brand-dark flex-col justify-center items-center p-4">
-    <div class="w-full max-w-sm bg-white rounded-xl overflow-hidden shadow-2xl flex flex-col">
-        <div class="bg-green-600 p-4 flex justify-between text-white"><h3 class="font-bold">Check-in</h3><button onclick="window.closeCheckinModal()"><i class="fa-solid fa-times"></i></button></div>
-        <div class="p-4"><select id="checkin-class-selector" class="w-full border-2 border-green-500 rounded p-2 mb-4 font-bold"><option value="Turma Livre">Geral / Livre</option></select><div id="reader" class="w-full bg-black h-64 flex items-center justify-center"><i class="fa-solid fa-camera text-white text-3xl"></i></div><div id="checkin-result" class="text-center p-4 mt-2 bg-gray-100 rounded font-bold">Aguardando QR...</div></div>
-    </div>
-</div>
+    <!-- Script Geral Firebase e Lógica -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-<!-- Imprimíveis Nativos -->
-<div id="printable-progress" class="print-only-element p-10 font-sans absolute inset-0 z-[100] bg-white text-black min-h-screen"><h1 class="text-2xl font-bold mb-4 text-center">Relatório de Evolução</h1><p>Nome: <span id="print-prog-name"></span></p><p>Total Presenças: <span id="print-prog-att-total"></span></p><h3 class="font-bold mt-4 border-b">Anotações</h3><table class="w-full mt-2"><tbody id="print-prog-table-body"></tbody></table><h3 class="font-bold mt-4 border-b">Presenças</h3><table class="w-full mt-2"><tbody id="print-prog-attendance-body"></tbody></table></div>
-<div id="print-only-qr" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen"></div>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-const $ = id => document.getElementById(id);
-window.students = []; window.currentTab = 'all'; window.currentView = 'students'; window.experimentalList = [];
-
-const PLAN_DICT = { 'infantil-mensal': { price: 189.90, short: 'Infantil Mensal' }, 'adulto-semestral': { price: 126.90, short: 'Adulto Semestral' }, 'combo-dupla': { price: 250.00, short: 'Combo Dupla' }, 'dependente': {price: 0, short: 'Dependente'} };
-window.getPlanInfo = (k) => PLAN_DICT[k] || { price: 0, short: String(k||'').toUpperCase() };
-
-window.toggleMobileMenu = () => { $('sidebar-menu').classList.toggle('-translate-x-full'); $('mobile-sidebar-overlay').classList.toggle('hidden'); };
-window.switchMainView = (v) => { window.currentView = v; ['students', 'notices', 'experimental'].forEach(id => { if($('view-'+id)) $('view-'+id).classList.toggle('hidden', v!==id); }); window.filterTable(); };
-window.switchTab = (t) => { window.currentTab = t; window.filterTable(); };
-window.handleLogout = () => { localStorage.removeItem('tanque_user_session'); window.location.href="https://www.tanqueteambjj.com.br/login.html"; };
-
-const toISODate = str => { if(!str || str.length!==10) return str; return str.split('/').reverse().join('-'); };
-const formatDate = val => { if(!val) return '--'; try { let d=new Date(typeof val==='string'?val.substring(0,10):val); return isNaN(d)?'--':d.toLocaleDateString('pt-BR'); }catch(e){return '--';} };
-const getAge = dStr => { if(!dStr) return null; let d=new Date(toISODate(dStr)); return isNaN(d)?null:Math.abs(new Date(Date.now()-d.getTime()).getUTCFullYear()-1970); };
-
-// FIREBASE INIT
-const cfg = typeof __firebase_config!=='undefined'?JSON.parse(__firebase_config):{apiKey:"AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",authDomain:"tanqueteambjj.firebaseapp.com",projectId:"tanqueteambjj"};
-const APP_ID = typeof __app_id!=='undefined'?__app_id:"tanqueteam-bjj";
-const app = initializeApp(cfg); const auth = getAuth(app); window.db = getFirestore(app);
-
-const init = async () => {
-    try { if(typeof __initial_auth_token!=='undefined'&&__initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token); else await signInAnonymously(auth); }catch(e){}
-    window.loadData();
-};
-init();
-
-window.loadData = async () => {
-    try {
-        const snap = await getDocs(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'));
-        window.students = []; snap.forEach(d => window.students.push({id: d.id, ...d.data()}));
-        window.students.sort((a,b) => new Date(b.registrationDate||0) - new Date(a.registrationDate||0));
-        window.filterTable();
-    } catch(e) { console.log(e); }
-};
-
-window.renderBeltSVG = (bStr) => {
-    let c = '#fff'; if(bStr.includes('Azul')) c='#3b82f6'; if(bStr.includes('Roxa')) c='#8b5cf6'; if(bStr.includes('Preta')) c='#000';
-    return `<div style="width:60px;height:15px;background:${c};border:1px solid #ccc;display:flex;justify-content:flex-end"><div style="width:15px;background:#000"></div></div>`;
-};
-
-window.filterTable = () => {
-    const term = ($('searchInput')?.value||"").toLowerCase(); const tb = $('students-table-body'); if(!tb) return; tb.innerHTML = '';
-    let f = window.students.filter(s => {
-        let m = String(s.name||'').toLowerCase().includes(term);
-        if(window.currentTab==='archived') return m && s.archived;
-        if(s.archived) return false;
-        let kid = (getAge(s.dob)!==null && getAge(s.dob)<12) || String(s.plan).includes('infantil');
-        if(window.currentTab==='kids' && !kid) return false;
-        if(window.currentTab==='adults' && kid) return false;
-        return m;
-    });
-    $('list-count').innerText = f.length;
-    if(f.length===0) { tb.innerHTML='<tr><td colspan="6" class="p-4 text-center">Nenhum aluno.</td></tr>'; return; }
-    
-    f.forEach(s => {
-        const tr = document.createElement('tr'); tr.className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800";
-        tr.innerHTML = `
-            <td class="p-3 text-center"><input type="checkbox" class="student-cb" value="${s.id}"></td>
-            <td class="p-3"><div class="font-bold cursor-pointer hover:text-red-500" onclick="window.viewStudentDetails('${s.id}')">${s.name}</div><div class="text-xs text-gray-500">${window.getPlanInfo(s.plan).short}</div></td>
-            <td class="p-3">${window.renderBeltSVG(s.belt||'')}</td>
-            <td class="p-3 font-bold">${s.attendance?s.attendance.length:0} aulas</td>
-            <td class="p-3 text-center">${(s.studentLogin)?'<i class="fa-solid fa-check text-green-500"></i>':'-'}</td>
-            <td class="p-3 flex gap-2 justify-center">
-                <button onclick="window.openProgressModal('${s.id}')" class="text-teal-500 bg-teal-50 p-2 rounded-full"><i class="fa-solid fa-book"></i></button>
-                <button onclick="window.openEditModal('${s.id}')" class="text-orange-500 bg-orange-50 p-2 rounded-full"><i class="fa-solid fa-pen"></i></button>
-                <button onclick="window.archiveStudent('${s.id}')" class="text-gray-500 bg-gray-100 p-2 rounded-full"><i class="fa-solid fa-box-archive"></i></button>
-            </td>
-        `;
-        tb.appendChild(tr);
-    });
-};
-
-// --- MODAIS SIMPLIFICADOS ---
-window.openAdminRegisterModal = () => { if($('admin-register-modal')) $('admin-register-modal').classList.replace('hidden', 'flex'); };
-window.closeAdminRegisterModal = () => { if($('admin-register-modal')) $('admin-register-modal').classList.replace('flex', 'hidden'); };
-window.togglePaymentMethods = () => { let s=$('reg-payment-status').value; if($('reg-payment-method')) $('reg-payment-method').classList.toggle('hidden', s!=='Pago'); if($('reg-payment-amount')) $('reg-payment-amount').classList.toggle('hidden', s!=='Pago'); };
-
-window.saveAdminNewStudent = async () => {
-    try {
-        const n=$('reg-name').value; const p=$('reg-plan').value; if(!n||!p){alert("Nome e plano obrigatórios");return;}
-        const amt = $('reg-payment-amount')?$('reg-payment-amount').value:0;
-        const stat = $('reg-payment-status')?$('reg-payment-status').value:'Pendente';
-        let hist = []; if(stat==='Pago') hist.push({amount:amt, method:$('reg-payment-method').value, timestamp:new Date().toISOString()});
+        // FIREBASE SETUP
+        const manualConfig = { apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE", authDomain: "tanqueteambjj.firebaseapp.com", projectId: "tanqueteambjj", storageBucket: "tanqueteambjj.firebasestorage.app", messagingSenderId: "410605992451", appId: "1:410605992451:web:f0f341f4594fe75f376c36" };
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : manualConfig;
+        const APP_ID = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj";
         
-        await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), {
-            name: n, dob: toISODate($('reg-dob').value), cpf: $('reg-cpf').value, plan: p, enrollmentStatus: 'Ativo', paymentStatus: stat==='Pago'?'Em dia':stat, paymentHistory: hist, registrationDate: new Date().toISOString(), attendance: [], belt: `Faixa ${$('reg-belt-color').value} - ${$('reg-belt-degree').value}`
-        });
-        window.closeAdminRegisterModal(); window.loadData(); alert("Sucesso!");
-    } catch(e){ alert("Erro"); }
-};
+        let app, db, auth;
+        window.students = []; 
+        window.currentTab = 'all'; 
+        window.currentView = 'students'; 
+        window.noticesList = [];
+        window.experimentalList = []; 
+        window.isScanningPaused = false; 
 
-window.openEditModal = (id) => {
-    let s = window.students.find(x=>x.id===id); if(!s) return;
-    $('edit-id').value=id; $('edit-name').value=s.name||''; $('edit-cpf').value=s.cpf||''; $('edit-plan').value=s.plan||'';
-    $('edit-modal').classList.replace('hidden','flex');
-};
-window.closeEditModal = () => { $('edit-modal').classList.replace('flex','hidden'); };
-window.saveStudentChanges = async () => {
-    let id=$('edit-id').value;
-    try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { name:$('edit-name').value, cpf:$('edit-cpf').value, plan:$('edit-plan').value }); window.closeEditModal(); window.loadData(); }catch(e){}
-};
+        window.PLAN_DICT = {
+            'infantil-mensal': { price: 189.90, short: 'Infantil Mensal', long: 'INFANTIL MENSAL' },
+            'infantil-trimestral': { price: 168.90, short: 'Infantil Trimestral', long: 'INFANTIL TRIMESTRAL' },
+            'infantil-semestral': { price: 157.90, short: 'Infantil Semestral', long: 'INFANTIL SEMESTRAL' },
+            'adulto-mensal': { price: 168.90, short: 'Adulto Mensal', long: 'JOVEM/ADULTO MENSAL' },
+            'adulto-trimestral': { price: 147.90, short: 'Adulto Trimestral', long: 'JOVEM/ADULTO TRIMESTRAL' },
+            'adulto-semestral': { price: 126.90, short: 'Adulto Semestral', long: 'JOVEM/ADULTO SEMESTRAL' },
+            'combo-dupla': { price: 250.00, short: 'Combo Dupla', long: 'COMBO DUPLA SEMESTRAL' },
+            'combo-casal': { price: 220.00, short: 'Combo Casal', long: 'COMBO CASAL SEMESTRAL' },
+            'combo-familia': { price: 362.02, short: 'Combo Família', long: 'COMBO FAMÍLIA SEMESTRAL' },
+            'administracao': { price: 0.00, short: 'Administração', long: 'ADMINISTRAÇÃO (ISENTO)' },
+            'dependente': { price: 0.00, short: 'Dependente', long: 'DEPENDENTE - COMBO FAMÍLIA' },
+            'isento': { price: 0.00, short: 'Isento', long: 'ISENTO / BOLSISTA' },
+            'outros': { price: 0.00, short: 'Outros', long: 'OUTROS' }
+        };
 
-window.sendCredsEmail = async (btn) => {
-    let n=$('edit-name').value; let e=$('edit-email').value; let l=$('edit-login').value; let p=$('edit-password').value;
-    if(!e||!l){alert("Preencha email e login");return;}
-    btn.innerText="Enviando...";
-    try{ await emailjs.send("service_2twa33d","template_few5bna",{to_name:n,to_email:e,message:`Login: ${l} Senha: ${p}`},"joP6USyQXdqGI3GN5"); alert("Enviado"); }catch(err){}
-    btn.innerText="Enviar Acesso";
-};
+        window.getPlanInfo = (planKey) => window.PLAN_DICT[planKey] || { price: 0, short: String(planKey||'').toUpperCase(), long: 'NÃO INFORMADO' };
 
-window.viewStudentDetails = (id) => {
-    let s = window.students.find(x=>x.id===id); if(!s) return;
-    $('detail-name').innerText=s.name; $('detail-cpf').innerText=s.cpf||'-'; $('detail-plan').innerText=s.plan||'-';
-    $('detail-student-id').value=id; $('detail-qr-image').src=`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${id}`;
-    $('details-modal').classList.replace('hidden','flex');
-};
-window.closeDetailsModal = () => { $('details-modal').classList.replace('flex','hidden'); };
+        // INITIALIZE FIREBASE AND AUTH
+        const isCanvasPreview = typeof __app_id !== 'undefined';
+        let session = localStorage.getItem('tanque_user_session');
+        if (!session && isCanvasPreview) { session = JSON.stringify({ role: 'admin', name: 'Admin (Preview)' }); localStorage.setItem('tanque_user_session', session); }
+        
+        if (!session) window.location.href = "https://www.tanqueteambjj.com.br/login.html";
+        else {
+            const user = JSON.parse(session);
+            if(user.role !== 'admin' && !isCanvasPreview) window.location.href = "https://www.tanqueteambjj.com.br/login.html";
+            else {
+                try {
+                    app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); window.db = db;
+                    const initAuth = async () => {
+                        try {
+                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+                            else await signInAnonymously(auth);
+                        } catch (e) { console.error("Auth error", e); await signInAnonymously(auth); }
+                        window.loadData(); window.loadNotices(); window.loadExperimentalData();
+                    };
+                    onAuthStateChanged(auth, (u) => { if(u) { window.loadData(); window.loadNotices(); window.loadExperimentalData(); } });
+                    initAuth();
+                } catch(e) { console.error("Firebase init error", e); }
+            }
+        }
 
-window.printAdminQrCard = () => {
-    const id = $('detail-student-id').value; const s = window.students.find(x=>x.id===id); if(!s) return;
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${id}`;
-    $('print-only-qr').innerHTML = `<div style="text-align:center;border:2px solid #000;padding:20px;width:300px;border-radius:10px;"><h2>TANQUE TEAM</h2><h3>${s.name}</h3><p>${s.belt||'Branca'}</p><img src="${qrUrl}" style="width:150px;margin:10px auto;"></div>`;
-    document.body.classList.add('printing-qr'); setTimeout(()=>{window.print(); setTimeout(()=>document.body.classList.remove('printing-qr'),1000);},500);
-};
+        // === FUNÇÕES DE UI ===
+        window.toggleTheme = function() {
+            const docEl = document.documentElement;
+            const tIdDesk = document.getElementById('theme-icon-desktop');
+            const tIdMob = document.getElementById('theme-icon-mobile');
+            const tIdSide = document.getElementById('theme-icon-sidebar');
+            const tIdTop = document.getElementById('theme-icon-topbar');
 
-window.openProgressModal = (id) => {
-    let s = window.students.find(x=>x.id===id); if(!s) return;
-    $('prog-student-id').value=id; $('prog-student-name').innerText=s.name;
-    let ht=''; let att=s.attendance||[]; $('prog-att-total').innerText=att.length;
-    att.forEach(d=>{ ht+=`<div class="p-1 border-b">${formatDate(d)}</div>`; }); $('prog-attendance-list').innerHTML=ht;
-    $('progress-modal').classList.replace('hidden','flex');
-};
-window.closeProgressModal = () => { $('progress-modal').classList.replace('flex','hidden'); };
-window.addManualAttendanceFromProg = async () => {
-    let id=$('prog-student-id').value; let d=$('prog-add-date').value; if(!d)return;
-    try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { attendance: arrayUnion(d) }); window.loadData(); window.closeProgressModal(); }catch(e){}
-};
+            if (docEl.classList.contains('dark')) {
+                docEl.classList.remove('dark'); localStorage.setItem('tanque_theme', 'light');
+                if(tIdDesk) { tIdDesk.classList.remove('fa-sun'); tIdDesk.classList.add('fa-moon'); }
+                if(tIdMob) { tIdMob.classList.remove('fa-sun'); tIdMob.classList.add('fa-moon'); }
+                if(tIdSide) { tIdSide.classList.remove('fa-sun'); tIdSide.classList.add('fa-moon'); }
+                if(tIdTop) { tIdTop.classList.remove('fa-sun'); tIdTop.classList.add('fa-moon'); }
+            } else {
+                docEl.classList.add('dark'); localStorage.setItem('tanque_theme', 'dark');
+                if(tIdDesk) { tIdDesk.classList.remove('fa-moon'); tIdDesk.classList.add('fa-sun'); }
+                if(tIdMob) { tIdMob.classList.remove('fa-moon'); tIdMob.classList.add('fa-sun'); }
+                if(tIdSide) { tIdSide.classList.remove('fa-moon'); tIdSide.classList.add('fa-sun'); }
+                if(tIdTop) { tIdTop.classList.remove('fa-moon'); tIdTop.classList.add('fa-sun'); }
+            }
+        };
 
-window.archiveStudent = async (id) => { if(confirm("Arquivar?")){ await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), {archived:true}); window.loadData(); } };
+        window.toggleMobileMenu = function() {
+            document.getElementById('sidebar-menu').classList.toggle('-translate-x-full');
+            document.getElementById('mobile-sidebar-overlay').classList.toggle('hidden');
+        };
 
-window.openCheckinModal = () => {
-    $('checkin-modal').classList.replace('hidden','flex'); $('checkin-result').innerText='Aguardando...';
-    setTimeout(()=>{ if(!window.h5qr){ window.h5qr = new Html5Qrcode("reader"); } window.h5qr.start({facingMode:"environment"},{fps:10,qrbox:250}, window.onScan, ()=>{}).catch(e=>$('checkin-result').innerText='Câmera indisponível'); },300);
-};
-window.closeCheckinModal = () => { $('checkin-modal').classList.replace('flex','hidden'); if(window.h5qr){window.h5qr.stop().catch(e=>{});} };
-window.onScan = async (txt) => {
-    $('checkin-result').innerText = 'Processando...';
-    try{ let id=txt; let t=new Date().toISOString().split('T')[0]; await updateDoc(doc(window.db,'artifacts',APP_ID,'public','data','students',id), {attendance:arrayUnion(t)}); window.playBeep(); $('checkin-result').innerHTML = `<span class='text-green-500'>OK!</span>`; setTimeout(()=>{window.closeCheckinModal();window.loadData();},2000); }catch(e){$('checkin-result').innerText='Erro';}
-};
-</script>
+        window.switchMainView = function(viewName) {
+            if(window.innerWidth < 768 && !document.getElementById('sidebar-menu').classList.contains('-translate-x-full')) window.toggleMobileMenu();
+            window.currentView = viewName;
+            ['students', 'notices', 'experimental'].forEach(v => {
+                const el = document.getElementById('view-' + v); if(el) el.classList.toggle('hidden', viewName !== v);
+                const nav = document.getElementById('nav-' + v);
+                if(nav) { if (v === viewName) { nav.className = "flex items-center px-4 py-3 bg-brand-red text-white rounded-lg shadow-md transition-all font-bold"; } else { nav.className = "flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold"; } }
+            });
+            if(viewName === 'students') window.renderTable(); 
+            else if(viewName === 'notices') { window.renderAdminNotices(); window.renderBirthdays(); } 
+            else if(viewName === 'experimental') window.renderExperimentalTable();
+        };
+
+        window.switchTab = (tab) => {
+            window.currentTab = tab; const cardIds = ['all', 'adults', 'kids', 'archived'];
+            cardIds.forEach(t => { 
+                const card = document.getElementById('card-' + t);
+                if(card) {
+                    card.classList.remove('card-active', 'border-b-blue-500', 'border-b-brand-red', 'border-b-green-500', 'border-b-gray-500'); card.classList.add('border-b-transparent');
+                    if (t === tab) { card.classList.add('card-active'); card.classList.remove('border-b-transparent'); if(t === 'all') card.classList.add('border-b-blue-500'); else if(t === 'kids') card.classList.add('border-b-brand-red'); else if(t === 'adults') card.classList.add('border-b-green-500'); else if(t === 'archived') card.classList.add('border-b-gray-500'); }
+                }
+            });
+            window.renderTable();
+        };
+
+        window.handleLogout = function() { localStorage.removeItem('tanque_user_session'); window.location.href = "https://www.tanqueteambjj.com.br/login.html"; };
+
+        // === UTILITÁRIOS ===
+        function formatCurrency(val) { return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+        
+        function formatDate(val) { 
+            if (!val) return '--';
+            try { 
+                let d;
+                if (typeof val === 'string') {
+                    if (val.length === 10 && val.includes('-')) {
+                        const [y, m, dNum] = val.split('-');
+                        d = new Date(y, m - 1, dNum);
+                    } else { d = new Date(val); }
+                }
+                else if (val && val.toDate) d = val.toDate(); 
+                else d = new Date(val); 
+                return isNaN(d.getTime()) ? '--' : d.toLocaleDateString('pt-BR'); 
+            } catch (e) { return '--'; } 
+        }
+
+        function getAge(dobStr) {
+            if (!dobStr) return null; let dobDate;
+            try {
+                const sStr = String(dobStr);
+                if (sStr.includes('/')) { const parts = sStr.split('/'); dobDate = new Date(parts[2], parts[1] - 1, parts[0]); } 
+                else if (sStr.includes('T')) dobDate = new Date(sStr);
+                else { const parts = sStr.split('-'); dobDate = new Date(parts[0], parts[1] - 1, parts[2]); }
+                if (isNaN(dobDate)) return null;
+                const ageDate = new Date(Date.now() - dobDate.getTime()); return Math.abs(ageDate.getUTCFullYear() - 1970);
+            } catch(e) { return null; }
+        }
+
+        function toISODate(ptBrDate) { const sDate = String(ptBrDate || ''); if(!sDate || !sDate.includes('/')) return sDate; return sDate.split('/').reverse().join('-'); }
+        
+        function isStudentKid(s) {
+            const cat = s.category ? String(s.category).toLowerCase() : ''; const plan = s.plan ? String(s.plan).toLowerCase() : '';
+            if (cat === 'administração' || plan === 'administracao') return false; 
+            const age = getAge(s.dob); if (age !== null && age < 12) return true;
+            if (cat.includes('infantil') || plan.includes('infantil')) return true; return false; 
+        }
+
+        // === CARREGAMENTO DB ===
+        window.loadData = async function() {
+            try {
+                if(!window.db) return;
+                const querySnapshot = await getDocs(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'));
+                window.students = [];
+                querySnapshot.forEach(doc => window.students.push({ id: doc.id, ...doc.data() }));
+                window.students.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
+                window.populateTitularSelects(); window.updateStats();
+                if(window.currentView === 'students') window.renderTable();
+            } catch (error) { console.error("Erro ao carregar dados:", error); }
+        };
+
+        window.updateStats = function() {
+            const total = window.students.filter(s => !s.archived).length;
+            let kidsCount = 0, adultsCount = 0, archivedCount = 0;
+            window.students.forEach(s => {
+                if (s.archived) { archivedCount++; return; }
+                if (isStudentKid(s)) kidsCount++; else adultsCount++;
+            });
+            const setText = (id, txt) => { const e = document.getElementById(id); if(e) e.innerText = txt; }
+            setText('stat-total', total); setText('stat-infantil', kidsCount); setText('stat-adulto', adultsCount); setText('stat-archived', archivedCount);
+        }
+
+        window.loadExperimentalData = async function() { 
+            try { 
+                const q = query(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental')); 
+                const snap = await getDocs(q); 
+                window.experimentalList = []; 
+                snap.forEach((doc) => window.experimentalList.push({ id: doc.id, ...doc.data() }));
+                if(window.currentView === 'experimental') window.renderExperimentalTable();
+            } catch (error) { console.error("Erro exp:", error); } 
+        };
+
+        window.loadNotices = async function() {
+            try {
+                const q = query(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'notices'));
+                const querySnapshot = await getDocs(q); window.noticesList = []; const now = new Date();
+                querySnapshot.forEach((doc) => {
+                    const noticeData = doc.data(); if (noticeData.expiresAt && now > new Date(noticeData.expiresAt)) return; 
+                    window.noticesList.push({ id: doc.id, ...noticeData });
+                });
+                window.noticesList.sort((a, b) => new Date(b.date) - new Date(a.date));
+                if (window.currentView === 'notices') { window.renderAdminNotices(); window.renderBirthdays(); }
+            } catch (error) { console.error(error); }
+        };
+
+        // === TABELAS E RENDERIZAÇÃO ===
+        window.filterTable = () => { 
+            const desktopSearch = document.getElementById('searchInput'); const mobileSearch1 = document.getElementById('searchInputMobile1'); 
+            if (document.activeElement === mobileSearch1 && desktopSearch) desktopSearch.value = mobileSearch1.value; else if (document.activeElement === desktopSearch && mobileSearch1) mobileSearch1.value = desktopSearch.value; 
+            if(window.currentView === 'students') window.renderTable(); else if(window.currentView === 'experimental') window.renderExperimentalTable(); 
+        };
+
+        window.renderBeltSVG = function(beltStr) {
+            if (!beltStr) return ''; const colors = { 'Branca': '#ffffff', 'Cinza': '#9ca3af', 'Amarela': '#fbbf24', 'Laranja': '#f97316', 'Verde': '#10b981', 'Azul': '#3b82f6', 'Roxa': '#8b5cf6', 'Marrom': '#78350f', 'Preta': '#000000' };
+            let color = '#ffffff'; let degree = 0; let colorName = 'Branca'; for (const [name, hex] of Object.entries(colors)) { if (beltStr.includes(name)) { color = hex; colorName = name; break; } }
+            const degreeMatch = beltStr.match(/(\d)º/); if (degreeMatch) degree = parseInt(degreeMatch[1]);
+            const width = 100; const height = 24; const tipWidth = 25; const stripeWidth = 4; const stripeGap = 3; let stripesSVG = ''; const barColor = (colorName === 'Preta') ? '#dc2626' : '#000000'; const stripeColor = '#ffffff';
+            for (let i = 0; i < degree; i++) { const x = width - 5 - (i * (stripeWidth + stripeGap)) - stripeWidth; stripesSVG += `<rect x="${x}" y="0" width="${stripeWidth}" height="${height}" fill="${stripeColor}" />`; }
+            return `<svg width="${width}" height="${height}" class="shadow-sm rounded" style="border:1px solid #ddd"><rect x="0" y="0" width="${width}" height="${height}" fill="${color}" /><rect x="${width - tipWidth}" y="0" width="${tipWidth}" height="${height}" fill="${barColor}" />${stripesSVG}</svg>`;
+        };
+
+        window.toggleDepRows = (titularId) => { const rows = document.querySelectorAll(`.dep-row-${titularId}`); const icon = document.getElementById(`icon-dep-${titularId}`); let isHidden = false; rows.forEach(r => { if(r.classList.contains('hidden')) { r.classList.remove('hidden'); isHidden = true; } else { r.classList.add('hidden'); isHidden = false; } }); if(icon) icon.className = isHidden ? "fa-solid fa-minus text-[10px]" : "fa-solid fa-plus text-[10px]"; };
+
+        window.renderTable = function() {
+            const tbody = document.getElementById('students-table-body'); const thead = document.getElementById('table-headers');
+            const search = (document.getElementById('searchInput')?.value || "").toLowerCase(); const beltFilter = (document.getElementById('filter-belt')?.value || "").toLowerCase(); const sortOrder = document.getElementById('sort-order')?.value || "recent";
+            if(!tbody) return; tbody.innerHTML = '';
+
+            let filtered = window.students.filter(s => {
+                const matchesSearch = String(s.name || '').toLowerCase().includes(search); const matchesBelt = beltFilter === "" || (s.belt && String(s.belt).toLowerCase().includes(beltFilter));
+                if (window.currentTab === 'archived') return matchesSearch && matchesBelt && s.archived === true;
+                else { if (s.archived) return false; let matchesTab = false; if(window.currentTab === 'all') matchesTab = true; else { let isKid = isStudentKid(s); matchesTab = (window.currentTab === 'kids' && isKid) || (window.currentTab === 'adults' && !isKid); } return matchesTab && matchesSearch && matchesBelt; }
+            });
+
+            if (sortOrder === 'az') filtered.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''))); else if (sortOrder === 'za') filtered.sort((a, b) => String(b.name || '').localeCompare(String(a.name || ''))); else filtered.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
+            document.getElementById('list-count').innerText = filtered.length; document.getElementById('list-title').innerText = (window.currentTab === 'all') ? "Todos (Ativos)" : (window.currentTab === 'adults') ? "Adultos e Família" : (window.currentTab === 'kids') ? "Infantil (Ativos)" : "Arquivo de Alunos";
+
+            thead.innerHTML = `<th class="px-6 py-3 border-b dark:border-gray-600 font-semibold w-10 text-center"><input type="checkbox" id="cb-select-all" onclick="window.toggleSelectAll(this)" class="rounded text-brand-red cursor-pointer"></th><th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Aluno</th>${window.currentTab === 'kids' || window.currentTab === 'all' ? '<th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Responsável/Titular</th>' : ''}<th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Faixa</th><th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Frequência</th><th class="px-6 py-3 border-b dark:border-gray-600 font-semibold text-center">Acesso</th><th class="px-6 py-3 border-b dark:border-gray-600 font-semibold text-center">Ações</th>`;
+            if (filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="${window.currentTab === 'kids' || window.currentTab === 'all' ? 7 : 6}" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500 italic">Nenhum aluno encontrado.</td></tr>`; return; }
+
+            const renderRow = (s, isDepRow = false, parentId = null) => {
+                const attendanceCount = s.attendance ? s.attendance.length : 0; const hasLogin = (s.studentLogin && s.studentPassword) ? '<span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-lock"></i> OK</span>' : '<span class="text-gray-400 dark:text-gray-500 text-xs italic">--</span>'; const safePlan = String(s.plan || '').toLowerCase();
+                let avatarHtml = s.photoBase64 ? `<img src="${s.photoBase64}" class="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200 dark:border-gray-600">` : `<div class="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 mr-3 font-bold text-xs">${String(s.name || '?').charAt(0).toUpperCase()}</div>`;
+                const age = getAge(s.dob); let nameHtml = isDepRow ? `<i class="fa-solid fa-level-up-alt fa-rotate-90 text-purple-300 dark:text-purple-500 mr-2 text-xs"></i>${s.name}` : s.name || 'Sem Nome';
+                
+                let nameDisplay = `<div class="font-medium text-gray-900 dark:text-gray-100 flex items-center group-hover:text-brand-red transition ${isDepRow ? 'pl-4 border-l-2 border-purple-200 dark:border-purple-800' : ''}">${nameHtml} ${((window.currentTab === 'adults' || window.currentTab === 'all') && age !== null && age < 18 && !isStudentKid(s)) ? `<span class="ml-2 text-[10px] text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 px-1.5 py-0.5 rounded border border-orange-200 dark:border-orange-800 font-bold">Menor (${age})</span>` : ''} ${(safePlan.includes('combo') && safePlan !== 'dependente') ? `<span class="ml-2 text-[10px] text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-800 font-bold uppercase">Combo</span>` : ''} ${(safePlan === 'administracao') ? `<span class="ml-2 text-[10px] text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-800 font-bold uppercase">Admin</span>` : ''} ${(safePlan === 'dependente') ? `<span class="ml-2 text-[10px] text-purple-600 bg-purple-50 dark:bg-purple-900/20 dark:text-purple-400 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-800 font-bold uppercase" title="Dependente"><i class="fa-solid fa-link"></i> DEP</span>` : ''} ${(s.archived) ? `<span class="ml-2 text-[10px] text-gray-800 bg-gray-300 dark:bg-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded border border-gray-400 dark:border-gray-600 font-bold uppercase">ARQUIVADO</span>` : ''}`;
+                const myFilteredDeps = filtered.filter(d => d.plan === 'dependente' && d.titularId === s.id);
+                if (!isDepRow && myFilteredDeps.length > 0) { nameDisplay += `<button onclick="event.stopPropagation(); window.toggleDepRows('${s.id}')" class="ml-2 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-400 w-5 h-5 rounded flex items-center justify-center shadow-sm hover:bg-purple-200 dark:hover:bg-purple-800 transition" title="Expandir/Recolher"><i id="icon-dep-${s.id}" class="fa-solid fa-plus text-[10px]"></i></button>`; }
+                nameDisplay += `</div>`;
+
+                const beltSVG = window.renderBeltSVG(s.belt || 'Faixa Branca - 0º Grau');
+                const guardianCell = (window.currentTab === 'kids' || window.currentTab === 'all') ? `<td class="px-6 py-4 align-middle text-sm text-gray-700 dark:text-gray-300"><i class="fa-solid fa-user-shield text-gray-400 dark:text-gray-500 mr-1"></i> ${s.guardian || s.titularName || '-'}</td>` : '';
+                
+                let actionsHtml = '';
+                if (s.archived) {
+                    actionsHtml = `<button onclick="window.restoreStudent('${s.id}')" class="text-green-600 hover:text-green-900 dark:text-green-500 dark:hover:text-green-400 mx-1 w-8 h-8 rounded-full bg-green-50 dark:bg-green-900/20 transition" title="Reativar Aluno"><i class="fa-solid fa-box-open"></i></button><button onclick="window.deleteStudent('${s.id}')" class="text-red-600 hover:text-red-900 dark:text-red-500 dark:hover:text-red-400 mx-1 w-8 h-8 rounded-full bg-red-50 dark:bg-red-900/20 transition" title="Excluir Permanentemente"><i class="fa-solid fa-trash"></i></button>`;
+                } else {
+                    actionsHtml = `<button onclick="window.openProgressModal('${s.id}')" class="text-teal-600 hover:text-teal-900 dark:text-teal-500 dark:hover:text-teal-400 mx-1 w-8 h-8 rounded-full hover:bg-teal-50 dark:hover:bg-teal-900/30 transition flex items-center justify-center" title="Evolução e Histórico"><i class="fa-solid fa-book-journal-whills"></i></button><button onclick="window.openEditModal('${s.id}')" class="text-orange-500 hover:text-orange-700 dark:text-orange-500 dark:hover:text-orange-400 mx-1 w-8 h-8 rounded-full hover:bg-orange-50 dark:hover:bg-orange-900/30 transition flex items-center justify-center" title="Editar / Graduar"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="window.archiveStudent('${s.id}')" class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-300 mx-1 w-8 h-8 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center" title="Arquivar Aluno"><i class="fa-solid fa-box-archive"></i></button>`;
+                }
+
+                let attendanceBtnHtml = s.archived ? `<span class="text-gray-400 dark:text-gray-500 text-xs italic">--</span>` : `<div class="flex items-center gap-2"><span class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 text-xs font-bold px-2 py-1 rounded w-16 text-center">${attendanceCount} aulas</span></div>`;
+
+                const tr = document.createElement('tr'); tr.className = isDepRow ? `hidden dep-row-${parentId} bg-purple-50/40 dark:bg-purple-900/10 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition border-b border-purple-100 dark:border-purple-800/50` : `border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition`;
+                tr.innerHTML = `<td class="px-6 py-4 align-middle text-center"><input type="checkbox" class="student-cb rounded text-brand-red cursor-pointer" value="${s.id}" onclick="window.updateBulkActions()"></td><td class="px-6 py-4 align-middle"><div onclick="window.viewStudentDetails('${s.id}')" class="flex items-center cursor-pointer group" title="Ver Detalhes do Aluno">${avatarHtml}<div>${nameDisplay}<div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${window.getPlanInfo(s.plan).short}</div></div></div></td>${guardianCell}<td class="px-6 py-4 align-middle"><div class="w-32 h-8 flex items-center">${beltSVG}</div><div class="text-xs text-gray-400 dark:text-gray-500 mt-1">${s.belt || 'Branca'}</div></td><td class="px-6 py-4 align-middle">${attendanceBtnHtml}</td><td class="px-6 py-4 align-middle text-center">${hasLogin}</td><td class="px-6 py-4 align-middle text-center whitespace-nowrap flex justify-center">${actionsHtml}</td>`;
+                tbody.appendChild(tr);
+            };
+
+            filtered.forEach(s => { if (s.plan === 'dependente' && filtered.some(t => t.id === s.titularId)) return; renderRow(s, false); filtered.filter(d => d.plan === 'dependente' && d.titularId === s.id).forEach(dep => renderRow(dep, true, s.id)); });
+        };
+
+        window.renderExperimentalTable = () => {
+            const tbody = document.getElementById('experimental-table-body'); const searchDesktop = document.getElementById('searchInput'); const searchMobile = document.getElementById('searchInputMobile1'); const search = (searchDesktop?.value || searchMobile?.value || "").toLowerCase();
+            if(!tbody) return; tbody.innerHTML = '';
+            let filtered = window.experimentalList.filter(e => String(e.name || '').toLowerCase().includes(search) || String(e.phone || '').includes(search));
+            filtered.sort((a,b) => { const wA = (a.status === 'Matriculado' || a.status === 'Faltou' || a.status === 'Cancelado') ? 2 : 1; const wB = (b.status === 'Matriculado' || b.status === 'Faltou' || b.status === 'Cancelado') ? 2 : 1; if (wA !== wB) return wA - wB; return new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00')); });
+            if(filtered.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500">Nenhum agendamento encontrado.</td></tr>`; return; }
+            const t = new Date(); const todayLocal = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+            filtered.forEach(exp => {
+                const age = getAge(exp.dob); const isMinor = age !== null && age < 18; const cleanPhone = String(exp.phone || '').replace(/\D/g, ''); let dateFormatted = exp.date ? new Date(exp.date + 'T12:00:00').toLocaleDateString('pt-BR') : '--';
+                let statusColor = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'; if(exp.status === 'Agendado') statusColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'; else if(exp.status === 'Concluído') statusColor = 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'; else if(exp.status === 'Matriculado') statusColor = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'; else if(exp.status === 'Cancelado' || exp.status === 'Faltou') statusColor = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+                const isInactive = (exp.status === 'Matriculado' || exp.status === 'Faltou' || exp.status === 'Cancelado'); const tr = document.createElement('tr');
+                if (isInactive) tr.className = "border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 opacity-60 transition"; else if (exp.date === todayLocal) tr.className = "border-b border-gray-100 dark:border-gray-700 bg-yellow-50 dark:bg-yellow-900/10 hover:bg-yellow-100 dark:hover:bg-yellow-900/20 transition"; else tr.className = "border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition";
+                let actionsHtml = '';
+                if (isInactive) actionsHtml = `<button onclick="window.deleteExperimental('${exp.id}')" class="text-red-400 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 mx-1 w-8 h-8 rounded-full hover:bg-red-50 dark:bg-red-900/20 transition" title="Excluir Registro"><i class="fa-solid fa-trash"></i></button>`; 
+                else actionsHtml = `<button onclick="window.convertToStudent('${exp.id}')" class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mx-1 w-8 h-8 rounded-full hover:bg-blue-50 dark:bg-blue-900/20 transition" title="Matricular como Aluno"><i class="fa-solid fa-user-plus"></i></button><button onclick="window.openEditExperimentalModal('${exp.id}')" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 mx-1 w-8 h-8 rounded-full hover:bg-gray-100 dark:bg-gray-700 transition" title="Editar"><i class="fa-solid fa-pen"></i></button><button onclick="window.deleteExperimental('${exp.id}')" class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 mx-1 w-8 h-8 rounded-full hover:bg-red-50 dark:bg-red-900/20 transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>`;
+                tr.innerHTML = `<td class="px-6 py-4 align-middle"><div class="font-bold text-gray-800 dark:text-gray-200">${dateFormatted} ${exp.date === todayLocal && !isInactive ? '<span class="ml-1 text-[9px] bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Hoje</span>' : ''}</div><div class="text-xs text-brand-red font-bold"><i class="fa-regular fa-clock"></i> ${exp.time || '--'}</div></td><td class="px-6 py-4 align-middle"><div class="font-bold text-gray-900 dark:text-gray-100">${exp.name} <span class="text-xs font-normal text-gray-500 dark:text-gray-400">(${age !== null ? age + 'a' : '-'})</span></div>${isMinor && exp.guardian ? `<div class="text-xs text-gray-500 dark:text-gray-400"><i class="fa-solid fa-user-shield text-gray-400 dark:text-gray-500"></i> Resp: ${exp.guardian}</div>` : ''}</td><td class="px-6 py-4 align-middle"><a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${exp.phone}</a></td><td class="px-6 py-4 align-middle"><select onchange="window.changeExpStatus('${exp.id}', this.value)" class="border dark:border-gray-600 rounded px-2 py-1 text-xs font-bold ${statusColor} outline-none cursor-pointer"><option value="Agendado" ${exp.status === 'Agendado' ? 'selected' : ''}>Agendado</option><option value="Concluído" ${exp.status === 'Concluído' ? 'selected' : ''}>Compareceu</option><option value="Matriculado" ${exp.status === 'Matriculado' ? 'selected' : ''}>Matriculado</option><option value="Faltou" ${exp.status === 'Faltou' ? 'selected' : ''}>Faltou</option><option value="Cancelado" ${exp.status === 'Cancelado' ? 'selected' : ''}>Cancelado</option></select></td><td class="px-6 py-4 align-middle text-center whitespace-nowrap flex justify-center">${actionsHtml}</td>`;
+                tbody.appendChild(tr);
+            });
+        };
+
+        window.renderAdminNotices = () => {
+            const list = document.getElementById('admin-notices-list'); list.innerHTML = '';
+            if (window.noticesList.length === 0) { list.innerHTML = '<div class="text-center py-8 text-gray-400 dark:text-gray-500 italic text-sm">Nenhum aviso publicado.</div>'; return; }
+            window.noticesList.forEach(notice => {
+                const d = new Date(notice.date).toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+                let bg = 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'; let icon = '<i class="fa-solid fa-circle-info text-blue-500"></i>';
+                if(notice.type === 'alert') { bg = 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800'; icon = '<i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>'; }
+                if(notice.type === 'success') { bg = 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800'; icon = '<i class="fa-solid fa-check-circle text-green-500"></i>'; }
+                if(notice.type === 'danger') { bg = 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'; icon = '<i class="fa-solid fa-circle-xmark text-red-500"></i>'; }
+                list.innerHTML += `<div class="p-4 border rounded-lg ${bg} flex justify-between items-start text-gray-800 dark:text-gray-200"><div><h4 class="font-bold flex items-center gap-2">${icon} ${notice.title}</h4><p class="text-sm mt-1 whitespace-pre-wrap">${notice.text}</p><p class="text-[10px] opacity-70 mt-2 font-medium">Publicado em: ${d} ${notice.expiresAt ? (new Date() > new Date(notice.expiresAt) ? '<span class="text-red-500 font-bold ml-2">(Expirado)</span>' : `<span class="text-orange-500 font-bold ml-2">(Expira em: ${new Date(notice.expiresAt).toLocaleDateString('pt-BR')})</span>`) : ''}</p></div><div class="flex gap-3"><button onclick="window.editNotice('${notice.id}')" class="text-blue-400 hover:text-blue-700 transition" title="Editar"><i class="fa-solid fa-pen"></i></button><button onclick="window.deleteNotice('${notice.id}')" class="text-red-500 hover:text-red-700 transition" title="Excluir"><i class="fa-solid fa-trash"></i></button></div></div>`;
+            });
+        };
+
+        window.renderBirthdays = () => {
+            const currentMonth = new Date().getMonth(); const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            document.getElementById('birthday-month-name').innerText = monthNames[currentMonth];
+            const birthdays = window.students.filter(s => {
+                if (!s.dob || s.enrollmentStatus === 'Inativo' || s.archived) return false;
+                let dobDate = String(s.dob).includes('/') ? new Date(s.dob.split('/')[2], s.dob.split('/')[1] - 1, s.dob.split('/')[0]) : (String(s.dob).includes('T') ? new Date(s.dob) : new Date(s.dob.split('-')[0], s.dob.split('-')[1] - 1, s.dob.split('-')[2]));
+                return !isNaN(dobDate) && dobDate.getMonth() === currentMonth;
+            });
+            const container = document.getElementById('admin-birthdays-widget'); const list = document.getElementById('birthday-list'); list.innerHTML = '';
+            if (birthdays.length === 0) container.classList.add('hidden');
+            else {
+                container.classList.remove('hidden');
+                birthdays.sort((a, b) => {
+                    const getDay = (dob) => String(dob).includes('/') ? Number(dob.split('/')[0]) : (String(dob).includes('T') ? new Date(dob).getDate() : Number(dob.split('-')[2]));
+                    return getDay(a.dob) - getDay(b.dob);
+                }).forEach(s => {
+                    let day = String(s.dob).includes('/') ? Number(s.dob.split('/')[0]) : (String(s.dob).includes('T') ? new Date(s.dob).getDate() : Number(s.dob.split('-')[2]));
+                    const cleanPhone = String(s.phone || '').replace(/\D/g, '');
+                    list.innerHTML += `<div class="bg-white dark:bg-gray-800 p-2 rounded shadow-sm flex items-center gap-3 border-l-4 border-blue-400 dark:border-blue-600"><div class="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 font-bold w-10 h-10 rounded flex flex-col items-center justify-center leading-tight shrink-0"><span class="text-[10px] font-normal uppercase">Dia</span><span>${day}</span></div><div class="flex-1 truncate"><p class="font-bold text-sm text-gray-800 dark:text-white truncate">${s.name.split(' ')[0]} ${s.name.split(' ').length > 1 ? s.name.split(' ').pop() : ''}</p><p class="text-[10px] text-gray-500 dark:text-gray-400 uppercase truncate">${String(s.plan || '').replace('-', ' ')}</p></div><div class="flex items-center gap-1 border-l border-gray-100 dark:border-gray-700 pl-2">${cleanPhone ? `<button onclick="window.sendBirthdayWhatsApp('${s.name}', '${cleanPhone}')" class="text-green-500 hover:text-green-700 p-1"><i class="fa-brands fa-whatsapp text-lg"></i></button>` : ''}<button onclick="window.publishBirthdayNotice('${s.name}')" class="text-blue-500 hover:text-blue-700 p-1"><i class="fa-solid fa-bullhorn text-lg"></i></button></div></div>`;
+                });
+            }
+        };
+
+        // === AÇÕES GLOBAIS ===
+        window.archiveSelectedStudents = async () => { const ids = Array.from(document.querySelectorAll('.student-cb:checked')).map(cb => cb.value); if(ids.length === 0) return; if(confirm(`Tem certeza que deseja ARQUIVAR ${ids.length} alunos selecionados?`)) { try { await Promise.all(ids.map(id => updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { archived: true }))); document.getElementById('cb-select-all').checked = false; window.updateBulkActions(); window.loadData(); } catch(e) { alert('Erro ao arquivar.'); } } };
+        window.deleteSelectedStudents = async () => { const ids = Array.from(document.querySelectorAll('.student-cb:checked')).map(cb => cb.value); if(ids.length === 0) return; if(confirm(`Tem a certeza absoluta que deseja EXCLUIR PERMANENTEMENTE ${ids.length} aluno(s) selecionados do arquivo?`)) { try { await Promise.all(ids.map(id => deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id)))); document.getElementById('cb-select-all').checked = false; window.updateBulkActions(); window.loadData(); } catch(e) { alert('Erro ao excluir definitivamente.'); } } };
+        window.archiveStudent = async (id) => { const myDeps = window.students.filter(d => d.titularId === id && !d.archived); if(!confirm("Deseja ARQUIVAR este aluno?" + (myDeps.length > 0 ? " Dependentes também serão arquivados." : ""))) return; try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { archived: true }); if (myDeps.length > 0) for(let dep of myDeps) await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', dep.id), { archived: true }); window.loadData(); } catch(e) { alert("Erro ao arquivar."); } };
+        window.restoreStudent = async (id) => { if(!confirm("Restaurar aluno do arquivo?")) return; try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { archived: false }); window.loadData(); } catch(e) { alert("Erro ao restaurar."); } };
+        window.deleteStudent = async (id) => { if(!confirm("Excluir este aluno permanentemente?")) return; try { await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id)); window.loadData(); } catch(e) { alert("Erro ao excluir."); } };
+        window.updateBulkActions = () => { const count = document.querySelectorAll('.student-cb:checked').length; const bulkDiv = document.getElementById('bulk-actions'); const btnBulkArchive = document.getElementById('btn-bulk-archive'); const btnBulkDelete = document.getElementById('btn-bulk-delete'); if(count > 0) { bulkDiv.classList.remove('hidden'); if (window.currentTab === 'archived') { if(btnBulkDelete) { btnBulkDelete.classList.remove('hidden'); document.getElementById('selected-count-delete').innerText = count; } if(btnBulkArchive) btnBulkArchive.classList.add('hidden'); } else { if(btnBulkArchive) { btnBulkArchive.classList.remove('hidden'); document.getElementById('selected-count-archive').innerText = count; } if(btnBulkDelete) btnBulkDelete.classList.add('hidden'); } } else { bulkDiv.classList.add('hidden'); } };
+        window.toggleSelectAll = (source) => { document.querySelectorAll('.student-cb').forEach(cb => cb.checked = source.checked); window.updateBulkActions(); };
+        
+        window.openNoticeModal = () => { document.getElementById('notice-id').value = ''; document.getElementById('notice-title').value = ''; document.getElementById('notice-text').value = ''; document.getElementById('notice-type').value = 'info'; document.getElementById('notice-expiry').value = ''; document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-bullhorn mr-2 text-yellow-500"></i> Publicar Aviso'; document.getElementById('notice-modal').classList.remove('hidden'); document.getElementById('notice-modal').classList.add('flex'); };
+        window.editNotice = (id) => { const notice = window.noticesList.find(n => n.id === id); if (!notice) return; document.getElementById('notice-id').value = notice.id; document.getElementById('notice-title').value = notice.title; document.getElementById('notice-text').value = notice.text; document.getElementById('notice-type').value = notice.type || 'info'; document.getElementById('notice-expiry').value = notice.expiresAt ? notice.expiresAt.split('T')[0] : ''; document.getElementById('notice-modal-title').innerHTML = '<i class="fa-solid fa-pen mr-2 text-yellow-500"></i> Editar Aviso'; document.getElementById('notice-modal').classList.remove('hidden'); document.getElementById('notice-modal').classList.add('flex'); };
+        window.closeNoticeModal = () => { document.getElementById('notice-modal').classList.add('hidden'); document.getElementById('notice-modal').classList.remove('flex'); };
+        
+        window.saveNotice = async () => {
+            const id = document.getElementById('notice-id').value; const title = document.getElementById('notice-title').value; const text = document.getElementById('notice-text').value; const type = document.getElementById('notice-type').value; const expiryRaw = document.getElementById('notice-expiry').value;
+            if(!title || !text) { alert("Preencha título e mensagem."); return; }
+            const noticeData = { title, text, type, expiresAt: expiryRaw ? new Date(expiryRaw + 'T23:59:59').toISOString() : null };
+            try {
+                if (id) { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'notices', id), noticeData); alert("Aviso atualizado!"); } 
+                else { noticeData.date = new Date().toISOString(); await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'notices'), noticeData); alert("Aviso publicado!"); }
+                window.closeNoticeModal(); window.loadNotices();
+            } catch(e) { alert("Erro ao salvar aviso."); }
+        };
+        window.deleteNotice = async (id) => { if(!confirm("Excluir este aviso permanentemente?")) return; try { await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'notices', id)); window.loadNotices(); } catch(e) { alert("Erro ao excluir."); } };
+
+        window.openEditExperimentalModal = (id) => {
+            const exp = window.experimentalList.find(e => e.id === id); if(!exp) return;
+            document.getElementById('edit-exp-id').value = id; document.getElementById('edit-exp-name').value = exp.name || ''; document.getElementById('edit-exp-phone').value = exp.phone || ''; document.getElementById('edit-exp-dob').value = exp.dob ? formatDate(exp.dob) : ''; document.getElementById('edit-exp-date').value = exp.date || ''; document.getElementById('edit-exp-time').value = exp.time || '';
+            document.getElementById('edit-exp-modal').classList.remove('hidden'); document.getElementById('edit-exp-modal').classList.add('flex');
+        };
+        window.closeEditExperimentalModal = () => { document.getElementById('edit-exp-modal').classList.add('hidden'); document.getElementById('edit-exp-modal').classList.remove('flex'); };
+        window.saveExperimentalChanges = async () => {
+            const id = document.getElementById('edit-exp-id').value; const name = document.getElementById('edit-exp-name').value; const phone = document.getElementById('edit-exp-phone').value; const dob = toISODate(document.getElementById('edit-exp-dob').value); const date = document.getElementById('edit-exp-date').value; const time = document.getElementById('edit-exp-time').value;
+            try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id), { name, phone, dob, date, time }); alert("Atualizado com sucesso!"); window.closeEditExperimentalModal(); window.loadExperimentalData(); } catch(e) { alert("Erro."); }
+        };
+        window.deleteExperimental = async (id) => { if(!confirm("Excluir este agendamento?")) return; try { await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id)); window.loadExperimentalData(); } catch(e) { alert("Erro."); } };
+        window.changeExpStatus = async (id, status) => { try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id), { status }); window.loadExperimentalData(); } catch(e) { alert("Erro ao mudar status."); } };
+        
+        window.convertToStudent = (id) => {
+            const exp = window.experimentalList.find(e => e.id === id); if(!exp) return;
+            window.openAdminRegisterModal();
+            setTimeout(() => {
+                document.getElementById('reg-name').value = exp.name || '';
+                document.getElementById('reg-phone').value = exp.phone || '';
+                document.getElementById('reg-email').value = exp.email || '';
+                if(exp.dob) document.getElementById('reg-dob').value = formatDate(exp.dob);
+                window.checkAdminRegAge(); window.changeExpStatus(id, 'Matriculado');
+            }, 500);
+        };
+
+        window.printProgressReport = () => {
+            try {
+                const id = document.getElementById('prog-student-id').value;
+                const s = window.students.find(st => st.id === id); if(!s) return;
+                
+                document.getElementById('print-prog-name').innerText = s.name;
+                document.getElementById('print-prog-start').innerText = formatDate(s.registrationDate);
+                document.getElementById('print-prog-belt').innerText = s.belt || 'Branca';
+                document.getElementById('print-prog-plan').innerText = window.getPlanInfo(s.plan).short;
+                
+                const tableBody = document.getElementById('print-prog-table-body'); 
+                tableBody.innerHTML = '';
+                
+                let logs = s.progressLog ? (Array.isArray(s.progressLog) ? [...s.progressLog] : Object.values(s.progressLog)) : []; 
+                logs.push({ type: 'info', text: 'Matrícula realizada.', date: s.registrationDate || new Date().toISOString() }); 
+                
+                logs.sort((a, b) => {
+                    const dA = a.date ? new Date(a.date).getTime() : 0;
+                    const dB = b.date ? new Date(b.date).getTime() : 0;
+                    return dB - dA;
+                });
+                
+                logs.forEach(log => { 
+                    tableBody.innerHTML += `<tr><td class="p-2 border">${formatDate(log.date)}</td><td class="p-2 border">${log.type === 'graduation' ? 'Graduação' : (log.type === 'note' ? 'Anotação' : 'Sistema')}</td><td class="p-2 border">${log.text}</td></tr>`; 
+                });
+                
+                const attBody = document.getElementById('print-prog-attendance-body'); 
+                attBody.innerHTML = '';
+                
+                let attendances = s.attendanceLog ? [...s.attendanceLog] : (s.attendance ? s.attendance.map(d => ({date: d, time: 'Manual'})) : []);
+                document.getElementById('print-prog-att-total').innerText = `Total: ${attendances.length} aulas`;
+                
+                attendances.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(att => { 
+                    attBody.innerHTML += `<tr><td class="p-2 border">${formatDate(att.date)}</td><td class="p-2 border">${att.time || 'Manual'}</td></tr>`; 
+                });
+                
+                document.body.classList.add('printing-progress');
+                setTimeout(() => { 
+                    window.print(); 
+                    setTimeout(() => document.body.classList.remove('printing-progress'), 1000); 
+                }, 500);
+            } catch(e) {
+                console.error("Erro imprimir histórico:", e);
+                alert("Erro ao imprimir relatório.");
+            }
+        };
+
+        window.printHtmlContent = function(htmlContent, titleStr) {
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.width = '0px';
+            iframe.style.height = '0px';
+            iframe.style.border = 'none';
+            document.body.appendChild(iframe);
+
+            const docIframe = iframe.contentWindow.document;
+            docIframe.open();
+            docIframe.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${titleStr}</title>
+                    <style>
+                        @media print {
+                            @page { margin: 1cm; }
+                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; font-family: Arial, sans-serif; }
+                        }
+                        body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+                    </style>
+                </head>
+                <body>
+                    ${htmlContent}
+                </body>
+                </html>
+            `);
+            docIframe.close();
+
+            setTimeout(() => {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+                setTimeout(() => { document.body.removeChild(iframe); }, 2000);
+            }, 500);
+        };
+
+        window.printAdminQrCard = () => {
+            try {
+                const studentId = document.getElementById('detail-student-id').value;
+                const s = window.students.find(st => st.id === studentId); if(!s) return;
+                
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${s.id}`;
+                const name = s.name; 
+                const belt = s.belt || "Faixa Branca"; 
+                const plan = window.getPlanInfo(s.plan).short || "Plano";
+                
+                let photoHtml = s.photoBase64 ? `<img src="${s.photoBase64}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : `<span style="font-size: 24px; font-weight: bold; color: #9ca3af; line-height: 70px;">${String(name).charAt(0).toUpperCase()}</span>`;
+                
+                const htmlContent = `
+                    <div style="width: 6.5cm; height: 10.5cm; border: 2px solid #1B1B1B; border-radius: 12px; margin: 0 auto; text-align: center; font-family: 'Arial', sans-serif; overflow: hidden; background: #fff; position: relative; box-sizing: border-box; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                        <div style="background-color: #1B1B1B; color: #fff; padding: 12px 10px; font-weight: bold; text-transform: uppercase; font-size: 13px; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                            <img src="https://iili.io/qC543c7.png" style="height: 22px;"> TANQUE TEAM
+                        </div>
+                        <img src="https://iili.io/qC543c7.png" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; opacity: 0.05; pointer-events: none; filter: grayscale(100%);">
+                        <div style="padding: 15px; display: flex; flex-direction: column; align-items: center; height: calc(100% - 46px); box-sizing: border-box; position: relative; z-index: 10;">
+                            <div style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid #D90429; margin-bottom: 8px; margin-top: 10px; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center;">
+                                ${photoHtml}
+                            </div>
+                            <h4 style="margin: 0 0 4px 0; font-size: 15px; font-weight: 800; text-transform: uppercase; color: #1B1B1B; line-height: 1.1;">${name}</h4>
+                            <p style="margin: 0 0 2px 0; color: #D90429; font-size: 11px; font-weight: 900; text-transform: uppercase;">${belt}</p>
+                            <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${plan}</p>
+                            <div style="border: 1px solid #e5e7eb; padding: 4px; border-radius: 8px; background: white; margin-top: auto;">
+                                <img src="${qrUrl}" style="width: 110px; height: 110px; display: block;">
+                            </div>
+                            <p style="margin: 8px 0 0 0; font-size: 8px; color: #9ca3af; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px;">Apresente no Check-in</p>
+                        </div>
+                    </div>
+                `;
+                
+                window.printHtmlContent(htmlContent, "Carteirinha_TanqueTeam");
+            } catch(e) {
+                console.error("Erro imprimir carteirinha", e);
+            }
+        };
+
+    </script>
 </body>
 </html>
