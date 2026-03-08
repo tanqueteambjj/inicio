@@ -4,27 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tanque Team | Painel Administrativo</title>
-    
     <link rel="icon" href="https://iili.io/qC543c7.png" type="image/png">
     
-    <!-- FOUC Script: Previne ecrã branco antes de aplicar o modo escuro -->
     <script>
         if (localStorage.getItem('tanque_theme') === 'dark' || (!('tanque_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
         }
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- EmailJS SDK -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    
-    <!-- Leitor de QR Code HTML5 -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <script>
@@ -32,13 +22,8 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    colors: {
-                        brand: { red: '#D90429', dark: '#1B1B1B', gray: '#2B2D42', light: '#EDF2F4' }
-                    },
-                    fontFamily: {
-                        sans: ['Roboto', 'sans-serif'],
-                        display: ['Oswald', 'sans-serif'],
-                    }
+                    colors: { brand: { red: '#D90429', dark: '#1B1B1B' } },
+                    fontFamily: { sans: ['Roboto', 'sans-serif'], display: ['Oswald', 'sans-serif'] }
                 }
             }
         }
@@ -47,332 +32,153 @@
     <style>
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-
-        .card-active {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border-bottom-width: 4px;
-        }
-
-        .print-only-element { display: none !important; }
-
-        @media print {
-            @page { margin: 15mm; size: A4 portrait; }
-            html, body { height: auto !important; min-height: 100% !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; background-color: #fff !important; color: #000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            body > *:not(.print-only-element) { display: none !important; }
-            
-            body.printing-progress #printable-progress, body.printing-qr #print-only-qr { 
-                display: block !important; position: static !important; width: 100% !important; height: auto !important; visibility: visible !important; background: #fff !important; color: #000 !important; margin: 0 !important; padding: 0 !important;
-            }
-            body.printing-progress #printable-progress *, body.printing-qr #print-only-qr * { visibility: visible !important; color: #000 !important; }
-            
-            body.printing-qr #print-only-qr { display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: flex-start !important; padding: 2cm 0 !important; }
-            
-            table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 15px; page-break-inside: auto; }
-            tr { page-break-inside: avoid; page-break-after: auto; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; color: black; }
-            th { background-color: #f3f3f3 !important; font-weight: bold; border-bottom: 2px solid #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            p, div { orphans: 3; widows: 3; }
-            h1, h2, h3, h4 { page-break-after: avoid; }
-            .page-break-inside-avoid { page-break-inside: avoid; break-inside: avoid; }
-            .no-print { display: none !important; }
-        }
+        .card-active { border-bottom: 4px solid #D90429; transform: translateY(-2px); }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 font-sans antialiased h-screen flex overflow-hidden text-gray-800 dark:text-gray-200 transition-colors duration-300">
-
-    <!-- Mobile Sidebar Overlay -->
-    <div id="mobile-sidebar-overlay" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden backdrop-blur-sm transition-opacity" onclick="window.toggleMobileMenu()"></div>
+<body class="bg-gray-100 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 h-screen flex overflow-hidden">
 
     <!-- Sidebar -->
-    <aside id="sidebar-menu" class="fixed md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 w-64 bg-brand-dark text-white flex flex-col shadow-2xl z-40 transition-transform duration-300 ease-in-out no-print h-full border-r border-gray-800">
-        <div class="p-6 flex items-center justify-center border-b border-gray-800 relative">
-            <img src="https://iili.io/qC543c7.png" alt="Logo" class="h-10 w-auto mr-3">
-            <span class="font-display font-bold text-lg tracking-wider text-brand-red">ADMIN</span>
-            <button onclick="window.toggleMobileMenu()" class="md:hidden absolute top-4 right-4 text-gray-400 hover:text-white focus:outline-none">
-                <i class="fa-solid fa-times text-xl"></i>
-            </button>
+    <aside id="sidebar-menu" class="fixed md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 w-64 bg-brand-dark text-white flex flex-col z-40 transition-transform duration-300 border-r border-gray-800">
+        <div class="p-6 border-b border-gray-800 flex items-center gap-3">
+            <img src="https://iili.io/qC543c7.png" class="h-8">
+            <span class="font-display font-bold text-xl text-brand-red">ADMIN</span>
         </div>
-        <div class="px-4 mt-6">
-            <button onclick="window.openCheckinModal()" class="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg shadow-md transition-transform transform hover:-translate-y-1">
-                <i class="fa-solid fa-camera"></i> Check-in (Leitor)
-            </button>
-        </div>
-        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-            <a href="#" onclick="window.switchMainView('students')" id="nav-students" class="flex items-center px-4 py-3 bg-brand-red text-white rounded-lg shadow-md transition-all font-bold">
-                <i class="fa-solid fa-users w-6"></i> <span class="ml-2">Alunos</span>
-            </a>
-            <a href="#" onclick="window.switchMainView('experimental')" id="nav-experimental" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
-                <i class="fa-solid fa-fire w-6"></i> <span class="ml-2">Aulas Exp.</span>
-            </a>
-            <a href="#" onclick="window.switchMainView('financial')" id="nav-financial" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
-                <i class="fa-solid fa-file-invoice-dollar w-6"></i> <span class="ml-2">Financeiro</span>
-            </a>
-            <a href="#" onclick="window.switchMainView('notices')" id="nav-notices" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
-                <i class="fa-solid fa-bullhorn w-6"></i> <span class="ml-2">Mural de Avisos</span>
-            </a>
+        <nav class="flex-1 p-4 space-y-2">
+            <button onclick="window.switchMainView('students')" id="nav-students" class="w-full flex items-center px-4 py-3 bg-brand-red rounded-lg font-bold"><i class="fa-solid fa-users w-6"></i> Alunos</button>
+            <button onclick="window.switchMainView('experimental')" id="nav-experimental" class="w-full flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 rounded-lg font-bold"><i class="fa-solid fa-fire w-6"></i> Aulas Exp.</button>
+            <button onclick="window.switchMainView('financial')" id="nav-financial" class="w-full flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 rounded-lg font-bold"><i class="fa-solid fa-file-invoice-dollar w-6"></i> Financeiro</button>
+            <button onclick="window.switchMainView('notices')" id="nav-notices" class="w-full flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 rounded-lg font-bold"><i class="fa-solid fa-bullhorn w-6"></i> Mural</button>
         </nav>
         <div class="p-4 border-t border-gray-800">
-            <button onclick="window.handleLogout()" class="flex items-center w-full px-4 py-2 text-red-400 hover:text-red-300 transition font-bold">
-                <i class="fa-solid fa-right-from-bracket w-6"></i> <span class="ml-2">Sair</span>
-            </button>
+            <button onclick="window.toggleTheme()" class="w-full py-2 mb-2 text-yellow-500"><i class="fa-solid fa-sun"></i> Alternar Tema</button>
+            <button onclick="window.handleLogout()" class="w-full py-2 text-red-500 font-bold"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
         </div>
     </aside>
 
-    <!-- Main Content -->
-    <div id="admin-dashboard" class="flex-1 flex flex-col h-full overflow-hidden relative w-full">
-        <!-- Topbar -->
-        <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 md:px-6 z-10 no-print shrink-0 transition-colors duration-300">
-            <div class="flex items-center md:hidden gap-3">
-                <button onclick="window.toggleMobileMenu()" class="text-brand-dark dark:text-white hover:text-brand-red focus:outline-none text-2xl transition"><i class="fa-solid fa-bars"></i></button>
-                <img src="https://iili.io/qC543c7.png" class="h-8 w-auto filter dark:brightness-200">
+    <!-- Main -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <header class="h-16 bg-white dark:bg-gray-800 shadow flex items-center justify-between px-6 border-b dark:border-gray-700">
+            <button onclick="window.toggleMobileMenu()" class="md:hidden text-2xl"><i class="fa-solid fa-bars"></i></button>
+            <div class="relative w-96 hidden md:block">
+                <input type="text" id="searchInput" onkeyup="window.filterTable()" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 rounded-full border dark:bg-gray-700 dark:border-gray-600 outline-none focus:ring-2 focus:ring-brand-red">
+                <i class="fa-solid fa-search absolute left-4 top-3 text-gray-400"></i>
             </div>
-            <div class="hidden md:flex relative w-96">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-search"></i></span>
-                <input type="text" id="searchInput" onkeyup="window.filterTable()" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border dark:border-gray-600 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red transition-colors">
-            </div>
-            <div class="flex items-center gap-3">
-                <button onclick="window.toggleTheme()" class="text-gray-400 hover:text-brand-red dark:text-yellow-400 dark:hover:text-yellow-300 focus:outline-none text-xl transition-colors w-10 h-10 flex items-center justify-center">
-                    <i class="fa-solid fa-moon" id="theme-icon"></i>
-                </button>
-                <button onclick="window.openCheckinModal()" class="md:hidden w-10 h-10 flex items-center justify-center bg-green-600 text-white rounded-full shadow-lg"><i class="fa-solid fa-camera"></i></button>
-                <span class="text-sm font-bold text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400 px-3 py-1 rounded-full hidden md:block border border-red-200 dark:border-red-800"><i class="fa-solid fa-shield-halved mr-1"></i> Painel Administrativo</span>
-                <div class="hidden md:flex w-8 h-8 rounded-full bg-brand-red text-white items-center justify-center font-bold shadow-sm">A</div>
-            </div>
+            <button onclick="window.openCheckinModal()" class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2"><i class="fa-solid fa-camera"></i> <span class="hidden md:block">Check-in</span></button>
         </header>
 
-        <!-- Content Area -->
-        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 relative">
-            
-            <!-- VIEW: ALUNOS -->
+        <main class="flex-1 overflow-y-auto p-6">
+            <!-- VIEW ALUNOS -->
             <div id="view-students" class="animate-fade-in">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 stats-container">
-                    <div id="card-all" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-blue-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 transition-all card-active" onclick="window.switchTab('all')">
-                        <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-blue-500 pointer-events-none"><i class="fa-solid fa-users"></i></div>
-                        <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Total Ativos</p>
-                        <p class="text-3xl font-bold text-gray-800 dark:text-white" id="stat-total">0</p>
-                    </div>
-                    <div id="card-kids" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-brand-red border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-red-50 dark:hover:bg-gray-700 transition-all" onclick="window.switchTab('kids')">
-                        <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-brand-red pointer-events-none"><i class="fa-solid fa-child"></i></div>
-                        <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Infantil (Ativos)</p>
-                        <p class="text-3xl font-bold text-gray-800 dark:text-white" id="stat-infantil">0</p>
-                    </div>
-                    <div id="card-adults" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-green-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-green-50 dark:hover:bg-gray-700 transition-all" onclick="window.switchTab('adults')">
-                        <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-green-500 pointer-events-none"><i class="fa-solid fa-user"></i></div>
-                        <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Adulto/Admin</p>
-                        <p class="text-3xl font-bold text-gray-800 dark:text-white" id="stat-adulto">0</p>
-                    </div>
-                    <div id="card-archived" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-gray-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-all" onclick="window.switchTab('archived')">
-                        <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-gray-500 pointer-events-none"><i class="fa-solid fa-box-archive"></i></div>
-                        <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Arquivo</p>
-                        <p class="text-3xl font-bold text-gray-800 dark:text-white" id="stat-archived">0</p>
-                    </div>
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold uppercase font-display">Gestão de Alunos</h2>
+                    <button onclick="window.openAdminRegisterModal()" class="bg-brand-red text-white px-4 py-2 rounded font-bold">+ Novo Aluno</button>
                 </div>
-
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex justify-between items-center no-print flex-wrap gap-2">
-                        <div class="flex items-center gap-4">
-                            <h3 class="font-bold text-gray-700 dark:text-gray-200 uppercase text-sm flex items-center gap-2">
-                                <span id="list-title">Lista de Alunos</span>
-                                <span class="bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 py-0.5 px-2 rounded-full text-xs" id="list-count">0</span>
-                            </h3>
-                            <div id="bulk-actions" class="hidden flex items-center gap-2 animate-fade-in">
-                                <button onclick="window.archiveSelectedStudents()" id="btn-bulk-archive" class="flex items-center gap-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded text-xs font-bold hover:bg-gray-300 dark:hover:bg-gray-500 transition border border-gray-300 dark:border-gray-500"><i class="fa-solid fa-box-archive"></i> Arquivar (<span id="selected-count-archive">0</span>)</button>
-                                <button onclick="window.deleteSelectedStudents()" id="btn-bulk-delete" class="hidden flex items-center gap-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 dark:hover:bg-red-800 transition border border-red-300 dark:border-red-700"><i class="fa-solid fa-trash"></i> Excluir (<span id="selected-count-delete">0</span>)</button>
-                            </div>
-                        </div>
-                        <div class="flex gap-2">
-                             <button onclick="window.openAdminRegisterModal()" class="bg-brand-red text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-red-700 shadow-sm transition transform active:scale-95"><i class="fa-solid fa-plus mr-1"></i> NOVO ALUNO</button>
-                             <button onclick="window.loadData()" class="text-gray-500 dark:text-gray-300 hover:text-black dark:hover:text-white text-sm flex items-center gap-1 bg-white dark:bg-gray-600 border dark:border-gray-500 px-3 py-1.5 rounded shadow-sm"><i class="fa-solid fa-rotate" id="icon-refresh"></i> Atualizar</button>
-                        </div>
-                    </div>
-                    
-                    <div class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-wrap gap-4 items-center text-sm no-print">
-                        <div class="w-full md:hidden relative mb-2">
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-search"></i></span>
-                            <input type="text" id="searchInputMobile1" onkeyup="window.filterTable()" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red transition">
-                        </div>
-                        <span class="font-bold text-gray-500 dark:text-gray-400"><i class="fa-solid fa-filter"></i> Filtros:</span>
-                        <select id="sort-order" onchange="window.filterTable()" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-1.5 text-gray-700 dark:text-gray-300 focus:outline-none focus:border-brand-red bg-gray-50 dark:bg-gray-700 font-medium">
-                            <option value="recent">⏱️ Mais Recentes</option><option value="az">🔤 Ordem Alfabética (A-Z)</option><option value="za">🔤 Ordem Alfabética (Z-A)</option>
-                        </select>
-                        <select id="filter-belt" onchange="window.filterTable()" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-1.5 text-gray-700 dark:text-gray-300 focus:outline-none focus:border-brand-red bg-gray-50 dark:bg-gray-700 font-medium">
-                            <option value="">🥋 Todas as Faixas</option><option value="branca">Branca</option><option value="cinza">Cinza</option><option value="amarela">Amarela</option><option value="laranja">Laranja</option><option value="verde">Verde</option><option value="azul">Azul</option><option value="roxa">Roxa</option><option value="marrom">Marrom</option><option value="preta">Preta</option>
-                        </select>
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider" id="table-headers"></tr>
-                            </thead>
-                            <tbody id="students-table-body" class="text-sm text-gray-700 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
-                                <tr><td colspan="7" class="px-6 py-4 text-center">A carregar dados...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 dark:bg-gray-700 text-xs uppercase text-gray-500">
+                            <tr>
+                                <th class="px-6 py-4">Aluno</th>
+                                <th class="px-6 py-4">Faixa</th>
+                                <th class="px-6 py-4 text-center">Status</th>
+                                <th class="px-6 py-4 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="students-table-body" class="divide-y dark:divide-gray-700"></tbody>
+                    </table>
                 </div>
             </div>
 
-            <!-- VIEW: FINANCEIRO -->
+            <!-- VIEW FINANCEIRO -->
             <div id="view-financial" class="hidden animate-fade-in">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border-l-4 border-green-500">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Recebido (Mês Atual)</p>
-                        <p class="text-2xl font-bold text-gray-800 dark:text-white" id="fin-stat-paid">R$ 0,00</p>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border-l-4 border-green-500 shadow">
+                        <p class="text-xs font-bold text-gray-400 uppercase">Recebido</p>
+                        <p id="fin-stat-paid" class="text-2xl font-bold">R$ 0,00</p>
                     </div>
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border-l-4 border-red-500">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Pendente</p>
-                        <p class="text-2xl font-bold text-gray-800 dark:text-white" id="fin-stat-pending">R$ 0,00</p>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border-l-4 border-red-500 shadow">
+                        <p class="text-xs font-bold text-gray-400 uppercase">Pendente</p>
+                        <p id="fin-stat-pending" class="text-2xl font-bold">R$ 0,00</p>
                     </div>
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Total Esperado</p>
-                        <p class="text-2xl font-bold text-gray-800 dark:text-white" id="fin-stat-total">R$ 0,00</p>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border-l-4 border-blue-500 shadow">
+                        <p class="text-xs font-bold text-gray-400 uppercase">Total Esperado</p>
+                        <p id="fin-stat-total" class="text-2xl font-bold">R$ 0,00</p>
                     </div>
                 </div>
-
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex justify-between items-center">
-                        <h3 class="font-bold text-gray-700 dark:text-gray-200 uppercase text-sm"><i class="fa-solid fa-sack-dollar mr-2 text-green-600"></i> Gestão de Mensalidades</h3>
-                        <button onclick="window.loadData()" class="text-xs bg-white dark:bg-gray-600 border px-3 py-1.5 rounded shadow-sm hover:bg-gray-100 transition"><i class="fa-solid fa-rotate"></i> Atualizar</button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider">
-                                    <th class="px-6 py-3 font-semibold">Aluno</th>
-                                    <th class="px-6 py-3 font-semibold">Plano / Valor</th>
-                                    <th class="px-6 py-3 font-semibold text-center">Status</th>
-                                    <th class="px-6 py-3 font-semibold text-center">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="financial-table-body" class="text-sm divide-y divide-gray-100 dark:divide-gray-700 text-gray-700 dark:text-gray-300">
-                                <tr><td colspan="4" class="px-6 py-4 text-center italic">Carregando dados financeiros...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 dark:bg-gray-700 text-xs uppercase">
+                            <tr>
+                                <th class="px-6 py-4">Aluno</th>
+                                <th class="px-6 py-4">Plano</th>
+                                <th class="px-6 py-4 text-center">Status</th>
+                                <th class="px-6 py-4 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="financial-table-body" class="divide-y dark:divide-gray-700"></tbody>
+                    </table>
                 </div>
             </div>
 
-            <!-- VIEW: AULA EXPERIMENTAL -->
+            <!-- VIEW EXPERIMENTAL -->
             <div id="view-experimental" class="hidden animate-fade-in">
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex justify-between items-center">
-                        <div>
-                            <h3 class="font-bold text-gray-800 dark:text-white uppercase text-lg"><i class="fa-solid fa-fire text-yellow-500 mr-2"></i> Gestão de Aulas Experimentais</h3>
-                        </div>
-                        <button onclick="window.loadExperimentalData()" class="text-gray-500 dark:text-gray-300 hover:text-black dark:hover:text-white text-sm bg-white dark:bg-gray-600 border dark:border-gray-500 px-3 py-1.5 rounded shadow-sm"><i class="fa-solid fa-rotate"></i> Atualizar</button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider">
-                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Data / Hora</th>
-                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Nome do Visitante</th>
-                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Contato</th>
-                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Status</th>
-                                    <th class="px-6 py-3 border-b dark:border-gray-600 text-center font-semibold no-print-col">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="experimental-table-body" class="text-sm text-gray-700 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
-                                <tr><td colspan="5" class="px-6 py-4 text-center">A carregar dados...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <h2 class="text-2xl font-bold uppercase font-display mb-6">Aulas Experimentais</h2>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 dark:bg-gray-700 text-xs uppercase">
+                            <tr>
+                                <th class="px-6 py-4">Visitante</th>
+                                <th class="px-6 py-4">Data/Hora</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="experimental-table-body" class="divide-y dark:divide-gray-700"></tbody>
+                    </table>
                 </div>
             </div>
-
-            <!-- VIEW: MURAL DE AVISOS -->
-            <div id="view-notices" class="hidden animate-fade-in">
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-t-4 border-yellow-500 max-w-5xl mx-auto border border-gray-200 dark:border-gray-700">
-                    <div class="flex justify-between items-center mb-6">
-                        <div>
-                            <h3 class="font-display text-xl font-bold text-gray-800 dark:text-white"><i class="fa-solid fa-bullhorn mr-2 text-yellow-500"></i> Mural de Avisos</h3>
-                        </div>
-                        <button onclick="window.openNoticeModal()" class="bg-yellow-500 hover:bg-yellow-600 text-brand-dark px-4 py-2 rounded text-sm font-bold shadow-sm transition"><i class="fa-solid fa-plus mr-1"></i> Novo Aviso</button>
-                    </div>
-
-                    <div id="admin-birthdays-widget" class="mb-6 bg-gradient-to-r from-blue-50 dark:from-blue-900/30 to-blue-100 dark:to-blue-800/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 shadow-sm hidden">
-                         <h4 class="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-3"><i class="fa-solid fa-cake-candles text-blue-500"></i> Aniversariantes do Mês (<span id="birthday-month-name"></span>)</h4>
-                         <div id="birthday-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
-                    </div>
-                                        
-                    <div id="admin-notices-list" class="space-y-4">
-                        <div class="text-center py-8 text-gray-400 dark:text-gray-500 italic text-sm">A carregar avisos...</div>
-                    </div>
-                </div>
-            </div>
-
         </main>
     </div>
 
-    <!-- MODAIS -->
-
-    <!-- Modal: Pagamento Financeiro -->
-    <div id="payment-modal" class="fixed inset-0 z-[100] hidden bg-black/60 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-md animate-fade-in border-t-4 border-green-600">
-            <div class="px-6 py-4 border-b dark:border-gray-600 flex justify-between items-center">
-                <h3 class="font-bold text-gray-800 dark:text-white">Registrar Pagamento</h3>
-                <button onclick="window.closePaymentModal()" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-times"></i></button>
+    <!-- MODAL: NOVO ALUNO (CORRIGIDO) -->
+    <div id="admin-register-modal" class="fixed inset-0 z-[100] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 border-t-4 border-brand-red">
+            <h3 class="text-xl font-bold mb-4 uppercase">Novo Cadastro de Aluno</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><label class="text-xs font-bold text-gray-500">Nome</label><input type="text" id="reg-name" class="w-full border rounded p-2 dark:bg-gray-700"></div>
+                <div><label class="text-xs font-bold text-gray-500">Nascimento</label><input type="text" id="reg-dob" placeholder="DD/MM/AAAA" class="w-full border rounded p-2 dark:bg-gray-700"></div>
+                <div><label class="text-xs font-bold text-gray-500">Plano</label>
+                    <select id="reg-plan" class="w-full border rounded p-2 dark:bg-gray-700">
+                        <option value="adulto-mensal">Adulto Mensal</option>
+                        <option value="infantil-mensal">Infantil Mensal</option>
+                        <option value="combo-familia">Combo Família</option>
+                    </select>
+                </div>
+                <div><label class="text-xs font-bold text-gray-500">WhatsApp</label><input type="text" id="reg-phone" class="w-full border rounded p-2 dark:bg-gray-700"></div>
             </div>
-            <div class="p-6 space-y-4">
-                <input type="hidden" id="pay-student-id">
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase mb-1">Aluno</p>
-                    <p id="pay-student-name" class="text-lg font-bold text-gray-800 dark:text-white">--</p>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Valor Recebido</label>
-                        <input type="number" id="pay-amount" step="0.01" class="w-full border rounded p-2 dark:bg-gray-700 dark:text-white focus:border-green-500 outline-none" placeholder="0.00">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Método</label>
-                        <select id="pay-method" class="w-full border rounded p-2 dark:bg-gray-700 dark:text-white focus:border-green-500 outline-none">
-                            <option value="Pix">Pix</option>
-                            <option value="Dinheiro">Dinheiro</option>
-                            <option value="Cartão">Cartão</option>
-                        </select>
-                    </div>
-                </div>
-                <button onclick="window.confirmPayment()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-md transition transform active:scale-95">Confirmar Recebimento</button>
+            <div class="mt-6 flex justify-end gap-2">
+                <button onclick="document.getElementById('admin-register-modal').classList.add('hidden')" class="px-4 py-2 text-gray-500">Cancelar</button>
+                <button onclick="window.saveAdminNewStudent()" class="px-6 py-2 bg-brand-red text-white rounded font-bold">Salvar Aluno</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Leitor Check-in -->
-    <div id="checkin-modal" class="fixed inset-0 z-[100] hidden bg-brand-dark flex-col justify-center items-center p-4">
-        <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-2xl flex flex-col animate-fade-in">
-            <div class="bg-green-600 px-6 py-4 flex justify-between items-center text-white shrink-0">
-                <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-camera"></i> Leitor de Check-in</h3>
-                <button onclick="window.closeCheckinModal()" class="hover:text-green-200 text-xl"><i class="fa-solid fa-times"></i></button>
+    <!-- MODAL: CHECK-IN (CAMERA) -->
+    <div id="checkin-modal" class="fixed inset-0 z-[100] hidden bg-black flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-lg rounded-xl overflow-hidden shadow-2xl">
+            <div class="bg-green-600 p-4 text-white flex justify-between">
+                <h3 class="font-bold"><i class="fa-solid fa-camera"></i> LEITOR DE QR CODE</h3>
+                <button onclick="window.closeCheckinModal()"><i class="fa-solid fa-times"></i></button>
             </div>
-            <div class="bg-gray-100 dark:bg-gray-700 p-4 shrink-0 border-b border-gray-200 dark:border-gray-600">
-                <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase mb-1">Selecione a Turma</label>
-                <select id="checkin-class-selector" class="w-full border-2 border-green-500 rounded-lg p-3 font-bold bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:outline-none">
-                    <option value="Turma Mista (Livre)">Geral / Mista</option>
-                    <option value="Adulto - 10h30">Adulto - 10h30</option>
-                    <option value="Adulto - 12h30">Adulto - 12h30</option>
-                    <option value="Adulto - 18h00">Adulto - 18h00</option>
-                    <option value="Adulto - 21h00">Adulto - 21h00</option>
-                    <option value="Infantil - 15h00">Infantil - 15h00</option>
-                    <option value="Infantil - 16h30">Infantil - 16h30</option>
-                </select>
-            </div>
-            <div class="p-6 flex-1 flex flex-col items-center bg-white dark:bg-gray-800">
-                <div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-4 border-gray-200 dark:border-gray-700 shadow-inner mb-4" style="min-height: 250px;"></div>
-                <div id="checkin-result" class="text-center py-4 w-full rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 font-medium text-gray-600 dark:text-gray-300 min-h-[100px] flex flex-col items-center justify-center transition-all duration-300">
-                    <i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o QR Code...
-                </div>
-            </div>
+            <div id="reader" class="w-full bg-black" style="min-height: 300px;"></div>
+            <div id="checkin-result" class="p-6 text-center font-bold text-gray-500">Aponte o QR Code para a câmera</div>
         </div>
     </div>
 
-    <!-- Script de Lógica do Sistema -->
+    <!-- Firebase e Lógica -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, addDoc, updateDoc, deleteDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
@@ -383,143 +189,158 @@
             appId: "1:410605992451:web:f0f341f4594fe75f376c36"
         };
 
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        window.db = db;
+
         const APP_ID = "tanqueteam-bjj";
-        let app, db, auth;
         window.students = [];
-        window.currentTab = 'all';
+        window.experimental = [];
         window.currentView = 'students';
-        window.db = null;
+        let html5QrCode = null;
 
-        window.PLAN_DICT = {
-            'infantil-mensal': { price: 189.90, short: 'Infantil Mensal' },
-            'infantil-trimestral': { price: 168.90, short: 'Infantil Trimestral' },
-            'infantil-semestral': { price: 157.90, short: 'Infantil Semestral' },
-            'adulto-mensal': { price: 168.90, short: 'Adulto Mensal' },
-            'adulto-trimestral': { price: 147.90, short: 'Adulto Trimestral' },
-            'adulto-semestral': { price: 126.90, short: 'Adulto Semestral' },
-            'combo-dupla': { price: 250.00, short: 'Combo Dupla' },
-            'combo-casal': { price: 220.00, short: 'Combo Casal' },
-            'combo-familia': { price: 362.02, short: 'Combo Família' },
-            'administracao': { price: 0.00, short: 'Admin' },
-            'dependente': { price: 0.00, short: 'Dependente' }
+        // --- INICIALIZAR ---
+        signInAnonymously(auth).then(() => {
+            window.loadData();
+            window.loadExperimentalData();
+        });
+
+        window.loadData = async () => {
+            const snap = await getDocs(collection(db, 'artifacts', APP_ID, 'public', 'data', 'students'));
+            window.students = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            window.renderTable();
+            if(window.currentView === 'financial') window.renderFinancialTable();
         };
 
-        window.getPlanInfo = (planKey) => window.PLAN_DICT[planKey] || { price: 0, short: String(planKey||'').toUpperCase() };
-
-        // --- INICIALIZAÇÃO ---
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            window.db = db;
-            signInAnonymously(auth).then(() => {
-                window.loadData();
-            });
-        } catch(e) { console.error(e); }
-
-        window.loadData = async function() {
-            try {
-                const querySnapshot = await getDocs(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'));
-                window.students = [];
-                querySnapshot.forEach(doc => window.students.push({ id: doc.id, ...doc.data() }));
-                updateStats();
-                if(window.currentView === 'students') window.renderTable();
-                if(window.currentView === 'financial') window.renderFinancialTable();
-            } catch (error) { console.error(error); }
+        window.loadExperimentalData = async () => {
+            const snap = await getDocs(collection(db, 'artifacts', APP_ID, 'public', 'data', 'experimental'));
+            window.experimental = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            window.renderExperimentalTable();
         };
 
-        function updateStats() {
-            const total = window.students.filter(s => !s.archived).length;
-            document.getElementById('stat-total').innerText = total;
-            // Outros contadores simplificados...
-        }
-
-        // --- NAVEGAÇÃO ---
-        window.switchMainView = (viewName) => {
-            window.currentView = viewName;
-            ['students', 'notices', 'experimental', 'financial'].forEach(v => {
-                const el = document.getElementById('view-' + v);
-                if(el) el.classList.toggle('hidden', viewName !== v);
-                const nav = document.getElementById('nav-' + v);
-                if(nav) {
-                    if (v === viewName) { nav.classList.add('bg-brand-red', 'text-white'); nav.classList.remove('text-gray-400'); }
-                    else { nav.classList.remove('bg-brand-red', 'text-white'); nav.classList.add('text-gray-400'); }
-                }
-            });
-            if(viewName === 'students') window.renderTable();
-            if(viewName === 'financial') window.renderFinancialTable();
-        };
-
-        // --- FINANCEIRO ---
-        window.renderFinancialTable = () => {
-            const tbody = document.getElementById('financial-table-body');
-            if(!tbody) return;
+        // --- RENDERIZAR ALUNOS ---
+        window.renderTable = () => {
+            const tbody = document.getElementById('students-table-body');
             tbody.innerHTML = '';
-            let totalPaid = 0, totalPending = 0;
-
-            const activeStudents = window.students.filter(s => !s.archived);
-            activeStudents.forEach(s => {
-                const plan = window.getPlanInfo(s.plan);
-                const isPaid = s.paymentStatus === 'Em dia';
-                const isExempt = plan.price === 0;
-                
-                if (!isExempt) { if(isPaid) totalPaid += plan.price; else totalPending += plan.price; }
-
+            window.students.forEach(s => {
                 const tr = document.createElement('tr');
-                tr.className = "border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition";
-                
-                let statusBadge = isExempt ? '<span class="text-xs text-gray-400">ISENTO</span>' : 
-                                  (isPaid ? '<span class="px-2 py-1 bg-green-100 text-green-700 rounded text-[10px] font-bold">PAGO</span>' : 
-                                           '<span class="px-2 py-1 bg-red-100 text-red-700 rounded text-[10px] font-bold">PENDENTE</span>');
-
                 tr.innerHTML = `
                     <td class="px-6 py-4 font-bold">${s.name}</td>
-                    <td class="px-6 py-4"><span class="text-xs uppercase">${plan.short}</span><br>R$ ${plan.price.toFixed(2)}</td>
-                    <td class="px-6 py-4 text-center">${statusBadge}</td>
+                    <td class="px-6 py-4 text-xs">${s.belt || 'Branca'}</td>
                     <td class="px-6 py-4 text-center">
-                        ${(!isPaid && !isExempt) ? `<button onclick="window.openPaymentModal('${s.id}')" class="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold">PAGAR</button>` : '<i class="fa-solid fa-check text-green-500"></i>'}
+                        <span class="px-2 py-1 rounded text-[10px] font-bold ${s.enrollmentStatus === 'Ativo' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${s.enrollmentStatus || 'Ativo'}</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <button class="text-blue-500 hover:scale-110 px-2"><i class="fa-solid fa-eye"></i></button>
+                        <button class="text-orange-500 hover:scale-110 px-2"><i class="fa-solid fa-pen"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
-            document.getElementById('fin-stat-paid').innerText = `R$ ${totalPaid.toFixed(2)}`;
-            document.getElementById('fin-stat-pending').innerText = `R$ ${totalPending.toFixed(2)}`;
-            document.getElementById('fin-stat-total').innerText = `R$ ${(totalPaid + totalPending).toFixed(2)}`;
         };
 
-        window.openPaymentModal = (id) => {
-            const s = window.students.find(st => st.id === id);
-            if(!s) return;
-            document.getElementById('pay-student-id').value = id;
-            document.getElementById('pay-student-name').innerText = s.name;
-            document.getElementById('pay-amount').value = window.getPlanInfo(s.plan).price;
-            document.getElementById('payment-modal').classList.remove('hidden');
+        // --- RENDERIZAR EXPERIMENTAL ---
+        window.renderExperimentalTable = () => {
+            const tbody = document.getElementById('experimental-table-body');
+            tbody.innerHTML = '';
+            window.experimental.forEach(e => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-bold">${e.name}</td>
+                    <td class="px-6 py-4 text-xs">${e.date} às ${e.time}</td>
+                    <td class="px-6 py-4"><span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-[10px] font-bold">${e.status || 'Agendado'}</span></td>
+                    <td class="px-6 py-4 text-center"><button class="text-green-500 font-bold"><i class="fa-solid fa-user-plus"></i></button></td>
+                `;
+                tbody.appendChild(tr);
+            });
         };
 
-        window.closePaymentModal = () => document.getElementById('payment-modal').classList.add('hidden');
-
-        window.confirmPayment = async () => {
-            const id = document.getElementById('pay-student-id').value;
-            const amount = parseFloat(document.getElementById('pay-amount').value);
-            const method = document.getElementById('pay-method').value;
-            try {
-                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), {
-                    paymentStatus: 'Em dia',
-                    paymentHistory: arrayUnion({ amount, method, date: new Date().toISOString() })
-                });
-                alert("Pagamento registrado!"); window.closePaymentModal(); window.loadData();
-            } catch(e) { alert("Erro ao salvar."); }
+        // --- FINANCEIRO ---
+        window.PLAN_DICT = {
+            'adulto-mensal': 168.90, 'infantil-mensal': 189.90, 'combo-familia': 362.02
         };
 
-        // --- LOGOUT ---
-        window.handleLogout = () => { localStorage.removeItem('tanque_user_session'); window.location.href = "login.html"; };
+        window.renderFinancialTable = () => {
+            const tbody = document.getElementById('financial-table-body');
+            tbody.innerHTML = '';
+            let paid = 0, pending = 0;
+            window.students.forEach(s => {
+                const price = window.PLAN_DICT[s.plan] || 0;
+                const isPaid = s.paymentStatus === 'Em dia';
+                if(isPaid) paid += price; else pending += price;
 
-        // --- MODO ESCURO ---
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-bold">${s.name}</td>
+                    <td class="px-6 py-4 text-xs uppercase">${s.plan} (R$ ${price})</td>
+                    <td class="px-6 py-4 text-center">${isPaid ? '<span class="text-green-600 font-bold">PAGO</span>' : '<span class="text-red-600 font-bold">PENDENTE</span>'}</td>
+                    <td class="px-6 py-4 text-center"><button class="bg-green-600 text-white px-2 py-1 rounded text-xs">PAGAR</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('fin-stat-paid').innerText = `R$ ${paid.toFixed(2)}`;
+            document.getElementById('fin-stat-pending').innerText = `R$ ${pending.toFixed(2)}`;
+            document.getElementById('fin-stat-total').innerText = `R$ ${(paid + pending).toFixed(2)}`;
+        };
+
+        // --- MODAIS E AÇÕES ---
+        window.openAdminRegisterModal = () => document.getElementById('admin-register-modal').classList.remove('hidden');
+        
+        window.saveAdminNewStudent = async () => {
+            const name = document.getElementById('reg-name').value;
+            const plan = document.getElementById('reg-plan').value;
+            if(!name) return alert("Preencha o nome!");
+            
+            await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'students'), {
+                name, plan, enrollmentStatus: 'Ativo', paymentStatus: 'Pendente', registrationDate: new Date().toISOString()
+            });
+            document.getElementById('admin-register-modal').classList.add('hidden');
+            window.loadData();
+        };
+
+        // --- CAMERA CHECK-IN ---
+        window.openCheckinModal = () => {
+            document.getElementById('checkin-modal').classList.remove('hidden');
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
+                (decodedText) => {
+                    document.getElementById('checkin-result').innerText = "Check-in: " + decodedText;
+                    window.playBeep();
+                }, 
+                (err) => {}
+            ).catch(err => {
+                 alert("Não foi possível abrir a câmera. Verifique as permissões.");
+            });
+        };
+
+        window.closeCheckinModal = () => {
+            if(html5QrCode) html5QrCode.stop().then(() => html5QrCode.clear());
+            document.getElementById('checkin-modal').classList.add('hidden');
+        };
+
+        window.playBeep = () => {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            osc.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        };
+
+        // --- NAVEGAÇÃO ---
+        window.switchMainView = (v) => {
+            window.currentView = v;
+            ['students', 'experimental', 'financial', 'notices'].forEach(view => {
+                document.getElementById('view-' + view)?.classList.toggle('hidden', view !== v);
+                document.getElementById('nav-' + view)?.classList.toggle('bg-brand-red', view === v);
+                document.getElementById('nav-' + view)?.classList.toggle('text-white', view === v);
+            });
+            if(v === 'financial') window.renderFinancialTable();
+        };
+
         window.toggleTheme = () => {
             document.documentElement.classList.toggle('dark');
             localStorage.setItem('tanque_theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
         };
-
     </script>
 </body>
 </html>
