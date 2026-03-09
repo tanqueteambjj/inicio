@@ -480,7 +480,7 @@
     </div>
 
     <!-- QR Code Modal (Visualização no Ecrã apenas - Não é usada na impressão) -->
-    <div id="qr-modal" class="fixed inset-0 z-[80] hidden bg-black/80 items-center justify-center p-4 backdrop-blur-sm no-print">
+    <div id="qr-modal" class="fixed inset-0 z-[80] hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm no-print">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 text-center max-w-sm w-full animate-fade-in relative border-t-4 border-brand-red flex flex-col items-center">
             <button onclick="window.closeMyQrModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition text-xl z-20"><i class="fa-solid fa-times"></i></button>
             <h3 class="font-display font-bold text-xl mb-4 uppercase flex items-center justify-center gap-2 text-gray-800 dark:text-white">
@@ -523,7 +523,7 @@
     </div>
 
     <!-- Student History Modal -->
-    <div id="student-history-modal" class="fixed inset-0 z-[70] hidden bg-black/60 items-center justify-center p-4 backdrop-blur-sm no-print">
+    <div id="student-history-modal" class="fixed inset-0 z-[70] hidden flex bg-black/60 items-center justify-center p-4 backdrop-blur-sm no-print">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] border-t-4 border-blue-500 animate-fade-in">
             <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
                 <h3 class="font-bold text-lg text-gray-800 dark:text-white"><i class="fa-solid fa-clock-rotate-left text-blue-500 mr-2"></i> O Meu Histórico Financeiro</h3>
@@ -627,7 +627,13 @@
 
         // --- Utilitários ---
         function formatCurrency(val) {
-            return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            if (val === undefined || val === null || val === '') return 'R$ 0,00';
+            let num = val;
+            if (typeof val === 'string') {
+                num = parseFloat(val.replace(',', '.'));
+            }
+            if (isNaN(num)) return 'R$ 0,00';
+            return Number(num).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
         const PLAN_DICT = {
@@ -1200,6 +1206,77 @@
             });
         }
 
+        // Função corrigida para abrir o histórico de pagamentos sem erros
+        function formatDate(isoStr) { 
+            try { 
+                const d = new Date(isoStr); 
+                return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR'); 
+            } catch (e) { return '--'; } 
+        }
+
+        window.viewPaymentHistory = function() {
+            try {
+                const historyBody = document.getElementById('student-history-body');
+                const emptyState = document.getElementById('student-history-empty');
+                const modal = document.getElementById('student-history-modal');
+                
+                if (!modal || !historyBody || !emptyState) return;
+                
+                historyBody.innerHTML = '';
+                
+                let payHist = currentUserData.paymentHistory;
+                let histArray = [];
+                
+                if (payHist) {
+                    if (Array.isArray(payHist)) {
+                        histArray = [...payHist];
+                    } else if (typeof payHist === 'object') {
+                        histArray = Object.values(payHist);
+                    }
+                }
+                
+                if(histArray.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    emptyState.classList.add('flex');
+                } else {
+                    emptyState.classList.add('hidden');
+                    emptyState.classList.remove('flex');
+                    
+                    histArray.sort((a,b) => {
+                        let d1 = new Date(a.timestamp || a.date || 0).getTime();
+                        let d2 = new Date(b.timestamp || b.date || 0).getTime();
+                        return d2 - d1;
+                    });
+                    
+                    histArray.forEach(p => {
+                        const dateStr = formatDate(p.timestamp || p.date);
+                        const val = formatCurrency(p.amount);
+                        
+                        historyBody.innerHTML += `
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                                <td class="px-4 py-3 font-bold text-gray-800 dark:text-gray-200">${dateStr}</td>
+                                <td class="px-4 py-3 font-bold text-green-600 dark:text-green-400 text-right">${val}</td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } catch (err) {
+                console.error("Erro ao exibir histórico:", err);
+                alert("Ocorreu um erro ao tentar exibir o histórico.");
+            }
+        }
+
+        window.closeStudentHistoryModal = function() {
+            const modal = document.getElementById('student-history-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
         window.loadNotices = async function() {
             try {
                 const q = query(collection(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'notices'));
@@ -1554,301 +1631,6 @@
             }
         }
 
-        window.viewPaymentHistory = function() {
-            const historyBody = document.getElementById('student-history-body');
-            const emptyState = document.getElementById('student-history-empty');
-            
-            historyBody.innerHTML = '';
-            
-            if(!currentUserData.paymentHistory || currentUserData.paymentHistory.length === 0) {
-                emptyState.classList.remove('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                
-                let sortedHistory = [...currentUserData.paymentHistory].sort((a,b) => new Date(b.timestamp||b.date) - new Date(a.timestamp||a.date));
-                
-                sortedHistory.forEach(p => {
-                    const dateStr = formatDate(p.timestamp || p.date);
-                    const val = formatCurrency(p.amount);
-                    
-                    historyBody.innerHTML += `
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
-                            <td class="px-4 py-3 font-bold">${dateStr}</td>
-                            <td class="px-4 py-3 font-bold text-green-600 dark:text-green-400 text-right">${val}</td>
-                        </tr>
-                    `;
-                });
-            }
-
-            document.getElementById('student-history-modal').classList.remove('hidden');
-            document.getElementById('student-history-modal').classList.add('flex');
-        }
-
-        window.closeStudentHistoryModal = function() {
-            document.getElementById('student-history-modal').classList.add('hidden');
-            document.getElementById('student-history-modal').classList.remove('flex');
-        }
-
-        window.openMyQrModal = function() {
-            if(!currentUserData) return;
-            
-            document.getElementById('qr-student-name').innerText = currentUserData.name;
-            document.getElementById('qr-belt').innerText = currentUserData.belt || "Faixa Branca";
-            document.getElementById('qr-plan').innerText = PLAN_DICT[currentUserData.plan]?.short || "Plano";
-            
-            const qrImage = document.getElementById('qr-image');
-            const qrBlocked = document.getElementById('qr-blocked-wrapper');
-            const footerText = document.getElementById('qr-footer-text');
-
-            if(currentUserData.paymentStatus === 'Pendente') {
-                qrImage.parentElement.classList.add('hidden');
-                qrBlocked.classList.remove('hidden');
-                qrBlocked.classList.add('flex');
-                footerText.innerText = "BLOQUEADO PELA RECEPÇÃO";
-                footerText.classList.replace('text-gray-400', 'text-red-500');
-            } else {
-                qrImage.parentElement.classList.remove('hidden');
-                qrBlocked.classList.add('hidden');
-                qrBlocked.classList.remove('flex');
-                qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentUserData.id}`;
-                footerText.innerText = "Apresente no Check-in";
-                footerText.classList.replace('text-red-500', 'text-gray-400');
-            }
-
-            const photoImg = document.getElementById('qr-photo'); 
-            const photoPlaceholder = document.getElementById('qr-photo-placeholder');
-            if (currentUserData.photoBase64) { 
-                photoImg.src = currentUserData.photoBase64; 
-                photoImg.classList.remove('hidden'); 
-                photoPlaceholder.classList.add('hidden'); 
-            } else { 
-                photoImg.classList.add('hidden'); 
-                photoPlaceholder.classList.remove('hidden'); 
-                photoPlaceholder.innerText = currentUserData.name.charAt(0).toUpperCase(); 
-            }
-
-            document.getElementById('qr-modal').classList.remove('hidden');
-        }
-
-        window.closeMyQrModal = function() {
-            document.getElementById('qr-modal').classList.add('hidden');
-        }
-
-        window.printHtmlContent = function(htmlContent, titleStr) {
-            const iframe = document.createElement('iframe');
-            iframe.style.position = 'absolute';
-            iframe.style.width = '0px';
-            iframe.style.height = '0px';
-            iframe.style.border = 'none';
-            document.body.appendChild(iframe);
-
-            const docIframe = iframe.contentWindow.document;
-            docIframe.open();
-            docIframe.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>${titleStr}</title>
-                    <style>
-                        @media print {
-                            @page { 
-                                margin: 3cm 2cm 2cm 3cm; /* Margens ABNT: Superior 3cm, Esquerda 3cm, Inferior 2cm, Direita 2cm */
-                                size: A4 portrait;
-                            }
-                            body { 
-                                -webkit-print-color-adjust: exact; 
-                                print-color-adjust: exact; 
-                                font-family: 'Times New Roman', Times, serif; 
-                            }
-                        }
-                        body { font-family: 'Times New Roman', Times, serif; margin: 0; padding: 0; }
-                    </style>
-                </head>
-                <body>
-                    ${htmlContent}
-                </body>
-                </html>
-            `);
-            docIframe.close();
-
-            setTimeout(() => {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-                setTimeout(() => { document.body.removeChild(iframe); }, 2000);
-            }, 500);
-        };
-
-        window.printQrCard = function() {
-            if (!currentUserData) return;
-            window.closeMyQrModal();
-
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentUserData.id}`;
-            const name = currentUserData.name;
-            const belt = currentUserData.belt || "Faixa Branca";
-            const plan = PLAN_DICT[currentUserData.plan]?.short || "Plano";
-            
-            let photoHtml = '';
-            if (currentUserData.photoBase64) {
-                photoHtml = `<img src="${currentUserData.photoBase64}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
-            } else {
-                photoHtml = `<span style="font-size: 24px; font-weight: bold; color: #9ca3af; line-height: 70px;">${name.charAt(0).toUpperCase()}</span>`;
-            }
-
-            const htmlContent = `
-                <div style="width: 6.5cm; height: 10.5cm; border: 2px solid #1B1B1B; border-radius: 12px; margin: 0 auto; text-align: center; font-family: 'Arial', sans-serif; overflow: hidden; background: #fff; position: relative; box-sizing: border-box; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                    <!-- HEADER -->
-                    <div style="background-color: #1B1B1B; color: #fff; padding: 12px 10px; font-weight: bold; text-transform: uppercase; font-size: 13px; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-                        <img src="https://iili.io/qC543c7.png" style="height: 22px;"> 
-                        TANQUE TEAM
-                    </div>
-                    <!-- WATERMARK -->
-                    <img src="https://iili.io/qC543c7.png" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; opacity: 0.05; pointer-events: none; filter: grayscale(100%);">
-                    <div style="padding: 15px; display: flex; flex-direction: column; align-items: center; height: calc(100% - 46px); box-sizing: border-box; position: relative; z-index: 10;">
-                        <!-- PHOTO -->
-                        <div style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid #D90429; margin-bottom: 8px; margin-top: 10px; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center;">
-                            ${photoHtml}
-                        </div>
-                        <!-- INFO -->
-                        <h4 style="margin: 0 0 4px 0; font-size: 15px; font-weight: 800; text-transform: uppercase; color: #1B1B1B; line-height: 1.1;">${name}</h4>
-                        <p style="margin: 0 0 2px 0; color: #D90429; font-size: 11px; font-weight: 900; text-transform: uppercase;">${belt}</p>
-                        <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${plan}</p>
-                        <!-- QR CODE -->
-                        <div style="border: 1px solid #e5e7eb; padding: 4px; border-radius: 8px; background: white; margin-top: auto;">
-                            <img src="${qrUrl}" style="width: 110px; height: 110px; display: block;">
-                        </div>
-                        <p style="margin: 8px 0 0 0; font-size: 8px; color: #9ca3af; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px;">Apresente no Check-in</p>
-                    </div>
-                </div>
-            `;
-            
-            window.printHtmlContent(htmlContent, "Carteirinha_TanqueTeam");
-        }
-
-        window.printStudentContract = function() {
-            if (!currentUserData) return;
-            const s = currentUserData;
-            
-            const pInfo = PLAN_DICT[s.plan] || { short: String(s.plan||'').toUpperCase(), price: 0 };
-            let price = formatCurrency(pInfo.price);
-            let displayName = pInfo.short;
-
-            let formattedDob = '--/--/----';
-            if (s.dob) { 
-                if (s.dob.includes('-')) {
-                    const parts = s.dob.split('-');
-                    if (parts.length === 3) formattedDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
-                } else {
-                    formattedDob = s.dob;
-                }
-            }
-
-            let contratanteText = s.name || "NÃO INFORMADO";
-            if (s.guardian && s.guardian.trim() !== "") contratanteText = `${s.guardian} (Responsável Legal)`;
-            else if (s.titularName && s.titularName.trim() !== "") contratanteText = `${s.titularName} (Titular)`;
-
-            let beltInfo = ""; 
-            if(s.belt && !s.belt.includes("Branca - 0º") && !s.belt.includes("Iniciante")) beltInfo = `| Graduação: ${s.belt}`;
-            
-            let regDate = new Date(); 
-            if (s.registrationDate) { const parsed = new Date(s.registrationDate); if (!isNaN(parsed)) regDate = parsed; }
-            const printDateStr = regDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
-            
-            const isCombo = String(s.plan).includes('combo'); 
-            const isFidelity = String(s.plan).includes('semestral') || String(s.plan).includes('trimestral') || isCombo;
-            
-            let clauseNum = 3;
-            let clausesHtmlABNT = `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA 1ª – DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA 2ª – DO PLANO E DOS VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong style="text-transform: uppercase; text-decoration: underline;">${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong>${price}</strong>. As mensalidades deverão ser pagas pontualmente conforme a data de vencimento acordada no ato da matrícula.</p>`;
-
-            if (isFidelity) { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNum}ª – DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade correspondente à sua nomenclatura. O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>`; clauseNum++; } 
-            else { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNum}ª – DO CANCELAMENTO:</strong> O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.</p>`; clauseNum++; }
-            
-            if (isCombo) { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNum}ª – DAS REGRAS DO PLANO FAMÍLIA (COMBO):</strong> O pagamento das mensalidades é unificado e de inteira responsabilidade do CONTRATANTE titular. O cancelamento ou afastamento de um dos beneficiários dependentes não dá direito a desconto ou reembolso parcial, e reverte automaticamente o plano dos membros restantes para o valor da tabela individual vigente.</p>`; clauseNum++; }
-            
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNum}ª – DA INADIMPLÊNCIA:</strong> O atraso superior a 30 (trinta) dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e a cobrança dos valores devidos acrescidos de multa de 2% (dois por cento) e juros de mora legais.</p>`; clauseNum++;
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNum}ª – DA SAÚDE E APTIDÃO FÍSICA:</strong> O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate, isentando a ESCOLA de qualquer responsabilidade sobre moléstias pré-existentes não declaradas formalmente no ato desta matrícula.</p>`; clauseNum++;
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNum}ª – DAS REGRAS DE CONDUTA (DOJO KUN):</strong> É obrigatório o uso de uniforme (Kimono) estipulado pela escola, limpo e conservado. Atos de indisciplina, desrespeito à hierarquia, agressão fora do contexto do treino esportivo ou falta de higiene poderão acarretar na suspensão ou rescisão unilateral deste contrato por parte da ESCOLA, sem devolução de valores.</p>`; clauseNum++;
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 0.5cm; text-align: justify;"><strong>CLÁUSULA ${clauseNum}ª – DO DIREITO DE IMAGEM:</strong> O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da escola ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.</p>`;
-            
-            let dependentsHtmlABNT = '';
-            if (isCombo && window.myDependents && window.myDependents.length > 0) {
-                dependentsHtmlABNT = `<p style="text-indent: 1.25cm; margin-bottom: 0.2cm;"><strong>4. DEPENDENTES VINCULADOS AO PLANO:</strong></p><ul style="padding-left: 2.5cm; margin-bottom: 0.5cm;">`;
-                window.myDependents.forEach(d => {
-                    let dDob = '--/--/----';
-                    if (d.dob) { 
-                        if(d.dob.includes('-')) {
-                            const parts = d.dob.split('-');
-                            if(parts.length===3) dDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
-                        } else dDob = d.dob;
-                    }
-                    dependentsHtmlABNT += `<li style="margin-bottom: 0.2cm;"><strong>${d.name}</strong> - Nasc: ${dDob} | Parentesco: ${d.parentesco || '-'} | Graduação: ${d.belt || 'Branca'}</li>`;
-                });
-                dependentsHtmlABNT += `</ul>`;
-            }
-
-            const signName = s.guardian || s.titularName || s.name || "CONTRATANTE";
-
-            const contractHtml = `
-                <div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.5; color: #000; max-width: 100%; margin: 0; padding: 0; text-align: justify;">
-                    
-                    <!-- Logo no topo centralizada e Nome abaixo em maiúsculo -->
-                    <div style="text-align: center; margin-bottom: 1cm;">
-                        <img src="https://iili.io/qC543c7.png" alt="Logo" style="height: 3cm; margin-bottom: 0.2cm; filter: grayscale(100%);">
-                        <h1 style="font-weight: bold; text-transform: uppercase; font-size: 16pt; margin: 0;">TANQUE TEAM BJJ</h1>
-                    </div>
-                    
-                    <!-- Cabeçalho abaixo com alinhamento à esquerda -->
-                    <div style="text-align: left; margin-bottom: 0.5cm; font-size: 10pt;">
-                        <p style="margin: 0;"><strong>Razão Social:</strong> TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA</p>
-                        <p style="margin: 0;"><strong>CNPJ:</strong> 00.000.000/0001-00 | <strong>Tel:</strong> (91) 99819-2610</p>
-                        <p style="margin: 0;"><strong>Endereço:</strong> Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</p>
-                    </div>
-                    
-                    <!-- Linha -->
-                    <hr style="border: none; border-top: 1px solid #000; margin-bottom: 1cm;">
-                    
-                    <!-- Título Maiúsculo, Negrito e Centralizado -->
-                    <h2 style="text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 1.5cm; text-transform: uppercase;">CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS</h2>
-                    
-                    <!-- O Contrato abaixo -->
-                    <div style="margin-bottom: 1.5cm;">
-                        <p style="text-indent: 1.25cm; margin-bottom: 0.5cm;"><strong>1. CONTRATADA:</strong> TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA, com sede na Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, inscrita no CNPJ sob o nº 00.000.000/0001-00.</p>
-                        <p style="text-indent: 1.25cm; margin-bottom: 0.5cm;"><strong>2. CONTRATANTE:</strong> ${contratanteText}, portador(a) do CPF nº ${s.cpf || "Não informado"}, residente e domiciliado(a) no endereço: ${s.address || "Não informado"}, telefone para contato: ${s.phone || "Não informado"}, endereço eletrônico (e-mail): ${s.email || "Não informado"}.</p>
-                        <p style="text-indent: 1.25cm; margin-bottom: 0.5cm;"><strong>3. ALUNO(A) BENEFICIÁRIO(A):</strong> ${s.name || "NÃO INFORMADO"}, data de nascimento: ${formattedDob}. ${beltInfo}</p>
-                        ${dependentsHtmlABNT}
-                    </div>
-
-                    <div style="margin-bottom: 2cm;">
-                        ${clausesHtmlABNT}
-                    </div>
-
-                    <!-- Assinaturas -->
-                    <div style="margin-top: 2cm; page-break-inside: avoid;">
-                        <p style="text-align: right; margin-bottom: 2.5cm;">Belém-PA, ${printDateStr}.</p>
-                        <table style="width: 100%; text-align: center; border: none;">
-                            <tr>
-                                <td style="width: 45%; border-top: 1px solid #000; padding-top: 5px;">
-                                    <p style="font-weight: bold; text-transform: uppercase; font-size: 12pt; margin: 0;">Tanque Team BJJ</p>
-                                    <p style="font-size: 10pt; margin: 0;">CONTRATADA</p>
-                                </td>
-                                <td style="width: 10%;"></td>
-                                <td style="width: 45%; border-top: 1px solid #000; padding-top: 5px;">
-                                    <p style="font-weight: bold; text-transform: uppercase; font-size: 12pt; margin: 0;">${signName}</p>
-                                    <p style="font-size: 10pt; margin: 0;">CONTRATANTE / RESP. FINANCEIRO</p>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-            `;
-            
-            window.printHtmlContent(contractHtml, "Contrato_Matricula_TanqueTeam_ABNT");
-        }
-
-        window.shareTrialLink = function() {
-            const text = encodeURIComponent(`Fala! Eu treino Jiu-Jitsu na *Tanque Team BJJ* e a escola é incrível! 🥋🔥\n\nEles estão com uma promoção e oferecem a *Primeira Aula Grátis*. Vamos marcar um treino experimental juntos?\n\nAcessa o link e agenda a tua aula aqui: http://www.tanqueteambjj.com.br/#experimental`);
-            window.open(`https://wa.me/?text=${text}`, '_blank');
-        }
     </script>
 </body>
 </html>
