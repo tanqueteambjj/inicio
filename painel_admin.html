@@ -449,6 +449,15 @@
                     <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nascimento</label><input type="text" id="edit-exp-dob" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none" placeholder="DD/MM/AAAA"></div>
                     <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data Agendada</label><input type="date" id="edit-exp-date" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
                     <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Horário</label><input type="time" id="edit-exp-time" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Status</label>
+                        <select id="edit-exp-status" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none">
+                            <option value="Pendente">Pendente</option>
+                            <option value="Realizada">Realizada</option>
+                            <option value="Matriculado">Matriculado</option>
+                            <option value="Cancelada">Cancelada</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="mt-6 flex justify-end gap-2 border-t border-gray-100 dark:border-gray-700 pt-4">
                     <button onclick="window.closeEditExperimentalModal()" class="px-4 py-2 border dark:border-gray-600 rounded text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Cancelar</button>
@@ -1513,6 +1522,7 @@
                         <td class="p-3 text-sm text-gray-600 dark:text-gray-400">${exp.category || '--'}</td>
                         <td class="p-3">${statusBadge}</td>
                         <td class="p-3 text-right">
+                            <button onclick="window.enrollExperimentalStudent('${exp.id}')" class="text-green-500 hover:text-green-700 mx-1" title="Matricular Aluno"><i class="fa-solid fa-user-plus"></i></button>
                             <button onclick="window.openEditExperimental('${exp.id}')" class="text-blue-500 hover:text-blue-700 mx-1" title="Editar"><i class="fa-solid fa-pen"></i></button>
                             <button onclick="window.deleteExperimental('${exp.id}')" class="text-red-500 hover:text-red-700 mx-1" title="Excluir"><i class="fa-solid fa-trash"></i></button>
                         </td>
@@ -1527,16 +1537,72 @@
             document.getElementById('edit-exp-modal').classList.remove('hidden'); document.getElementById('edit-exp-modal').classList.add('flex');
         };
 
-        window.closeEditExperimental = () => { document.getElementById('edit-exp-modal').classList.add('hidden'); document.getElementById('edit-exp-modal').classList.remove('flex'); };
+        window.closeEditExperimentalModal = () => { document.getElementById('edit-exp-modal').classList.add('hidden'); document.getElementById('edit-exp-modal').classList.remove('flex'); };
 
         window.saveExperimentalChanges = async () => {
             const id = document.getElementById('edit-exp-id').value; const name = document.getElementById('edit-exp-name').value; const phone = document.getElementById('edit-exp-phone').value; const date = document.getElementById('edit-exp-date').value; const time = document.getElementById('edit-exp-time').value; const status = document.getElementById('edit-exp-status').value;
-            try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id), { name, phone, date, time, status }); window.closeEditExperimental(); window.loadExperimentalData(); } catch(e) { alert("Erro ao salvar."); }
+            try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id), { name, phone, date, time, status }); window.closeEditExperimentalModal(); window.loadExperimentalData(); } catch(e) { alert("Erro ao salvar."); }
         };
 
         window.deleteExperimental = async (id) => {
             if(!confirm("Excluir este agendamento?")) return;
             try { await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id)); window.loadExperimentalData(); } catch(e) { alert("Erro ao excluir."); }
+        };
+
+        window.enrollExperimentalStudent = (id) => {
+            const exp = window.experimentalList.find(x => x.id === id); 
+            if(!exp) return;
+            
+            // Switch to students view
+            window.switchMainView('students');
+            
+            // Open registration modal
+            window.openAdminRegisterModal();
+            
+            // Pre-fill fields
+            document.getElementById('reg-name').value = exp.name || '';
+            document.getElementById('reg-phone').value = exp.phone || '';
+            
+            // Format DOB for input if it exists
+            if (exp.dob) {
+                let formattedDob = String(exp.dob); 
+                if (formattedDob.includes('-')) { 
+                    const parts = formattedDob.split('-'); 
+                    if(parts.length === 3) formattedDob = `${parts[2].substring(0,2)}/${parts[1]}/${parts[0]}`; 
+                } 
+                document.getElementById('reg-dob').value = formattedDob;
+                window.checkAdminRegAge(); // Check age for guardian fields
+            }
+            
+            // Set origin
+            const originSelect = document.getElementById('reg-origin');
+            if (originSelect) {
+                // Try to find if origin matches any option, otherwise set to 'Outros'
+                let found = false;
+                for (let i = 0; i < originSelect.options.length; i++) {
+                    if (originSelect.options[i].value === 'Aula Experimental' || originSelect.options[i].text === 'Aula Experimental') {
+                        originSelect.selectedIndex = i;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    // Add option if it doesn't exist
+                    const option = document.createElement('option');
+                    option.value = 'Aula Experimental';
+                    option.text = 'Aula Experimental';
+                    originSelect.add(option);
+                    originSelect.value = 'Aula Experimental';
+                }
+            }
+            
+            // Update experimental status to Matriculado
+            try { 
+                updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id), { status: 'Matriculado' }); 
+                window.loadExperimentalData(); 
+            } catch(e) { 
+                console.error("Erro ao atualizar status da aula experimental", e); 
+            }
         };
 
         // Helper para gerar imagem da faixa
@@ -1685,8 +1751,17 @@
                 if(s.paymentStatus === 'Pendente') payBadge = `<span class="text-red-600 font-bold text-xs"><i class="fa-solid fa-xmark"></i> Pendente</span>`;
                 else if(s.paymentStatus === 'Isento') payBadge = `<span class="text-gray-500 font-bold text-xs">Isento</span>`;
 
-                let photoHtml = `<div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 text-xs font-bold">${s.name.charAt(0).toUpperCase()}</div>`;
-                if(s.photoBase64) photoHtml = `<img src="${s.photoBase64}" class="w-8 h-8 rounded-full object-cover border border-gray-300">`;
+                let photoHtml = `<div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 text-xs font-bold shrink-0">${s.name.charAt(0).toUpperCase()}</div>`;
+                if(s.photoBase64) photoHtml = `<img src="${s.photoBase64}" class="w-8 h-8 rounded-full object-cover border border-gray-300 shrink-0">`;
+
+                let subNameHtml = '';
+                if (s.plan === 'dependente' && s.titularName) {
+                    subNameHtml = `<div class="text-[10px] text-purple-600 dark:text-purple-400 font-bold mt-0.5"><i class="fa-solid fa-link"></i> Dep. de ${s.titularName}</div>`;
+                } else if (s.plan && s.plan.includes('combo')) {
+                    subNameHtml = `<div class="text-[10px] text-purple-600 dark:text-purple-400 font-bold mt-0.5"><i class="fa-solid fa-users"></i> Titular Combo</div>`;
+                } else if (isStudentKid(s) && s.guardian) {
+                    subNameHtml = `<div class="text-[10px] text-yellow-600 dark:text-yellow-500 font-bold mt-0.5"><i class="fa-solid fa-user-shield"></i> Resp: ${s.guardian}</div>`;
+                }
 
                 let actionsHtml = `
                     <button onclick="window.viewStudentDetails('${s.id}')" class="text-gray-500 hover:text-brand-dark mx-1" title="Detalhes"><i class="fa-solid fa-eye"></i></button>
@@ -1697,7 +1772,15 @@
 
                 tbody.innerHTML += `
                     <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                        <td class="p-3"><div class="flex items-center gap-3">${photoHtml} <span class="font-bold text-sm text-gray-800 dark:text-gray-200 cursor-pointer hover:underline hover:text-brand-red transition-colors" onclick="window.viewStudentDetails('${s.id}')">${s.name}</span></div></td>
+                        <td class="p-3">
+                            <div class="flex items-center gap-3">
+                                ${photoHtml} 
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-sm text-gray-800 dark:text-gray-200 cursor-pointer hover:underline hover:text-brand-red transition-colors" onclick="window.viewStudentDetails('${s.id}')">${s.name}</span>
+                                    ${subNameHtml}
+                                </div>
+                            </div>
+                        </td>
                         <td class="p-3">${window.getBeltImageHtml(s.belt)}</td>
                         <td class="p-3 text-sm text-gray-600 dark:text-gray-400">${planInfo.short}</td>
                         <td class="p-3">${statusBadge}</td>
@@ -1764,11 +1847,67 @@
         };
 
         window.sendCredsEmail = (name, email, login, pass, btn) => {
-            alert("Função de envio de e-mail não implementada no preview.");
+            if (!email) {
+                alert("O aluno não possui um e-mail cadastrado.");
+                return;
+            }
+            if (!login || !pass) {
+                alert("O aluno não possui login e senha configurados.");
+                return;
+            }
+            const subject = encodeURIComponent("Seus dados de acesso - Tanque Team");
+            const body = encodeURIComponent(`Olá, ${name}!\n\nSeja bem-vindo(a) ao portal do aluno da Tanque Team.\n\nAqui estão seus dados de acesso:\nURL: ${window.location.origin}\nLogin: ${login}\nSenha: ${pass}\n\nOss!\nEquipe Tanque Team`);
+            window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
         };
 
         window.printProgressReport = () => {
-            alert("Função de impressão não implementada no preview.");
+            const id = document.getElementById('prog-student-id').value;
+            const s = window.students.find(st => st.id === id);
+            if (!s) return;
+
+            document.getElementById('print-prog-name').innerText = s.name;
+            document.getElementById('print-prog-start').innerText = formatDate(s.registrationDate);
+            document.getElementById('print-prog-belt').innerText = s.belt || 'Branca';
+            
+            let planName = 'Não informado';
+            if (s.plan === 'infantil-mensal') planName = 'Infantil Mensal (R$ 150)';
+            else if (s.plan === 'infantil-trimestral') planName = 'Infantil Trimestral (R$ 400)';
+            else if (s.plan === 'adulto-mensal') planName = 'Adulto Mensal (R$ 180)';
+            else if (s.plan === 'adulto-trimestral') planName = 'Adulto Trimestral (R$ 480)';
+            else if (s.plan === 'combo-familia') planName = 'Combo Família';
+            else if (s.plan === 'dependente') planName = 'Dependente';
+            document.getElementById('print-prog-plan').innerText = planName;
+
+            const printTableBody = document.getElementById('print-prog-table-body');
+            printTableBody.innerHTML = '';
+            let logs = s.progressLog ? [...s.progressLog] : []; 
+            logs.push({ type: 'info', text: 'Matrícula realizada.', date: s.registrationDate || new Date().toISOString() }); 
+            logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            logs.forEach(log => {
+                const d = new Date(log.date).toLocaleDateString('pt-BR');
+                const typeStr = log.type === 'graduation' ? 'Graduação' : (log.type === 'note' ? 'Anotação' : 'Sistema');
+                printTableBody.innerHTML += `<tr><td class="p-2 border border-gray-300">${d}</td><td class="p-2 border border-gray-300">${typeStr}</td><td class="p-2 border border-gray-300">${log.text}</td></tr>`;
+            });
+
+            const startFilter = document.getElementById('prog-start-filter').value; 
+            const endFilter = document.getElementById('prog-end-filter').value;
+            let attendances = [];
+            if (s.attendanceLog && s.attendanceLog.length > 0) attendances = [...s.attendanceLog]; else if (s.attendance && s.attendance.length > 0) attendances = s.attendance.map(dateStr => ({ date: dateStr, time: 'Check-in manual' }));
+            if (startFilter) attendances = attendances.filter(att => att.date >= startFilter); 
+            if (endFilter) attendances = attendances.filter(att => att.date <= endFilter);
+            
+            document.getElementById('print-prog-att-total').innerText = `Total: ${attendances.length} aulas`;
+            const printAttBody = document.getElementById('print-prog-attendance-body');
+            printAttBody.innerHTML = '';
+            attendances.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(att => {
+                const d = new Date(att.date).toLocaleDateString('pt-BR');
+                printAttBody.innerHTML += `<tr><td class="p-2 border border-gray-300">${d}</td><td class="p-2 border border-gray-300">${att.time || 'Check-in manual'}</td></tr>`;
+            });
+
+            document.body.classList.add('printing-progress');
+            window.print();
+            document.body.classList.remove('printing-progress');
         };
 
         window.archiveSelectedStudents = () => {
@@ -1780,17 +1919,58 @@
         };
 
         // RENDER ANIVERSARIANTES
-        setInterval(() => {
-            const list = document.getElementById('birthday-list'); if(!list || window.students.length === 0) return;
+        window.shareBirthdayNotice = async (name) => {
+            const title = `🎉 Feliz Aniversário, ${name}!`;
+            const text = `A família Tanque Team deseja um excelente aniversário para o nosso aluno ${name}! Que seu novo ciclo seja repleto de vitórias dentro e fora dos tatames. Oss! 🥋🎂`;
+            const type = 'success';
+            const expiryDate = new Date();
+            expiryDate.setDate(expiryDate.getDate() + 3); // Expira em 3 dias
+            const expiryDateStr = expiryDate.toISOString().split('T')[0];
+
+            try {
+                const data = { title, text, type, expiryDate: expiryDateStr, timestamp: new Date().toISOString() };
+                await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'notices'), data);
+                window.loadNotices();
+                alert(`Mensagem de aniversário para ${name} publicada no mural com sucesso!`);
+            } catch(e) { 
+                console.error(e); 
+                alert("Erro ao publicar aviso de aniversário."); 
+            }
+        };
+
+        const renderBirthdays = () => {
+            const list = document.getElementById('birthday-list'); 
+            const widget = document.getElementById('admin-birthdays-widget');
+            if(!list || !widget || window.students.length === 0) return;
             const currentMonth = new Date().getMonth() + 1;
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            document.getElementById('birthday-month-name').innerText = monthNames[currentMonth - 1];
+            
             const bdays = window.students.filter(s => { if(!s.dob || s.archived || s.enrollmentStatus === 'Inativo') return false; const m = parseInt(s.dob.split('-')[1]); return m === currentMonth; });
             list.innerHTML = '';
-            if(bdays.length === 0) { list.innerHTML = '<p class="text-xs text-gray-500">Nenhum aniversariante este mês.</p>'; return; }
-            bdays.sort((a,b) => parseInt(a.dob.split('-')[2]) - parseInt(b.dob.split('-')[2])).forEach(s => {
-                const day = s.dob.split('-')[2];
-                list.innerHTML += `<div class="flex items-center justify-between text-sm py-1 border-b border-gray-100 dark:border-gray-700 last:border-0"><span class="text-gray-700 dark:text-gray-300">${s.name}</span><span class="font-bold text-brand-dark bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded text-xs">Dia ${day}</span></div>`;
-            });
-        }, 5000);
+            
+            if(bdays.length > 0) {
+                widget.classList.remove('hidden');
+                bdays.sort((a,b) => parseInt(a.dob.split('-')[2]) - parseInt(b.dob.split('-')[2])).forEach(s => {
+                    const day = s.dob.split('-')[2];
+                    list.innerHTML += `
+                        <div class="flex items-center justify-between text-sm py-2 border-b border-blue-100 dark:border-blue-800 last:border-0 group">
+                            <div class="flex flex-col">
+                                <span class="text-blue-900 dark:text-blue-200 font-bold">${s.name}</span>
+                                <span class="text-[10px] text-blue-600 dark:text-blue-400">Dia ${day}</span>
+                            </div>
+                            <button onclick="window.shareBirthdayNotice('${s.name}')" class="opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm" title="Publicar Parabéns no Mural">
+                                <i class="fa-solid fa-share-nodes mr-1"></i> Publicar
+                            </button>
+                        </div>
+                    `;
+                });
+            } else {
+                widget.classList.add('hidden');
+            }
+        };
+        setInterval(renderBirthdays, 5000);
+        setTimeout(renderBirthdays, 1000);
 
     </script>
 </body>
