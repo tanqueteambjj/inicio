@@ -7,6 +7,7 @@
     
     <link rel="icon" href="https://iili.io/qC543c7.png" type="image/png">
     
+    <!-- Script para evitar Flash de Ecrã Branco (FOUC) ao carregar Modo Noturno -->
     <script>
         if (localStorage.getItem('tanque_theme') === 'dark' || (!('tanque_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
@@ -47,24 +48,78 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
 
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-        .calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 0.85rem; color: #4b5563; border: 1px solid transparent; cursor: default; }
-        .calendar-day.present { background-color: #dcfce7; color: #166534; font-weight: bold; border-color: #86efac; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .calendar-day.empty { background: transparent; }
-        .calendar-header-day { font-size: 0.7rem; font-weight: bold; text-transform: uppercase; color: #9ca3af; text-align: center; padding-bottom: 4px; }
+        /* Calendar Styles */
+        .calendar-grid { 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            gap: 4px; 
+        }
+        .calendar-day { 
+            aspect-ratio: 1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 6px; 
+            font-size: 0.85rem; 
+            color: #4b5563; 
+            border: 1px solid transparent; 
+            cursor: default; 
+        }
+        .calendar-day.present { 
+            background-color: #dcfce7; 
+            color: #166534; 
+            font-weight: bold; 
+            border-color: #86efac; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
+        }
+        .calendar-day.empty { 
+            background: transparent; 
+        }
+        .calendar-header-day { 
+            font-size: 0.7rem; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            color: #9ca3af; 
+            text-align: center; 
+            padding-bottom: 4px; 
+        }
 
+        /* Dark Mode overrides */
         .dark .calendar-day { color: #d1d5db; }
         .dark .calendar-day:hover { background-color: #374151; }
-        .dark .calendar-day.present { background-color: rgba(22, 163, 74, 0.2); color: #4ade80; border-color: rgba(22, 163, 74, 0.5); }
+        .dark .calendar-day.present { 
+            background-color: rgba(22, 163, 74, 0.2); 
+            color: #4ade80; 
+            border-color: rgba(22, 163, 74, 0.5); 
+        }
         
-        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-        .like-animate { animation: pop 0.3s ease-in-out; color: #D90429 !important; }
+        /* Feed like animation */
+        @keyframes pop { 
+            0% { transform: scale(1); } 
+            50% { transform: scale(1.2); } 
+            100% { transform: scale(1); } 
+        }
+        .like-animate { 
+            animation: pop 0.3s ease-in-out; 
+            color: #D90429 !important; 
+        }
 
         .print-only-element { display: none !important; }
 
+        /* CSS BLINDADO PARA IMPRESSÃO EM MOBILE E PC */
         @media print {
             @page { margin: 15mm; size: A4 portrait; }
-            html, body { height: auto !important; min-height: 100% !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; background-color: #fff !important; color: #000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            html, body { 
+                height: auto !important; 
+                min-height: 100% !important; 
+                overflow: visible !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                background-color: #fff !important; 
+                color: #000 !important; 
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+            }
             body > *:not(.print-only-element) { display: none !important; }
             .no-print { display: none !important; }
         }
@@ -134,6 +189,7 @@
         <!-- Main Content -->
         <div class="flex-1 flex flex-col h-full overflow-hidden relative w-full">
             
+            <!-- Mobile Header -->
             <header class="md:hidden bg-brand-dark border-b border-gray-800 text-white p-4 flex justify-between items-center shadow-md z-20 no-print shrink-0">
                 <div class="flex items-center gap-3">
                     <button onclick="window.toggleMobileMenu()" class="text-white hover:text-brand-red focus:outline-none text-2xl transition">
@@ -154,6 +210,7 @@
                 </div>
             </header>
 
+            <!-- DEPENDENT VIEW BANNER -->
             <div id="viewing-dependent-banner" class="hidden bg-purple-600 dark:bg-purple-800 text-white px-4 py-3 flex justify-between items-center shadow-md z-10 no-print shrink-0">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-users text-purple-200"></i>
@@ -167,8 +224,10 @@
             <!-- Scrollable Content -->
             <main id="student-dashboard" class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-8 relative">
                 
-                <!-- ABA: DASHBOARD -->
+                <!-- ==================== ABA 1: DASHBOARD ==================== -->
                 <div id="view-dashboard" class="animate-fade-in">
+                    
+                    <!-- Welcome Section -->
                     <div class="mb-8 flex justify-between items-end">
                         <div class="flex items-center gap-4">
                             <div class="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 border-2 border-white dark:border-gray-800 shadow-md overflow-hidden flex-shrink-0 relative">
@@ -199,79 +258,122 @@
                                 </div>
                                 <div>
                                     <span class="block text-lg md:text-xl font-display uppercase tracking-widest text-brand-red">Carteirinha Digital</span>
-                                    <span class="block text-xs md:text-sm text-gray-300 dark:text-gray-400 font-normal mt-1">Toque aqui para abrir o seu QR Code e realizar o Check-in na recepção</span>
+                                    <span class="block text-xs md:text-sm text-gray-300 dark:text-gray-400 font-normal mt-1">Toque aqui para abrir o seu QR Code e realizar o Check-in na Recepção</span>
                                 </div>
                             </div>
                             <i class="fa-solid fa-chevron-right text-gray-400 text-2xl hidden md:block"></i>
                         </button>
                     </div>
 
+                    <!-- MURAL DE AVISOS -->
                     <div id="student-notices-container" class="hidden mb-8">
-                        <h3 class="font-display text-xl font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2"><i class="fa-solid fa-bullhorn text-yellow-500"></i> Quadro de Avisos</h3>
+                        <h3 class="font-display text-xl font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-bullhorn text-yellow-500"></i> Quadro de Avisos
+                        </h3>
                         <div id="student-notices-list" class="space-y-3"></div>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        
+                        <!-- Left Column -->
                         <div class="lg:col-span-2 space-y-6">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Card Belt Status -->
                                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-l-4 border-brand-red relative overflow-hidden flex flex-col justify-between">
-                                    <div id="celebration-banner" class="hidden absolute top-0 left-0 w-full bg-yellow-400 text-yellow-900 text-center text-xs font-bold py-1 z-10"><span id="celebration-text">🎉 PARABÉNS PELA NOVA GRADUAÇÃO! 🎉</span></div>
+                                    
+                                    <!-- MENSAGEM DINÂMICA DE PARABÉNS (GRADUAÇÃO RECENTE) -->
+                                    <div id="celebration-banner" class="hidden absolute top-0 left-0 w-full bg-yellow-400 text-yellow-900 text-center text-xs font-bold py-1 z-10">
+                                        <span id="celebration-text">🎉 PARABÉNS PELA NOVA GRADUAÇÃO! 🎉</span>
+                                    </div>
+                                    
                                     <div>
                                         <div class="flex justify-between items-start mb-4 mt-2">
                                             <div>
                                                 <h3 class="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-widest">Graduação Atual</h3>
                                                 <p class="text-xl font-bold text-brand-dark dark:text-white mt-1" id="belt-text">--</p>
                                             </div>
-                                            <div class="p-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-brand-dark dark:text-gray-300"><i class="fa-solid fa-medal text-xl"></i></div>
+                                            <div class="p-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-brand-dark dark:text-gray-300">
+                                                <i class="fa-solid fa-medal text-xl"></i>
+                                            </div>
                                         </div>
                                         <div id="belt-visual-container" class="w-full h-12 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 shadow-inner overflow-hidden relative">
                                             <span class="text-xs text-gray-400 dark:text-gray-500">A carregar faixa...</span>
                                         </div>
                                     </div>
+                                    
+                                    <!-- Botão de partilha (Feed) -->
                                     <div id="share-belt-container" class="hidden mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                                        <button id="btn-share-belt" onclick="window.shareNewBeltToFeed(this)" class="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 rounded-lg transition shadow-sm flex items-center justify-center gap-2"><i class="fa-solid fa-share-nodes text-lg"></i> Partilhar no Feed da Equipe</button>
+                                        <button id="btn-share-belt" onclick="window.shareNewBeltToFeed(this)" class="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 rounded-lg transition shadow-sm flex items-center justify-center gap-2">
+                                            <i class="fa-solid fa-share-nodes text-lg"></i> Partilhar no Feed da Equipe
+                                        </button>
                                     </div>
                                 </div>
 
+                                <!-- Card Financial Status -->
                                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-l-4 border-gray-800 dark:border-gray-600">
                                     <div class="flex justify-between items-start mb-4">
                                         <div>
                                             <h3 class="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-widest">Financeiro</h3>
                                             <div id="payment-status-badge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-2 bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300">A verificar...</div>
                                         </div>
-                                        <div class="p-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-green-600 dark:text-green-400"><i class="fa-solid fa-check-circle text-xl" id="payment-status-icon"></i></div>
+                                        <div class="p-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-green-600 dark:text-green-400">
+                                            <i class="fa-solid fa-check-circle text-xl" id="payment-status-icon"></i>
+                                        </div>
                                     </div>
                                     <div class="mt-4">
                                         <p class="text-sm text-gray-600 dark:text-gray-300">Plano: <span class="font-bold text-brand-dark dark:text-white uppercase" id="plan-display">--</span></p>
-                                        <button onclick="window.viewPaymentHistory()" class="mt-3 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-bold flex items-center transition"><i class="fa-solid fa-clock-rotate-left mr-1"></i> Ver Histórico de Pagamentos</button>
+                                        <button onclick="window.viewPaymentHistory()" class="mt-3 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-bold flex items-center transition">
+                                            <i class="fa-solid fa-clock-rotate-left mr-1"></i> Ver Histórico de Pagamentos
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Right Column (CALENDAR) -->
                         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-t-4 border-blue-500 flex flex-col h-full">
                             <div class="flex justify-between items-center mb-6">
-                                <h3 class="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-widest flex items-center gap-2"><i class="fa-solid fa-calendar-days text-brand-red"></i> Calendário de Treinos</h3>
+                                <h3 class="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                                    <i class="fa-solid fa-calendar-days text-brand-red"></i> Calendário de Treinos
+                                </h3>
                                 <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-full px-2 py-1">
                                     <button onclick="window.changeMonth(-1)" class="w-6 h-6 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-600 hover:text-brand-red rounded-full transition"><i class="fa-solid fa-chevron-left text-xs"></i></button>
                                     <span id="calendar-month-year" class="text-xs font-bold text-brand-dark dark:text-gray-200 min-w-[80px] text-center uppercase">--</span>
                                     <button onclick="window.changeMonth(1)" class="w-6 h-6 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-600 hover:text-brand-red rounded-full transition"><i class="fa-solid fa-chevron-right text-xs"></i></button>
                                 </div>
                             </div>
+                            
                             <div class="mb-4 flex-grow">
                                 <div class="grid grid-cols-7 mb-2">
-                                    <div class="calendar-header-day dark:text-gray-500">Dom</div><div class="calendar-header-day dark:text-gray-500">Seg</div><div class="calendar-header-day dark:text-gray-500">Ter</div><div class="calendar-header-day dark:text-gray-500">Qua</div><div class="calendar-header-day dark:text-gray-500">Qui</div><div class="calendar-header-day dark:text-gray-500">Sex</div><div class="calendar-header-day dark:text-gray-500">Sáb</div>
+                                    <div class="calendar-header-day dark:text-gray-500">Dom</div>
+                                    <div class="calendar-header-day dark:text-gray-500">Seg</div>
+                                    <div class="calendar-header-day dark:text-gray-500">Ter</div>
+                                    <div class="calendar-header-day dark:text-gray-500">Qua</div>
+                                    <div class="calendar-header-day dark:text-gray-500">Qui</div>
+                                    <div class="calendar-header-day dark:text-gray-500">Sex</div>
+                                    <div class="calendar-header-day dark:text-gray-500">Sáb</div>
                                 </div>
                                 <div id="calendar-days" class="calendar-grid"></div>
                             </div>
+
                             <div class="mt-auto pt-4 border-t border-gray-100 dark:border-gray-700">
-                                <div class="flex justify-between items-center mb-2"><span class="text-sm font-bold text-gray-600 dark:text-gray-300">Total de Treinos (Mês)</span><span class="text-xl font-bold text-brand-red" id="month-attendance-count">0</span></div>
-                                <div class="flex justify-between items-center mb-2"><span class="text-sm font-bold text-gray-600 dark:text-gray-300">Total de Treinos (Geral)</span><span class="text-xl font-bold text-blue-600 dark:text-blue-400" id="total-attendance-count">0</span></div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-bold text-gray-600 dark:text-gray-300">Total de Treinos (Mês)</span>
+                                    <span class="text-xl font-bold text-brand-red" id="month-attendance-count">0</span>
+                                </div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-bold text-gray-600 dark:text-gray-300">Total de Treinos (Geral)</span>
+                                    <span class="text-xl font-bold text-blue-600 dark:text-blue-400" id="total-attendance-count">0</span>
+                                </div>
                             </div>
                         </div>
+
                     </div>
 
+                    <!-- SEÇÃO: CONQUISTAS E RANKING -->
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8 no-print">
+                        
+                        <!-- Ranking -->
                         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border-t-4 border-brand-dark dark:border-gray-600 flex flex-col">
                             <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center shrink-0">
                                 <div>
@@ -288,47 +390,67 @@
                                 </table>
                             </div>
                         </div>
+
+                        <!-- Conquistas -->
                         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-t-4 border-yellow-500 flex flex-col" id="achievements-section">
                             <h3 class="font-display text-xl font-bold text-gray-700 dark:text-gray-200 mb-2 flex items-center gap-2"><i class="fa-solid fa-trophy text-yellow-500"></i> As Minhas Conquistas</h3>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mb-6">Acompanhe a sua evolução no tatame e partilhe as suas medalhas no Feed!</p>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 overflow-y-auto max-h-[300px] pr-2 pb-2" id="badges-container"></div>
+                            
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 overflow-y-auto max-h-[300px] pr-2 pb-2" id="badges-container">
+                                <!-- Preenchido dinamicamente -->
+                            </div>
                         </div>
+
                     </div>
 
+                    <!-- Dependentes Vinculados -->
                     <div id="dash-dependents-container" class="hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 text-left border-l-4 border-purple-500 mb-8">
                         <h3 class="font-display text-xl font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2"><i class="fa-solid fa-users text-purple-600"></i> Meus Dependentes (Combo Família)</h3>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Gira as informações e acompanhe a frequência de quem treina consigo no plano Combo.</p>
                         <div id="dash-dependents-list" class="space-y-3"></div>
                     </div>
                     
+                    <!-- BOTOES DE AÇÃO SECUNDÁRIOS -->
                     <div class="mt-6 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto no-print">
                         <button onclick="window.printStudentContract()" class="hidden md:flex w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg justify-center items-center gap-2 transition transform hover:-translate-y-1">
                             <i class="fa-solid fa-file-contract text-xl"></i> Imprimir Minha Matrícula
                         </button>
+
                         <button onclick="window.shareTrialLink()" class="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-4 rounded-xl shadow-lg flex justify-center items-center gap-2 transition transform hover:-translate-y-1 md:col-span-1">
                             <i class="fa-brands fa-whatsapp text-xl"></i> Convidar Amigo p/ Treino
                         </button>
                     </div>
                 </div>
 
-                <!-- ABA: FEED -->
+                <!-- ==================== ABA FEED DA EQUIPE ==================== -->
                 <div id="view-feed" class="hidden animate-fade-in">
                     <div class="mb-6 border-b border-gray-200 dark:border-gray-700 pb-4 flex justify-between items-end">
                         <div>
-                            <h2 class="font-display text-3xl font-bold text-brand-dark dark:text-white flex items-center gap-3"><i class="fa-solid fa-users text-blue-500"></i> Feed da Equipe</h2>
+                            <h2 class="font-display text-3xl font-bold text-brand-dark dark:text-white flex items-center gap-3">
+                                <i class="fa-solid fa-users text-blue-500"></i> Feed da Equipe
+                            </h2>
                             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Veja as conquistas recentes da sua escola. As partilhas desaparecem após 24 horas.</p>
                         </div>
-                        <button onclick="window.loadFeedData()" class="bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-bold flex items-center gap-2 transition"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+                        <button onclick="window.loadFeedData()" class="bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-bold flex items-center gap-2 transition">
+                            <i class="fa-solid fa-rotate"></i> Atualizar
+                        </button>
                     </div>
-                    <div class="max-w-2xl mx-auto space-y-6" id="feed-container"></div>
+
+                    <div class="max-w-2xl mx-auto space-y-6" id="feed-container">
+                        <div class="text-center py-10">
+                            <i class="fa-solid fa-spinner fa-spin text-3xl text-gray-300 dark:text-gray-600 mb-3"></i>
+                            <p class="text-gray-500 dark:text-gray-400">A carregar o feed...</p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- ABA: MEUS DADOS -->
+                <!-- ==================== ABA MEUS DADOS ==================== -->
                 <div id="view-profile" class="hidden animate-fade-in">
                     <div class="mb-6 flex items-center gap-3 border-b border-gray-200 dark:border-gray-700 pb-3 mt-2">
                         <i class="fa-solid fa-user-gear text-3xl text-brand-red"></i>
                         <h2 class="font-display text-3xl font-bold text-brand-dark dark:text-white uppercase tracking-wider">Meus Dados</h2>
                     </div>
+
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden max-w-4xl mx-auto border-t-4 border-gray-800 dark:border-gray-600">
                         <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
                             <h3 class="text-gray-800 dark:text-gray-100 font-display font-bold tracking-wide text-lg"><i class="fa-regular fa-address-card mr-2 text-brand-red"></i> DADOS CADASTRAIS</h3>
@@ -336,12 +458,30 @@
                         </div>
                         <div class="p-8">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Nome Completo</label><div class="p-3 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white font-medium shadow-sm overflow-x-auto" id="data-name">--</div></div>
-                                <div><label class="block text-xs font-bold text-blue-600 dark:text-blue-400 uppercase mb-1">Utilizador de Acesso (Login)</label><div class="p-3 bg-blue-50 dark:bg-blue-900/30 rounded border border-blue-100 dark:border-blue-800 text-blue-900 dark:text-blue-200 font-bold shadow-sm overflow-x-auto" id="data-login">--</div></div>
-                                <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">E-mail</label><div class="p-3 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white font-medium shadow-sm overflow-x-auto" id="data-email">--</div></div>
-                                <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">CPF</label><div class="p-3 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white font-medium shadow-sm overflow-x-auto" id="data-cpf">--</div></div>
-                                <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Telefone</label><div class="p-3 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white font-medium shadow-sm overflow-x-auto" id="data-phone">--</div></div>
-                                <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Endereço</label><div class="p-3 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white font-medium shadow-sm overflow-x-auto" id="data-address">--</div></div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Nome Completo</label>
+                                    <div class="p-3 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white font-medium shadow-sm overflow-x-auto" id="data-name">--</div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-blue-600 dark:text-blue-400 uppercase mb-1">Utilizador de Acesso (Login)</label>
+                                    <div class="p-3 bg-blue-50 dark:bg-blue-900/30 rounded border border-blue-100 dark:border-blue-800 text-blue-900 dark:text-blue-200 font-bold shadow-sm overflow-x-auto" id="data-login">--</div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">E-mail</label>
+                                    <div class="p-3 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white font-medium shadow-sm overflow-x-auto" id="data-email">--</div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">CPF</label>
+                                    <div class="p-3 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white font-medium shadow-sm overflow-x-auto" id="data-cpf">--</div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Telefone</label>
+                                    <div class="p-3 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white font-medium shadow-sm overflow-x-auto" id="data-phone">--</div>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Endereço</label>
+                                    <div class="p-3 bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white font-medium shadow-sm overflow-x-auto" id="data-address">--</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -352,34 +492,58 @@
                 </div>
             </main>
         </div>
-    </div> <!-- FIM MAIN UI -->
+    </div> <!-- End Main UI -->
 
-    <!-- MODAIS DO ALUNO -->
+    <!-- Modal de Edição de Perfil -->
     <div id="profile-edit-modal" class="fixed inset-0 z-[100] hidden bg-black/80 items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all animate-fade-in border-t-4 border-brand-red">
             <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600">
                 <h3 class="text-gray-800 dark:text-white font-display font-bold text-lg"><i class="fa-solid fa-pen-to-square text-brand-red mr-2"></i> Alterar Dados</h3>
                 <button onclick="window.closeProfileEditModal()" class="text-gray-400 hover:text-red-500 transition text-xl no-print"><i class="fa-solid fa-times"></i></button>
             </div>
+            
             <div class="p-6">
                 <div class="flex items-center gap-4 mb-6 border-b pb-4 border-gray-100 dark:border-gray-700">
                     <div class="relative w-20 h-20 group cursor-pointer flex-shrink-0" onclick="document.getElementById('profile-photo-input').click()">
                         <img id="profile-photo-preview" src="" class="w-full h-full rounded-full object-cover border-2 border-gray-200 dark:border-gray-600 shadow-md hidden">
                         <div id="profile-photo-placeholder" class="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl font-bold text-gray-400 dark:text-gray-500">TT</div>
-                        <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-camera text-white"></i></div>
+                        <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            <i class="fa-solid fa-camera text-white"></i>
+                        </div>
                         <input type="file" id="profile-photo-input" accept="image/*" class="hidden" onchange="window.previewProfilePhoto(event)">
                     </div>
-                    <div><h4 class="text-xs font-bold text-brand-red uppercase">Foto de Perfil</h4><p class="text-[10px] text-gray-400 dark:text-gray-500 leading-tight">Clique na imagem para enviar uma nova foto.</p></div>
-                </div>
-                <div class="space-y-4">
-                    <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Utilizador (Login)</label><input type="text" id="profile-login" class="w-full border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed" disabled></div>
-                    <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Endereço Completo</label><input type="text" id="profile-address" class="w-full border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-1 focus:ring-brand-red focus:outline-none"></div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">E-mail</label><input type="email" id="profile-email" class="w-full border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-1 focus:ring-brand-red focus:outline-none"></div>
-                        <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Telefone</label><input type="text" id="profile-phone" class="w-full border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-1 focus:ring-brand-red focus:outline-none"></div>
+                    <div>
+                        <h4 class="text-xs font-bold text-brand-red uppercase">Foto de Perfil</h4>
+                        <p class="text-[10px] text-gray-400 dark:text-gray-500 leading-tight">Clique na imagem para enviar uma nova foto.</p>
                     </div>
-                    <div class="pt-3 border-t border-gray-100 dark:border-gray-700 mt-2"><label class="block text-xs font-bold text-blue-600 dark:text-blue-400 mb-1">Nova Senha (Opcional)</label><input type="text" id="profile-password" class="w-full border border-blue-200 dark:border-blue-800 rounded p-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none" placeholder="Digite para alterar..."><p class="text-[10px] text-gray-400 mt-1">Deixe em branco para manter a senha atual.</p></div>
                 </div>
+
+                <div class="space-y-4">
+                    <div id="profile-login-container">
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Utilizador (Login)</label>
+                        <input type="text" id="profile-login" class="w-full border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed" disabled>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Endereço Completo</label>
+                        <input type="text" id="profile-address" class="w-full border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-1 focus:ring-brand-red focus:outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">E-mail</label>
+                            <input type="email" id="profile-email" class="w-full border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-1 focus:ring-brand-red focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Telefone</label>
+                            <input type="text" id="profile-phone" class="w-full border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-1 focus:ring-brand-red focus:outline-none">
+                        </div>
+                    </div>
+                    <div class="pt-3 border-t border-gray-100 dark:border-gray-700 mt-2" id="profile-password-container">
+                        <label class="block text-xs font-bold text-blue-600 dark:text-blue-400 mb-1">Nova Senha (Opcional)</label>
+                        <input type="text" id="profile-password" class="w-full border border-blue-200 dark:border-blue-800 rounded p-2 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none" placeholder="Digite para alterar...">
+                        <p class="text-[10px] text-gray-400 mt-1">Deixe em branco para manter a senha atual.</p>
+                    </div>
+                </div>
+                
                 <div class="mt-6 flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-gray-700 no-print">
                     <button onclick="window.closeProfileEditModal()" class="px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-700 font-bold text-gray-700 dark:text-gray-300 transition">Cancelar</button>
                     <button onclick="window.saveProfileChanges()" id="btn-save-profile" class="px-5 py-2 bg-brand-red text-white rounded-lg text-sm hover:bg-red-700 font-bold transition shadow-md flex items-center justify-center gap-2 w-32"><i class="fa-solid fa-save"></i> Salvar</button>
@@ -388,22 +552,42 @@
         </div>
     </div>
 
-    <!-- QR Code Modal (Visualização no Ecrã apenas) -->
+    <!-- QR Code Modal (Visualização no Ecrã apenas - Não é usada na impressão) -->
     <div id="qr-modal" class="fixed inset-0 z-[80] hidden bg-black/80 items-center justify-center p-4 backdrop-blur-sm no-print">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 text-center max-w-sm w-full animate-fade-in relative border-t-4 border-brand-red flex flex-col items-center">
             <button onclick="window.closeMyQrModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition text-xl z-20"><i class="fa-solid fa-times"></i></button>
-            <h3 class="font-display font-bold text-xl mb-4 uppercase flex items-center justify-center gap-2 text-gray-800 dark:text-white"><i class="fa-solid fa-id-card text-brand-red"></i> Carteirinha Digital</h3>
+            <h3 class="font-display font-bold text-xl mb-4 uppercase flex items-center justify-center gap-2 text-gray-800 dark:text-white">
+                <i class="fa-solid fa-id-card text-brand-red"></i> Carteirinha Digital
+            </h3>
+            
             <div class="bg-white border border-gray-300 rounded-xl overflow-hidden relative shadow-inner flex flex-col" style="width: 260px; height: 410px;">
-                <div class="bg-brand-dark text-white p-3 flex items-center justify-center gap-2 shrink-0 border-b-4 border-brand-red"><img src="https://iili.io/qC543c7.png" class="h-6"><span class="font-display font-bold text-sm tracking-widest uppercase">Tanque Team</span></div>
+                <div class="bg-brand-dark text-white p-3 flex items-center justify-center gap-2 shrink-0 border-b-4 border-brand-red">
+                    <img src="https://iili.io/qC543c7.png" class="h-6">
+                    <span class="font-display font-bold text-sm tracking-widest uppercase">Tanque Team</span>
+                </div>
                 <div class="p-4 flex flex-col items-center flex-1 relative bg-white">
                     <img src="https://iili.io/qC543c7.png" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 opacity-5 pointer-events-none grayscale">
-                    <div class="w-20 h-20 bg-gray-100 rounded-full border-2 border-gray-200 overflow-hidden mb-3 shadow-sm z-10 flex-shrink-0 relative"><img id="qr-photo" src="" class="w-full h-full object-cover hidden"><div id="qr-photo-placeholder" class="w-full h-full flex items-center justify-center text-gray-400 font-bold text-2xl font-display">TT</div></div>
-                    <div class="text-center z-10 w-full mb-3"><h4 class="font-bold text-sm text-gray-900 leading-tight uppercase truncate" id="qr-student-name">Nome do Aluno</h4><p class="text-[10px] text-brand-red font-bold uppercase truncate mt-0.5" id="qr-belt">Faixa Branca</p><p class="text-[9px] text-gray-500 uppercase font-bold tracking-wider truncate mt-0.5" id="qr-plan">Plano</p></div>
-                    <div id="qr-code-wrapper" class="mt-auto bg-white p-1 border border-gray-200 rounded shadow-sm z-10 inline-block"><img id="qr-image" src="" alt="QR Code" class="w-28 h-28"></div>
-                    <div id="qr-blocked-wrapper" class="hidden mt-auto bg-red-50 p-2 border border-red-200 rounded shadow-sm z-10 flex-col items-center justify-center w-28 h-28 text-center"><i class="fa-solid fa-lock text-red-500 text-3xl mb-1"></i><span class="text-[10px] font-bold text-red-700 leading-tight uppercase">Acesso<br>Bloqueado</span></div>
+                    <div class="w-20 h-20 bg-gray-100 rounded-full border-2 border-gray-200 overflow-hidden mb-3 shadow-sm z-10 flex-shrink-0 relative">
+                        <img id="qr-photo" src="" class="w-full h-full object-cover hidden">
+                        <div id="qr-photo-placeholder" class="w-full h-full flex items-center justify-center text-gray-400 font-bold text-2xl font-display">TT</div>
+                    </div>
+                    <div class="text-center z-10 w-full mb-3">
+                        <h4 class="font-bold text-sm text-gray-900 leading-tight uppercase truncate" id="qr-student-name">Nome do Aluno</h4>
+                        <p class="text-[10px] text-brand-red font-bold uppercase truncate mt-0.5" id="qr-belt">Faixa Branca</p>
+                        <p class="text-[9px] text-gray-500 uppercase font-bold tracking-wider truncate mt-0.5" id="qr-plan">Plano</p>
+                    </div>
+                    <div id="qr-code-wrapper" class="mt-auto bg-white p-1 border border-gray-200 rounded shadow-sm z-10 inline-block">
+                        <img id="qr-image" src="" alt="QR Code" class="w-28 h-28">
+                    </div>
+                    <div id="qr-blocked-wrapper" class="hidden mt-auto bg-red-50 p-2 border border-red-200 rounded shadow-sm z-10 flex-col items-center justify-center w-28 h-28 text-center">
+                        <i class="fa-solid fa-lock text-red-500 text-3xl mb-1"></i>
+                        <span class="text-[10px] font-bold text-red-700 leading-tight uppercase">Acesso<br>Bloqueado</span>
+                    </div>
                     <p id="qr-footer-text" class="text-[8px] text-gray-400 mt-3 z-10 font-bold uppercase tracking-widest">Apresente na Recepção</p>
                 </div>
             </div>
+
+            <!-- Instrução para Mobile e Botão para PC -->
             <div class="mt-6 pt-4 w-full border-t border-gray-100 dark:border-gray-700 text-center">
                 <p class="md:hidden text-xs text-gray-500 font-bold mb-2"><i class="fa-solid fa-camera mr-1"></i> Tire um print da tela para salvar a sua carteirinha.</p>
                 <button onclick="window.printQrCard()" class="hidden md:flex px-6 py-2 bg-gray-800 text-white rounded-lg text-sm font-bold hover:bg-black transition shadow-md items-center justify-center gap-2 w-full"><i class="fa-solid fa-print"></i> Salvar / Imprimir PDF</button>
@@ -411,7 +595,7 @@
         </div>
     </div>
 
-    <!-- Modal: Histórico Financeiro -->
+    <!-- Student History Modal -->
     <div id="student-history-modal" class="fixed inset-0 z-[70] hidden bg-black/60 items-center justify-center p-4 backdrop-blur-sm no-print">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] border-t-4 border-blue-500 animate-fade-in">
             <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
@@ -419,15 +603,20 @@
                 <button onclick="window.closeStudentHistoryModal()" class="text-gray-400 hover:text-red-500 text-xl transition no-print"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="overflow-y-auto p-0 flex-1">
-                <table class="w-full text-sm text-left text-gray-800 dark:text-gray-200">
+                <table id="student-history-table" class="w-full text-sm text-left text-gray-800 dark:text-gray-200">
                     <thead class="text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 shadow-sm">
-                        <tr><th class="px-4 py-3 font-bold">Data</th><th class="px-4 py-3 font-bold text-right">Valor Pago</th></tr>
+                        <tr>
+                            <th class="px-4 py-3 font-bold">Data</th>
+                            <th class="px-4 py-3 font-bold text-right">Valor Pago</th>
+                        </tr>
                     </thead>
-                    <tbody id="student-history-body" class="divide-y divide-gray-100 dark:divide-gray-700"></tbody>
+                    <tbody id="student-history-body" class="divide-y divide-gray-100 dark:divide-gray-700">
+                        <!-- Filled by JS -->
+                    </tbody>
                 </table>
                 <div id="student-history-empty" class="hidden text-center py-10 flex-col items-center">
                     <i class="fa-solid fa-file-invoice-dollar text-4xl text-gray-300 dark:text-gray-600 mb-3"></i>
-                    <p class="text-gray-500 dark:text-gray-400 italic text-sm font-medium">Nenhum pagamento registado no sistema.</p>
+                    <p class="text-gray-500 dark:text-gray-400 italic text-sm font-medium mt-2">Nenhum pagamento registado no sistema.</p>
                 </div>
             </div>
             <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 shrink-0 text-right no-print">
@@ -436,16 +625,199 @@
         </div>
     </div>
 
-    <!-- ÁREAS EXCLUSIVAS PARA IMPRESSÃO -->
-    <div id="printable-contract" class="print-only-element"></div>
-    <div id="print-only-qr" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen flex items-center justify-center"></div>
+    <!-- ========================================== -->
+    <!-- ÁREAS EXCLUSIVAS PARA IMPRESSÃO (NATIVAS)  -->
+    <!-- ========================================== -->
+    
+    <!-- Printable Contract Container -->
+    <div id="printable-contract" class="print-only-element">
+        <!-- JS irá preencher este container dinamicamente -->
+    </div>
 
-    <!-- SCRIPT GERAL DO SISTEMA (Firebase & App Logic) -->
+    <!-- CARTEIRINHA IMPRESSA -->
+    <div id="print-only-qr" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen flex items-center justify-center">
+        <!-- O JS preenche a carteirinha abaixo com a logo na cor original -->
+    </div>
+
+    <!-- Firebase Logic & Application Code -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, getDocs, collection, query, where, updateDoc, addDoc, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // === FUNÇÕES GLOBAIS ===
+        window.toggleTheme = function() {
+            const docEl = document.documentElement;
+            const themeIconDesktop = document.getElementById('theme-icon-desktop');
+            const themeIconMobile = document.getElementById('theme-icon-mobile');
+            if (docEl.classList.contains('dark')) {
+                docEl.classList.remove('dark');
+                localStorage.setItem('tanque_theme', 'light');
+                if(themeIconDesktop) { themeIconDesktop.classList.remove('fa-sun'); themeIconDesktop.classList.add('fa-moon'); }
+                if(themeIconMobile) { themeIconMobile.classList.remove('fa-sun'); themeIconMobile.classList.add('fa-moon'); }
+            } else {
+                docEl.classList.add('dark');
+                localStorage.setItem('tanque_theme', 'dark');
+                if(themeIconDesktop) { themeIconDesktop.classList.remove('fa-moon'); themeIconDesktop.classList.add('fa-sun'); }
+                if(themeIconMobile) { themeIconMobile.classList.remove('fa-moon'); themeIconMobile.classList.add('fa-sun'); }
+            }
+        };
+
+        window.toggleMobileMenu = function() {
+            document.getElementById('sidebar-menu').classList.toggle('-translate-x-full');
+            document.getElementById('mobile-sidebar-overlay').classList.toggle('hidden');
+        };
+
+        window.switchMainView = function(viewName) {
+            if(window.innerWidth < 768 && !document.getElementById('sidebar-menu').classList.contains('-translate-x-full')) {
+                window.toggleMobileMenu();
+            }
+            
+            document.getElementById('view-dashboard').classList.toggle('hidden', viewName !== 'dashboard');
+            document.getElementById('view-feed').classList.toggle('hidden', viewName !== 'feed');
+            document.getElementById('view-profile').classList.toggle('hidden', viewName !== 'profile');
+            
+            const nDash = document.getElementById('nav-dashboard');
+            const nFeed = document.getElementById('nav-feed');
+            const nProf = document.getElementById('nav-profile');
+            
+            const activeClass = "flex items-center px-4 py-3 bg-brand-red text-white rounded-lg shadow-md transition-transform transform hover:translate-x-1";
+            const inactiveClass = "flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors";
+            
+            if(nDash) nDash.className = viewName === 'dashboard' ? activeClass : inactiveClass;
+            if(nFeed) nFeed.className = viewName === 'feed' ? activeClass : inactiveClass;
+            if(nProf) nProf.className = viewName === 'profile' ? activeClass : inactiveClass;
+
+            if (viewName === 'feed') {
+                window.loadFeedData();
+            }
+        };
+
+        window.handleLogout = function() {
+            localStorage.removeItem('tanque_user_session');
+            window.location.href = "https://www.tanqueteambjj.com.br/login.html";
+        };
+
+        // --- Utilitários ---
+        function formatCurrency(val) {
+            if (val === undefined || val === null || val === '') return 'R$ 0,00';
+            let num = val;
+            if (typeof val === 'string') {
+                num = parseFloat(val.replace(',', '.'));
+            }
+            if (isNaN(num)) return 'R$ 0,00';
+            return Number(num).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        const PLAN_DICT = {
+            'infantil-mensal': { price: 189.90, short: 'Infantil Mensal' },
+            'infantil-trimestral': { price: 168.90, short: 'Infantil Trimestral' },
+            'infantil-semestral': { price: 157.90, short: 'Infantil Semestral' },
+            'adulto-mensal': { price: 168.90, short: 'Adulto Mensal' },
+            'adulto-trimestral': { price: 147.90, short: 'Adulto Trimestral' },
+            'adulto-semestral': { price: 126.90, short: 'Adulto Semestral' },
+            'combo-dupla': { price: 250.00, short: 'Combo Dupla' },
+            'combo-familia': { price: 362.02, short: 'Combo Família' },
+            'administracao': { price: 0.00, short: 'Administração' },
+            'dependente': { price: 0.00, short: 'Dependente' }
+        };
+
+        function renderBeltSVG(beltStr) {
+            if (!beltStr) return '';
+            const colors = { 'Branca': '#ffffff', 'Cinza': '#9ca3af', 'Amarela': '#fbbf24', 'Laranja': '#f97316', 'Verde': '#10b981', 'Azul': '#3b82f6', 'Roxa': '#8b5cf6', 'Marrom': '#78350f', 'Preta': '#000000' };
+            let color = '#ffffff'; let degree = 0; let colorName = 'Branca';
+            
+            for (const [name, hex] of Object.entries(colors)) {
+                if (beltStr.includes(name)) { color = hex; colorName = name; break; }
+            }
+            
+            const degreeMatch = beltStr.match(/(\d)º/);
+            if (degreeMatch) degree = parseInt(degreeMatch[1]);
+            
+            const width = 200; const height = 40; const tipWidth = 40; const stripeWidth = 6; const stripeGap = 5;
+            let stripesSVG = '';
+            const barColor = (colorName === 'Preta') ? '#dc2626' : '#000000';
+            const stripeColor = '#ffffff';
+            
+            for (let i = 0; i < degree; i++) {
+                const x = width - 10 - (i * (stripeWidth + stripeGap)) - stripeWidth;
+                stripesSVG += `<rect x="${x}" y="0" width="${stripeWidth}" height="${height}" fill="${stripeColor}" />`;
+            }
+            
+            return `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"><rect x="0" y="0" width="${width}" height="${height}" fill="${color}" /><rect x="${width - tipWidth}" y="0" width="${tipWidth}" height="${height}" fill="${barColor}" />${stripesSVG}</svg>`;
+        }
+
+        function calculateConsecutiveDays(attendanceArray) {
+            if (!attendanceArray || attendanceArray.length === 0) return 0;
+            
+            const dates = attendanceArray.map(d => {
+                const parts = d.split('-');
+                const dt = new Date(parts[0], parts[1] - 1, parts[2]);
+                dt.setHours(0,0,0,0);
+                return dt;
+            }).sort((a, b) => b - a);
+
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            const uniqueDates = [];
+            let lastTime = 0;
+            dates.forEach(d => {
+                if (d.getTime() !== lastTime) {
+                    uniqueDates.push(d);
+                    lastTime = d.getTime();
+                }
+            });
+
+            if (uniqueDates.length === 0) return 0;
+
+            let streak = 0;
+            let expectedDate = new Date(today);
+
+            if (uniqueDates[0].getTime() !== today.getTime()) {
+                expectedDate.setDate(expectedDate.getDate() - 1);
+                if (uniqueDates[0].getTime() !== expectedDate.getTime()) {
+                    return 0; 
+                }
+            }
+
+            for (let i = 0; i < uniqueDates.length; i++) {
+                if (uniqueDates[i].getTime() === expectedDate.getTime()) {
+                    streak++;
+                    expectedDate.setDate(expectedDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+            return streak;
+        }
+        
+        function checkForRecentGraduation(progressLog, currentBeltStr) {
+            if (!progressLog || progressLog.length === 0) return null;
+            
+            const graduations = progressLog.filter(log => log.type === 'graduation');
+            if (graduations.length === 0) return null;
+            
+            graduations.sort((a, b) => new Date(b.date) - new Date(a.date));
+            const latestGrad = graduations[0];
+            
+            const fiveDaysAgo = new Date();
+            fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+            const gradDate = new Date(latestGrad.date);
+            
+            if (gradDate >= fiveDaysAgo) {
+                const isDegree = latestGrad.text.includes('Grau');
+                return {
+                    isNewBelt: !isDegree,
+                    beltStr: currentBeltStr,
+                    date: gradDate
+                };
+            }
+            
+            return null;
+        }
+
+        // --- Configuração Firebase ---
         const firebaseConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
             authDomain: "tanqueteambjj.firebaseapp.com",
@@ -454,15 +826,8 @@
             messagingSenderId: "410605992451",
             appId: "1:410605992451:web:f0f341f4594fe75f376c36"
         };
-        
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj";
-        
-        window.dbInstance = db;
-        window.appIdVar = appId;
-        let currentUserData, viewingDependentId = null;
+
+        let app, db, auth, appId, currentUserData, viewingDependentId = null;
         let currentCalendarMonth = new Date().getMonth();
         let currentCalendarYear = new Date().getFullYear();
 
@@ -481,10 +846,21 @@
             if (user.role !== 'student' && !isCanvasPreview) {
                 window.location.href = "https://www.tanqueteambjj.com.br/login.html";
             } else {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj";
+                
+                window.dbInstance = db;
+                window.appIdVar = appId;
+
                 const initApp = async () => {
                     try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
-                        else await signInAnonymously(auth);
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
                         
                         document.getElementById('loading-screen').classList.add('opacity-0');
                         setTimeout(() => {
@@ -494,6 +870,7 @@
 
                         await window.loadStudentData(user.id);
                         if(window.loadNotices) window.loadNotices();
+                        
                     } catch (e) {
                         console.error("Auth erro:", e);
                         document.getElementById('loading-screen').classList.add('hidden');
@@ -519,20 +896,32 @@
                         document.getElementById('dash-dependents-container').classList.add('hidden');
                     }
                 } else {
+                    // Fallback visual for preview mock
                     if (typeof __app_id !== 'undefined') {
-                        currentUserData = { id: studentId, name: 'Aluno Preview', plan: 'adulto-mensal', belt: 'Faixa Branca - 0º Grau', enrollmentStatus: 'Ativo', paymentStatus: 'Em dia', attendance: [] };
+                        currentUserData = { 
+                            id: studentId, 
+                            name: 'Aluno Preview', 
+                            plan: 'adulto-mensal',
+                            belt: 'Faixa Branca - 0º Grau',
+                            enrollmentStatus: 'Ativo',
+                            paymentStatus: 'Em dia',
+                            attendance: []
+                        };
                         window.updateDashboardUI(currentUserData);
                     } else {
                         document.getElementById('redirect-error-msg').innerText = "Matrícula não encontrada no sistema.";
                         document.getElementById('redirect-overlay').classList.remove('hidden');
                     }
                 }
-            } catch (error) { console.error("Erro ao carregar dados do aluno:", error); }
+            } catch (error) {
+                console.error("Erro ao carregar dados do aluno:", error);
+            }
         }
 
         async function loadDependents(titularId) {
             try {
                 window.myDependents = [];
+
                 const q = query(collection(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'students'));
                 const querySnapshot = await getDocs(q);
                 
@@ -547,21 +936,32 @@
                     if(dep.titularId === titularId && dep.plan === 'dependente' && !dep.archived) {
                         foundDeps = true;
                         window.myDependents.push(dep);
+                        
                         const attCount = dep.attendance ? dep.attendance.length : 0;
                         const beltName = dep.belt ? dep.belt.split('-')[0].trim() : 'Branca';
                         
                         depsList.innerHTML += `
                             <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm transition hover:shadow-md">
-                                <div><p class="font-bold text-sm text-purple-900 dark:text-purple-100">${dep.name}</p><p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 uppercase tracking-wider">${beltName} • ${attCount} Treinos</p></div>
-                                <button onclick="window.switchToDependent('${dep.id}', '${dep.name}')" class="bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-800 px-3 py-1.5 rounded text-xs font-bold transition shadow-sm border border-purple-200 dark:border-purple-700">Acessar Painel <i class="fa-solid fa-arrow-right ml-1"></i></button>
+                                <div>
+                                    <p class="font-bold text-sm text-purple-900 dark:text-purple-100">${dep.name}</p>
+                                    <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 uppercase tracking-wider">${beltName} • ${attCount} Treinos</p>
+                                </div>
+                                <button onclick="window.switchToDependent('${dep.id}', '${dep.name}')" class="bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-800 px-3 py-1.5 rounded text-xs font-bold transition shadow-sm border border-purple-200 dark:border-purple-700">
+                                    Acessar Painel <i class="fa-solid fa-arrow-right ml-1"></i>
+                                </button>
                             </div>
                         `;
                     }
                 });
 
-                if (foundDeps) depsContainer.classList.remove('hidden');
-                else depsContainer.classList.add('hidden');
-            } catch (e) { console.error("Erro dependentes:", e); }
+                if (foundDeps) {
+                    depsContainer.classList.remove('hidden');
+                } else {
+                    depsContainer.classList.add('hidden');
+                }
+            } catch (e) {
+                console.error("Erro dependentes:", e);
+            }
         }
 
         window.switchToDependent = async function(depId, depName) {
@@ -582,6 +982,8 @@
 
         window.updateDashboardUI = function(data) {
             const isDep = viewingDependentId !== null;
+            
+            // PRIMEIRO NOME NO TOPO
             const firstName = (data.name || "Aluno").split(' ')[0];
             document.getElementById('student-name-display').innerText = firstName;
             
@@ -591,17 +993,30 @@
             const photoEl = document.getElementById('welcome-photo');
             const initEl = document.getElementById('welcome-initials');
             if (data.photoBase64) {
-                photoEl.src = data.photoBase64; photoEl.classList.remove('hidden'); initEl.classList.add('hidden');
+                photoEl.src = data.photoBase64;
+                photoEl.classList.remove('hidden');
+                initEl.classList.add('hidden');
             } else {
-                photoEl.classList.add('hidden'); initEl.classList.remove('hidden'); initEl.innerText = firstName.charAt(0).toUpperCase();
+                photoEl.classList.add('hidden');
+                initEl.classList.remove('hidden');
+                initEl.innerText = firstName.charAt(0).toUpperCase();
             }
 
+            // Status Badge
             const statBadge = document.getElementById('enrollment-status-badge');
             statBadge.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'bg-gray-500');
-            if (data.archived) { statBadge.innerText = 'Arquivado'; statBadge.classList.add('bg-gray-500'); } 
-            else if (data.enrollmentStatus === 'Inativo') { statBadge.innerText = 'Inativo'; statBadge.classList.add('bg-red-500'); } 
-            else { statBadge.innerText = 'Ativo'; statBadge.classList.add('bg-green-500'); }
+            if (data.archived) {
+                statBadge.innerText = 'Arquivado';
+                statBadge.classList.add('bg-gray-500');
+            } else if (data.enrollmentStatus === 'Inativo') {
+                statBadge.innerText = 'Inativo';
+                statBadge.classList.add('bg-red-500');
+            } else {
+                statBadge.innerText = 'Ativo';
+                statBadge.classList.add('bg-green-500');
+            }
 
+            // Belt & Parabéns Dinâmico
             const beltStr = data.belt || "Faixa Branca - 0º Grau";
             document.getElementById('belt-text').innerText = beltStr;
             document.getElementById('belt-visual-container').innerHTML = renderBeltSVG(beltStr);
@@ -611,49 +1026,70 @@
             const recentGrad = checkForRecentGraduation(data.progressLog, beltStr);
             
             if (recentGrad) {
-                celebrationBanner.classList.remove('hidden'); shareBeltBtn.classList.remove('hidden');
-                if (recentGrad.isNewBelt) document.getElementById('celebration-text').innerText = "🎉 PARABÉNS PELA NOVA FAIXA! 🎉";
-                else document.getElementById('celebration-text').innerText = "⭐ PARABÉNS PELO NOVO GRAU! ⭐";
+                celebrationBanner.classList.remove('hidden');
+                shareBeltBtn.classList.remove('hidden');
+                
+                if (recentGrad.isNewBelt) {
+                    document.getElementById('celebration-text').innerText = "🎉 PARABÉNS PELA NOVA FAIXA! 🎉";
+                } else {
+                    document.getElementById('celebration-text').innerText = "⭐ PARABÉNS PELO NOVO GRAU! ⭐";
+                }
 
+                // Verifica se já foi partilhado
                 const badgeNameToCheck = recentGrad.isNewBelt ? "Nova Faixa" : "Mais um Degrau";
                 const alreadyShared = window.checkIfBadgeShared(badgeNameToCheck);
                 const btn = document.getElementById('btn-share-belt');
                 
                 if (alreadyShared) {
-                    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-check text-green-500"></i> Partilhado no Feed';
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fa-solid fa-check text-green-500"></i> Partilhado no Feed';
                     btn.className = "w-full bg-gray-100 dark:bg-gray-700 text-gray-500 text-xs font-bold py-2 rounded-lg cursor-not-allowed flex items-center justify-center gap-2";
                 } else {
-                    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-share-nodes text-lg"></i> Partilhar no Feed da Equipe';
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-share-nodes text-lg"></i> Partilhar no Feed da Equipe';
                     btn.className = "w-full bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 rounded-lg transition shadow-sm flex items-center justify-center gap-2";
                 }
             } else {
-                celebrationBanner.classList.add('hidden'); shareBeltBtn.classList.add('hidden');
+                celebrationBanner.classList.add('hidden');
+                shareBeltBtn.classList.add('hidden');
             }
 
+            // Financeiro
             const planKey = data.plan || 'N/A';
             const planInfo = PLAN_DICT[planKey] || { short: planKey.toUpperCase(), price: 0 };
             document.getElementById('plan-display').innerText = planInfo.short;
 
             const payBadge = document.getElementById('payment-status-badge');
             const payIcon = document.getElementById('payment-status-icon');
+            
             payBadge.classList.remove('bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700', 'bg-gray-200', 'text-gray-600', 'dark:bg-green-900/30', 'dark:text-green-400', 'dark:bg-red-900/30', 'dark:text-red-400', 'dark:bg-gray-700', 'dark:text-gray-300');
             
             if (data.paymentStatus === 'Pendente') {
-                payBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Pendente'; payBadge.classList.add('bg-red-100', 'text-red-700', 'dark:bg-red-900/30', 'dark:text-red-400'); payIcon.className = "fa-solid fa-circle-xmark text-3xl text-red-500 dark:text-red-400";
+                payBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Pendente';
+                payBadge.classList.add('bg-red-100', 'text-red-700', 'dark:bg-red-900/30', 'dark:text-red-400');
+                payIcon.className = "fa-solid fa-circle-xmark text-3xl text-red-500 dark:text-red-400";
             } else if (data.paymentStatus === 'Isento' || planKey === 'dependente') {
-                payBadge.innerHTML = '<i class="fa-solid fa-link mr-1"></i> Isento (Dependente/Bolsista)'; payBadge.classList.add('bg-gray-200', 'text-gray-600', 'dark:bg-gray-700', 'dark:text-gray-300'); payIcon.className = "fa-solid fa-check-circle text-3xl text-gray-400 dark:text-gray-500";
+                payBadge.innerHTML = '<i class="fa-solid fa-link mr-1"></i> Isento (Dependente/Bolsista)';
+                payBadge.classList.add('bg-gray-200', 'text-gray-600', 'dark:bg-gray-700', 'dark:text-gray-300');
+                payIcon.className = "fa-solid fa-check-circle text-3xl text-gray-400 dark:text-gray-500";
             } else {
-                payBadge.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Em dia'; payBadge.classList.add('bg-green-100', 'text-green-700', 'dark:bg-green-900/30', 'dark:text-green-400'); payIcon.className = "fa-solid fa-check-circle text-3xl text-green-500 dark:text-green-400";
+                payBadge.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Em dia';
+                payBadge.classList.add('bg-green-100', 'text-green-700', 'dark:bg-green-900/30', 'dark:text-green-400');
+                payIcon.className = "fa-solid fa-check-circle text-3xl text-green-500 dark:text-green-400";
             }
 
+            // Frequência Total e Seguidos
             const totalAtt = data.attendance ? data.attendance.length : 0;
             document.getElementById('total-attendance-count').innerText = totalAtt;
+            
             const streak = calculateConsecutiveDays(data.attendance || []);
             
+            // Chama as funções globais passando os dados
             window.renderCalendar(data.attendance || []);
             window.renderBadges(totalAtt, streak);
             window.renderRanking(); 
 
+            // Preencher Perfil Completo
             if (!isDep) {
                 document.getElementById('data-name').innerText = data.name || '--';
                 document.getElementById('data-login').innerText = data.studentLogin || '--';
@@ -664,6 +1100,7 @@
             }
         };
 
+        // --- CALENDÁRIO ---
         window.changeMonth = function(dir) {
             currentCalendarMonth += dir;
             if (currentCalendarMonth > 11) { currentCalendarMonth = 0; currentCalendarYear++; }
@@ -674,17 +1111,37 @@
         window.renderCalendar = function(attendanceArray) {
             const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
             document.getElementById('calendar-month-year').innerText = `${monthNames[currentCalendarMonth].substring(0,3)}. ${currentCalendarYear}`;
-            const grid = document.getElementById('calendar-days'); grid.innerHTML = '';
+
+            const grid = document.getElementById('calendar-days');
+            grid.innerHTML = '';
+
             const firstDay = new Date(currentCalendarYear, currentCalendarMonth, 1).getDay();
             const daysInMonth = new Date(currentCalendarYear, currentCalendarMonth + 1, 0).getDate();
+
             let monthAttCount = 0;
-            for (let i = 0; i < firstDay; i++) { const emptyDiv = document.createElement('div'); emptyDiv.className = 'calendar-day empty'; grid.appendChild(emptyDiv); }
+
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'calendar-day empty';
+                grid.appendChild(emptyDiv);
+            }
+
             for (let i = 1; i <= daysInMonth; i++) {
-                const dayDiv = document.createElement('div'); dayDiv.className = 'calendar-day bg-gray-50 dark:bg-gray-700/50 shadow-sm'; dayDiv.innerText = i;
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day bg-gray-50 dark:bg-gray-700/50 shadow-sm';
+                dayDiv.innerText = i;
+
                 const dateStr = `${currentCalendarYear}-${String(currentCalendarMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-                if (attendanceArray.includes(dateStr)) { dayDiv.classList.add('present'); dayDiv.classList.remove('bg-gray-50', 'dark:bg-gray-700/50'); monthAttCount++; }
+                
+                if (attendanceArray.includes(dateStr)) {
+                    dayDiv.classList.add('present');
+                    dayDiv.classList.remove('bg-gray-50', 'dark:bg-gray-700/50');
+                    monthAttCount++;
+                }
+                
                 grid.appendChild(dayDiv);
             }
+
             document.getElementById('month-attendance-count').innerText = monthAttCount;
         }
 
@@ -707,33 +1164,61 @@
             if(!currentUserData) return;
             const recentGrad = checkForRecentGraduation(currentUserData.progressLog, currentUserData.belt);
             if(!recentGrad) return;
+            
             let badgeName = recentGrad.isNewBelt ? "Nova Faixa" : "Mais um Degrau";
-            let desc = recentGrad.isNewBelt ? `Fui graduado para a ${recentGrad.beltStr}! O trabalho duro compensa. Oss! 🔥` : `Recebi mais um grau na minha ${recentGrad.beltStr}! Um passo de cada vez. Oss! 🔥`;
+            let desc = recentGrad.isNewBelt 
+                ? `Fui graduado para a ${recentGrad.beltStr}! O trabalho duro compensa. Oss! 🔥` 
+                : `Recebi mais um grau na minha ${recentGrad.beltStr}! Um passo de cada vez. Oss! 🔥`;
             let iconClass = recentGrad.isNewBelt ? "fa-solid fa-medal text-brand-red" : "fa-solid fa-star text-yellow-600";
+            
             await window.shareBadgeToFeed(badgeName, desc, iconClass, btnElement);
         };
 
         window.shareBadgeToFeed = async function(badgeName, desc, iconClass, btnElement) {
             if(!currentUserData) return;
-            if (!confirm("Tem certeza que deseja partilhar esta conquista no Feed da Equipe? Esta publicação ficará visível para todos os alunos da escola durante 24 horas.")) return; 
-            const originalHtml = btnElement.innerHTML; btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; btnElement.disabled = true;
-            const expiry = new Date(); expiry.setHours(expiry.getHours() + 24);
-            const feedPost = { studentId: currentUserData.id, studentName: currentUserData.name.split(' ')[0], studentPhoto: currentUserData.photoBase64 || null, badgeName: badgeName, badgeDesc: desc, badgeIcon: iconClass, likes: 0, likedBy: [], timestamp: new Date().toISOString(), expiresAt: expiry.toISOString() };
+            
+            const userConfirmed = confirm("Tem certeza que deseja partilhar esta conquista no Feed da Equipe? Esta publicação ficará visível para todos os alunos da escola durante 24 horas.");
+            if (!userConfirmed) return; 
+
+            const originalHtml = btnElement.innerHTML;
+            btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            btnElement.disabled = true;
+
+            const expiry = new Date();
+            expiry.setHours(expiry.getHours() + 24);
+
+            const feedPost = {
+                studentId: currentUserData.id,
+                studentName: currentUserData.name.split(' ')[0],
+                studentPhoto: currentUserData.photoBase64 || null,
+                badgeName: badgeName,
+                badgeDesc: desc,
+                badgeIcon: iconClass,
+                likes: 0,
+                likedBy: [],
+                timestamp: new Date().toISOString(),
+                expiresAt: expiry.toISOString()
+            };
+
             try {
                 await addDoc(collection(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'feed'), feedPost);
                 window.markBadgeAsShared(badgeName);
+
                 btnElement.innerHTML = '<i class="fa-solid fa-check text-green-500"></i> Partilhado no Feed';
                 btnElement.classList.remove('bg-blue-50', 'hover:bg-blue-100', 'text-blue-500', 'bg-blue-500', 'hover:bg-blue-600', 'text-white');
                 btnElement.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-500', 'cursor-not-allowed');
             } catch (e) {
-                console.error("Erro ao partilhar no feed:", e); alert("Erro ao publicar.");
-                btnElement.innerHTML = originalHtml; btnElement.disabled = false;
+                console.error("Erro ao partilhar no feed:", e);
+                alert("Erro ao publicar.");
+                btnElement.innerHTML = originalHtml;
+                btnElement.disabled = false;
             }
         };
 
         window.renderBadges = function(totalClasses, streak) {
             const container = document.getElementById('badges-container');
             container.innerHTML = '';
+            
             const badges = [
                 { name: "Primeiro Passo", desc: "A jornada começa aqui.", icon: "fa-solid fa-shoe-prints text-blue-500", req: 0 },
                 { name: "Iniciante", desc: "10 Treinos concluídos.", icon: "fa-solid fa-fire text-orange-500", req: 10 },
@@ -748,7 +1233,12 @@
 
             badges.forEach(b => {
                 let unlocked = false;
-                if (b.customReq !== undefined) { unlocked = b.customReq; } else { unlocked = totalClasses >= b.req; }
+                if (b.customReq !== undefined) {
+                    unlocked = b.customReq;
+                } else {
+                    unlocked = totalClasses >= b.req;
+                }
+
                 const opacityClass = unlocked ? 'opacity-100 ring-2 ring-yellow-400 dark:ring-yellow-500' : 'opacity-40 grayscale pointer-events-none';
                 const bgClass = unlocked ? 'bg-gradient-to-b from-white to-gray-100 dark:from-gray-700 dark:to-gray-800' : 'bg-gray-100 dark:bg-gray-800';
                 
@@ -756,17 +1246,40 @@
                 if (unlocked) {
                     const alreadyShared = window.checkIfBadgeShared(b.name);
                     if (alreadyShared) {
-                        actionHtml = `<div class="mt-2 w-full"><button disabled class="w-full text-[9px] font-bold text-gray-500 bg-gray-100 dark:bg-gray-700 rounded py-1 flex items-center justify-center gap-1 cursor-not-allowed border border-gray-200 dark:border-gray-600"><i class="fa-solid fa-check text-green-500"></i> Partilhado</button></div>`;
+                        actionHtml = `
+                            <div class="mt-2 w-full">
+                                <button disabled class="w-full text-[9px] font-bold text-gray-500 bg-gray-100 dark:bg-gray-700 rounded py-1 flex items-center justify-center gap-1 cursor-not-allowed border border-gray-200 dark:border-gray-600">
+                                    <i class="fa-solid fa-check text-green-500"></i> Partilhado
+                                </button>
+                            </div>
+                        `;
                     } else {
-                        actionHtml = `<div class="mt-2 w-full"><button onclick="window.shareBadgeToFeed('${b.name}', '${b.desc}', '${b.icon}', this)" class="w-full text-[9px] font-bold text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 rounded py-1 transition flex items-center justify-center gap-1 border border-blue-200 dark:border-blue-800 shadow-sm" title="Postar no Feed da Escola"><i class="fa-solid fa-share-nodes"></i> Partilhar no Feed</button></div>`;
+                        actionHtml = `
+                            <div class="mt-2 w-full">
+                                <button onclick="window.shareBadgeToFeed('${b.name}', '${b.desc}', '${b.icon}', this)" class="w-full text-[9px] font-bold text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 rounded py-1 transition flex items-center justify-center gap-1 border border-blue-200 dark:border-blue-800 shadow-sm" title="Postar no Feed da Escola">
+                                    <i class="fa-solid fa-share-nodes"></i> Partilhar no Feed
+                                </button>
+                            </div>
+                        `;
                     }
                 }
 
-                container.innerHTML += `<div class="flex flex-col items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm ${bgClass} ${opacityClass} transition transform ${unlocked ? 'hover:-translate-y-1' : ''}"><div class="flex flex-col items-center w-full"><div class="w-12 h-12 rounded-full bg-white dark:bg-gray-900 flex items-center justify-center text-2xl shadow-inner mb-2 border border-gray-100 dark:border-gray-600"><i class="${b.icon}"></i></div><p class="text-[10px] font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider text-center leading-tight mb-1 truncate w-full">${b.name}</p><p class="text-[8px] text-gray-500 dark:text-gray-400 text-center leading-tight line-clamp-2">${b.desc}</p></div>${actionHtml}</div>`;
+                container.innerHTML += `
+                    <div class="flex flex-col items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm ${bgClass} ${opacityClass} transition transform ${unlocked ? 'hover:-translate-y-1' : ''}">
+                        <div class="flex flex-col items-center w-full">
+                            <div class="w-12 h-12 rounded-full bg-white dark:bg-gray-900 flex items-center justify-center text-2xl shadow-inner mb-2 border border-gray-100 dark:border-gray-600">
+                                <i class="${b.icon}"></i>
+                            </div>
+                            <p class="text-[10px] font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider text-center leading-tight mb-1 truncate w-full">${b.name}</p>
+                            <p class="text-[8px] text-gray-500 dark:text-gray-400 text-center leading-tight line-clamp-2">${b.desc}</p>
+                        </div>
+                        ${actionHtml}
+                    </div>
+                `;
             });
         }
 
-        // --- HISTÓRICO DE PAGAMENTO ---
+        // --- HISTÓRICO DE PAGAMENTO (CORRIGIDO PARA ABRIR SEMPRE) ---
         function formatDate(isoStr) { 
             try { 
                 const d = new Date(isoStr); 
@@ -776,6 +1289,7 @@
 
         window.viewPaymentHistory = function() {
             try {
+                const historyTable = document.getElementById('student-history-table');
                 const historyBody = document.getElementById('student-history-body');
                 const emptyState = document.getElementById('student-history-empty');
                 const modal = document.getElementById('student-history-modal');
@@ -787,7 +1301,7 @@
                 
                 historyBody.innerHTML = '';
                 
-                let payHist = currentUserData.paymentHistory;
+                let payHist = currentUserData ? currentUserData.paymentHistory : [];
                 let histArray = [];
                 
                 if (payHist) {
@@ -798,12 +1312,14 @@
                     }
                 }
                 
-                if(histArray.length === 0) {
+                if (histArray.length === 0) {
                     emptyState.classList.remove('hidden');
                     emptyState.classList.add('flex');
+                    if (historyTable) historyTable.classList.add('hidden');
                 } else {
                     emptyState.classList.add('hidden');
                     emptyState.classList.remove('flex');
+                    if (historyTable) historyTable.classList.remove('hidden');
                     
                     histArray.sort((a,b) => {
                         let d1 = new Date(a.timestamp || a.date || 0).getTime();
@@ -825,6 +1341,7 @@
                 }
 
                 modal.classList.remove('hidden');
+                modal.classList.add('flex');
             } catch (err) {
                 console.error("Erro ao exibir histórico:", err);
                 alert("Ocorreu um erro ao tentar exibir o histórico.");
@@ -835,6 +1352,7 @@
             const modal = document.getElementById('student-history-modal');
             if (modal) {
                 modal.classList.add('hidden');
+                modal.classList.remove('flex');
             }
         }
 
@@ -842,7 +1360,8 @@
             try {
                 const q = query(collection(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'notices'));
                 const snap = await getDocs(q);
-                const notices = []; const now = new Date();
+                const notices = [];
+                const now = new Date();
                 
                 snap.forEach(docSnap => {
                     const data = docSnap.data();
@@ -853,10 +1372,14 @@
                 const container = document.getElementById('student-notices-container');
                 const list = document.getElementById('student-notices-list');
                 
-                if (notices.length === 0) { container.classList.add('hidden'); return; }
+                if (notices.length === 0) {
+                    container.classList.add('hidden');
+                    return;
+                }
                 
                 notices.sort((a, b) => new Date(b.date) - new Date(a.date));
-                container.classList.remove('hidden'); list.innerHTML = '';
+                container.classList.remove('hidden');
+                list.innerHTML = '';
                 
                 notices.forEach(notice => {
                     const d = new Date(notice.date).toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric'});
@@ -881,7 +1404,9 @@
                         </div>
                     `;
                 });
-            } catch (e) { console.error("Erro ao carregar avisos:", e); }
+            } catch (e) {
+                console.error("Erro ao carregar avisos:", e);
+            }
         };
 
         window.loadFeedData = async function() {
@@ -894,10 +1419,18 @@
                 const snap = await getDocs(q);
                 
                 let posts = [];
-                snap.forEach(doc => { posts.push({ id: doc.id, ...doc.data() }); });
+                snap.forEach(doc => {
+                    posts.push({ id: doc.id, ...doc.data() });
+                });
 
                 if (posts.length === 0) {
-                    container.innerHTML = `<div class="bg-white dark:bg-gray-800 rounded-xl p-10 text-center shadow-sm border border-gray-200 dark:border-gray-700"><i class="fa-regular fa-face-frown text-4xl text-gray-300 dark:text-gray-600 mb-3"></i><h3 class="font-bold text-gray-600 dark:text-gray-300">O feed está silencioso...</h3><p class="text-sm text-gray-400 mt-1">Nenhuma conquista nova nas últimas 24 horas. Seja o primeiro a partilhar!</p></div>`;
+                    container.innerHTML = `
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-10 text-center shadow-sm border border-gray-200 dark:border-gray-700">
+                            <i class="fa-regular fa-face-frown text-4xl text-gray-300 dark:text-gray-600 mb-3"></i>
+                            <h3 class="font-bold text-gray-600 dark:text-gray-300">O feed está silencioso...</h3>
+                            <p class="text-sm text-gray-400 mt-1">Nenhuma conquista nova nas últimas 24 horas. Seja o primeiro a partilhar!</p>
+                        </div>
+                    `;
                     return;
                 }
 
@@ -907,31 +1440,55 @@
                 posts.forEach(post => {
                     const hasLiked = post.likedBy && post.likedBy.includes(currentUserData.id);
                     const likeIcon = hasLiked ? 'fa-solid fa-thumbs-up text-brand-red like-animate' : 'fa-regular fa-thumbs-up text-gray-400 dark:text-gray-500 group-hover:text-brand-red';
+                    
                     let avatar = post.studentPhoto ? `<img src="${post.studentPhoto}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-500">${post.studentName.charAt(0).toUpperCase()}</div>`;
+
                     const timeAgo = formatTimeAgo(new Date(post.timestamp));
 
-                    const deleteBtn = post.studentId === currentUserData.id ? `<button onclick="window.deleteFeedPost('${post.id}')" class="text-gray-400 hover:text-red-500 transition text-sm bg-gray-100 hover:bg-red-50 dark:bg-gray-700 dark:hover:bg-red-900/30 w-8 h-8 rounded-full flex items-center justify-center" title="Apagar Minha Publicação"><i class="fa-solid fa-trash"></i></button>` : '';
+                    const deleteBtn = post.studentId === currentUserData.id ? `
+                        <button onclick="window.deleteFeedPost('${post.id}')" class="text-gray-400 hover:text-red-500 transition text-sm bg-gray-100 hover:bg-red-50 dark:bg-gray-700 dark:hover:bg-red-900/30 w-8 h-8 rounded-full flex items-center justify-center" title="Apagar Minha Publicação">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    ` : '';
 
                     container.innerHTML += `
                         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-5 border border-gray-100 dark:border-gray-700 animate-fade-in" id="post-${post.id}">
                             <div class="flex justify-between items-start mb-4">
-                                <div class="flex items-center gap-3">${avatar}<div><h4 class="font-bold text-gray-800 dark:text-white leading-tight">${post.studentName}</h4><p class="text-xs text-gray-500">${timeAgo}</p></div></div>
+                                <div class="flex items-center gap-3">
+                                    ${avatar}
+                                    <div>
+                                        <h4 class="font-bold text-gray-800 dark:text-white leading-tight">${post.studentName}</h4>
+                                        <p class="text-xs text-gray-500">${timeAgo}</p>
+                                    </div>
+                                </div>
                                 ${deleteBtn}
                             </div>
+                            
                             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 mb-4 flex items-center gap-4 border border-gray-100 dark:border-gray-600">
-                                <div class="w-14 h-14 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center text-3xl shadow-sm shrink-0"><i class="${post.badgeIcon}"></i></div>
-                                <div><p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-widest mb-1">Desbloqueou</p><h5 class="font-display text-xl font-bold text-brand-dark dark:text-gray-100 leading-tight">${post.badgeName}</h5><p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${post.badgeDesc}</p></div>
+                                <div class="w-14 h-14 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center text-3xl shadow-sm shrink-0">
+                                    <i class="${post.badgeIcon}"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-widest mb-1">Desbloqueou</p>
+                                    <h5 class="font-display text-xl font-bold text-brand-dark dark:text-gray-100 leading-tight">${post.badgeName}</h5>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${post.badgeDesc}</p>
+                                </div>
                             </div>
+
                             <div class="flex items-center border-t border-gray-100 dark:border-gray-700 pt-3">
                                 <button onclick="window.likeFeedPost('${post.id}', this)" class="flex items-center gap-2 font-bold transition group outline-none" data-liked="${hasLiked}">
-                                    <i class="${likeIcon}"></i><span class="text-sm ${hasLiked ? 'text-brand-red' : 'text-gray-500'} group-hover:text-brand-red likes-count">${post.likes || 0} Oss!</span>
+                                    <i class="${likeIcon}"></i>
+                                    <span class="text-sm ${hasLiked ? 'text-brand-red' : 'text-gray-500'} group-hover:text-brand-red likes-count">${post.likes || 0} Oss!</span>
                                 </button>
                             </div>
                         </div>
                     `;
                 });
 
-            } catch (e) { console.error("Erro ao carregar feed:", e); container.innerHTML = '<p class="text-center text-red-500">Erro ao carregar o feed.</p>'; }
+            } catch (e) {
+                console.error("Erro ao carregar feed:", e);
+                container.innerHTML = '<p class="text-center text-red-500">Erro ao carregar o feed.</p>';
+            }
         };
 
         window.deleteFeedPost = async function(postId) {
@@ -939,9 +1496,14 @@
             try {
                 await deleteDoc(doc(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'feed', postId));
                 document.getElementById(`post-${postId}`).remove();
+                
                 const container = document.getElementById('feed-container');
-                if (container.children.length === 0) window.loadFeedData();
-            } catch (e) { alert("Erro ao excluir publicação."); }
+                if (container.children.length === 0) {
+                    window.loadFeedData();
+                }
+            } catch (e) {
+                alert("Erro ao excluir publicação.");
+            }
         };
 
         window.likeFeedPost = async function(postId, btnElement) {
@@ -957,26 +1519,37 @@
                 btnElement.setAttribute('data-liked', 'false');
                 icon.className = 'fa-regular fa-thumbs-up text-xl transition-all text-gray-400 dark:text-gray-500 group-hover:text-brand-red';
                 countSpan.className = 'text-sm text-gray-500 group-hover:text-brand-red likes-count';
-                currentLikes--; countSpan.innerText = `${currentLikes} Oss!`;
+                currentLikes--;
+                countSpan.innerText = `${currentLikes} Oss!`;
             } else {
                 btnElement.setAttribute('data-liked', 'true');
                 icon.className = 'fa-solid fa-thumbs-up text-xl transition-all like-animate text-brand-red';
                 countSpan.className = 'text-sm text-brand-red group-hover:text-brand-red likes-count';
-                currentLikes++; countSpan.innerText = `${currentLikes} Oss!`;
+                currentLikes++;
+                countSpan.innerText = `${currentLikes} Oss!`;
             }
 
             try {
-                const updateQuery = isLiked ? { likes: currentLikes, likedBy: arrayRemove(currentUserData.id) } : { likes: currentLikes, likedBy: arrayUnion(currentUserData.id) };
+                const updateQuery = isLiked ? 
+                    { likes: currentLikes, likedBy: arrayRemove(currentUserData.id) } : 
+                    { likes: currentLikes, likedBy: arrayUnion(currentUserData.id) };
+                
                 await updateDoc(doc(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'feed', postId), updateQuery);
-            } catch (e) { console.error("Erro ao dar like:", e); }
+            } catch (e) {
+                console.error("Erro ao dar like:", e);
+            }
         };
 
         function formatTimeAgo(date) {
             const seconds = Math.floor((new Date() - date) / 1000);
             let interval = seconds / 3600;
-            if (interval >= 1) return Math.floor(interval) + " h atrás";
+            if (interval >= 1) {
+                return Math.floor(interval) + " h atrás";
+            }
             interval = seconds / 60;
-            if (interval >= 1) return Math.floor(interval) + " min atrás";
+            if (interval >= 1) {
+                return Math.floor(interval) + " min atrás";
+            }
             return "Agora mesmo";
         }
 
@@ -995,6 +1568,7 @@
                 snap.forEach(docSnap => {
                     const data = docSnap.data();
                     if(data.archived || data.enrollmentStatus === 'Inativo') return;
+                    
                     let monthCount = 0;
                     if(data.attendance && data.attendance.length > 0) {
                         data.attendance.forEach(d => {
@@ -1042,6 +1616,7 @@
                         </tr>
                     `;
                 });
+
             } catch(e) { console.error("Ranking error:", e); }
         }
 
@@ -1135,268 +1710,6 @@
             }
         }
 
-        window.openMyQrModal = function() {
-            if(!currentUserData) return;
-            
-            document.getElementById('qr-student-name').innerText = currentUserData.name;
-            document.getElementById('qr-belt').innerText = currentUserData.belt || "Faixa Branca";
-            document.getElementById('qr-plan').innerText = PLAN_DICT[currentUserData.plan]?.short || "Plano";
-            
-            const qrImage = document.getElementById('qr-image');
-            const qrBlocked = document.getElementById('qr-blocked-wrapper');
-            const footerText = document.getElementById('qr-footer-text');
-
-            if(currentUserData.paymentStatus === 'Pendente') {
-                qrImage.parentElement.classList.add('hidden');
-                qrBlocked.classList.remove('hidden');
-                qrBlocked.classList.add('flex');
-                footerText.innerText = "BLOQUEADO PELA RECEPÇÃO";
-                footerText.classList.replace('text-gray-400', 'text-red-500');
-            } else {
-                qrImage.parentElement.classList.remove('hidden');
-                qrBlocked.classList.add('hidden');
-                qrBlocked.classList.remove('flex');
-                qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentUserData.id}`;
-                footerText.innerText = "Apresente na Recepção";
-                footerText.classList.replace('text-red-500', 'text-gray-400');
-            }
-
-            const photoImg = document.getElementById('qr-photo'); 
-            const photoPlaceholder = document.getElementById('qr-photo-placeholder');
-            if (currentUserData.photoBase64) { 
-                photoImg.src = currentUserData.photoBase64; 
-                photoImg.classList.remove('hidden'); 
-                photoPlaceholder.classList.add('hidden'); 
-            } else { 
-                photoImg.classList.add('hidden'); 
-                photoPlaceholder.classList.remove('hidden'); 
-                photoPlaceholder.innerText = currentUserData.name.charAt(0).toUpperCase(); 
-            }
-
-            document.getElementById('qr-modal').classList.remove('hidden');
-        }
-
-        window.closeMyQrModal = function() {
-            document.getElementById('qr-modal').classList.add('hidden');
-        }
-
-        window.printHtmlContent = function(htmlContent, titleStr) {
-            const iframe = document.createElement('iframe');
-            iframe.style.position = 'absolute';
-            iframe.style.width = '0px';
-            iframe.style.height = '0px';
-            iframe.style.border = 'none';
-            document.body.appendChild(iframe);
-
-            const docIframe = iframe.contentWindow.document;
-            docIframe.open();
-            docIframe.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>${titleStr}</title>
-                    <style>
-                        @media print {
-                            @page { 
-                                margin: 3cm 2cm 2cm 3cm; 
-                                size: A4 portrait;
-                            }
-                            body { 
-                                -webkit-print-color-adjust: exact; 
-                                print-color-adjust: exact; 
-                                font-family: 'Times New Roman', Times, serif; 
-                            }
-                        }
-                        body { font-family: 'Times New Roman', Times, serif; margin: 0; padding: 0; }
-                    </style>
-                </head>
-                <body>
-                    ${htmlContent}
-                </body>
-                </html>
-            `);
-            docIframe.close();
-
-            setTimeout(() => {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-                setTimeout(() => { document.body.removeChild(iframe); }, 2000);
-            }, 500);
-        };
-
-        window.printQrCard = function() {
-            if (!currentUserData) return;
-            window.closeMyQrModal();
-
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentUserData.id}`;
-            const name = currentUserData.name;
-            const belt = currentUserData.belt || "Faixa Branca";
-            const plan = PLAN_DICT[currentUserData.plan]?.short || "Plano";
-            
-            let photoHtml = '';
-            if (currentUserData.photoBase64) {
-                photoHtml = `<img src="${currentUserData.photoBase64}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
-            } else {
-                photoHtml = `<span style="font-size: 24px; font-weight: bold; color: #9ca3af; line-height: 70px;">${name.charAt(0).toUpperCase()}</span>`;
-            }
-
-            const htmlContent = `
-                <div style="width: 6.5cm; height: 10.5cm; border: 2px solid #1B1B1B; border-radius: 12px; margin: 0 auto; text-align: center; font-family: 'Arial', sans-serif; overflow: hidden; background: #fff; position: relative; box-sizing: border-box; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                    <div style="background-color: #1B1B1B; color: #fff; padding: 12px 10px; font-weight: bold; text-transform: uppercase; font-size: 13px; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-                        <img src="https://iili.io/qC543c7.png" style="height: 22px;"> 
-                        TANQUE TEAM
-                    </div>
-                    <img src="https://iili.io/qC543c7.png" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; opacity: 0.05; pointer-events: none; filter: grayscale(100%);">
-                    <div style="padding: 15px; display: flex; flex-direction: column; align-items: center; height: calc(100% - 46px); box-sizing: border-box; position: relative; z-index: 10;">
-                        <div style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid #D90429; margin-bottom: 8px; margin-top: 10px; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center;">
-                            ${photoHtml}
-                        </div>
-                        <h4 style="margin: 0 0 4px 0; font-size: 15px; font-weight: 800; text-transform: uppercase; color: #1B1B1B; line-height: 1.1;">${name}</h4>
-                        <p style="margin: 0 0 2px 0; color: #D90429; font-size: 11px; font-weight: 900; text-transform: uppercase;">${belt}</p>
-                        <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${plan}</p>
-                        <div style="border: 1px solid #e5e7eb; padding: 4px; border-radius: 8px; background: white; margin-top: auto;">
-                            <img src="${qrUrl}" style="width: 110px; height: 110px; display: block;">
-                        </div>
-                        <p style="margin: 8px 0 0 0; font-size: 8px; color: #9ca3af; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px;">Apresente na Recepção</p>
-                    </div>
-                </div>
-            `;
-            
-            window.printHtmlContent(htmlContent, "Carteirinha_TanqueTeam");
-        }
-
-        window.printStudentContract = async function() {
-            if (!currentUserData) return;
-            const s = currentUserData;
-            
-            const isCombo = String(s.plan).includes('combo'); 
-            let myDependents = [];
-            if (isCombo) {
-                const qSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'students'));
-                qSnap.forEach(docSnap => {
-                    const data = docSnap.data();
-                    if(data.titularId === s.id && data.plan === 'dependente' && !data.archived) {
-                        myDependents.push(data);
-                    }
-                });
-            }
-
-            const pInfo = window.getPlanInfo(s.plan);
-            let price = formatCurrency(pInfo.price);
-            let displayName = pInfo.short;
-
-            let formattedDob = '--/--/----';
-            if (s.dob) { 
-                if (s.dob.includes('-')) {
-                    const parts = s.dob.split('-');
-                    if (parts.length === 3) formattedDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
-                } else {
-                    formattedDob = s.dob;
-                }
-            }
-
-            let contratanteText = s.name || "NÃO INFORMADO";
-            if (s.guardian && s.guardian.trim() !== "") contratanteText = `${s.guardian} (Responsável Legal)`;
-            else if (s.titularName && s.titularName.trim() !== "") contratanteText = `${s.titularName} (Titular)`;
-
-            let beltInfo = ""; 
-            if(s.belt && !s.belt.includes("Branca - 0º") && !s.belt.includes("Iniciante")) beltInfo = `| Graduação: ${s.belt}`;
-            
-            let regDate = new Date(); 
-            if (s.registrationDate) { const parsed = new Date(s.registrationDate); if (!isNaN(parsed)) regDate = parsed; }
-            const printDateStr = regDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
-            
-            const isFidelity = String(s.plan).includes('semestral') || String(s.plan).includes('trimestral') || isCombo;
-            
-            let promoNote = "";
-            if (s.plan.includes('semestral') && !s.plan.includes('combo')) {
-                promoNote = "A 1ª Mensalidade terá o valor reduzido de R$ 29,90.";
-            } else if (s.plan === 'combo-dupla') {
-                promoNote = "A 1ª Mensalidade terá o valor reduzido de R$ 59,90.";
-            } else if (s.plan === 'combo-familia') {
-                promoNote = "A 1ª Mensalidade terá o valor reduzido de R$ 89,90.";
-            }
-
-            let dependentsHtml = '';
-            if (isCombo && myDependents.length > 0) {
-                dependentsHtml = `<div style="margin-bottom: 15px; padding-left: 20px; border-left: 2px solid #ccc;"><p style="margin: 0 0 5px 0; font-weight: bold; font-size: 11pt;">DEPENDENTES VINCULADOS AO PLANO:</p><ul style="margin: 0; padding-left: 20px; font-size: 11pt;">`;
-                myDependents.forEach(d => {
-                    let dDob = '--/--/----';
-                    if (d.dob) { 
-                        if(d.dob.includes('-')) {
-                            const parts = d.dob.split('-');
-                            if(parts.length===3) dDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
-                        } else dDob = d.dob;
-                    }
-                    dependentsHtml += `<li style="margin-bottom: 3px;"><strong>${d.name}</strong> - Nasc: ${dDob} | Parentesco: ${d.parentesco || '-'} | Graduação: ${d.belt || 'Branca'}</li>`;
-                });
-                dependentsHtml += `</ul></div>`;
-            }
-
-            let clauseNum = 3;
-            let clausesHtmlABNT = `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: ${promoNote ? '5px' : '15px'}; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong>${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong>${price}</strong>. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.</p>`;
-
-            if (promoNote) {
-                clausesHtmlABNT += `<p style="margin-bottom: 15px; font-style: italic; font-size: 11pt; text-align: justify; line-height: 1.5;">OBS: Promoção de Inauguração aplicada. ${promoNote}</p>`;
-            }
-
-            if (isFidelity) { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade correspondente à sua nomenclatura (Trimestral ou Semestral). O cancelamento exige aviso prévio de 30 dias por escrito. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>`; clauseNum++; } 
-            else { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO:</strong> O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.</p>`; clauseNum++; }
-            
-            if (isCombo) { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DO PLANO FAMÍLIA (COMBO):</strong> O pagamento das mensalidades é unificado e de inteira responsabilidade do CONTRATANTE titular. O cancelamento ou afastamento de um dos beneficiários dependentes não dá direito a desconto ou reembolso parcial, e reverte automaticamente o plano dos membros restantes para o valor da tabela individual vigente.</p>`; clauseNum++; }
-            
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DA INADIMPLÊNCIA:</strong> O atraso superior a 30 dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e cobrança dos valores devidos acrescidos de multa de 2% e juros de mora legais.</p>`; clauseNum++;
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DA SAÚDE E APTIDÃO FÍSICA:</strong> O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate, isentando a CONTRATADA de qualquer responsabilidade sobre moléstias pré-existentes não declaradas formalmente no ato desta matrícula.</p>`; clauseNum++;
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DE CONDUTA (DOJO KUN):</strong> É obrigatório o uso de uniforme (Kimono) estipulado pela academia, limpo e conservado. Atos de indisciplina, desrespeito à hierarquia, agressão fora do contexto do treino esportivo ou falta de higiene poderão acarretar na suspensão ou rescisão unilateral deste contrato por parte da CONTRATADA, sem devolução de valores.</p>`; clauseNum++;
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DO DIREITO DE IMAGEM:</strong> O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da academia ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.</p>`;
-
-            const signName = s.guardian || s.titularName || s.name || "CONTRATANTE";
-
-            const contractHtml = `
-                <div style="font-family: 'Times New Roman', Times, serif; color: #000; max-width: 100%; margin: 0; padding: 0;">
-                    <div style="text-align: center; margin-bottom: 15px;">
-                        <img src="https://iili.io/qC543c7.png" alt="Logo" style="height: 80px; margin-bottom: 10px; filter: grayscale(100%);">
-                        <h1 style="font-size: 16pt; font-weight: bold; margin: 0;">TANQUE TEAM BJJ</h1>
-                    </div>
-                    <div style="text-align: left; font-size: 10pt; line-height: 1.3; margin-bottom: 10px;">
-                        <p style="margin: 0;">CNPJ: 00.000.000/0001-00</p>
-                        <p style="margin: 0;">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, CEP 66635-110</p>
-                        <p style="margin: 0;">Tel: (91) 99819-2610 | Email: administrativo@tanqueteambjj.com.br</p>
-                    </div>
-                    <hr style="border: 0; border-top: 1px solid #000; margin-bottom: 20px;">
-                    <h2 style="text-align: center; font-size: 14pt; font-weight: bold; text-decoration: underline; margin-bottom: 30px;">CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS</h2>
-                    <div style="font-size: 12pt; line-height: 1.5; text-align: justify; margin-bottom: 20px;">
-                        <p style="margin-bottom: 15px;"><strong>1. CONTRATADA:</strong> TANQUE TEAM ACADEMIA DE ARTES MARCIAIS LTDA.</p>
-                        <p style="margin-bottom: 15px;"><strong>2. CONTRATANTE:</strong> ${contratanteText}, CPF: ${s.cpf || "Não informado"}, Endereço: ${s.address || "Não informado"}, Tel: ${s.phone || "Não informado"}, E-mail: ${s.email || "Não informado"}.</p>
-                        <p style="margin-bottom: 15px;"><strong>3. ALUNO(A):</strong> ${s.name || "NÃO INFORMADO"}, Nasc: ${formattedDob}. ${beltInfo}</p>
-                        ${dependentsHtml}
-                    </div>
-                    ${clausesHtmlABNT}
-                    <div style="margin-top: 60px; page-break-inside: avoid;">
-                        <p style="text-align: right; margin-bottom: 50px; font-size: 11pt;">Belém-PA, ${printDateStr}.</p>
-                        <table style="width: 100%; text-align: center; border: none;">
-                            <tr>
-                                <td style="width: 45%; border-top: 1px solid #000; padding-top: 5px;">
-                                    <p style="font-weight: bold; text-transform: uppercase; font-size: 11pt; margin: 0;">TANQUE TEAM BJJ</p>
-                                </td>
-                                <td style="width: 10%;"></td>
-                                <td style="width: 45%; border-top: 1px solid #000; padding-top: 5px;">
-                                    <p style="font-weight: bold; font-size: 11pt; text-transform: uppercase; margin: 0;">${signName}</p>
-                                    <p style="font-size: 9pt; color: #555; margin: 0;">CONTRATANTE / RESP. FINANCEIRO</p>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-            `;
-            window.printHtmlContent(contractHtml, `Contrato_Matricula_TanqueTeam_${s.name.replace(/\s+/g, '_')}`);
-        }
-
-        window.shareTrialLink = function() {
-            const text = encodeURIComponent(`Fala! Eu treino Jiu-Jitsu na *Tanque Team BJJ* e a escola é incrível! 🥋🔥\n\nEles estão com uma promoção e oferecem a *Primeira Aula Grátis*. Vamos marcar um treino experimental juntos?\n\nAcessa o link e agenda a tua aula aqui: http://www.tanqueteambjj.com.br/#experimental`);
-            window.open(`https://wa.me/?text=${text}`, '_blank');
-        }
     </script>
 </body>
 </html>
