@@ -968,8 +968,8 @@
                         </div>
                         <!-- INFO -->
                         <h4 style="margin: 0 0 4px 0; font-size: 15px; font-weight: 800; text-transform: uppercase; color: #1B1B1B; line-height: 1.1;">${name}</h4>
-                        <p style="margin: 0 0 2px 0; color: #D90429; font-size: 11px; font-weight: 900; text-transform: uppercase;">${belt}</p>
-                        <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${plan}</p>
+                        ${window.getBeltImageInlineHtml(belt)}
+                        <p style="margin: 4px 0 10px 0; color: #6b7280; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${plan}</p>
                         <!-- QR CODE -->
                         <div style="border: 1px solid #e5e7eb; padding: 4px; border-radius: 8px; background: white; margin-top: auto;">
                             <img src="${qrUrl}" style="width: 110px; height: 110px; display: block;">
@@ -1121,7 +1121,7 @@
                 const s = window.students.find(st => st.id === id); if(!s) return;
                 document.getElementById('detail-name').innerText = s.name;
                 const age = getAge(s.dob); document.getElementById('detail-age').innerText = age !== null ? `${age} anos` : '--';
-                document.getElementById('detail-belt').innerText = s.belt || "Faixa Branca";
+                document.getElementById('detail-belt').innerHTML = '<div class="flex items-center gap-2">' + window.getBeltImageHtml(s.belt) + '<span>' + (s.belt || "Faixa Branca") + '</span></div>';
                 const photoImg = document.getElementById('detail-photo'); const photoIcon = document.getElementById('detail-icon');
                 if(s.photoBase64) { photoImg.src = s.photoBase64; photoImg.classList.remove('hidden'); photoIcon.classList.add('hidden'); } 
                 else { photoImg.classList.add('hidden'); photoIcon.classList.remove('hidden'); }
@@ -1280,7 +1280,9 @@
         // PROGRESSO, FREQUENCIA EMBUTIDA
         window.openProgressModal = (id) => {
             const s = window.students.find(st => st.id === id); if(!s) return;
-            document.getElementById('prog-student-id').value = id; document.getElementById('prog-student-name').innerText = s.name; document.getElementById('prog-start-date').innerText = formatDate(s.registrationDate); document.getElementById('prog-current-belt').innerText = s.belt || 'Branca'; document.getElementById('prog-new-note').value = ''; document.getElementById('prog-add-date').valueAsDate = new Date();
+            document.getElementById('prog-student-id').value = id; document.getElementById('prog-student-name').innerText = s.name; document.getElementById('prog-start-date').innerText = formatDate(s.registrationDate); 
+            document.getElementById('prog-current-belt').innerHTML = '<span class="inline-flex items-center gap-2 align-middle">' + window.getBeltImageHtml(s.belt) + '<span>' + (s.belt || 'Branca') + '</span></span>';
+            document.getElementById('prog-new-note').value = ''; document.getElementById('prog-add-date').valueAsDate = new Date();
             const tl = document.getElementById('prog-timeline'); tl.innerHTML = '';
             let logs = s.progressLog ? [...s.progressLog] : []; logs.push({ type: 'info', text: 'Matrícula realizada.', date: s.registrationDate || new Date().toISOString() }); logs.sort((a, b) => new Date(b.date) - new Date(a.date));
             logs.forEach(log => {
@@ -1537,6 +1539,99 @@
             try { await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id)); window.loadExperimentalData(); } catch(e) { alert("Erro ao excluir."); }
         };
 
+        // Helper para gerar imagem da faixa
+        window.getBeltImageHtml = (beltStr) => {
+            if (!beltStr) beltStr = 'Faixa Branca - 0º Grau';
+            
+            let colorName = 'Branca';
+            let degree = 0;
+            
+            const parts = beltStr.split(' - ');
+            if (parts.length > 0) colorName = parts[0].replace('Faixa ', '').trim();
+            if (parts.length > 1) degree = parseInt(parts[1].replace('º Grau', '').trim()) || 0;
+            
+            let bgColorClass = 'bg-white';
+            let barColorClass = 'bg-black';
+            let stripeColorClass = 'bg-white';
+            let borderColorClass = 'border-gray-300';
+            
+            switch(colorName.toLowerCase()) {
+                case 'branca': bgColorClass = 'bg-white'; break;
+                case 'cinza': bgColorClass = 'bg-gray-400'; borderColorClass = 'border-gray-500'; break;
+                case 'amarela': bgColorClass = 'bg-yellow-400'; borderColorClass = 'border-yellow-500'; break;
+                case 'laranja': bgColorClass = 'bg-orange-500'; borderColorClass = 'border-orange-600'; break;
+                case 'verde': bgColorClass = 'bg-green-600'; borderColorClass = 'border-green-700'; break;
+                case 'azul': bgColorClass = 'bg-blue-600'; borderColorClass = 'border-blue-700'; break;
+                case 'roxa': bgColorClass = 'bg-purple-600'; borderColorClass = 'border-purple-700'; break;
+                case 'marrom': bgColorClass = 'bg-amber-800'; borderColorClass = 'border-amber-900'; break;
+                case 'preta': 
+                    bgColorClass = 'bg-black'; 
+                    barColorClass = 'bg-red-600'; 
+                    borderColorClass = 'border-gray-800';
+                    break;
+            }
+            
+            let stripesHtml = '';
+            for (let i = 0; i < degree; i++) {
+                stripesHtml += `<div class="w-1 h-full ${stripeColorClass} mx-px"></div>`;
+            }
+            
+            return `
+                <div class="flex items-center w-20 h-4 rounded-sm overflow-hidden border ${borderColorClass} shadow-sm" title="${beltStr}">
+                    <div class="flex-grow h-full ${bgColorClass}"></div>
+                    <div class="w-6 h-full ${barColorClass} flex items-center justify-end px-0.5 border-l border-black/20">
+                        ${stripesHtml}
+                    </div>
+                </div>
+            `;
+        };
+
+        window.getBeltImageInlineHtml = (beltStr) => {
+            if (!beltStr) beltStr = 'Faixa Branca - 0º Grau';
+            
+            let colorName = 'Branca';
+            let degree = 0;
+            
+            const parts = beltStr.split(' - ');
+            if (parts.length > 0) colorName = parts[0].replace('Faixa ', '').trim();
+            if (parts.length > 1) degree = parseInt(parts[1].replace('º Grau', '').trim()) || 0;
+            
+            let bgColor = '#ffffff';
+            let barColor = '#000000';
+            let stripeColor = '#ffffff';
+            let borderColor = '#d1d5db';
+            
+            switch(colorName.toLowerCase()) {
+                case 'branca': bgColor = '#ffffff'; break;
+                case 'cinza': bgColor = '#9ca3af'; borderColor = '#6b7280'; break;
+                case 'amarela': bgColor = '#facc15'; borderColor = '#eab308'; break;
+                case 'laranja': bgColor = '#f97316'; borderColor = '#ea580c'; break;
+                case 'verde': bgColor = '#16a34a'; borderColor = '#15803d'; break;
+                case 'azul': bgColor = '#2563eb'; borderColor = '#1d4ed8'; break;
+                case 'roxa': bgColor = '#9333ea'; borderColor = '#7e22ce'; break;
+                case 'marrom': bgColor = '#92400e'; borderColor = '#78350f'; break;
+                case 'preta': 
+                    bgColor = '#000000'; 
+                    barColor = '#dc2626'; 
+                    borderColor = '#1f2937';
+                    break;
+            }
+            
+            let stripesHtml = '';
+            for (let i = 0; i < degree; i++) {
+                stripesHtml += `<div style="width: 3px; height: 100%; background-color: ${stripeColor}; margin: 0 1px;"></div>`;
+            }
+            
+            return `
+                <div style="display: flex; align-items: center; width: 100px; height: 16px; border-radius: 2px; overflow: hidden; border: 1px solid ${borderColor}; margin: 4px auto;">
+                    <div style="flex-grow: 1; height: 100%; background-color: ${bgColor}; -webkit-print-color-adjust: exact; print-color-adjust: exact;"></div>
+                    <div style="width: 24px; height: 100%; background-color: ${barColor}; display: flex; align-items: center; justify-content: flex-end; padding: 0 2px; border-left: 1px solid rgba(0,0,0,0.2); -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                        ${stripesHtml}
+                    </div>
+                </div>
+            `;
+        };
+
         // TABELA DE ALUNOS
         window.renderTable = () => {
             const tbody = document.getElementById('students-table-body');
@@ -1602,8 +1697,8 @@
 
                 tbody.innerHTML += `
                     <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                        <td class="p-3"><div class="flex items-center gap-3">${photoHtml} <span class="font-bold text-sm text-gray-800 dark:text-gray-200">${s.name}</span></div></td>
-                        <td class="p-3 text-sm text-gray-600 dark:text-gray-400">${s.belt || 'Branca'}</td>
+                        <td class="p-3"><div class="flex items-center gap-3">${photoHtml} <span class="font-bold text-sm text-gray-800 dark:text-gray-200 cursor-pointer hover:underline hover:text-brand-red transition-colors" onclick="window.viewStudentDetails('${s.id}')">${s.name}</span></div></td>
+                        <td class="p-3">${window.getBeltImageHtml(s.belt)}</td>
                         <td class="p-3 text-sm text-gray-600 dark:text-gray-400">${planInfo.short}</td>
                         <td class="p-3">${statusBadge}</td>
                         <td class="p-3">${payBadge}</td>
