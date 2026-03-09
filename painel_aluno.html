@@ -786,14 +786,14 @@
                         document.getElementById('loading-screen').classList.add('opacity-0');
                         setTimeout(() => {
                             document.getElementById('loading-screen').classList.add('hidden');
-                        document.getElementById('main-ui').classList.remove('hidden');
-                    }, 500);
+                            document.getElementById('main-ui').classList.remove('hidden');
+                        }, 500);
 
-                    await window.loadStudentData(user.id);
-                    if(window.loadNotices) window.loadNotices();
-                    
-                } catch (e) {
-                    console.error("Auth erro:", e);
+                        await window.loadStudentData(user.id);
+                        if(window.loadNotices) window.loadNotices();
+                        
+                    } catch (e) {
+                        console.error("Auth erro:", e);
                         document.getElementById('loading-screen').classList.add('hidden');
                         document.getElementById('redirect-overlay').classList.remove('hidden');
                     }
@@ -817,8 +817,22 @@
                         document.getElementById('dash-dependents-container').classList.add('hidden');
                     }
                 } else {
-                    document.getElementById('redirect-error-msg').innerText = "Matrícula não encontrada no sistema.";
-                    document.getElementById('redirect-overlay').classList.remove('hidden');
+                    // Fallback visual for preview mock
+                    if (typeof __app_id !== 'undefined') {
+                        currentUserData = { 
+                            id: studentId, 
+                            name: 'Aluno Preview', 
+                            plan: 'adulto-mensal',
+                            belt: 'Faixa Branca - 0º Grau',
+                            enrollmentStatus: 'Ativo',
+                            paymentStatus: 'Em dia',
+                            attendance: []
+                        };
+                        window.updateDashboardUI(currentUserData);
+                    } else {
+                        document.getElementById('redirect-error-msg').innerText = "Matrícula não encontrada no sistema.";
+                        document.getElementById('redirect-overlay').classList.remove('hidden');
+                    }
                 }
             } catch (error) {
                 console.error("Erro ao carregar dados do aluno:", error);
@@ -1182,7 +1196,7 @@
                         </div>
                         ${actionHtml}
                     </div>
-                \`;
+                `;
             });
         }
 
@@ -1221,18 +1235,18 @@
                     if(notice.type === 'success') { bg = 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800'; icon = '<i class="fa-solid fa-check-circle text-green-500"></i>'; textClass = 'text-green-800 dark:text-green-200';}
                     if(notice.type === 'danger') { bg = 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'; icon = '<i class="fa-solid fa-circle-xmark text-red-500"></i>'; textClass = 'text-red-800 dark:text-red-200';}
                     
-                    list.innerHTML += \`
-                        <div class="p-4 border rounded-xl \${bg} shadow-sm animate-fade-in">
+                    list.innerHTML += `
+                        <div class="p-4 border rounded-xl ${bg} shadow-sm animate-fade-in">
                             <div class="flex items-start gap-3">
-                                <div class="text-xl mt-0.5">\${icon}</div>
+                                <div class="text-xl mt-0.5">${icon}</div>
                                 <div>
-                                    <h4 class="font-bold \${textClass} text-sm md:text-base leading-tight">\${notice.title}</h4>
-                                    <p class="text-sm mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">\${notice.text}</p>
-                                    <p class="text-[10px] opacity-70 mt-2 font-medium text-gray-500 dark:text-gray-400">Publicado em: \${d}</p>
+                                    <h4 class="font-bold ${textClass} text-sm md:text-base leading-tight">${notice.title}</h4>
+                                    <p class="text-sm mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">${notice.text}</p>
+                                    <p class="text-[10px] opacity-70 mt-2 font-medium text-gray-500 dark:text-gray-400">Publicado em: ${d}</p>
                                 </div>
                             </div>
                         </div>
-                    \`;
+                    `;
                 });
             } catch (e) {
                 console.error("Erro ao carregar avisos:", e);
@@ -1835,7 +1849,6 @@
             const text = encodeURIComponent(`Fala! Eu treino Jiu-Jitsu na *Tanque Team BJJ* e a escola é incrível! 🥋🔥\n\nEles estão com uma promoção e oferecem a *Primeira Aula Grátis*. Vamos marcar um treino experimental juntos?\n\nAcessa o link e agenda a tua aula aqui: http://www.tanqueteambjj.com.br/#experimental`);
             window.open(`https://wa.me/?text=${text}`, '_blank');
         }
-
     </script>
 </body>
 </html>
