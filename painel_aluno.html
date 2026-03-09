@@ -786,13 +786,14 @@
                         document.getElementById('loading-screen').classList.add('opacity-0');
                         setTimeout(() => {
                             document.getElementById('loading-screen').classList.add('hidden');
-                            document.getElementById('main-ui').classList.remove('hidden');
-                        }, 500);
+                        document.getElementById('main-ui').classList.remove('hidden');
+                    }, 500);
 
-                        await window.loadStudentData(user.id);
-                        
-                    } catch (e) {
-                        console.error("Auth erro:", e);
+                    await window.loadStudentData(user.id);
+                    if(window.loadNotices) window.loadNotices();
+                    
+                } catch (e) {
+                    console.error("Auth erro:", e);
                         document.getElementById('loading-screen').classList.add('hidden');
                         document.getElementById('redirect-overlay').classList.remove('hidden');
                     }
@@ -1181,9 +1182,62 @@
                         </div>
                         ${actionHtml}
                     </div>
-                `;
+                \`;
             });
         }
+
+        window.loadNotices = async function() {
+            try {
+                const q = query(collection(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'notices'));
+                const snap = await getDocs(q);
+                const notices = [];
+                const now = new Date();
+                
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if (data.expiresAt && new Date(data.expiresAt) < now) return;
+                    notices.push({ id: docSnap.id, ...data });
+                });
+                
+                const container = document.getElementById('student-notices-container');
+                const list = document.getElementById('student-notices-list');
+                
+                if (notices.length === 0) {
+                    container.classList.add('hidden');
+                    return;
+                }
+                
+                notices.sort((a, b) => new Date(b.date) - new Date(a.date));
+                container.classList.remove('hidden');
+                list.innerHTML = '';
+                
+                notices.forEach(notice => {
+                    const d = new Date(notice.date).toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric'});
+                    let bg = 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'; 
+                    let icon = '<i class="fa-solid fa-circle-info text-blue-500"></i>';
+                    let textClass = 'text-blue-800 dark:text-blue-200';
+                    
+                    if(notice.type === 'alert') { bg = 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800'; icon = '<i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>'; textClass = 'text-yellow-800 dark:text-yellow-200'; }
+                    if(notice.type === 'success') { bg = 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800'; icon = '<i class="fa-solid fa-check-circle text-green-500"></i>'; textClass = 'text-green-800 dark:text-green-200';}
+                    if(notice.type === 'danger') { bg = 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'; icon = '<i class="fa-solid fa-circle-xmark text-red-500"></i>'; textClass = 'text-red-800 dark:text-red-200';}
+                    
+                    list.innerHTML += \`
+                        <div class="p-4 border rounded-xl \${bg} shadow-sm animate-fade-in">
+                            <div class="flex items-start gap-3">
+                                <div class="text-xl mt-0.5">\${icon}</div>
+                                <div>
+                                    <h4 class="font-bold \${textClass} text-sm md:text-base leading-tight">\${notice.title}</h4>
+                                    <p class="text-sm mt-1 whitespace-pre-wrap text-gray-700 dark:text-gray-300">\${notice.text}</p>
+                                    <p class="text-[10px] opacity-70 mt-2 font-medium text-gray-500 dark:text-gray-400">Publicado em: \${d}</p>
+                                </div>
+                            </div>
+                        </div>
+                    \`;
+                });
+            } catch (e) {
+                console.error("Erro ao carregar avisos:", e);
+            }
+        };
 
         window.loadFeedData = async function() {
             const container = document.getElementById('feed-container');
@@ -1780,15 +1834,6 @@
         window.shareTrialLink = function() {
             const text = encodeURIComponent(`Fala! Eu treino Jiu-Jitsu na *Tanque Team BJJ* e a escola é incrível! 🥋🔥\n\nEles estão com uma promoção e oferecem a *Primeira Aula Grátis*. Vamos marcar um treino experimental juntos?\n\nAcessa o link e agenda a tua aula aqui: http://www.tanqueteambjj.com.br/#experimental`);
             window.open(`https://wa.me/?text=${text}`, '_blank');
-        }
-
-        function formatDateBR(isoString) {
-            if(!isoString) return '--';
-            try {
-                const date = new Date(isoString);
-                if(isNaN(date)) return '--';
-                return date.toLocaleDateString('pt-BR');
-            } catch(e) { return '--'; }
         }
 
     </script>
