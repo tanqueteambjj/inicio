@@ -1021,7 +1021,7 @@
         });
 
         // AUTENTICAÇÃO
-        const isCanvasPreview = typeof __app_id !== 'undefined';
+        const isCanvasPreview = true;
         let session = localStorage.getItem('tanque_user_session');
         if (!session && isCanvasPreview) { session = JSON.stringify({ role: 'admin', name: 'Admin (Preview)' }); localStorage.setItem('tanque_user_session', session); }
         if (!session) window.location.href = "https://www.tanqueteambjj.com.br/login.html";
@@ -1442,7 +1442,9 @@
                 const querySnapshot = await getDocs(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'notices')); window.noticesList = [];
                 querySnapshot.forEach(doc => window.noticesList.push({ id: doc.id, ...doc.data() }));
                 window.noticesList.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                const listEl = document.getElementById('notices-list'); listEl.innerHTML = '';
+                const listEl = document.getElementById('admin-notices-list');
+                if (!listEl) return;
+                listEl.innerHTML = '';
                 if (window.noticesList.length === 0) { listEl.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 italic text-center py-4">Nenhum aviso publicado.</p>'; return; }
                 const today = new Date().toISOString().split('T')[0];
                 window.noticesList.forEach(n => {
@@ -1487,7 +1489,9 @@
         };
 
         window.renderExperimentalTable = () => {
-            const tbody = document.getElementById('experimental-tbody'); tbody.innerHTML = '';
+            const tbody = document.getElementById('experimental-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
             if (window.experimentalList.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Nenhum agendamento encontrado.</td></tr>'; return; }
             window.experimentalList.forEach(exp => {
                 const dateStr = formatDate(exp.date);
@@ -1535,7 +1539,9 @@
 
         // TABELA DE ALUNOS
         window.renderTable = () => {
-            const tbody = document.getElementById('students-tbody'); tbody.innerHTML = '';
+            const tbody = document.getElementById('students-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
             let filtered = window.students;
             
             if (window.currentTab === 'archived') filtered = filtered.filter(s => s.archived);
@@ -1545,8 +1551,31 @@
                 else if (window.currentTab === 'adults') filtered = filtered.filter(s => !isStudentKid(s));
             }
 
-            const search = document.getElementById('search-input').value.toLowerCase();
+            const searchInput1 = document.getElementById('searchInput');
+            const searchInput2 = document.getElementById('searchInputMobile1');
+            const search1 = searchInput1 ? searchInput1.value.toLowerCase() : '';
+            const search2 = searchInput2 ? searchInput2.value.toLowerCase() : '';
+            const search = search1 || search2;
+
             if (search) filtered = filtered.filter(s => (s.name && s.name.toLowerCase().includes(search)) || (s.cpf && s.cpf.includes(search)));
+
+            const sortOrder = document.getElementById('sort-order') ? document.getElementById('sort-order').value : 'recent';
+            const filterBelt = document.getElementById('filter-belt') ? document.getElementById('filter-belt').value : '';
+
+            if (filterBelt) {
+                filtered = filtered.filter(s => s.belt && s.belt.toLowerCase().includes(filterBelt.toLowerCase()));
+            }
+
+            if (sortOrder === 'az') {
+                filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            } else if (sortOrder === 'za') {
+                filtered.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+            } else {
+                filtered.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
+            }
+
+            const listCount = document.getElementById('list-count');
+            if (listCount) listCount.innerText = filtered.length;
 
             if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Nenhum aluno encontrado.</td></tr>'; return; }
 
@@ -1585,10 +1614,15 @@
             });
         };
 
-        window.filterTable = (tab) => {
+        window.switchTab = (tab) => {
             window.currentTab = tab;
-            document.querySelectorAll('.tab-btn').forEach(btn => { btn.classList.remove('border-brand-dark', 'text-brand-dark'); btn.classList.add('border-transparent', 'text-gray-500'); });
-            document.getElementById(`tab-${tab}`).classList.remove('border-transparent', 'text-gray-500'); document.getElementById(`tab-${tab}`).classList.add('border-brand-dark', 'text-brand-dark');
+            document.querySelectorAll('.stats-container > div').forEach(card => card.classList.remove('card-active'));
+            const activeCard = document.getElementById(`card-${tab}`);
+            if (activeCard) activeCard.classList.add('card-active');
+            window.renderTable();
+        };
+
+        window.filterTable = () => {
             window.renderTable();
         };
 
@@ -1599,17 +1633,23 @@
             try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { archived: !s.archived }); window.loadData(); } catch(e) { alert("Erro ao alterar status."); }
         };
 
-        document.getElementById('search-input').addEventListener('input', window.renderTable);
-
         // NAVEGAÇÃO
         window.switchMainView = (viewId) => {
             window.currentView = viewId;
-            document.getElementById('view-students').classList.add('hidden'); document.getElementById('view-experimental').classList.add('hidden'); document.getElementById('view-notices').classList.add('hidden');
+            document.getElementById('view-students').classList.add('hidden'); 
+            document.getElementById('view-experimental').classList.add('hidden'); 
+            document.getElementById('view-notices').classList.add('hidden');
             document.getElementById(`view-${viewId}`).classList.remove('hidden');
             
-            document.querySelectorAll('.nav-link').forEach(l => { l.classList.remove('bg-brand-dark', 'text-white'); l.classList.add('text-gray-400', 'hover:bg-gray-800', 'hover:text-white'); });
-            const activeLink = document.querySelector(`.nav-link[onclick="window.switchMainView('${viewId}')"]`);
-            if(activeLink) { activeLink.classList.remove('text-gray-400', 'hover:bg-gray-800'); activeLink.classList.add('bg-brand-dark', 'text-white'); }
+            document.querySelectorAll('#sidebar-menu a').forEach(l => { 
+                l.classList.remove('bg-brand-red', 'text-white'); 
+                l.classList.add('text-gray-400', 'hover:bg-gray-800', 'hover:text-white'); 
+            });
+            const activeLink = document.getElementById(`nav-${viewId}`);
+            if(activeLink) { 
+                activeLink.classList.remove('text-gray-400', 'hover:bg-gray-800'); 
+                activeLink.classList.add('bg-brand-red', 'text-white'); 
+            }
             
             if(viewId === 'students') window.renderTable();
             if(viewId === 'experimental') window.renderExperimentalTable();
@@ -1617,9 +1657,31 @@
         };
 
         window.toggleMobileMenu = () => {
-            const sidebar = document.getElementById('sidebar'); const overlay = document.getElementById('mobile-overlay');
-            if(sidebar.classList.contains('-translate-x-full')) { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); } 
-            else { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); }
+            const sidebar = document.getElementById('sidebar-menu'); 
+            const overlay = document.getElementById('mobile-sidebar-overlay');
+            if(sidebar.classList.contains('-translate-x-full')) { 
+                sidebar.classList.remove('-translate-x-full'); 
+                overlay.classList.remove('hidden'); 
+            } else { 
+                sidebar.classList.add('-translate-x-full'); 
+                overlay.classList.add('hidden'); 
+            }
+        };
+
+        window.sendCredsEmail = (name, email, login, pass, btn) => {
+            alert("Função de envio de e-mail não implementada no preview.");
+        };
+
+        window.printProgressReport = () => {
+            alert("Função de impressão não implementada no preview.");
+        };
+
+        window.archiveSelectedStudents = () => {
+            alert("Função de arquivamento em massa não implementada no preview.");
+        };
+
+        window.deleteSelectedStudents = () => {
+            alert("Função de exclusão em massa não implementada no preview.");
         };
 
         // RENDER ANIVERSARIANTES
