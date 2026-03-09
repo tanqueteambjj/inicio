@@ -1295,7 +1295,7 @@
             const tl = document.getElementById('prog-timeline'); tl.innerHTML = '';
             let logs = s.progressLog ? [...s.progressLog] : []; logs.push({ type: 'info', text: 'Matrícula realizada.', date: s.registrationDate || new Date().toISOString() }); logs.sort((a, b) => new Date(b.date) - new Date(a.date));
             logs.forEach(log => {
-                const d = new Date(log.date).toLocaleDateString('pt-BR'); let icon = '<i class="fa-solid fa-comment-dots text-teal-500"></i>'; let bg = 'bg-teal-50 border-teal-200 dark:bg-teal-900/20 dark:border-teal-800';
+                const d = formatDate(log.date.includes('T') ? log.date : log.date + 'T12:00:00'); let icon = '<i class="fa-solid fa-comment-dots text-teal-500"></i>'; let bg = 'bg-teal-50 border-teal-200 dark:bg-teal-900/20 dark:border-teal-800';
                 if(log.type === 'graduation') { icon = '<i class="fa-solid fa-medal text-yellow-500"></i>'; bg = 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800'; }
                 if(log.type === 'info') { icon = '<i class="fa-solid fa-flag-checkered text-blue-500"></i>'; bg = 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'; }
                 tl.innerHTML += `<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active"><div class="flex items-center justify-center w-8 h-8 rounded-full border border-white dark:border-gray-800 bg-white dark:bg-gray-800 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">${icon}</div><div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-3 rounded border shadow-sm ${bg}"><div class="flex items-center justify-between mb-1"><div class="font-bold text-gray-800 dark:text-gray-200 text-xs">${log.type === 'graduation' ? 'Graduação' : (log.type === 'note' ? 'Anotação' : 'Sistema')}</div><time class="text-[10px] font-medium text-gray-500 dark:text-gray-400">${d}</time></div><div class="text-sm text-gray-600 dark:text-gray-300">${log.text}</div></div></div>`;
@@ -1885,7 +1885,7 @@
             logs.sort((a, b) => new Date(b.date) - new Date(a.date));
             
             logs.forEach(log => {
-                const d = new Date(log.date).toLocaleDateString('pt-BR');
+                const d = formatDate(log.date.includes('T') ? log.date : log.date + 'T12:00:00');
                 const typeStr = log.type === 'graduation' ? 'Graduação' : (log.type === 'note' ? 'Anotação' : 'Sistema');
                 printTableBody.innerHTML += `<tr><td class="p-2 border border-gray-300">${d}</td><td class="p-2 border border-gray-300">${typeStr}</td><td class="p-2 border border-gray-300">${log.text}</td></tr>`;
             });
@@ -1900,9 +1900,17 @@
             document.getElementById('print-prog-att-total').innerText = `Total: ${attendances.length} aulas`;
             const printAttBody = document.getElementById('print-prog-attendance-body');
             printAttBody.innerHTML = '';
-            attendances.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(att => {
-                const d = new Date(att.date).toLocaleDateString('pt-BR');
-                printAttBody.innerHTML += `<tr><td class="p-2 border border-gray-300">${d}</td><td class="p-2 border border-gray-300">${att.time || 'Check-in manual'}</td></tr>`;
+            const grouped = {};
+            attendances.forEach(log => {
+                if (!grouped[log.date]) grouped[log.date] = [];
+                if (!grouped[log.date].some(existing => existing.time === log.time)) {
+                    grouped[log.date].push(log);
+                }
+            });
+            Object.keys(grouped).sort((a,b) => new Date(b) - new Date(a)).forEach(dateStr => {
+                const formatted = formatDate(dateStr.includes('T') ? dateStr : dateStr + 'T12:00:00');
+                let timesHtml = grouped[dateStr].map(log => log.time || 'Check-in manual').join('<br>');
+                printAttBody.innerHTML += `<tr><td class="p-2 border border-gray-300">${formatted}</td><td class="p-2 border border-gray-300">${timesHtml}</td></tr>`;
             });
 
             document.body.classList.add('printing-progress');
