@@ -121,6 +121,19 @@
                 print-color-adjust: exact !important; 
             }
             body > *:not(.print-only-element) { display: none !important; }
+            
+            body.printing-qr #print-only-qr {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+                padding: 2cm 0 !important;
+            }
+            body.printing-qr #print-only-qr * {
+                visibility: visible !important;
+                color: #000 !important;
+            }
+
             .no-print { display: none !important; }
         }
     </style>
@@ -267,9 +280,7 @@
 
                     <!-- MURAL DE AVISOS -->
                     <div id="student-notices-container" class="hidden mb-8">
-                        <h3 class="font-display text-xl font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
-                            <i class="fa-solid fa-bullhorn text-yellow-500"></i> Quadro de Avisos
-                        </h3>
+                        <h3 class="font-display text-xl font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2"><i class="fa-solid fa-bullhorn text-yellow-500"></i> Quadro de Avisos</h3>
                         <div id="student-notices-list" class="space-y-3"></div>
                     </div>
 
@@ -553,7 +564,7 @@
     </div>
 
     <!-- QR Code Modal (Visualização no Ecrã apenas - Não é usada na impressão) -->
-    <div id="qr-modal" class="fixed inset-0 z-[80] hidden bg-black/80 items-center justify-center p-4 backdrop-blur-sm no-print">
+    <div id="qr-modal" class="fixed inset-0 z-[80] hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm no-print">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 text-center max-w-sm w-full animate-fade-in relative border-t-4 border-brand-red flex flex-col items-center">
             <button onclick="window.closeMyQrModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition text-xl z-20"><i class="fa-solid fa-times"></i></button>
             <h3 class="font-display font-bold text-xl mb-4 uppercase flex items-center justify-center gap-2 text-gray-800 dark:text-white">
@@ -1279,7 +1290,6 @@
             });
         }
 
-        // --- HISTÓRICO DE PAGAMENTO (CORRIGIDO PARA ABRIR SEMPRE) ---
         function formatDate(isoStr) { 
             try { 
                 const d = new Date(isoStr); 
@@ -1710,6 +1720,290 @@
             }
         }
 
+        window.openMyQrModal = function() {
+            if(!currentUserData) return;
+            
+            document.getElementById('qr-student-name').innerText = currentUserData.name;
+            document.getElementById('qr-belt').innerText = currentUserData.belt || "Faixa Branca";
+            document.getElementById('qr-plan').innerText = PLAN_DICT[currentUserData.plan]?.short || "Plano";
+            
+            const qrImage = document.getElementById('qr-image');
+            const qrBlocked = document.getElementById('qr-blocked-wrapper');
+            const footerText = document.getElementById('qr-footer-text');
+
+            if(currentUserData.paymentStatus === 'Pendente') {
+                qrImage.parentElement.classList.add('hidden');
+                qrBlocked.classList.remove('hidden');
+                qrBlocked.classList.add('flex');
+                footerText.innerText = "BLOQUEADO PELA RECEPÇÃO";
+                footerText.classList.replace('text-gray-400', 'text-red-500');
+            } else {
+                qrImage.parentElement.classList.remove('hidden');
+                qrBlocked.classList.add('hidden');
+                qrBlocked.classList.remove('flex');
+                qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentUserData.id}`;
+                footerText.innerText = "Apresente na Recepção";
+                footerText.classList.replace('text-red-500', 'text-gray-400');
+            }
+
+            const photoImg = document.getElementById('qr-photo'); 
+            const photoPlaceholder = document.getElementById('qr-photo-placeholder');
+            if (currentUserData.photoBase64) { 
+                photoImg.src = currentUserData.photoBase64; 
+                photoImg.classList.remove('hidden'); 
+                photoPlaceholder.classList.add('hidden'); 
+            } else { 
+                photoImg.classList.add('hidden'); 
+                photoPlaceholder.classList.remove('hidden'); 
+                photoPlaceholder.innerText = currentUserData.name.charAt(0).toUpperCase(); 
+            }
+
+            document.getElementById('qr-modal').classList.remove('hidden');
+            document.getElementById('qr-modal').classList.add('flex');
+        }
+
+        window.closeMyQrModal = function() {
+            document.getElementById('qr-modal').classList.add('hidden');
+            document.getElementById('qr-modal').classList.remove('flex');
+        }
+
+        window.printHtmlContent = function(htmlContent, titleStr) {
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.top = '-9999px'; // Permite imprimir sem bugar layout no Safari/Mobile
+            iframe.style.border = 'none';
+            document.body.appendChild(iframe);
+
+            const docIframe = iframe.contentWindow.document;
+            docIframe.open();
+            docIframe.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${titleStr}</title>
+                    <style>
+                        @media print {
+                            @page { 
+                                margin: 3cm 2cm 2cm 3cm; /* Margens ABNT: Superior 3cm, Esquerda 3cm, Inferior 2cm, Direita 2cm */
+                                size: A4 portrait;
+                            }
+                            body { 
+                                -webkit-print-color-adjust: exact; 
+                                print-color-adjust: exact; 
+                                font-family: 'Times New Roman', Times, serif; 
+                            }
+                        }
+                        body { font-family: 'Times New Roman', Times, serif; margin: 0; padding: 0; }
+                    </style>
+                </head>
+                <body>
+                    ${htmlContent}
+                </body>
+                </html>
+            `);
+            docIframe.close();
+
+            setTimeout(() => {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+                setTimeout(() => { document.body.removeChild(iframe); }, 2000);
+            }, 500);
+        };
+
+        window.printQrCard = function() {
+            if (!currentUserData) return;
+            window.closeMyQrModal();
+
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentUserData.id}`;
+            const name = currentUserData.name;
+            const belt = currentUserData.belt || "Faixa Branca";
+            const plan = PLAN_DICT[currentUserData.plan]?.short || "Plano";
+            
+            let photoHtml = '';
+            if (currentUserData.photoBase64) {
+                photoHtml = `<img src="${currentUserData.photoBase64}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+            } else {
+                photoHtml = `<span style="font-size: 24px; font-weight: bold; color: #9ca3af; line-height: 70px;">${name.charAt(0).toUpperCase()}</span>`;
+            }
+
+            const htmlContent = `
+                <div style="width: 6.5cm; height: 10.5cm; border: 2px solid #1B1B1B; border-radius: 12px; margin: 0 auto; text-align: center; font-family: 'Arial', sans-serif; overflow: hidden; background: #fff; position: relative; box-sizing: border-box; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    <div style="background-color: #1B1B1B; color: #fff; padding: 12px 10px; font-weight: bold; text-transform: uppercase; font-size: 13px; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                        <img src="https://iili.io/qC543c7.png" style="height: 22px;"> 
+                        TANQUE TEAM
+                    </div>
+                    <img src="https://iili.io/qC543c7.png" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; opacity: 0.05; pointer-events: none; filter: grayscale(100%);">
+                    <div style="padding: 15px; display: flex; flex-direction: column; align-items: center; height: calc(100% - 46px); box-sizing: border-box; position: relative; z-index: 10;">
+                        <div style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid #D90429; margin-bottom: 8px; margin-top: 10px; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center;">
+                            ${photoHtml}
+                        </div>
+                        <h4 style="margin: 0 0 4px 0; font-size: 15px; font-weight: 800; text-transform: uppercase; color: #1B1B1B; line-height: 1.1;">${name}</h4>
+                        <p style="margin: 0 0 2px 0; color: #D90429; font-size: 11px; font-weight: 900; text-transform: uppercase;">${belt}</p>
+                        <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${plan}</p>
+                        <div style="border: 1px solid #e5e7eb; padding: 4px; border-radius: 8px; background: white; margin-top: auto;">
+                            <img src="${qrUrl}" style="width: 110px; height: 110px; display: block;">
+                        </div>
+                        <p style="margin: 8px 0 0 0; font-size: 8px; color: #9ca3af; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px;">Apresente na Recepção</p>
+                    </div>
+                </div>
+            `;
+            
+            const printContainer = document.getElementById('print-only-qr');
+            printContainer.innerHTML = htmlContent;
+            document.body.classList.add('printing-qr');
+            
+            setTimeout(() => {
+                window.print();
+                setTimeout(() => {
+                    document.body.classList.remove('printing-qr');
+                    printContainer.innerHTML = '';
+                }, 1000);
+            }, 500);
+        }
+
+        window.printStudentContract = async function() {
+            if (!currentUserData) return;
+            const s = currentUserData;
+            
+            const isCombo = String(s.plan).includes('combo'); 
+            let myDependents = [];
+            if (isCombo) {
+                const qSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'students'));
+                qSnap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if(data.titularId === s.id && data.plan === 'dependente' && !data.archived) {
+                        myDependents.push(data);
+                    }
+                });
+            }
+
+            const pInfo = window.getPlanInfo(s.plan);
+            let price = formatCurrency(pInfo.price);
+            let displayName = pInfo.short;
+
+            let formattedDob = '--/--/----';
+            if (s.dob) { 
+                if (s.dob.includes('-')) {
+                    const parts = s.dob.split('-');
+                    if (parts.length === 3) formattedDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                } else {
+                    formattedDob = s.dob;
+                }
+            }
+
+            let contratanteText = s.name || "NÃO INFORMADO";
+            if (s.guardian && s.guardian.trim() !== "") contratanteText = `${s.guardian} (Responsável Legal)`;
+            else if (s.titularName && s.titularName.trim() !== "") contratanteText = `${s.titularName} (Titular)`;
+
+            let beltInfo = ""; 
+            if(s.belt && !s.belt.includes("Branca - 0º") && !s.belt.includes("Iniciante")) beltInfo = `| Graduação: ${s.belt}`;
+            
+            let regDate = new Date(); 
+            if (s.registrationDate) { const parsed = new Date(s.registrationDate); if (!isNaN(parsed)) regDate = parsed; }
+            const printDateStr = regDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+            
+            const isFidelity = String(s.plan).includes('semestral') || String(s.plan).includes('trimestral') || isCombo;
+            
+            let promoNote = "";
+            if (s.plan.includes('semestral') && !s.plan.includes('combo')) {
+                promoNote = "A 1ª Mensalidade terá o valor reduzido de R$ 29,90.";
+            } else if (s.plan === 'combo-dupla') {
+                promoNote = "A 1ª Mensalidade terá o valor reduzido de R$ 59,90.";
+            } else if (s.plan === 'combo-familia') {
+                promoNote = "A 1ª Mensalidade terá o valor reduzido de R$ 89,90.";
+            }
+
+            let dependentsHtml = '';
+            if (isCombo && myDependents.length > 0) {
+                dependentsHtml = `<div style="margin-bottom: 15px; padding-left: 20px; border-left: 2px solid #ccc;"><p style="margin: 0 0 5px 0; font-weight: bold; font-size: 11pt;">DEPENDENTES VINCULADOS AO PLANO:</p><ul style="margin: 0; padding-left: 20px; font-size: 11pt;">`;
+                myDependents.forEach(d => {
+                    let dDob = '--/--/----';
+                    if (d.dob) { 
+                        if(d.dob.includes('-')) {
+                            const parts = d.dob.split('-');
+                            if(parts.length===3) dDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                        } else dDob = d.dob;
+                    }
+                    dependentsHtml += `<li style="margin-bottom: 3px;"><strong>${d.name}</strong> - Nasc: ${dDob} | Parentesco: ${d.parentesco || '-'} | Graduação: ${d.belt || 'Branca'}</li>`;
+                });
+                dependentsHtml += `</ul></div>`;
+            }
+
+            let clauseNum = 3;
+            let clausesHtmlABNT = `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
+            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: ${promoNote ? '5px' : '15px'}; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong>${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong>${price}</strong>. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.</p>`;
+
+            if (promoNote) {
+                clausesHtmlABNT += `<p style="margin-bottom: 15px; font-style: italic; font-size: 11pt; text-align: justify; line-height: 1.5;">OBS: Promoção de Inauguração aplicada. ${promoNote}</p>`;
+            }
+
+            if (isFidelity) { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade correspondente à sua nomenclatura (Trimestral ou Semestral). O cancelamento exige aviso prévio de 30 dias por escrito. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>`; clauseNum++; } 
+            else { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO:</strong> O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.</p>`; clauseNum++; }
+            
+            if (isCombo) { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DO PLANO FAMÍLIA (COMBO):</strong> O pagamento das mensalidades é unificado e de inteira responsabilidade do CONTRATANTE titular. O cancelamento ou afastamento de um dos beneficiários dependentes não dá direito a desconto ou reembolso parcial, e reverte automaticamente o plano dos membros restantes para o valor da tabela individual vigente.</p>`; clauseNum++; }
+            
+            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DA INADIMPLÊNCIA:</strong> O atraso superior a 30 dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e cobrança dos valores devidos acrescidos de multa de 2% e juros de mora legais.</p>`; clauseNum++;
+            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DA SAÚDE E APTIDÃO FÍSICA:</strong> O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate, isentando a CONTRATADA de qualquer responsabilidade sobre moléstias pré-existentes não declaradas formalmente no ato desta matrícula.</p>`; clauseNum++;
+            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DE CONDUTA (DOJO KUN):</strong> É obrigatório o uso de uniforme (Kimono) estipulado pela academia, limpo e conservado. Atos de indisciplina, desrespeito à hierarquia, agressão fora do contexto do treino esportivo ou falta de higiene poderão acarretar na suspensão ou rescisão unilateral deste contrato por parte da CONTRATADA, sem devolução de valores.</p>`; clauseNum++;
+            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DO DIREITO DE IMAGEM:</strong> O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da academia ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.</p>`;
+
+            const signName = s.guardian || s.titularName || s.name || "CONTRATANTE";
+
+            const contractHtml = `
+                <div style="font-family: 'Times New Roman', Times, serif; color: #000; max-width: 100%; margin: 0; padding: 0;">
+                    
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <img src="https://iili.io/qC543c7.png" alt="Logo" style="height: 80px; margin-bottom: 10px; filter: grayscale(100%);">
+                        <h1 style="font-size: 16pt; font-weight: bold; margin: 0;">TANQUE TEAM BJJ</h1>
+                    </div>
+                    
+                    <div style="text-align: left; font-size: 10pt; line-height: 1.3; margin-bottom: 10px;">
+                        <p style="margin: 0;">CNPJ: 00.000.000/0001-00</p>
+                        <p style="margin: 0;">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, CEP 66635-110</p>
+                        <p style="margin: 0;">Tel: (91) 99819-2610 | Email: administrativo@tanqueteambjj.com.br</p>
+                    </div>
+                    
+                    <hr style="border: 0; border-top: 1px solid #000; margin-bottom: 20px;">
+                    
+                    <h2 style="text-align: center; font-size: 14pt; font-weight: bold; text-decoration: underline; margin-bottom: 30px;">CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS</h2>
+                    
+                    <div style="font-size: 12pt; line-height: 1.5; text-align: justify; margin-bottom: 20px;">
+                        <p style="margin-bottom: 15px;"><strong>1. CONTRATADA:</strong> TANQUE TEAM ACADEMIA DE ARTES MARCIAIS LTDA.</p>
+                        <p style="margin-bottom: 15px;"><strong>2. CONTRATANTE:</strong> ${contratanteText}, CPF: ${s.cpf || "Não informado"}, Endereço: ${s.address || "Não informado"}, Tel: ${s.phone || "Não informado"}, E-mail: ${s.email || "Não informado"}.</p>
+                        <p style="margin-bottom: 15px;"><strong>3. ALUNO(A):</strong> ${s.name || "NÃO INFORMADO"}, Nasc: ${formattedDob}. ${beltInfo}</p>
+                        
+                        ${dependentsHtml}
+                    </div>
+
+                    ${clausesHtmlABNT}
+
+                    <div style="margin-top: 60px; page-break-inside: avoid;">
+                        <p style="text-align: right; margin-bottom: 50px; font-size: 11pt;">Belém-PA, ${printDateStr}.</p>
+                        <table style="width: 100%; text-align: center; border: none;">
+                            <tr>
+                                <td style="width: 45%; border-top: 1px solid #000; padding-top: 5px;">
+                                    <p style="font-weight: bold; text-transform: uppercase; font-size: 11pt; margin: 0;">TANQUE TEAM BJJ</p>
+                                </td>
+                                <td style="width: 10%;"></td>
+                                <td style="width: 45%; border-top: 1px solid #000; padding-top: 5px;">
+                                    <p style="font-weight: bold; font-size: 11pt; text-transform: uppercase; margin: 0;">${signName}</p>
+                                    <p style="font-size: 9pt; color: #555; margin: 0;">CONTRATANTE / RESP. FINANCEIRO</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            window.printHtmlContent(contractHtml, `Contrato_Matricula_TanqueTeam_${s.name.replace(/\s+/g, '_')}`);
+        };
+
+        window.shareTrialLink = function() {
+            const text = encodeURIComponent(`Fala! Eu treino Jiu-Jitsu na *Tanque Team BJJ* e a escola é incrível! 🥋🔥\n\nEles estão com uma promoção e oferecem a *Primeira Aula Grátis*. Vamos marcar um treino experimental juntos?\n\nAcessa o link e agenda a tua aula aqui: http://www.tanqueteambjj.com.br/#experimental`);
+            window.open(`https://wa.me/?text=${text}`, '_blank');
+        }
     </script>
 </body>
 </html>
