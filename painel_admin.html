@@ -1068,7 +1068,17 @@
             } catch(e) { return null; }
         }
         function toISODate(ptBrDate) { const sDate = String(ptBrDate || ''); if(!sDate || !sDate.includes('/')) return sDate; return sDate.split('/').reverse().join('-'); }
-        function formatDate(isoStr) { try { const d = new Date(isoStr); return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR'); } catch (e) { return '--'; } }
+        function formatDate(isoStr) { 
+            try { 
+                if (!isoStr) return '--';
+                if (isoStr.length >= 10 && isoStr.indexOf('-') === 4) {
+                    const parts = isoStr.split('T')[0].split('-');
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                const d = new Date(isoStr); 
+                return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR'); 
+            } catch (e) { return '--'; } 
+        }
         function isStudentKid(s) {
             const cat = s.category ? String(s.category).toLowerCase() : ''; const plan = s.plan ? String(s.plan).toLowerCase() : '';
             if (cat === 'administração' || plan === 'administracao') return false; 
@@ -1293,9 +1303,10 @@
             document.getElementById('prog-current-belt').innerHTML = '<span class="inline-flex items-center gap-2 align-middle">' + window.getBeltImageHtml(s.belt) + '<span>' + (s.belt || 'Branca') + '</span></span>';
             document.getElementById('prog-new-note').value = ''; document.getElementById('prog-add-date').valueAsDate = new Date();
             const tl = document.getElementById('prog-timeline'); tl.innerHTML = '';
-            let logs = s.progressLog ? [...s.progressLog] : []; logs.push({ type: 'info', text: 'Matrícula realizada.', date: s.registrationDate || new Date().toISOString() }); logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+            let logs = s.progressLog ? [...s.progressLog] : []; logs.push({ type: 'info', text: 'Matrícula realizada.', date: s.registrationDate || new Date().toISOString() }); logs.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
             logs.forEach(log => {
-                const d = formatDate(log.date.includes('T') ? log.date : log.date + 'T12:00:00'); let icon = '<i class="fa-solid fa-comment-dots text-teal-500"></i>'; let bg = 'bg-teal-50 border-teal-200 dark:bg-teal-900/20 dark:border-teal-800';
+                const dateVal = log.date || '';
+                const d = formatDate(dateVal.includes('T') ? dateVal : dateVal + 'T12:00:00'); let icon = '<i class="fa-solid fa-comment-dots text-teal-500"></i>'; let bg = 'bg-teal-50 border-teal-200 dark:bg-teal-900/20 dark:border-teal-800';
                 if(log.type === 'graduation') { icon = '<i class="fa-solid fa-medal text-yellow-500"></i>'; bg = 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800'; }
                 if(log.type === 'info') { icon = '<i class="fa-solid fa-flag-checkered text-blue-500"></i>'; bg = 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'; }
                 tl.innerHTML += `<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active"><div class="flex items-center justify-center w-8 h-8 rounded-full border border-white dark:border-gray-800 bg-white dark:bg-gray-800 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">${icon}</div><div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-3 rounded border shadow-sm ${bg}"><div class="flex items-center justify-between mb-1"><div class="font-bold text-gray-800 dark:text-gray-200 text-xs">${log.type === 'graduation' ? 'Graduação' : (log.type === 'note' ? 'Anotação' : 'Sistema')}</div><time class="text-[10px] font-medium text-gray-500 dark:text-gray-400">${d}</time></div><div class="text-sm text-gray-600 dark:text-gray-300">${log.text}</div></div></div>`;
@@ -1316,14 +1327,22 @@
             const startFilter = document.getElementById('prog-start-filter').value; const endFilter = document.getElementById('prog-end-filter').value;
             const attList = document.getElementById('prog-attendance-list'); attList.innerHTML = ''; let attendances = [];
             if (s.attendanceLog && s.attendanceLog.length > 0) attendances = [...s.attendanceLog]; else if (s.attendance && s.attendance.length > 0) attendances = s.attendance.map(dateStr => ({ date: dateStr, time: 'Check-in manual' }));
-            if (startFilter) attendances = attendances.filter(att => att.date >= startFilter); if (endFilter) attendances = attendances.filter(att => att.date <= endFilter);
+            if (startFilter) attendances = attendances.filter(att => (att.date || '') >= startFilter); if (endFilter) attendances = attendances.filter(att => (att.date || '') <= endFilter);
             document.getElementById('prog-att-total').innerText = `${attendances.length} aulas`;
             if (attendances.length === 0) attList.innerHTML = '<div class="text-xs text-gray-500 text-center py-4 italic">Nenhuma presença.</div>';
             else {
-                const grouped = {}; attendances.forEach(log => { if(!grouped[log.date]) grouped[log.date] = []; if(!grouped[log.date].some(existing => existing.time === log.time)){ grouped[log.date].push(log); } });
+                const grouped = {}; 
+                attendances.forEach(log => { 
+                    const dateVal = log.date || '';
+                    const dStr = dateVal.split('T')[0];
+                    if(!grouped[dStr]) grouped[dStr] = []; 
+                    if(!grouped[dStr].some(existing => existing.time === log.time)){ 
+                        grouped[dStr].push(log); 
+                    } 
+                });
                 Object.keys(grouped).sort((a,b) => new Date(b) - new Date(a)).forEach(dateStr => {
-                    const formatted = formatDate(dateStr + 'T12:00:00');
-                    let classesHtml = grouped[dateStr].map(log => `<span class="text-[10px] bg-white dark:bg-gray-800 px-2 py-1 rounded font-bold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 inline-flex items-center gap-1 mb-1 mr-1 shadow-sm">${log.time || 'Manual'} <button onclick="window.removeSpecificAttendance('${id}', '${log.date}', '${log.time}')" class="text-red-400 hover:text-red-600 transition ml-1"><i class="fa-solid fa-times"></i></button></span>`).join('');
+                    const formatted = formatDate(dateStr);
+                    let classesHtml = grouped[dateStr].map(log => `<span class="text-[10px] bg-white dark:bg-gray-800 px-2 py-1 rounded font-bold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 inline-flex items-center gap-1 mb-1 mr-1 shadow-sm">${log.time || 'Manual'} <button onclick="window.removeSpecificAttendance('${id}', '${log.date || ''}', '${log.time || ''}')" class="text-red-400 hover:text-red-600 transition ml-1"><i class="fa-solid fa-times"></i></button></span>`).join('');
                     attList.innerHTML += `<div class="py-2 px-3 hover:bg-white dark:hover:bg-gray-600 transition border-b border-gray-100 dark:border-gray-600 flex flex-col gap-1"><span class="text-sm font-bold text-gray-800 dark:text-gray-200"><i class="fa-regular fa-calendar-check text-green-600 mr-1"></i> ${formatted}</span><div class="flex flex-wrap">${classesHtml}</div></div>`;
                 });
             }
@@ -1533,15 +1552,33 @@
 
         window.openEditExperimental = (id) => {
             const exp = window.experimentalList.find(x => x.id === id); if(!exp) return;
-            document.getElementById('edit-exp-id').value = id; document.getElementById('edit-exp-name').value = exp.name; document.getElementById('edit-exp-phone').value = exp.phone || ''; document.getElementById('edit-exp-date').value = exp.date || ''; document.getElementById('edit-exp-time').value = exp.time || ''; document.getElementById('edit-exp-status').value = exp.status || 'Pendente';
+            document.getElementById('edit-exp-id').value = id; 
+            document.getElementById('edit-exp-name').value = exp.name; 
+            document.getElementById('edit-exp-phone').value = exp.phone || ''; 
+            document.getElementById('edit-exp-dob').value = exp.dob || '';
+            document.getElementById('edit-exp-date').value = exp.date || ''; 
+            document.getElementById('edit-exp-time').value = exp.time || ''; 
+            document.getElementById('edit-exp-status').value = exp.status || 'Pendente';
             document.getElementById('edit-exp-modal').classList.remove('hidden'); document.getElementById('edit-exp-modal').classList.add('flex');
         };
 
         window.closeEditExperimentalModal = () => { document.getElementById('edit-exp-modal').classList.add('hidden'); document.getElementById('edit-exp-modal').classList.remove('flex'); };
 
         window.saveExperimentalChanges = async () => {
-            const id = document.getElementById('edit-exp-id').value; const name = document.getElementById('edit-exp-name').value; const phone = document.getElementById('edit-exp-phone').value; const date = document.getElementById('edit-exp-date').value; const time = document.getElementById('edit-exp-time').value; const status = document.getElementById('edit-exp-status').value;
-            try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id), { name, phone, date, time, status }); window.closeEditExperimentalModal(); window.loadExperimentalData(); } catch(e) { alert("Erro ao salvar."); }
+            const id = document.getElementById('edit-exp-id').value; 
+            const name = document.getElementById('edit-exp-name').value; 
+            const phone = document.getElementById('edit-exp-phone').value; 
+            const dob = document.getElementById('edit-exp-dob').value;
+            const date = document.getElementById('edit-exp-date').value; 
+            const time = document.getElementById('edit-exp-time').value; 
+            const status = document.getElementById('edit-exp-status').value;
+            try { 
+                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id), { name, phone, dob, date, time, status }); 
+                window.closeEditExperimentalModal(); 
+                window.loadExperimentalData(); 
+            } catch(e) { 
+                alert("Erro ao salvar."); 
+            }
         };
 
         window.deleteExperimental = async (id) => {
@@ -1740,7 +1777,10 @@
 
             if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Nenhum aluno encontrado.</td></tr>'; return; }
 
-            filtered.forEach(s => {
+            let html = '';
+            const renderedIds = new Set();
+
+            const renderStudentRow = (s, isDependent = false, titularId = null, hasDependents = false) => {
                 const planInfo = window.getPlanInfo(s.plan);
                 let statusBadge = `<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">Ativo</span>`;
                 if(s.archived) statusBadge = `<span class="bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs font-bold">Arquivado</span>`;
@@ -1770,13 +1810,29 @@
                     <button onclick="window.toggleArchive('${s.id}')" class="text-red-500 hover:text-red-700 mx-1" title="${s.archived ? 'Desarquivar' : 'Arquivar'}"><i class="fa-solid ${s.archived ? 'fa-box-open' : 'fa-box-archive'}"></i></button>
                 `;
 
-                tbody.innerHTML += `
-                    <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                        <td class="p-3">
+                let rowClass = "border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition";
+                if (isDependent) {
+                    rowClass += ` bg-gray-50/50 dark:bg-gray-800/50 hidden dependent-of-${titularId}`;
+                }
+
+                let expandBtn = '';
+                if (hasDependents) {
+                    expandBtn = `<button onclick="window.toggleDependents('${s.id}')" class="ml-2 text-xs text-brand-red hover:text-red-700 transition-colors" title="Ver dependentes"><i class="fa-solid fa-chevron-down" id="icon-dep-${s.id}"></i></button>`;
+                }
+
+                let paddingLeft = isDependent ? 'pl-8' : 'p-3';
+
+                return `
+                    <tr class="${rowClass}">
+                        <td class="${paddingLeft} py-3 pr-3">
                             <div class="flex items-center gap-3">
+                                ${isDependent ? '<i class="fa-solid fa-turn-up rotate-90 text-gray-300 dark:text-gray-600"></i>' : ''}
                                 ${photoHtml} 
                                 <div class="flex flex-col">
-                                    <span class="font-bold text-sm text-gray-800 dark:text-gray-200 cursor-pointer hover:underline hover:text-brand-red transition-colors" onclick="window.viewStudentDetails('${s.id}')">${s.name}</span>
+                                    <div class="flex items-center">
+                                        <span class="font-bold text-sm text-gray-800 dark:text-gray-200 cursor-pointer hover:underline hover:text-brand-red transition-colors" onclick="window.viewStudentDetails('${s.id}')">${s.name}</span>
+                                        ${expandBtn}
+                                    </div>
                                     ${subNameHtml}
                                 </div>
                             </div>
@@ -1789,7 +1845,64 @@
                         <td class="p-3 text-right whitespace-nowrap">${actionsHtml}</td>
                     </tr>
                 `;
+            };
+
+            filtered.forEach(s => {
+                if (renderedIds.has(s.id)) return;
+
+                if (s.plan && s.plan.includes('combo')) {
+                    const myDependents = window.students.filter(d => d.plan === 'dependente' && d.titularId === s.id);
+                    html += renderStudentRow(s, false, null, myDependents.length > 0);
+                    renderedIds.add(s.id);
+
+                    myDependents.forEach(dep => {
+                        html += renderStudentRow(dep, true, s.id, false);
+                        renderedIds.add(dep.id);
+                    });
+                } else if (s.plan === 'dependente' && s.titularId) {
+                    const titular = filtered.find(t => t.id === s.titularId);
+                    if (titular && !renderedIds.has(titular.id)) {
+                        const myDependents = window.students.filter(d => d.plan === 'dependente' && d.titularId === titular.id);
+                        html += renderStudentRow(titular, false, null, myDependents.length > 0);
+                        renderedIds.add(titular.id);
+                        myDependents.forEach(dep => {
+                            html += renderStudentRow(dep, true, titular.id, false);
+                            renderedIds.add(dep.id);
+                        });
+                    } else if (!titular) {
+                        html += renderStudentRow(s, false, null, false);
+                        renderedIds.add(s.id);
+                    }
+                } else {
+                    html += renderStudentRow(s, false, null, false);
+                    renderedIds.add(s.id);
+                }
             });
+
+            tbody.innerHTML = html;
+        };
+
+        window.toggleDependents = (titularId) => {
+            const rows = document.querySelectorAll(`.dependent-of-${titularId}`);
+            const icon = document.getElementById(`icon-dep-${titularId}`);
+            let isHidden = false;
+            rows.forEach(row => {
+                if (row.classList.contains('hidden')) {
+                    row.classList.remove('hidden');
+                    isHidden = true;
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
+            if (icon) {
+                if (isHidden) {
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-up');
+                } else {
+                    icon.classList.remove('fa-chevron-up');
+                    icon.classList.add('fa-chevron-down');
+                }
+            }
         };
 
         window.switchTab = (tab) => {
@@ -1857,7 +1970,14 @@
             }
             const subject = encodeURIComponent("Seus dados de acesso - Tanque Team");
             const body = encodeURIComponent(`Olá, ${name}!\n\nSeja bem-vindo(a) ao portal do aluno da Tanque Team.\n\nAqui estão seus dados de acesso:\nURL: ${window.location.origin}\nLogin: ${login}\nSenha: ${pass}\n\nOss!\nEquipe Tanque Team`);
-            window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+            
+            const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
+            const a = document.createElement('a');
+            a.href = mailtoLink;
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         };
 
         window.printProgressReport = () => {
@@ -1882,10 +2002,11 @@
             printTableBody.innerHTML = '';
             let logs = s.progressLog ? [...s.progressLog] : []; 
             logs.push({ type: 'info', text: 'Matrícula realizada.', date: s.registrationDate || new Date().toISOString() }); 
-            logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+            logs.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
             
             logs.forEach(log => {
-                const d = formatDate(log.date.includes('T') ? log.date : log.date + 'T12:00:00');
+                const dateVal = log.date || '';
+                const d = formatDate(dateVal.includes('T') ? dateVal : dateVal + 'T12:00:00');
                 const typeStr = log.type === 'graduation' ? 'Graduação' : (log.type === 'note' ? 'Anotação' : 'Sistema');
                 printTableBody.innerHTML += `<tr><td class="p-2 border border-gray-300">${d}</td><td class="p-2 border border-gray-300">${typeStr}</td><td class="p-2 border border-gray-300">${log.text}</td></tr>`;
             });
@@ -1894,21 +2015,23 @@
             const endFilter = document.getElementById('prog-end-filter').value;
             let attendances = [];
             if (s.attendanceLog && s.attendanceLog.length > 0) attendances = [...s.attendanceLog]; else if (s.attendance && s.attendance.length > 0) attendances = s.attendance.map(dateStr => ({ date: dateStr, time: 'Check-in manual' }));
-            if (startFilter) attendances = attendances.filter(att => att.date >= startFilter); 
-            if (endFilter) attendances = attendances.filter(att => att.date <= endFilter);
+            if (startFilter) attendances = attendances.filter(att => (att.date || '') >= startFilter); 
+            if (endFilter) attendances = attendances.filter(att => (att.date || '') <= endFilter);
             
             document.getElementById('print-prog-att-total').innerText = `Total: ${attendances.length} aulas`;
             const printAttBody = document.getElementById('print-prog-attendance-body');
             printAttBody.innerHTML = '';
             const grouped = {};
             attendances.forEach(log => {
-                if (!grouped[log.date]) grouped[log.date] = [];
-                if (!grouped[log.date].some(existing => existing.time === log.time)) {
-                    grouped[log.date].push(log);
+                const dateVal = log.date || '';
+                const dStr = dateVal.split('T')[0];
+                if (!grouped[dStr]) grouped[dStr] = [];
+                if (!grouped[dStr].some(existing => existing.time === log.time)) {
+                    grouped[dStr].push(log);
                 }
             });
             Object.keys(grouped).sort((a,b) => new Date(b) - new Date(a)).forEach(dateStr => {
-                const formatted = formatDate(dateStr.includes('T') ? dateStr : dateStr + 'T12:00:00');
+                const formatted = formatDate(dateStr);
                 let timesHtml = grouped[dateStr].map(log => log.time || 'Check-in manual').join('<br>');
                 printAttBody.innerHTML += `<tr><td class="p-2 border border-gray-300">${formatted}</td><td class="p-2 border border-gray-300">${timesHtml}</td></tr>`;
             });
