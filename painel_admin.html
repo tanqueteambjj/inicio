@@ -256,10 +256,17 @@
                     </div>
 
                     <!-- WIDGET DE ANIVERSARIANTES DO MÊS -->
-                    <div id="admin-birthdays-widget" class="mb-6 bg-gradient-to-r from-blue-50 dark:from-blue-900/30 to-blue-100 dark:to-blue-800/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 shadow-sm hidden">
-                         <h4 class="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-3"><i class="fa-solid fa-cake-candles text-blue-500"></i> Aniversariantes do Mês (<span id="birthday-month-name"></span>)</h4>
-                         <div id="birthday-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                             <!-- JS injetará os aniversariantes aqui -->
+                    <div id="admin-birthdays-widget" class="mb-8 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 border border-indigo-100 dark:border-indigo-800/50 rounded-2xl p-6 shadow-sm hidden relative overflow-hidden">
+                         <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                         <div class="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                         <div class="relative z-10">
+                             <div class="flex items-center justify-between mb-6">
+                                 <h4 class="font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-3 text-lg"><div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-800/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400"><i class="fa-solid fa-cake-candles"></i></div> Aniversariantes de <span id="birthday-month-name" class="capitalize"></span></h4>
+                                 <span class="text-xs font-bold bg-indigo-100 dark:bg-indigo-800/50 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-full" id="birthday-count">0</span>
+                             </div>
+                             <div id="birthday-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                 <!-- JS injetará os aniversariantes aqui -->
+                             </div>
                          </div>
                     </div>
                     
@@ -1242,9 +1249,13 @@
             const origin = document.getElementById('reg-origin') ? document.getElementById('reg-origin').value : 'Não informado';
             
             // Payment logic
-            const payStatus = document.getElementById('reg-payment-status').value;
+            let payStatus = document.getElementById('reg-payment-status').value;
             const payAmount = document.getElementById('reg-pay-amount').value;
             const payMethod = document.getElementById('reg-pay-method').value;
+
+            if (plan === 'administracao') {
+                payStatus = 'Isento';
+            }
 
             if(!name || !plan) { alert("Preencha nome e plano."); return; }
             if(plan === 'dependente' && !titular) { alert("Selecione o Titular do plano."); return; }
@@ -1289,6 +1300,9 @@
             if(photoInput.files && photoInput.files[0]) { const file = photoInput.files[0]; if(file.size > 800 * 1024) { alert("A foto é muito grande."); return; } photoBase64 = await new Promise((resolve) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result); reader.readAsDataURL(file); }); }
             try {
                 const updateData = { name: name, dob: dobIso, cpf: cpf, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf, plan: plan, titularName: titular, category: newCategory, enrollmentStatus: status, belt: beltStr, studentLogin: login, studentPassword: pass, email: email, phone: phone };
+                if (plan === 'administracao') {
+                    updateData.paymentStatus = 'Isento';
+                }
                 if(photoBase64) updateData.photoBase64 = photoBase64;
                 if (beltStr !== originalBelt) { updateData.lastGraduationDate = new Date().toISOString(); updateData.progressLog = arrayUnion({ type: 'graduation', text: `Graduado para ${beltStr}`, date: new Date().toISOString() }); }
                 await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), updateData);
@@ -1470,15 +1484,24 @@
             try {
                 if(!window.db) return;
                 const querySnapshot = await getDocs(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'notices')); window.noticesList = [];
-                querySnapshot.forEach(doc => window.noticesList.push({ id: doc.id, ...doc.data() }));
+                const today = new Date().toISOString().split('T')[0];
+                
+                for (const document of querySnapshot.docs) {
+                    const data = document.data();
+                    if (data.expiryDate && data.expiryDate <= today) {
+                        await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'notices', document.id));
+                    } else {
+                        window.noticesList.push({ id: document.id, ...data });
+                    }
+                }
+                
                 window.noticesList.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 const listEl = document.getElementById('admin-notices-list');
                 if (!listEl) return;
                 listEl.innerHTML = '';
                 if (window.noticesList.length === 0) { listEl.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 italic text-center py-4">Nenhum aviso publicado.</p>'; return; }
-                const today = new Date().toISOString().split('T')[0];
+                
                 window.noticesList.forEach(n => {
-                    if (n.expiryDate && n.expiryDate < today) return;
                     let icon = 'fa-circle-info text-blue-500'; let border = 'border-blue-200 dark:border-blue-800'; let bg = 'bg-blue-50 dark:bg-blue-900/20';
                     if(n.type === 'alert') { icon = 'fa-triangle-exclamation text-yellow-500'; border = 'border-yellow-200 dark:border-yellow-800'; bg = 'bg-yellow-50 dark:bg-yellow-900/20'; }
                     if(n.type === 'success') { icon = 'fa-star text-green-500'; border = 'border-green-200 dark:border-green-800'; bg = 'bg-green-50 dark:bg-green-900/20'; }
@@ -2082,16 +2105,28 @@
             
             if(bdays.length > 0) {
                 widget.classList.remove('hidden');
+                document.getElementById('birthday-count').innerText = `${bdays.length} ${bdays.length === 1 ? 'aluno' : 'alunos'}`;
                 bdays.sort((a,b) => parseInt(a.dob.split('-')[2]) - parseInt(b.dob.split('-')[2])).forEach(s => {
                     const day = s.dob.split('-')[2];
+                    const isToday = parseInt(day) === new Date().getDate();
+                    
+                    let photoHtml = `<div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-800 flex items-center justify-center text-indigo-500 dark:text-indigo-300 font-bold text-sm shrink-0 border-2 border-white dark:border-gray-800 shadow-sm">${s.name.charAt(0).toUpperCase()}</div>`;
+                    if(s.photoBase64) photoHtml = `<img src="${s.photoBase64}" class="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-sm shrink-0">`;
+
                     list.innerHTML += `
-                        <div class="flex items-center justify-between text-sm py-2 border-b border-blue-100 dark:border-blue-800 last:border-0 group">
-                            <div class="flex flex-col">
-                                <span class="text-blue-900 dark:text-blue-200 font-bold">${s.name}</span>
-                                <span class="text-[10px] text-blue-600 dark:text-blue-400">Dia ${day}</span>
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-3 flex items-center gap-3 shadow-sm border border-indigo-50 dark:border-gray-700 hover:shadow-md transition-shadow group relative overflow-hidden ${isToday ? 'ring-2 ring-indigo-400 dark:ring-indigo-500' : ''}">
+                            ${isToday ? '<div class="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-indigo-400 to-transparent opacity-20"></div><div class="absolute top-1 right-1 text-indigo-500 text-[10px]"><i class="fa-solid fa-star"></i></div>' : ''}
+                            ${photoHtml}
+                            <div class="flex-1 min-w-0">
+                                <h5 class="font-bold text-gray-800 dark:text-gray-200 text-sm truncate" title="${s.name}">${s.name}</h5>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${isToday ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}">
+                                        <i class="fa-regular fa-calendar"></i> Dia ${day}
+                                    </span>
+                                </div>
                             </div>
-                            <button onclick="window.shareBirthdayNotice('${s.name}')" class="opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm" title="Publicar Parabéns no Mural">
-                                <i class="fa-solid fa-share-nodes mr-1"></i> Publicar
+                            <button onclick="window.shareBirthdayNotice('${s.name}')" class="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 flex items-center justify-center shrink-0 shadow-sm" title="Publicar Parabéns no Mural">
+                                <i class="fa-solid fa-share-nodes text-xs"></i>
                             </button>
                         </div>
                     `;
