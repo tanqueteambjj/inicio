@@ -901,6 +901,7 @@
 
                         await window.loadStudentData(user.id);
                         if(window.loadNotices) window.loadNotices();
+                        if(window.loadFeedData) window.loadFeedData();
                         
                     } catch (e) {
                         console.error("Auth erro:", e);
@@ -927,6 +928,7 @@
                         document.getElementById('dash-dependents-container').classList.add('hidden');
                     }
                 } else {
+                    // Fallback visual for preview mock
                     if (typeof __app_id !== 'undefined') {
                         currentUserData = { 
                             id: studentId, 
@@ -1309,6 +1311,13 @@
             });
         }
 
+        function formatDate(isoStr) { 
+            try { 
+                const d = new Date(isoStr); 
+                return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR'); 
+            } catch (e) { return '--'; } 
+        }
+
         window.viewPaymentHistory = function() {
             try {
                 const historyTable = document.getElementById('student-history-table');
@@ -1411,12 +1420,22 @@
                 notices.forEach(notice => {
                     let d = '--/--/----';
                     if (notice.date) {
-                        const parsedDate = new Date(notice.date);
-                        if (!isNaN(parsedDate.getTime())) {
-                            d = parsedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                        } else {
-                            d = notice.date;
-                        }
+                        try {
+                            if (notice.date.includes('T')) {
+                                const parsedDate = new Date(notice.date);
+                                if (!isNaN(parsedDate.getTime())) {
+                                    d = parsedDate.toLocaleDateString('pt-BR');
+                                } else {
+                                    d = notice.date;
+                                }
+                            } else if (notice.date.includes('-')) {
+                                const parts = notice.date.split('-');
+                                if (parts.length === 3) d = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                                else d = notice.date;
+                            } else {
+                                d = notice.date;
+                            }
+                        } catch(e) { d = notice.date; }
                     }
 
                     let bg = 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'; 
@@ -1450,13 +1469,16 @@
             container.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-spinner fa-spin text-3xl text-gray-300 dark:text-gray-600 mb-3"></i><p class="text-gray-500 dark:text-gray-400">A carregar o feed...</p></div>';
             
             try {
-                const now = new Date().toISOString();
-                const q = query(collection(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'feed'), where('expiresAt', '>', now));
+                const nowISO = new Date().toISOString();
+                const q = query(collection(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'feed'));
                 const snap = await getDocs(q);
                 
                 let posts = [];
                 snap.forEach(doc => {
-                    posts.push({ id: doc.id, ...doc.data() });
+                    const data = doc.data();
+                    if (!data.expiresAt || data.expiresAt > nowISO) {
+                        posts.push({ id: doc.id, ...data });
+                    }
                 });
 
                 if (posts.length === 0) {
