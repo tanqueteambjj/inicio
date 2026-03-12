@@ -376,6 +376,73 @@
 
     <!-- MODAIS DO SISTEMA -->
 
+    <!-- Modal: Informar Pagamento -->
+    <div id="payment-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-green-500">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white"><i class="fa-solid fa-money-bill-wave text-green-500 mr-2"></i> Informar Pagamento</h3>
+                <button onclick="window.closePaymentModal()"><i class="fa-solid fa-times text-gray-400 hover:text-gray-800 dark:hover:text-white"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 bg-white dark:bg-gray-800">
+                <input type="hidden" id="pay-student-id">
+                
+                <div class="flex justify-between items-end mb-6">
+                    <div>
+                        <h4 class="font-bold text-xl text-gray-900 dark:text-white" id="pay-student-name">--</h4>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Matrícula: <span id="pay-start-date" class="font-medium text-gray-700 dark:text-gray-300">--</span> | Plano: <span id="pay-plan-name" class="font-medium text-gray-700 dark:text-gray-300">--</span></p>
+                    </div>
+                </div>
+
+                <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-100 dark:border-green-800 mb-6">
+                    <h5 class="font-bold text-green-800 dark:text-green-400 mb-3 uppercase text-xs tracking-wider">Registrar Novo Pagamento</h5>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Mês de Referência</label>
+                            <input type="month" id="pay-ref-month" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Valor Pago (R$)</label>
+                            <input type="number" id="pay-amount" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none" step="0.01">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Meio de Pagamento</label>
+                            <select id="pay-method" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
+                                <option value="Pix">Pix</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                                <option value="Débito">Cartão de Débito</option>
+                                <option value="Crédito à vista">Cartão de Crédito</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Próximo Vencimento</label>
+                            <input type="date" id="pay-next-due" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
+                        </div>
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <button onclick="window.savePayment()" class="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700 transition shadow-sm">Registrar Pagamento</button>
+                    </div>
+                </div>
+
+                <h5 class="font-bold text-gray-700 dark:text-gray-300 mb-4 border-b dark:border-gray-700 pb-1 text-sm uppercase">Histórico de Pagamentos</h5>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider">
+                                <th class="px-3 py-2 border-b dark:border-gray-600 font-semibold">Data</th>
+                                <th class="px-3 py-2 border-b dark:border-gray-600 font-semibold">Referência</th>
+                                <th class="px-3 py-2 border-b dark:border-gray-600 font-semibold">Valor</th>
+                                <th class="px-3 py-2 border-b dark:border-gray-600 font-semibold">Método</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pay-history-list" class="text-gray-700 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
+                            <!-- Injetado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Presença em Lote -->
     <div id="bulk-attendance-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-sm animate-fade-in border-t-4 border-green-500">
@@ -2065,12 +2132,27 @@
         window.updateBulkActionsBtn = () => {
             const checkboxes = document.querySelectorAll('.student-checkbox:checked');
             const btn = document.getElementById('bulk-actions-btn');
+            const menu = document.getElementById('bulk-actions-menu');
             if (checkboxes.length > 0) {
                 btn.classList.remove('hidden');
                 btn.innerHTML = `Ações em Lote (${checkboxes.length}) <i class="fa-solid fa-chevron-down ml-1"></i>`;
+                
+                // Update menu items based on current tab
+                const menuUl = menu.querySelector('ul');
+                if (window.currentTab === 'archived') {
+                    menuUl.innerHTML = `
+                        <li><button onclick="window.bulkUnarchive()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fa-solid fa-box-open text-blue-500 mr-2"></i> Desarquivar</button></li>
+                        <li><button onclick="window.bulkDeletePermanently()" class="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fa-solid fa-trash text-red-500 mr-2"></i> Apagar Definitivamente</button></li>
+                    `;
+                } else {
+                    menuUl.innerHTML = `
+                        <li><button onclick="window.bulkMarkAttendance()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fa-solid fa-check text-green-500 mr-2"></i> Dar Presença</button></li>
+                        <li><button onclick="window.bulkArchive()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fa-solid fa-box-archive text-red-500 mr-2"></i> Arquivar</button></li>
+                    `;
+                }
             } else {
                 btn.classList.add('hidden');
-                document.getElementById('bulk-actions-menu').classList.add('hidden');
+                menu.classList.add('hidden');
             }
         };
 
@@ -2135,7 +2217,7 @@
             const checkboxes = document.querySelectorAll('.student-checkbox:checked');
             if (checkboxes.length === 0) return;
 
-            if (!confirm(`Deseja realmente arquivar/desarquivar os ${checkboxes.length} alunos selecionados?`)) return;
+            if (!confirm(`Deseja realmente arquivar os ${checkboxes.length} alunos selecionados?`)) return;
 
             document.getElementById('bulk-actions-menu').classList.add('hidden');
 
@@ -2143,28 +2225,158 @@
                 for (const cb of checkboxes) {
                     const id = cb.value;
                     const s = window.students.find(x => x.id === id);
-                    if (s) {
-                        await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { archived: !s.archived });
+                    if (s && !s.archived) {
+                        await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { archived: true });
                     }
                 }
-                alert("Status alterado com sucesso!");
+                alert("Alunos arquivados com sucesso!");
                 window.loadData();
             } catch (e) {
                 console.error(e);
-                alert("Erro ao alterar status.");
+                alert("Erro ao arquivar alunos.");
             }
+        };
+
+        window.bulkUnarchive = async () => {
+            const checkboxes = document.querySelectorAll('.student-checkbox:checked');
+            if (checkboxes.length === 0) return;
+
+            if (!confirm(`Deseja realmente desarquivar os ${checkboxes.length} alunos selecionados?`)) return;
+
+            document.getElementById('bulk-actions-menu').classList.add('hidden');
+
+            try {
+                for (const cb of checkboxes) {
+                    const id = cb.value;
+                    const s = window.students.find(x => x.id === id);
+                    if (s && s.archived) {
+                        await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { archived: false });
+                    }
+                }
+                alert("Alunos desarquivados com sucesso!");
+                window.loadData();
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao desarquivar alunos.");
+            }
+        };
+
+        window.bulkDeletePermanently = async () => {
+            const checkboxes = document.querySelectorAll('.student-checkbox:checked');
+            if (checkboxes.length === 0) return;
+
+            if (!confirm(`ATENÇÃO: Deseja realmente APAGAR DEFINITIVAMENTE os ${checkboxes.length} alunos selecionados? Esta ação não pode ser desfeita.`)) return;
+
+            document.getElementById('bulk-actions-menu').classList.add('hidden');
+
+            try {
+                for (const cb of checkboxes) {
+                    const id = cb.value;
+                    await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id));
+                }
+                alert("Alunos apagados com sucesso!");
+                window.loadData();
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao apagar alunos.");
+            }
+        };
+
+        window.closePaymentModal = () => {
+            document.getElementById('payment-modal').classList.add('hidden');
+            document.getElementById('payment-modal').classList.remove('flex');
         };
 
         window.informPayment = async (id) => {
             const s = window.students.find(st => st.id === id); if(!s) return;
-            if(!confirm(`Deseja informar o pagamento para o aluno ${s.name}? O status de pagamento será alterado para "Em dia".`)) return;
-            try { 
-                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { paymentStatus: 'Em dia' }); 
-                alert("Pagamento informado com sucesso!");
-                window.loadData(); 
-            } catch(e) { 
+            
+            document.getElementById('pay-student-id').value = id;
+            document.getElementById('pay-student-name').innerText = s.name;
+            document.getElementById('pay-start-date').innerText = formatDate(s.registrationDate);
+            document.getElementById('pay-plan-name').innerText = window.getPlanInfo(s.plan).long;
+            
+            // Pre-fill fields
+            const now = new Date();
+            const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            document.getElementById('pay-ref-month').value = currentMonth;
+            
+            const planInfo = window.getPlanInfo(s.plan);
+            document.getElementById('pay-amount').value = planInfo.price > 0 ? planInfo.price.toFixed(2) : '';
+            document.getElementById('pay-method').value = 'Pix';
+            
+            // Calculate next due date based on plan
+            let nextDue = new Date();
+            if (s.plan && s.plan.includes('trimestral')) {
+                nextDue.setMonth(nextDue.getMonth() + 3);
+            } else if (s.plan && s.plan.includes('semestral')) {
+                nextDue.setMonth(nextDue.getMonth() + 6);
+            } else {
+                nextDue.setMonth(nextDue.getMonth() + 1);
+            }
+            document.getElementById('pay-next-due').value = nextDue.toISOString().split('T')[0];
+            
+            // Render history
+            const historyList = document.getElementById('pay-history-list');
+            historyList.innerHTML = '';
+            if (s.paymentHistory && s.paymentHistory.length > 0) {
+                // Sort by date descending
+                const sortedHistory = [...s.paymentHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+                sortedHistory.forEach(p => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-3 py-2 border-b dark:border-gray-700">${formatDate(p.date)}</td>
+                        <td class="px-3 py-2 border-b dark:border-gray-700">${p.refMonth || '--'}</td>
+                        <td class="px-3 py-2 border-b dark:border-gray-700 font-bold text-green-600 dark:text-green-400">R$ ${parseFloat(p.amount).toFixed(2)}</td>
+                        <td class="px-3 py-2 border-b dark:border-gray-700">${p.method || '--'}</td>
+                    `;
+                    historyList.appendChild(row);
+                });
+            } else {
+                historyList.innerHTML = '<tr><td colspan="4" class="px-3 py-4 text-center text-gray-500">Nenhum pagamento registrado.</td></tr>';
+            }
+            
+            document.getElementById('payment-modal').classList.remove('hidden');
+            document.getElementById('payment-modal').classList.add('flex');
+        };
+
+        window.savePayment = async () => {
+            const id = document.getElementById('pay-student-id').value;
+            const refMonth = document.getElementById('pay-ref-month').value;
+            const amount = document.getElementById('pay-amount').value;
+            const method = document.getElementById('pay-method').value;
+            const nextDue = document.getElementById('pay-next-due').value;
+            
+            if (!refMonth || !amount || !method) {
+                alert("Por favor, preencha o mês de referência, valor e meio de pagamento.");
+                return;
+            }
+            
+            const s = window.students.find(st => st.id === id); if(!s) return;
+            
+            const newPayment = {
+                date: new Date().toISOString(),
+                refMonth: refMonth,
+                amount: parseFloat(amount),
+                method: method
+            };
+            
+            try {
+                const updateData = {
+                    paymentStatus: 'Em dia',
+                    paymentHistory: arrayUnion(newPayment)
+                };
+                if (nextDue) {
+                    updateData.contractEndDate = nextDue;
+                }
+                
+                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), updateData);
+                
+                alert("Pagamento registrado com sucesso!");
+                window.closePaymentModal();
+                window.loadData();
+            } catch(e) {
                 console.error(e);
-                alert("Erro ao informar pagamento."); 
+                alert("Erro ao registrar pagamento.");
             }
         };
 
@@ -2232,16 +2444,32 @@
                 alert("O aluno não possui login e senha configurados.");
                 return;
             }
-            const subject = encodeURIComponent("Seus dados de acesso - Tanque Team");
-            const body = encodeURIComponent(`Olá, ${name}!\n\nSeja bem-vindo(a) ao portal do aluno da Tanque Team.\n\nAqui estão seus dados de acesso:\nURL: ${window.location.origin}\nLogin: ${login}\nSenha: ${pass}\n\nOss!\nEquipe Tanque Team`);
             
-            const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
-            const a = document.createElement('a');
-            a.href = mailtoLink;
-            a.target = '_blank';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+            btn.disabled = true;
+
+            const body = `Olá, ${name}!\n\nSeja bem-vindo(a) ao portal do aluno da Tanque Team.\n\nAqui estão seus dados de acesso:\nURL: ${window.location.origin}\nLogin: ${login}\nSenha: ${pass}\n\nOss!\nEquipe Tanque Team`;
+            
+            const templateParams = {
+                to_name: name,
+                to_email: email,
+                message: body,
+                login: login,
+                password: pass
+            };
+
+            emailjs.send('service_yq744mr', 'template_few5bna', templateParams)
+                .then(function(response) {
+                   alert("E-mail enviado com sucesso!");
+                   btn.innerHTML = '<i class="fa-solid fa-check"></i> Enviado';
+                   setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 3000);
+                }, function(error) {
+                   console.error("Erro ao enviar e-mail:", error);
+                   alert("Erro ao enviar e-mail. Verifique o console.");
+                   btn.innerHTML = originalText;
+                   btn.disabled = false;
+                });
         };
 
         window.printExperimentalReport = () => {
