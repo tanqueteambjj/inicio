@@ -223,7 +223,10 @@
                             <h3 class="font-bold text-gray-800 dark:text-white uppercase text-lg"><i class="fa-solid fa-fire text-yellow-500 mr-2"></i> Gestão de Aulas Experimentais</h3>
                             <p class="text-xs text-gray-500 dark:text-gray-400">Controle os visitantes que agendaram pelo site</p>
                         </div>
-                        <button onclick="window.loadExperimentalData()" class="text-gray-500 dark:text-gray-300 hover:text-black dark:hover:text-white text-sm bg-white dark:bg-gray-600 border dark:border-gray-500 px-3 py-1.5 rounded shadow-sm"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+                        <div class="flex items-center gap-2">
+                            <button onclick="window.printExperimentalReport()" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 text-sm bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 px-3 py-1.5 rounded shadow-sm font-bold"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
+                            <button onclick="window.loadExperimentalData()" class="text-gray-500 dark:text-gray-300 hover:text-black dark:hover:text-white text-sm bg-white dark:bg-gray-600 border dark:border-gray-500 px-3 py-1.5 rounded shadow-sm"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+                        </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
@@ -279,6 +282,28 @@
         </main>
     </div>
     <!-- PRINTABLE CONTAINERS -->
+
+    <!-- RELATÓRIO DE AULAS EXPERIMENTAIS -->
+    <div id="printable-experimental" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen hidden">
+        <div class="text-center mb-6 border-b-2 border-black pb-4">
+            <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
+            <h2 class="text-lg font-bold mt-2 uppercase">Relatório de Aulas Experimentais</h2>
+            <p class="text-sm text-gray-600 mt-1">Gerado em <span id="print-exp-date"></span></p>
+        </div>
+        
+        <table class="w-full text-sm text-left border-collapse mb-8">
+            <thead>
+                <tr class="bg-gray-100">
+                    <th class="p-2 border border-gray-300">Nome / Responsável</th>
+                    <th class="p-2 border border-gray-300">Telefone</th>
+                    <th class="p-2 border border-gray-300">Agendamento</th>
+                    <th class="p-2 border border-gray-300">Categoria</th>
+                    <th class="p-2 border border-gray-300">Status</th>
+                </tr>
+            </thead>
+            <tbody id="print-exp-table-body"></tbody>
+        </table>
+    </div>
 
     <!-- RELATÓRIO DE PROGRESSO DO ALUNO -->
     <div id="printable-progress" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen">
@@ -454,6 +479,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">WhatsApp</label><input type="text" id="edit-exp-phone" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none" placeholder="(91) 90000-0000"></div>
                     <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nascimento</label><input type="text" id="edit-exp-dob" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none" placeholder="DD/MM/AAAA"></div>
+                    <div class="col-span-2"><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Responsável (se menor)</label><input type="text" id="edit-exp-guardian" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none" placeholder="Nome do responsável"></div>
                     <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data Agendada</label><input type="date" id="edit-exp-date" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
                     <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Horário</label><input type="time" id="edit-exp-time" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
                     <div class="col-span-2">
@@ -626,6 +652,8 @@
                             <div class="grid grid-cols-2 gap-y-2 text-sm">
                                 <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">CPF</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-cpf">--</span></div>
                                 <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Idade</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-age">--</span></div>
+                                <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Altura</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-height">--</span></div>
+                                <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Peso</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-weight">--</span></div>
                                 <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Telefone / WhatsApp</span><span class="font-medium" id="detail-phone">--</span></div>
                                 <div class="col-span-2"><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">E-mail</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-email">--</span></div>
                                 <div class="col-span-2"><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Endereço</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-address">--</span></div>
@@ -1159,6 +1187,8 @@
                 statusEl.innerText = s.archived ? 'Arquivado' : (s.enrollmentStatus || 'Ativo');
                 statusEl.className = (s.enrollmentStatus === 'Ativo' && !s.archived) ? 'text-sm font-bold mt-1 text-green-600' : 'text-sm font-bold mt-1 text-red-600';
                 document.getElementById('detail-cpf').innerText = s.cpf || '-';
+                document.getElementById('detail-height').innerText = s.height ? s.height + ' m' : '-';
+                document.getElementById('detail-weight').innerText = s.weight ? s.weight + ' kg' : '-';
                 
                 const phoneDisplay = document.getElementById('detail-phone');
                 if ((s.phone || '').trim() !== "") { const cleanPhone = s.phone.replace(/\D/g, ''); phoneDisplay.innerHTML = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold transition inline-flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${s.phone}</a>`; } else { phoneDisplay.innerText = '-'; }
@@ -1556,12 +1586,32 @@
                 let phoneHtml = '-';
                 if(exp.phone) { const cleanPhone = exp.phone.replace(/\D/g, ''); phoneHtml = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:underline"><i class="fa-brands fa-whatsapp"></i> ${exp.phone}</a>`; }
 
+                let categoryHtml = '--';
+                let guardianHtml = '';
+                if (exp.dob) {
+                    const age = calculateAge(toISODate(exp.dob));
+                    if (age !== null) {
+                        if (age < 12) {
+                            categoryHtml = `<span class="text-blue-600 font-bold"><i class="fa-solid fa-child"></i> Infantil (${age} anos)</span>`;
+                            if (exp.guardian) guardianHtml = `<div class="text-[10px] text-gray-500 mt-0.5">Resp: ${exp.guardian}</div>`;
+                        } else {
+                            categoryHtml = `<span class="text-gray-700 font-bold"><i class="fa-solid fa-user"></i> Jovem/Adulto (${age} anos)</span>`;
+                            if (age < 18 && exp.guardian) guardianHtml = `<div class="text-[10px] text-gray-500 mt-0.5">Resp: ${exp.guardian}</div>`;
+                        }
+                    }
+                } else if (exp.category) {
+                    categoryHtml = exp.category;
+                }
+
                 tbody.innerHTML += `
                     <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                        <td class="p-3 text-sm font-bold text-gray-800 dark:text-gray-200">${exp.name}</td>
+                        <td class="p-3 text-sm font-bold text-gray-800 dark:text-gray-200">
+                            ${exp.name}
+                            ${guardianHtml}
+                        </td>
                         <td class="p-3 text-sm text-gray-600 dark:text-gray-400">${phoneHtml}</td>
                         <td class="p-3 text-sm text-gray-600 dark:text-gray-400">${dateStr} às ${exp.time || '--'}</td>
-                        <td class="p-3 text-sm text-gray-600 dark:text-gray-400">${exp.category || '--'}</td>
+                        <td class="p-3 text-sm text-gray-600 dark:text-gray-400">${categoryHtml}</td>
                         <td class="p-3">${statusBadge}</td>
                         <td class="p-3 text-right">
                             <button onclick="window.enrollExperimentalStudent('${exp.id}')" class="text-green-500 hover:text-green-700 mx-1" title="Matricular Aluno"><i class="fa-solid fa-user-plus"></i></button>
@@ -1579,6 +1629,7 @@
             document.getElementById('edit-exp-name').value = exp.name; 
             document.getElementById('edit-exp-phone').value = exp.phone || ''; 
             document.getElementById('edit-exp-dob').value = exp.dob || '';
+            document.getElementById('edit-exp-guardian').value = exp.guardian || '';
             document.getElementById('edit-exp-date').value = exp.date || ''; 
             document.getElementById('edit-exp-time').value = exp.time || ''; 
             document.getElementById('edit-exp-status').value = exp.status || 'Pendente';
@@ -1592,11 +1643,12 @@
             const name = document.getElementById('edit-exp-name').value; 
             const phone = document.getElementById('edit-exp-phone').value; 
             const dob = document.getElementById('edit-exp-dob').value;
+            const guardian = document.getElementById('edit-exp-guardian').value;
             const date = document.getElementById('edit-exp-date').value; 
             const time = document.getElementById('edit-exp-time').value; 
             const status = document.getElementById('edit-exp-status').value;
             try { 
-                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id), { name, phone, dob, date, time, status }); 
+                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id), { name, phone, dob, guardian, date, time, status }); 
                 window.closeEditExperimentalModal(); 
                 window.loadExperimentalData(); 
             } catch(e) { 
@@ -1727,11 +1779,12 @@
             let stripeColor = '#ffffff';
             let borderColor = '#d1d5db';
             
+            let textColor = '#ffffff';
             switch(colorName.toLowerCase()) {
-                case 'branca': bgColor = '#ffffff'; break;
-                case 'cinza': bgColor = '#9ca3af'; borderColor = '#6b7280'; break;
-                case 'amarela': bgColor = '#facc15'; borderColor = '#eab308'; break;
-                case 'laranja': bgColor = '#f97316'; borderColor = '#ea580c'; break;
+                case 'branca': bgColor = '#ffffff'; textColor = '#000000'; break;
+                case 'cinza': bgColor = '#9ca3af'; borderColor = '#6b7280'; textColor = '#000000'; break;
+                case 'amarela': bgColor = '#facc15'; borderColor = '#eab308'; textColor = '#000000'; break;
+                case 'laranja': bgColor = '#f97316'; borderColor = '#ea580c'; textColor = '#000000'; break;
                 case 'verde': bgColor = '#16a34a'; borderColor = '#15803d'; break;
                 case 'azul': bgColor = '#2563eb'; borderColor = '#1d4ed8'; break;
                 case 'roxa': bgColor = '#9333ea'; borderColor = '#7e22ce'; break;
@@ -1749,8 +1802,10 @@
             }
             
             return `
-                <div style="display: flex; align-items: center; width: 100px; height: 16px; border-radius: 2px; overflow: hidden; border: 1px solid ${borderColor}; margin: 4px auto;">
-                    <div style="flex-grow: 1; height: 100%; background-color: ${bgColor}; -webkit-print-color-adjust: exact; print-color-adjust: exact;"></div>
+                <div style="display: flex; align-items: center; width: 100px; height: 16px; border-radius: 2px; overflow: hidden; border: 1px solid ${borderColor}; margin: 4px auto; position: relative;">
+                    <div style="flex-grow: 1; height: 100%; background-color: ${bgColor}; -webkit-print-color-adjust: exact; print-color-adjust: exact; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 8px; font-weight: bold; color: ${textColor}; text-transform: uppercase; letter-spacing: 0.5px;">${colorName}</span>
+                    </div>
                     <div style="width: 24px; height: 100%; background-color: ${barColor}; display: flex; align-items: center; justify-content: flex-end; padding: 0 2px; border-left: 1px solid rgba(0,0,0,0.2); -webkit-print-color-adjust: exact; print-color-adjust: exact;">
                         ${stripesHtml}
                     </div>
@@ -1827,10 +1882,10 @@
                 }
 
                 let actionsHtml = `
-                    <button onclick="window.viewStudentDetails('${s.id}')" class="text-gray-500 hover:text-brand-dark mx-1" title="Detalhes"><i class="fa-solid fa-eye"></i></button>
                     <button onclick="window.openProgressModal('${s.id}')" class="text-blue-500 hover:text-blue-700 mx-1" title="Progresso"><i class="fa-solid fa-chart-line"></i></button>
                     <button onclick="window.openEditModal('${s.id}')" class="text-orange-500 hover:text-orange-700 mx-1" title="Editar"><i class="fa-solid fa-pen"></i></button>
                     <button onclick="window.toggleArchive('${s.id}')" class="text-red-500 hover:text-red-700 mx-1" title="${s.archived ? 'Desarquivar' : 'Arquivar'}"><i class="fa-solid ${s.archived ? 'fa-box-open' : 'fa-box-archive'}"></i></button>
+                    ${s.archived ? `<button onclick="window.deleteStudentPermanently('${s.id}')" class="text-red-700 hover:text-red-900 mx-1" title="Excluir Definitivamente"><i class="fa-solid fa-trash"></i></button>` : ''}
                 `;
 
                 let rowClass = "border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition";
@@ -1947,6 +2002,19 @@
             try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { archived: !s.archived }); window.loadData(); } catch(e) { alert("Erro ao alterar status."); }
         };
 
+        window.deleteStudentPermanently = async (id) => {
+            const s = window.students.find(st => st.id === id); if(!s) return;
+            if(!confirm(`ATENÇÃO: Deseja excluir DEFINITIVAMENTE o aluno ${s.name} do banco de dados? Esta ação não pode ser desfeita.`)) return;
+            try { 
+                await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id)); 
+                window.loadData(); 
+                alert("Aluno excluído com sucesso.");
+            } catch(e) { 
+                console.error(e);
+                alert("Erro ao excluir aluno."); 
+            }
+        };
+
         // NAVEGAÇÃO
         window.switchMainView = (viewId) => {
             window.currentView = viewId;
@@ -2001,6 +2069,52 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+        };
+
+        window.printExperimentalReport = () => {
+            document.getElementById('print-exp-date').innerText = new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR');
+            const tbody = document.getElementById('print-exp-table-body');
+            tbody.innerHTML = '';
+            
+            if (window.experimentalList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500 border border-gray-300">Nenhum agendamento encontrado.</td></tr>';
+            } else {
+                window.experimentalList.forEach(exp => {
+                    const dateStr = formatDate(exp.date);
+                    let categoryHtml = exp.category || '--';
+                    let guardianHtml = '';
+                    
+                    if (exp.dob) {
+                        const age = calculateAge(toISODate(exp.dob));
+                        if (age !== null) {
+                            if (age < 12) {
+                                categoryHtml = `Infantil (${age} anos)`;
+                                if (exp.guardian) guardianHtml = `<br><span class="text-xs text-gray-500">Resp: ${exp.guardian}</span>`;
+                            } else {
+                                categoryHtml = `Jovem/Adulto (${age} anos)`;
+                                if (age < 18 && exp.guardian) guardianHtml = `<br><span class="text-xs text-gray-500">Resp: ${exp.guardian}</span>`;
+                            }
+                        }
+                    }
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="p-2 border border-gray-300 font-bold">${exp.name}${guardianHtml}</td>
+                            <td class="p-2 border border-gray-300">${exp.phone || '-'}</td>
+                            <td class="p-2 border border-gray-300">${dateStr} às ${exp.time || '--'}</td>
+                            <td class="p-2 border border-gray-300">${categoryHtml}</td>
+                            <td class="p-2 border border-gray-300">${exp.status || 'Pendente'}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // Hide other printables
+            document.getElementById('printable-progress').classList.add('hidden');
+            document.getElementById('printable-id-card').classList.add('hidden');
+            document.getElementById('printable-experimental').classList.remove('hidden');
+            
+            window.print();
         };
 
         window.printProgressReport = () => {
@@ -2073,7 +2187,10 @@
         };
 
         // RENDER ANIVERSARIANTES
-        window.shareBirthdayNotice = async (name) => {
+        window.shareBirthdayNotice = async (id) => {
+            const s = window.students.find(st => st.id === id);
+            if (!s) return;
+            const name = s.name;
             const title = `🎉 Feliz Aniversário, ${name}!`;
             const text = `A família Tanque Team deseja um excelente aniversário para o nosso aluno ${name}! Que seu novo ciclo seja repleto de vitórias dentro e fora dos tatames. Oss! 🥋🎂`;
             const type = 'success';
@@ -2125,7 +2242,7 @@
                                     </span>
                                 </div>
                             </div>
-                            <button onclick="window.shareBirthdayNotice('${s.name}')" class="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 flex items-center justify-center shrink-0 shadow-sm" title="Publicar Parabéns no Mural">
+                            <button onclick="window.shareBirthdayNotice('${s.id}')" class="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 flex items-center justify-center shrink-0 shadow-sm" title="Publicar Parabéns no Mural">
                                 <i class="fa-solid fa-share-nodes text-xs"></i>
                             </button>
                         </div>
