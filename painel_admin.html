@@ -376,6 +376,35 @@
 
     <!-- MODAIS DO SISTEMA -->
 
+    <!-- Modal: Presença em Lote -->
+    <div id="bulk-attendance-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-sm animate-fade-in border-t-4 border-green-500">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white"><i class="fa-solid fa-check text-green-500 mr-2"></i> Dar Presença</h3>
+                <button onclick="window.closeBulkAttendanceModal()"><i class="fa-solid fa-times text-gray-400 hover:text-gray-800 dark:hover:text-white"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-600 dark:text-gray-400">Selecione a turma para registrar a presença dos alunos selecionados.</p>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Turma</label>
+                    <select id="bulk-class-selector" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
+                        <option value="Turma Mista (Livre)">Geral / Mista</option>
+                        <option value="Adulto - 10h30">Adulto - 10h30</option>
+                        <option value="Adulto - 12h30">Adulto - 12h30</option>
+                        <option value="Adulto - 18h00">Adulto - 18h00</option>
+                        <option value="Adulto - 21h00">Adulto - 21h00</option>
+                        <option value="Infantil - 15h00">Infantil - 15h00</option>
+                        <option value="Infantil - 16h30">Infantil - 16h30</option>
+                    </select>
+                </div>
+                <div class="mt-6 flex justify-end gap-2 border-t border-gray-100 dark:border-gray-700 pt-4">
+                    <button onclick="window.closeBulkAttendanceModal()" class="px-4 py-2 border dark:border-gray-600 rounded text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Cancelar</button>
+                    <button onclick="window.confirmBulkAttendance()" class="px-5 py-2 bg-green-600 text-white rounded text-sm font-bold hover:bg-green-500 shadow-md">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Evolução e Anotações (Com Inserção Manual de Frequência Embutida) -->
     <div id="progress-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-teal-600">
@@ -1166,7 +1195,11 @@
                 if(!window.db) return;
                 const querySnapshot = await getDocs(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'));
                 window.students = [];
-                querySnapshot.forEach(doc => window.students.push({ id: doc.id, ...doc.data() }));
+                querySnapshot.forEach(doc => {
+                    let data = doc.data();
+                    if (data.name) data.name = String(data.name).toUpperCase();
+                    window.students.push({ id: doc.id, ...data });
+                });
                 window.students.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
                 window.populateTitularSelects(); updateStats();
                 if(window.currentView === 'students') window.renderTable();
@@ -1288,7 +1321,7 @@
         window.handleEditPlanChange = () => { const plan = document.getElementById('edit-plan').value; const titularContainer = document.getElementById('edit-titular-container'); if (plan === 'dependente') titularContainer.classList.remove('hidden'); else titularContainer.classList.add('hidden'); };
 
         window.saveAdminNewStudent = async () => {
-            const name = document.getElementById('reg-name').value; const dob = toISODate(document.getElementById('reg-dob').value); const cpf = document.getElementById('reg-cpf').value; const email = document.getElementById('reg-email').value; const phone = document.getElementById('reg-phone').value; const address = document.getElementById('reg-address').value; 
+            const name = String(document.getElementById('reg-name').value).toUpperCase(); const dob = toISODate(document.getElementById('reg-dob').value); const cpf = document.getElementById('reg-cpf').value; const email = document.getElementById('reg-email').value; const phone = document.getElementById('reg-phone').value; const address = document.getElementById('reg-address').value; 
             const guardian = document.getElementById('reg-guardian') ? document.getElementById('reg-guardian').value : ''; const guardianCpf = document.getElementById('reg-guardian-cpf') ? document.getElementById('reg-guardian-cpf').value : ''; const guardianKinship = 'Pai/Mãe'; 
             const plan = document.getElementById('reg-plan').value; const titular = plan === 'dependente' ? document.getElementById('reg-titular').value : ""; 
             const beltColor = document.getElementById('reg-belt-color').value; const beltDegree = document.getElementById('reg-belt-degree').value; const login = document.getElementById('reg-student-login').value; const pass = document.getElementById('reg-student-pass').value;
@@ -1324,11 +1357,11 @@
                 const titularDocRef = await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name, dob, cpf, email, phone, address, guardian, guardianCpf, plan, titularName: titular, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 
                 if (plan === 'combo-dupla' || plan === 'combo-casal' || plan === 'combo-familia') {
-                    const d1Name = document.getElementById('admin-dep1-name').value;
+                    const d1Name = String(document.getElementById('admin-dep1-name').value).toUpperCase();
                     if(d1Name) await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name: d1Name, dob: toISODate(document.getElementById('admin-dep1-dob').value), titularName: name, titularId: titularDocRef.id, guardianKinship: document.getElementById('admin-dep1-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', category: 'Dependente (Combo)', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 }
                 if (plan === 'combo-familia') {
-                    const d2Name = document.getElementById('admin-dep2-name').value;
+                    const d2Name = String(document.getElementById('admin-dep2-name').value).toUpperCase();
                     if(d2Name) await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name: d2Name, dob: toISODate(document.getElementById('admin-dep2-dob').value), titularName: name, titularId: titularDocRef.id, guardianKinship: document.getElementById('admin-dep2-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', category: 'Dependente (Combo)', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 }
                 window.closeAdminRegisterModal(); window.loadData(); alert("Aluno cadastrado com sucesso!");
@@ -1336,7 +1369,7 @@
         };
 
         window.saveStudentChanges = async () => {
-            const id = document.getElementById('edit-id').value; const name = document.getElementById('edit-name').value; const dobIso = toISODate(document.getElementById('edit-dob').value); const cpf = document.getElementById('edit-cpf').value; const address = document.getElementById('edit-address').value; const guardian = document.getElementById('edit-guardian').value;
+            const id = document.getElementById('edit-id').value; const name = String(document.getElementById('edit-name').value).toUpperCase(); const dobIso = toISODate(document.getElementById('edit-dob').value); const cpf = document.getElementById('edit-cpf').value; const address = document.getElementById('edit-address').value; const guardian = document.getElementById('edit-guardian').value;
             let guardianKinship = ''; if(document.getElementById('edit-guardian-kinship')) guardianKinship = document.getElementById('edit-guardian-kinship').value;
             let guardianCpf = ''; if(document.getElementById('edit-guardian-cpf')) guardianCpf = document.getElementById('edit-guardian-cpf').value;
             const plan = document.getElementById('edit-plan').value; const titular = document.getElementById('edit-titular').value; const email = document.getElementById('edit-email').value; const phone = document.getElementById('edit-phone').value; const color = document.getElementById('edit-belt-color').value; const degree = document.getElementById('edit-belt-degree').value; const beltStr = `Faixa ${color} - ${degree}º Grau`; const login = document.getElementById('edit-login').value; const pass = document.getElementById('edit-password').value; const status = document.getElementById('edit-enrollment-status').value;
@@ -1898,6 +1931,7 @@
                 }
 
                 let actionsHtml = `
+                    <button onclick="window.informPayment('${s.id}')" class="text-green-500 hover:text-green-700 mx-1" title="Informar Pagamento"><i class="fa-solid fa-hand-holding-dollar"></i></button>
                     <button onclick="window.openProgressModal('${s.id}')" class="text-blue-500 hover:text-blue-700 mx-1" title="Progresso"><i class="fa-solid fa-chart-line"></i></button>
                     <button onclick="window.openEditModal('${s.id}')" class="text-orange-500 hover:text-orange-700 mx-1" title="Editar"><i class="fa-solid fa-pen"></i></button>
                     <button onclick="window.toggleArchive('${s.id}')" class="text-red-500 hover:text-red-700 mx-1" title="${s.archived ? 'Desarquivar' : 'Arquivar'}"><i class="fa-solid ${s.archived ? 'fa-box-open' : 'fa-box-archive'}"></i></button>
@@ -1927,7 +1961,7 @@
                                 ${photoHtml} 
                                 <div class="flex flex-col">
                                     <div class="flex items-center">
-                                        <span class="font-bold text-sm text-gray-800 dark:text-gray-200 cursor-pointer hover:underline hover:text-brand-red transition-colors" onclick="window.viewStudentDetails('${s.id}')">${s.name}</span>
+                                        <span class="font-bold text-sm text-gray-800 dark:text-gray-200 cursor-pointer hover:underline hover:text-brand-red transition-colors uppercase" onclick="window.viewStudentDetails('${s.id}')">${s.name}</span>
                                         ${expandBtn}
                                     </div>
                                     ${subNameHtml}
@@ -2052,20 +2086,31 @@
             }
         });
 
-        window.bulkMarkAttendance = async () => {
+        window.bulkMarkAttendance = () => {
+            const checkboxes = document.querySelectorAll('.student-checkbox:checked');
+            if (checkboxes.length === 0) return;
+            document.getElementById('bulk-actions-menu').classList.add('hidden');
+            document.getElementById('bulk-attendance-modal').classList.remove('hidden');
+            document.getElementById('bulk-attendance-modal').classList.add('flex');
+        };
+
+        window.closeBulkAttendanceModal = () => {
+            document.getElementById('bulk-attendance-modal').classList.add('hidden');
+            document.getElementById('bulk-attendance-modal').classList.remove('flex');
+        };
+
+        window.confirmBulkAttendance = async () => {
             const checkboxes = document.querySelectorAll('.student-checkbox:checked');
             if (checkboxes.length === 0) return;
             
-            const timeStr = prompt("Digite o horário da turma (ex: 19:00):");
+            const timeStr = document.getElementById('bulk-class-selector').value;
             if (!timeStr) return;
 
             const dateStr = new Date().toISOString().split('T')[0];
             const newLog = { date: dateStr, time: timeStr, timestamp: new Date().toISOString() };
 
-            if (!confirm(`Confirmar presença para ${checkboxes.length} alunos na turma das ${timeStr} hoje?`)) return;
+            window.closeBulkAttendanceModal();
 
-            document.getElementById('bulk-actions-menu').classList.add('hidden');
-            
             try {
                 for (const cb of checkboxes) {
                     const id = cb.value;
@@ -2107,6 +2152,19 @@
             } catch (e) {
                 console.error(e);
                 alert("Erro ao alterar status.");
+            }
+        };
+
+        window.informPayment = async (id) => {
+            const s = window.students.find(st => st.id === id); if(!s) return;
+            if(!confirm(`Deseja informar o pagamento para o aluno ${s.name}? O status de pagamento será alterado para "Em dia".`)) return;
+            try { 
+                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { paymentStatus: 'Em dia' }); 
+                alert("Pagamento informado com sucesso!");
+                window.loadData(); 
+            } catch(e) { 
+                console.error(e);
+                alert("Erro ao informar pagamento."); 
             }
         };
 
