@@ -1155,6 +1155,7 @@
                 window.students.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
                 window.populateTitularSelects(); updateStats();
                 if(window.currentView === 'students') window.renderTable();
+                if(window.renderBirthdays) window.renderBirthdays();
             } catch (error) { console.error(error); }
         }
 
@@ -1589,7 +1590,7 @@
                 let categoryHtml = '--';
                 let guardianHtml = '';
                 if (exp.dob) {
-                    const age = calculateAge(toISODate(exp.dob));
+                    const age = getAge(exp.dob);
                     if (age !== null) {
                         if (age < 12) {
                             categoryHtml = `<span class="text-blue-600 font-bold"><i class="fa-solid fa-child"></i> Infantil (${age} anos)</span>`;
@@ -2085,7 +2086,7 @@
                     let guardianHtml = '';
                     
                     if (exp.dob) {
-                        const age = calculateAge(toISODate(exp.dob));
+                        const age = getAge(exp.dob);
                         if (age !== null) {
                             if (age < 12) {
                                 categoryHtml = `Infantil (${age} anos)`;
@@ -2209,7 +2210,7 @@
             }
         };
 
-        const renderBirthdays = () => {
+        window.renderBirthdays = () => {
             const list = document.getElementById('birthday-list'); 
             const widget = document.getElementById('admin-birthdays-widget');
             if(!list || !widget || window.students.length === 0) return;
@@ -2232,7 +2233,7 @@
 
                     list.innerHTML += `
                         <div class="bg-white dark:bg-gray-800 rounded-xl p-3 flex items-center gap-3 shadow-sm border border-indigo-50 dark:border-gray-700 hover:shadow-md transition-shadow group relative overflow-hidden ${isToday ? 'ring-2 ring-indigo-400 dark:ring-indigo-500' : ''}">
-                            ${isToday ? '<div class="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-indigo-400 to-transparent opacity-20"></div><div class="absolute top-1 right-1 text-indigo-500 text-[10px]"><i class="fa-solid fa-star"></i></div>' : ''}
+                            ${isToday ? '<div class="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-indigo-400 to-transparent opacity-20 pointer-events-none"></div><div class="absolute top-1 right-1 text-indigo-500 text-[10px] pointer-events-none"><i class="fa-solid fa-star"></i></div>' : ''}
                             ${photoHtml}
                             <div class="flex-1 min-w-0">
                                 <h5 class="font-bold text-gray-800 dark:text-gray-200 text-sm truncate" title="${s.name}">${s.name}</h5>
@@ -2242,7 +2243,7 @@
                                     </span>
                                 </div>
                             </div>
-                            <button onclick="window.shareBirthdayNotice('${s.id}')" class="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 flex items-center justify-center shrink-0 shadow-sm" title="Publicar Parabéns no Mural">
+                            <button onclick="window.shareBirthdayNotice('${s.id}')" class="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 flex items-center justify-center shrink-0 shadow-sm relative z-10" title="Publicar Parabéns no Mural">
                                 <i class="fa-solid fa-share-nodes text-xs"></i>
                             </button>
                         </div>
@@ -2252,9 +2253,6 @@
                 widget.classList.add('hidden');
             }
         };
-        setInterval(renderBirthdays, 5000);
-        setTimeout(renderBirthdays, 1000);
-
     </script>
 </body>
 </html>
