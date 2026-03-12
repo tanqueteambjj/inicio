@@ -125,7 +125,9 @@
             body.printing-qr #print-only-qr,
             body.printing-contract #printable-contract {
                 display: block !important;
-                position: static !important;
+                position: absolute !important;
+                left: 0;
+                top: 0;
                 width: 100% !important;
                 height: auto !important;
                 visibility: visible !important;
@@ -133,6 +135,7 @@
                 color: #000 !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                z-index: 9999;
             }
             
             body.printing-qr #print-only-qr {
@@ -149,7 +152,7 @@
                 color: #000 !important;
             }
 
-            /* Força a cor branca no cabeçalho durante a impressão */
+            /* Força a cor branca no cabeçalho durante a impressão da carteirinha */
             body.printing-qr #print-only-qr .qr-header-text {
                 color: #ffffff !important;
             }
@@ -447,7 +450,7 @@
                             <i class="fa-solid fa-file-contract text-xl"></i> Imprimir Minha Matrícula
                         </button>
 
-                        <button onclick="window.shareTrialLink()" class="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-4 rounded-xl shadow-lg flex justify-center items-center gap-2 transition transform hover:-translate-y-1 md:col-span-1">
+                        <button onclick="window.shareTrialLink()" class="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-4 rounded-xl shadow-lg flex justify-center items-center gap-2 transition transform hover:-translate-y-1">
                             <i class="fa-brands fa-whatsapp text-xl"></i> Convidar Amigo p/ Treino
                         </button>
                     </div>
@@ -584,7 +587,7 @@
     </div>
 
     <!-- QR Code Modal -->
-    <div id="qr-modal" class="fixed inset-0 z-[80] hidden bg-black/80 items-center justify-center p-4 backdrop-blur-sm no-print">
+    <div id="qr-modal" class="fixed inset-0 z-[80] hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm no-print">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 text-center max-w-sm w-full animate-fade-in relative border-t-4 border-brand-red flex flex-col items-center">
             <button onclick="window.closeMyQrModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition text-xl z-20"><i class="fa-solid fa-times"></i></button>
             <h3 class="font-display font-bold text-xl mb-4 uppercase flex items-center justify-center gap-2 text-gray-800 dark:text-white">
@@ -627,7 +630,7 @@
     </div>
 
     <!-- Student History Modal -->
-    <div id="student-history-modal" class="fixed inset-0 z-[70] hidden bg-black/60 items-center justify-center p-4 backdrop-blur-sm no-print">
+    <div id="student-history-modal" class="fixed inset-0 z-[70] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm no-print">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] border-t-4 border-blue-500 animate-fade-in">
             <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
                 <h3 class="font-bold text-lg text-gray-800 dark:text-white"><i class="fa-solid fa-clock-rotate-left text-blue-500 mr-2"></i> O Meu Histórico Financeiro</h3>
@@ -740,36 +743,36 @@
             return Number(num).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
         
-        function parseRobustDate(dateStr) {
-            if (!dateStr) return '--/--/----';
+        // Função Robusta para ler Datas Independentemente do Firebase Timestamp ou String ISO
+        function parseRobustDate(dateVal) {
+            if (!dateVal) return '--/--/----';
             try {
-                if (dateStr.includes('/') && dateStr.length === 10) return dateStr;
-                if (dateStr.length === 10 && dateStr.includes('-')) {
-                    const parts = dateStr.split('-');
-                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                if (typeof dateVal.toDate === 'function') return dateVal.toDate().toLocaleDateString('pt-BR');
+                if (dateVal instanceof Date) return dateVal.toLocaleDateString('pt-BR');
+                if (typeof dateVal === 'string') {
+                    if (dateVal.includes('/') && dateVal.length === 10) return dateVal;
+                    if (dateVal.length === 10 && dateVal.includes('-')) {
+                        const parts = dateVal.split('-');
+                        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                    }
+                    const d = new Date(dateVal);
+                    if (!isNaN(d.getTime())) return d.toLocaleDateString('pt-BR');
                 }
-                const d = new Date(dateStr);
-                if (!isNaN(d.getTime())) {
-                    return d.toLocaleDateString('pt-BR');
-                }
-                return String(dateStr);
-            } catch(e) { return String(dateStr); }
+                return String(dateVal);
+            } catch(e) { return '--/--/----'; }
         }
         
-        function parseRobustDateTime(dateStr) {
-            if (!dateStr) return '--/--/----';
+        function parseRobustDateTime(dateVal) {
+            if (!dateVal) return '--/--/----';
             try {
-                if (dateStr.includes('/') && dateStr.length === 10) return dateStr;
-                if (dateStr.length === 10 && dateStr.includes('-')) {
-                    const parts = dateStr.split('-');
-                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                if (typeof dateVal.toDate === 'function') return dateVal.toDate().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                if (dateVal instanceof Date) return dateVal.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                if (typeof dateVal === 'string') {
+                    const d = new Date(dateVal);
+                    if (!isNaN(d.getTime())) return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                 }
-                const d = new Date(dateStr);
-                if (!isNaN(d.getTime())) {
-                    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                }
-                return String(dateStr);
-            } catch(e) { return String(dateStr); }
+                return String(dateVal);
+            } catch(e) { return '--/--/----'; }
         }
 
         const PLAN_DICT = {
@@ -814,11 +817,14 @@
             if (!attendanceArray || attendanceArray.length === 0) return 0;
             
             const dates = attendanceArray.map(d => {
-                const parts = d.split('-');
-                const dt = new Date(parts[0], parts[1] - 1, parts[2]);
+                if (typeof d === 'string' && d.length === 10) {
+                    const parts = d.split('-');
+                    return new Date(parts[0], parts[1] - 1, parts[2]);
+                }
+                const dt = new Date(d);
                 dt.setHours(0,0,0,0);
                 return dt;
-            }).sort((a, b) => b - a);
+            }).filter(d => !isNaN(d.getTime())).sort((a, b) => b - a);
 
             const today = new Date();
             today.setHours(0,0,0,0);
@@ -931,8 +937,9 @@
                             document.getElementById('main-ui').classList.remove('hidden');
                         }, 500);
 
-                        await window.loadStudentData(user.id);
+                        await window.loadStudentData(user.id, user);
                         if(window.loadNotices) window.loadNotices();
+                        if(window.loadFeedData) window.loadFeedData();
                         
                     } catch (e) {
                         console.error("Auth erro:", e);
@@ -944,7 +951,7 @@
             }
         }
 
-        window.loadStudentData = async function(studentId) {
+        window.loadStudentData = async function(studentId, fallbackUser = null) {
             try {
                 const docRef = doc(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'students', studentId);
                 const docSnap = await getDoc(docRef);
@@ -959,21 +966,21 @@
                         document.getElementById('dash-dependents-container').classList.add('hidden');
                     }
                 } else {
-                    if (typeof __app_id !== 'undefined') {
-                        currentUserData = { 
-                            id: studentId, 
-                            name: 'Aluno Preview', 
-                            plan: 'adulto-mensal',
-                            belt: 'Faixa Branca - 0º Grau',
-                            enrollmentStatus: 'Ativo',
-                            paymentStatus: 'Em dia',
-                            attendance: []
-                        };
-                        window.updateDashboardUI(currentUserData);
-                    } else {
-                        document.getElementById('redirect-error-msg').innerText = "Matrícula não encontrada no sistema.";
-                        document.getElementById('redirect-overlay').classList.remove('hidden');
-                    }
+                    console.warn("Documento do aluno não encontrado no Firebase. Usando fallback temporário.");
+                    currentUserData = fallbackUser || { 
+                        id: studentId, 
+                        name: 'Aluno', 
+                        plan: 'adulto-mensal',
+                        belt: 'Faixa Branca - 0º Grau',
+                        enrollmentStatus: 'Ativo',
+                        paymentStatus: 'Em dia',
+                        attendance: [],
+                        paymentHistory: [],
+                        progressLog: []
+                    };
+                    window.updateDashboardUI(currentUserData);
+                    document.getElementById('redirect-error-msg').innerText = "Matrícula não encontrada no sistema. Algumas informações podem estar incorretas.";
+                    document.getElementById('redirect-overlay').classList.remove('hidden');
                 }
             } catch (error) {
                 console.error("Erro ao carregar dados do aluno:", error);
@@ -1149,6 +1156,7 @@
             window.renderBadges(totalAtt, streak);
             window.renderRanking(); 
 
+            // Preencher Perfil Completo
             if (!isDep) {
                 document.getElementById('data-name').innerText = data.name || '--';
                 document.getElementById('data-login').innerText = data.studentLogin || '--';
@@ -1159,6 +1167,7 @@
             }
         };
 
+        // --- CALENDÁRIO ---
         window.changeMonth = function(dir) {
             currentCalendarMonth += dir;
             if (currentCalendarMonth > 11) { currentCalendarMonth = 0; currentCalendarYear++; }
@@ -1235,7 +1244,8 @@
         window.shareBadgeToFeed = async function(badgeName, desc, iconClass, btnElement) {
             if(!currentUserData) return;
             
-            if (!confirm("Tem certeza que deseja partilhar esta conquista no Feed da Equipe? Esta publicação ficará visível para todos os alunos da escola durante 24 horas.")) return; 
+            const userConfirmed = confirm("Tem certeza que deseja partilhar esta conquista no Feed da Equipe? Esta publicação ficará visível para todos os alunos da escola durante 24 horas.");
+            if (!userConfirmed) return; 
 
             const originalHtml = btnElement.innerHTML;
             btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
@@ -1458,9 +1468,16 @@
 
         window.loadFeedData = async function() {
             const container = document.getElementById('feed-container');
+            if(!container) return;
+            
             container.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-spinner fa-spin text-3xl text-gray-300 dark:text-gray-600 mb-3"></i><p class="text-gray-500 dark:text-gray-400">A carregar o feed...</p></div>';
             
             try {
+                if (!window.dbInstance || !window.appIdVar) {
+                    console.warn("DB não inicializado no feed");
+                    return;
+                }
+
                 const nowISO = new Date().toISOString();
                 const q = query(collection(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'feed'));
                 const snap = await getDocs(q);
@@ -1484,18 +1501,35 @@
                     return;
                 }
 
-                posts.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                posts.sort((a,b) => {
+                    let da = new Date(a.timestamp || 0).getTime();
+                    let db = new Date(b.timestamp || 0).getTime();
+                    return db - da;
+                });
+                
                 container.innerHTML = '';
 
                 posts.forEach(post => {
-                    const hasLiked = post.likedBy && post.likedBy.includes(currentUserData.id);
+                    const hasLiked = currentUserData && post.likedBy && post.likedBy.includes(currentUserData.id);
                     const likeIcon = hasLiked ? 'fa-solid fa-thumbs-up text-brand-red like-animate' : 'fa-regular fa-thumbs-up text-gray-400 dark:text-gray-500 group-hover:text-brand-red';
                     
                     let avatar = post.studentPhoto ? `<img src="${post.studentPhoto}" class="w-10 h-10 rounded-full object-cover">` : `<div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-500">${post.studentName.charAt(0).toUpperCase()}</div>`;
 
-                    const timeAgo = formatTimeAgo(new Date(post.timestamp));
+                    function formatTimeAgoDef(dateVal) {
+                        if (!dateVal) return "Agora mesmo";
+                        let dateObj = new Date(dateVal);
+                        if (isNaN(dateObj.getTime())) return "Recentemente";
+                        const seconds = Math.floor((new Date() - dateObj) / 1000);
+                        let interval = seconds / 3600;
+                        if (interval >= 1) return Math.floor(interval) + " h atrás";
+                        interval = seconds / 60;
+                        if (interval >= 1) return Math.floor(interval) + " min atrás";
+                        return "Agora mesmo";
+                    }
 
-                    const deleteBtn = post.studentId === currentUserData.id ? `
+                    const timeAgo = formatTimeAgoDef(post.timestamp);
+
+                    const deleteBtn = (currentUserData && post.studentId === currentUserData.id) ? `
                         <button onclick="window.deleteFeedPost('${post.id}')" class="text-gray-400 hover:text-red-500 transition text-sm bg-gray-100 hover:bg-red-50 dark:bg-gray-700 dark:hover:bg-red-900/30 w-8 h-8 rounded-full flex items-center justify-center" title="Apagar Minha Publicação">
                             <i class="fa-solid fa-trash"></i>
                         </button>
@@ -1537,7 +1571,7 @@
 
             } catch (e) {
                 console.error("Erro ao carregar feed:", e);
-                container.innerHTML = '<p class="text-center text-red-500">Erro ao carregar o feed.</p>';
+                container.innerHTML = '<p class="text-center text-red-500">Erro ao carregar o feed. Verifique sua conexão.</p>';
             }
         };
 
@@ -1609,8 +1643,10 @@
                     let monthCount = 0;
                     if(data.attendance && data.attendance.length > 0) {
                         data.attendance.forEach(d => {
-                            const dateObj = new Date(d + 'T12:00:00');
-                            if(dateObj.getMonth() === currentMonth && dateObj.getFullYear() === currentYear) monthCount++;
+                            const dateObj = new Date(d + (d.length === 10 ? 'T12:00:00' : ''));
+                            if(!isNaN(dateObj.getTime())) {
+                                if(dateObj.getMonth() === currentMonth && dateObj.getFullYear() === currentYear) monthCount++;
+                            }
                         });
                     }
                     if(monthCount > 0) ranking.push({ name: data.name, belt: data.belt, classes: monthCount });
@@ -1747,20 +1783,137 @@
             }
         }
 
+        window.openMyQrModal = function() {
+            if(!currentUserData) return;
+            
+            document.getElementById('qr-student-name').innerText = currentUserData.name;
+            document.getElementById('qr-belt').innerText = currentUserData.belt || "Faixa Branca";
+            document.getElementById('qr-plan').innerText = PLAN_DICT[currentUserData.plan]?.short || "Plano";
+            
+            const qrImage = document.getElementById('qr-image');
+            const qrBlocked = document.getElementById('qr-blocked-wrapper');
+            const footerText = document.getElementById('qr-footer-text');
+
+            const isInactive = currentUserData.enrollmentStatus === 'Inativo' || currentUserData.archived;
+            const isPending = currentUserData.paymentStatus === 'Pendente';
+
+            if (isInactive || isPending) {
+                qrImage.parentElement.classList.add('hidden');
+                qrBlocked.classList.remove('hidden');
+                qrBlocked.classList.add('flex');
+                
+                if (isInactive) {
+                    document.getElementById('qr-footer-text-blocked').innerHTML = "MATRÍCULA<br>INATIVA";
+                } else {
+                    document.getElementById('qr-footer-text-blocked').innerHTML = "ACESSO<br>BLOQUEADO";
+                }
+                footerText.innerText = "DIRIJA-SE À RECEPÇÃO";
+                footerText.classList.replace('text-gray-400', 'text-red-500');
+            } else {
+                qrImage.parentElement.classList.remove('hidden');
+                qrBlocked.classList.add('hidden');
+                qrBlocked.classList.remove('flex');
+                qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentUserData.id}`;
+                footerText.innerText = "Apresente na Recepção";
+                footerText.classList.replace('text-red-500', 'text-gray-400');
+            }
+
+            const photoImg = document.getElementById('qr-photo'); 
+            const photoPlaceholder = document.getElementById('qr-photo-placeholder');
+            if (currentUserData.photoBase64) { 
+                photoImg.src = currentUserData.photoBase64; 
+                photoImg.classList.remove('hidden'); 
+                photoPlaceholder.classList.add('hidden'); 
+            } else { 
+                photoImg.classList.add('hidden'); 
+                photoPlaceholder.classList.remove('hidden'); 
+                photoPlaceholder.innerText = currentUserData.name.charAt(0).toUpperCase(); 
+            }
+
+            document.getElementById('qr-modal').classList.remove('hidden');
+            document.getElementById('qr-modal').classList.add('flex');
+        }
+
+        window.closeMyQrModal = function() {
+            document.getElementById('qr-modal').classList.add('hidden');
+            document.getElementById('qr-modal').classList.remove('flex');
+        }
+
+        window.printQrCard = function() {
+            if (!currentUserData) {
+                alert("Sem dados para impressão.");
+                return;
+            }
+            window.closeMyQrModal();
+
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentUserData.id}`;
+            const name = currentUserData.name;
+            const belt = currentUserData.belt || "Faixa Branca";
+            const plan = PLAN_DICT[currentUserData.plan]?.short || "Plano";
+            
+            let photoHtml = '';
+            if (currentUserData.photoBase64) {
+                photoHtml = `<img src="${currentUserData.photoBase64}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+            } else {
+                photoHtml = `<span style="font-size: 24px; font-weight: bold; color: #9ca3af; line-height: 70px;">${name.charAt(0).toUpperCase()}</span>`;
+            }
+
+            const htmlContent = `
+                <div style="width: 6.5cm; height: 10.5cm; border: 2px solid #1B1B1B; border-radius: 12px; margin: 0 auto; text-align: center; font-family: 'Arial', sans-serif; overflow: hidden; background: #fff; position: relative; box-sizing: border-box; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    <div style="background-color: #1B1B1B !important; color: #ffffff !important; padding: 12px 10px; font-weight: bold; text-transform: uppercase; font-size: 13px; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                        <img src="https://iili.io/qC543c7.png" style="height: 22px;"> 
+                        <span class="qr-header-text" style="color: #ffffff !important;">TANQUE TEAM BJJ</span>
+                    </div>
+                    <img src="https://iili.io/qC543c7.png" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; opacity: 0.05; pointer-events: none; filter: grayscale(100%);">
+                    <div style="padding: 15px; display: flex; flex-direction: column; align-items: center; height: calc(100% - 46px); box-sizing: border-box; position: relative; z-index: 10;">
+                        <div style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid #D90429; margin-bottom: 8px; margin-top: 10px; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center;">
+                            ${photoHtml}
+                        </div>
+                        <h4 style="margin: 0 0 4px 0; font-size: 15px; font-weight: 800; text-transform: uppercase; color: #1B1B1B; line-height: 1.1;">${name}</h4>
+                        <p style="margin: 0 0 2px 0; color: #D90429; font-size: 11px; font-weight: 900; text-transform: uppercase;">${belt}</p>
+                        <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${plan}</p>
+                        <div style="border: 1px solid #e5e7eb; padding: 4px; border-radius: 8px; background: white; margin-top: auto;">
+                            <img src="${qrUrl}" style="width: 110px; height: 110px; display: block;">
+                        </div>
+                        <p style="margin: 8px 0 0 0; font-size: 8px; color: #9ca3af; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px;">Apresente na Recepção</p>
+                    </div>
+                </div>
+            `;
+            
+            const printContainer = document.getElementById('print-only-qr');
+            printContainer.innerHTML = htmlContent;
+            document.body.classList.add('printing-qr');
+            
+            setTimeout(() => {
+                window.print();
+                setTimeout(() => {
+                    document.body.classList.remove('printing-qr');
+                    printContainer.innerHTML = '';
+                }, 1000);
+            }, 500);
+        };
+
         window.printStudentContract = async function() {
-            if (!currentUserData) return;
+            // Se o currentUserData for vazio, tentar resgatar as vars antes de abortar
+            if (!currentUserData || !currentUserData.id) {
+                alert("Sem dados de contrato disponíveis. Por favor, atualize a página.");
+                return;
+            }
+            
             const s = currentUserData;
             
             const isCombo = String(s.plan).includes('combo'); 
             let myDependents = [];
             if (isCombo) {
-                const qSnap = await getDocs(collection(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'students'));
-                qSnap.forEach(docSnap => {
-                    const data = docSnap.data();
-                    if(data.titularId === s.id && data.plan === 'dependente' && !data.archived) {
-                        myDependents.push(data);
-                    }
-                });
+                try {
+                    const qSnap = await getDocs(collection(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'students'));
+                    qSnap.forEach(docSnap => {
+                        const data = docSnap.data();
+                        if(data.titularId === s.id && data.plan === 'dependente' && !data.archived) {
+                            myDependents.push(data);
+                        }
+                    });
+                } catch(e) { console.warn(e); }
             }
 
             const pInfo = window.getPlanInfo(s.plan);
@@ -1777,7 +1930,10 @@
             if(s.belt && !s.belt.includes("Branca - 0º") && !s.belt.includes("Iniciante")) beltInfo = `| Graduação: ${s.belt}`;
             
             let regDate = new Date(); 
-            if (s.registrationDate) { const parsed = new Date(s.registrationDate); if (!isNaN(parsed)) regDate = parsed; }
+            if (s.registrationDate) { 
+                const parsed = new Date(s.registrationDate); 
+                if (!isNaN(parsed.getTime())) regDate = parsed; 
+            }
             const printDateStr = regDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
             
             const isFidelity = String(s.plan).includes('semestral') || String(s.plan).includes('trimestral') || isCombo;
@@ -1865,113 +2021,6 @@
                 window.print();
                 setTimeout(() => {
                     document.body.classList.remove('printing-contract');
-                    printContainer.innerHTML = '';
-                }, 1000);
-            }, 500);
-        };
-
-        window.openMyQrModal = function() {
-            if(!currentUserData) return;
-            
-            document.getElementById('qr-student-name').innerText = currentUserData.name;
-            document.getElementById('qr-belt').innerText = currentUserData.belt || "Faixa Branca";
-            document.getElementById('qr-plan').innerText = PLAN_DICT[currentUserData.plan]?.short || "Plano";
-            
-            const qrImage = document.getElementById('qr-image');
-            const qrBlocked = document.getElementById('qr-blocked-wrapper');
-            const footerText = document.getElementById('qr-footer-text');
-
-            const isInactive = currentUserData.enrollmentStatus === 'Inativo' || currentUserData.archived;
-            const isPending = currentUserData.paymentStatus === 'Pendente';
-
-            if (isInactive || isPending) {
-                qrImage.parentElement.classList.add('hidden');
-                qrBlocked.classList.remove('hidden');
-                qrBlocked.classList.add('flex');
-                
-                if (isInactive) {
-                    document.getElementById('qr-footer-text-blocked').innerHTML = "MATRÍCULA<br>INATIVA";
-                } else {
-                    document.getElementById('qr-footer-text-blocked').innerHTML = "ACESSO<br>BLOQUEADO";
-                }
-                footerText.innerText = "DIRIJA-SE À RECEPÇÃO";
-                footerText.classList.replace('text-gray-400', 'text-red-500');
-            } else {
-                qrImage.parentElement.classList.remove('hidden');
-                qrBlocked.classList.add('hidden');
-                qrBlocked.classList.remove('flex');
-                qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentUserData.id}`;
-                footerText.innerText = "Apresente na Recepção";
-                footerText.classList.replace('text-red-500', 'text-gray-400');
-            }
-
-            const photoImg = document.getElementById('qr-photo'); 
-            const photoPlaceholder = document.getElementById('qr-photo-placeholder');
-            if (currentUserData.photoBase64) { 
-                photoImg.src = currentUserData.photoBase64; 
-                photoImg.classList.remove('hidden'); 
-                photoPlaceholder.classList.add('hidden'); 
-            } else { 
-                photoImg.classList.add('hidden'); 
-                photoPlaceholder.classList.remove('hidden'); 
-                photoPlaceholder.innerText = currentUserData.name.charAt(0).toUpperCase(); 
-            }
-
-            document.getElementById('qr-modal').classList.remove('hidden');
-            document.getElementById('qr-modal').classList.add('flex');
-        }
-
-        window.closeMyQrModal = function() {
-            document.getElementById('qr-modal').classList.add('hidden');
-            document.getElementById('qr-modal').classList.remove('flex');
-        }
-
-        window.printQrCard = function() {
-            if (!currentUserData) return;
-            window.closeMyQrModal();
-
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentUserData.id}`;
-            const name = currentUserData.name;
-            const belt = currentUserData.belt || "Faixa Branca";
-            const plan = PLAN_DICT[currentUserData.plan]?.short || "Plano";
-            
-            let photoHtml = '';
-            if (currentUserData.photoBase64) {
-                photoHtml = `<img src="${currentUserData.photoBase64}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
-            } else {
-                photoHtml = `<span style="font-size: 24px; font-weight: bold; color: #9ca3af; line-height: 70px;">${name.charAt(0).toUpperCase()}</span>`;
-            }
-
-            const htmlContent = `
-                <div style="width: 6.5cm; height: 10.5cm; border: 2px solid #1B1B1B; border-radius: 12px; margin: 0 auto; text-align: center; font-family: 'Arial', sans-serif; overflow: hidden; background: #fff; position: relative; box-sizing: border-box; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                    <div style="background-color: #1B1B1B !important; color: #ffffff !important; padding: 12px 10px; font-weight: bold; text-transform: uppercase; font-size: 13px; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-                        <img src="https://iili.io/qC543c7.png" style="height: 22px;"> 
-                        <span class="qr-header-text" style="color: #ffffff !important;">TANQUE TEAM BJJ</span>
-                    </div>
-                    <img src="https://iili.io/qC543c7.png" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; opacity: 0.05; pointer-events: none; filter: grayscale(100%);">
-                    <div style="padding: 15px; display: flex; flex-direction: column; align-items: center; height: calc(100% - 46px); box-sizing: border-box; position: relative; z-index: 10;">
-                        <div style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid #D90429; margin-bottom: 8px; margin-top: 10px; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center;">
-                            ${photoHtml}
-                        </div>
-                        <h4 style="margin: 0 0 4px 0; font-size: 15px; font-weight: 800; text-transform: uppercase; color: #1B1B1B; line-height: 1.1;">${name}</h4>
-                        <p style="margin: 0 0 2px 0; color: #D90429; font-size: 11px; font-weight: 900; text-transform: uppercase;">${belt}</p>
-                        <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${plan}</p>
-                        <div style="border: 1px solid #e5e7eb; padding: 4px; border-radius: 8px; background: white; margin-top: auto;">
-                            <img src="${qrUrl}" style="width: 110px; height: 110px; display: block;">
-                        </div>
-                        <p style="margin: 8px 0 0 0; font-size: 8px; color: #9ca3af; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px;">Apresente na Recepção</p>
-                    </div>
-                </div>
-            `;
-            
-            const printContainer = document.getElementById('print-only-qr');
-            printContainer.innerHTML = htmlContent;
-            document.body.classList.add('printing-qr');
-            
-            setTimeout(() => {
-                window.print();
-                setTimeout(() => {
-                    document.body.classList.remove('printing-qr');
                     printContainer.innerHTML = '';
                 }, 1000);
             }, 500);
