@@ -177,10 +177,6 @@
                                 <span id="list-title">Lista de Alunos</span>
                                 <span class="bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 py-0.5 px-2 rounded-full text-xs" id="list-count">0</span>
                             </h3>
-                            <div id="bulk-actions" class="hidden flex items-center gap-2 animate-fade-in">
-                                <button onclick="window.archiveSelectedStudents()" id="btn-bulk-archive" class="flex items-center gap-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded text-xs font-bold hover:bg-gray-300 dark:hover:bg-gray-500 transition border border-gray-300 dark:border-gray-500"><i class="fa-solid fa-box-archive"></i> Arquivar (<span id="selected-count-archive">0</span>)</button>
-                                <button onclick="window.deleteSelectedStudents()" id="btn-bulk-delete" class="hidden flex items-center gap-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 dark:hover:bg-red-800 transition border border-red-300 dark:border-red-700"><i class="fa-solid fa-trash"></i> Excluir (<span id="selected-count-delete">0</span>)</button>
-                            </div>
                         </div>
                         <div class="flex gap-2">
                              <button onclick="window.openAdminRegisterModal()" class="bg-brand-red text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-red-700 shadow-sm transition transform active:scale-95"><i class="fa-solid fa-plus mr-1"></i> NOVO ALUNO</button>
@@ -194,6 +190,15 @@
                             <input type="text" id="searchInputMobile1" onkeyup="window.filterTable()" placeholder="Buscar aluno..." class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red transition">
                         </div>
                         <span class="font-bold text-gray-500 dark:text-gray-400"><i class="fa-solid fa-filter"></i> Filtros:</span>
+                        <div class="relative inline-block text-left">
+                            <button id="bulk-actions-btn" class="hidden text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white text-sm bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 px-3 py-1.5 rounded shadow-sm font-bold" onclick="window.toggleBulkActionsMenu()">Ações em Lote <i class="fa-solid fa-chevron-down ml-1"></i></button>
+                            <div id="bulk-actions-menu" class="hidden absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-50 border border-gray-200 dark:border-gray-700">
+                                <ul class="py-1">
+                                    <li><button onclick="window.bulkMarkAttendance()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fa-solid fa-check text-green-500 mr-2"></i> Dar Presença</button></li>
+                                    <li><button onclick="window.bulkArchive()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fa-solid fa-box-archive text-red-500 mr-2"></i> Arquivar</button></li>
+                                </ul>
+                            </div>
+                        </div>
                         <select id="sort-order" onchange="window.filterTable()" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-1.5 text-gray-700 dark:text-gray-300 focus:outline-none focus:border-brand-red bg-gray-50 dark:bg-gray-700 font-medium">
                             <option value="recent">⏱️ Mais Recentes</option><option value="az">🔤 Ordem Alfabética (A-Z)</option><option value="za">🔤 Ordem Alfabética (Z-A)</option>
                         </select>
@@ -205,7 +210,16 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider" id="table-headers"></tr>
+                                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider" id="table-headers">
+                                    <th class="px-3 py-3 border-b dark:border-gray-600 text-center w-10"><input type="checkbox" id="select-all-students" onclick="window.toggleSelectAllStudents(this)" class="rounded border-gray-300 text-brand-red focus:ring-brand-red"></th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Aluno</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Faixa</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Plano</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Status</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Pagamento</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold" title="Presenças no mês atual">Freq.</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 text-right font-semibold">Ações</th>
+                                </tr>
                             </thead>
                             <tbody id="students-table-body" class="text-sm text-gray-700 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
                                 <tr><td colspan="7" class="px-6 py-4 text-center">A carregar dados...</td></tr>
@@ -232,9 +246,10 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider">
-                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Data / Hora</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Nome do Visitante</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Contato</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Data / Hora</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Categoria</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Status</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-600 text-center font-semibold no-print-col">Ações</th>
                                 </tr>
@@ -1192,7 +1207,7 @@
                 document.getElementById('detail-weight').innerText = s.weight ? s.weight + ' kg' : '-';
                 
                 const phoneDisplay = document.getElementById('detail-phone');
-                if ((s.phone || '').trim() !== "") { const cleanPhone = s.phone.replace(/\D/g, ''); phoneDisplay.innerHTML = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold transition inline-flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${s.phone}</a>`; } else { phoneDisplay.innerText = '-'; }
+                if (String(s.phone || '').trim() !== "") { const cleanPhone = String(s.phone).replace(/\D/g, ''); phoneDisplay.innerHTML = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold transition inline-flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${s.phone}</a>`; } else { phoneDisplay.innerText = '-'; }
                 document.getElementById('detail-email').innerText = s.email || '-'; document.getElementById('detail-address').innerText = s.address || '-'; document.getElementById('detail-login').innerText = s.studentLogin || 'Não configurado'; document.getElementById('detail-pass').innerText = s.studentPassword || '---';
                 const originEl = document.getElementById('detail-origin'); if (originEl) originEl.innerText = s.howDidYouFindUs || 'Não informado';
                 const guardianBox = document.getElementById('detail-guardian-box'); if (s.guardian && String(s.guardian).trim() !== "") { document.getElementById('detail-guardian-name').innerText = s.guardian; guardianBox.classList.remove('hidden'); } else guardianBox.classList.add('hidden');
@@ -1585,7 +1600,7 @@
                 if(exp.status === 'Matriculado') statusBadge = `<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-bold">Matriculado</span>`;
                 
                 let phoneHtml = '-';
-                if(exp.phone) { const cleanPhone = exp.phone.replace(/\D/g, ''); phoneHtml = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:underline"><i class="fa-brands fa-whatsapp"></i> ${exp.phone}</a>`; }
+                if(exp.phone) { const cleanPhone = String(exp.phone).replace(/\D/g, ''); phoneHtml = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:underline"><i class="fa-brands fa-whatsapp"></i> ${exp.phone}</a>`; }
 
                 let categoryHtml = '--';
                 let guardianHtml = '';
@@ -1834,13 +1849,13 @@
             const search2 = searchInput2 ? searchInput2.value.toLowerCase() : '';
             const search = search1 || search2;
 
-            if (search) filtered = filtered.filter(s => (s.name && s.name.toLowerCase().includes(search)) || (s.cpf && s.cpf.includes(search)));
+            if (search) filtered = filtered.filter(s => (s.name && String(s.name).toLowerCase().includes(search)) || (s.cpf && String(s.cpf).includes(search)));
 
             const sortOrder = document.getElementById('sort-order') ? document.getElementById('sort-order').value : 'recent';
             const filterBelt = document.getElementById('filter-belt') ? document.getElementById('filter-belt').value : '';
 
             if (filterBelt) {
-                filtered = filtered.filter(s => s.belt && s.belt.toLowerCase().includes(filterBelt.toLowerCase()));
+                filtered = filtered.filter(s => s.belt && String(s.belt).toLowerCase().includes(filterBelt.toLowerCase()));
             }
 
             if (sortOrder === 'az') {
@@ -1903,6 +1918,9 @@
 
                 return `
                     <tr class="${rowClass}">
+                        <td class="px-3 py-3 text-center">
+                            <input type="checkbox" class="student-checkbox rounded border-gray-300 text-brand-red focus:ring-brand-red" value="${s.id}" onchange="window.updateBulkActionsBtn()">
+                        </td>
                         <td class="${paddingLeft} py-3 pr-3">
                             <div class="flex items-center gap-3">
                                 ${isDependent ? '<i class="fa-solid fa-turn-up rotate-90 text-gray-300 dark:text-gray-600"></i>' : ''}
@@ -1959,6 +1977,9 @@
             });
 
             tbody.innerHTML = html;
+            const selectAllCb = document.getElementById('select-all-students');
+            if (selectAllCb) selectAllCb.checked = false;
+            if (window.updateBulkActionsBtn) window.updateBulkActionsBtn();
         };
 
         window.toggleDependents = (titularId) => {
@@ -1994,6 +2015,99 @@
 
         window.filterTable = () => {
             window.renderTable();
+            window.updateBulkActionsBtn();
+        };
+
+        window.toggleSelectAllStudents = (source) => {
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+            checkboxes.forEach(cb => {
+                if (!cb.closest('tr').classList.contains('hidden')) {
+                    cb.checked = source.checked;
+                }
+            });
+            window.updateBulkActionsBtn();
+        };
+
+        window.updateBulkActionsBtn = () => {
+            const checkboxes = document.querySelectorAll('.student-checkbox:checked');
+            const btn = document.getElementById('bulk-actions-btn');
+            if (checkboxes.length > 0) {
+                btn.classList.remove('hidden');
+                btn.innerHTML = `Ações em Lote (${checkboxes.length}) <i class="fa-solid fa-chevron-down ml-1"></i>`;
+            } else {
+                btn.classList.add('hidden');
+                document.getElementById('bulk-actions-menu').classList.add('hidden');
+            }
+        };
+
+        window.toggleBulkActionsMenu = () => {
+            document.getElementById('bulk-actions-menu').classList.toggle('hidden');
+        };
+
+        document.addEventListener('click', (e) => {
+            const btn = document.getElementById('bulk-actions-btn');
+            const menu = document.getElementById('bulk-actions-menu');
+            if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        window.bulkMarkAttendance = async () => {
+            const checkboxes = document.querySelectorAll('.student-checkbox:checked');
+            if (checkboxes.length === 0) return;
+            
+            const timeStr = prompt("Digite o horário da turma (ex: 19:00):");
+            if (!timeStr) return;
+
+            const dateStr = new Date().toISOString().split('T')[0];
+            const newLog = { date: dateStr, time: timeStr, timestamp: new Date().toISOString() };
+
+            if (!confirm(`Confirmar presença para ${checkboxes.length} alunos na turma das ${timeStr} hoje?`)) return;
+
+            document.getElementById('bulk-actions-menu').classList.add('hidden');
+            
+            try {
+                for (const cb of checkboxes) {
+                    const id = cb.value;
+                    const s = window.students.find(x => x.id === id);
+                    if (s) {
+                        if (s.attendanceLog && s.attendanceLog.some(l => l.date === dateStr && l.time === timeStr)) continue;
+                        await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { 
+                            attendance: arrayUnion(dateStr), 
+                            attendanceLog: arrayUnion(newLog) 
+                        });
+                    }
+                }
+                alert("Presenças registradas com sucesso!");
+                window.loadData();
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao registrar presenças.");
+            }
+        };
+
+        window.bulkArchive = async () => {
+            const checkboxes = document.querySelectorAll('.student-checkbox:checked');
+            if (checkboxes.length === 0) return;
+
+            if (!confirm(`Deseja realmente arquivar/desarquivar os ${checkboxes.length} alunos selecionados?`)) return;
+
+            document.getElementById('bulk-actions-menu').classList.add('hidden');
+
+            try {
+                for (const cb of checkboxes) {
+                    const id = cb.value;
+                    const s = window.students.find(x => x.id === id);
+                    if (s) {
+                        await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { archived: !s.archived });
+                    }
+                }
+                alert("Status alterado com sucesso!");
+                window.loadData();
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao alterar status.");
+            }
         };
 
         window.toggleArchive = async (id) => {
@@ -2179,15 +2293,6 @@
             document.body.classList.remove('printing-progress');
         };
 
-        window.archiveSelectedStudents = () => {
-            alert("Função de arquivamento em massa não implementada no preview.");
-        };
-
-        window.deleteSelectedStudents = () => {
-            alert("Função de exclusão em massa não implementada no preview.");
-        };
-
-        // RENDER ANIVERSARIANTES
         window.shareBirthdayNotice = async (id) => {
             const s = window.students.find(st => st.id === id);
             if (!s) return;
