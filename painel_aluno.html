@@ -446,6 +446,7 @@
                     
                     <!-- BOTOES DE AÇÃO SECUNDÁRIOS -->
                     <div class="mt-6 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto no-print">
+                        <!-- Removido o hidden md:flex para que mostre sempre no celular tambem -->
                         <button onclick="window.printStudentContract()" class="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg flex justify-center items-center gap-2 transition transform hover:-translate-y-1">
                             <i class="fa-solid fa-file-contract text-xl"></i> Imprimir Minha Matrícula
                         </button>
@@ -630,7 +631,7 @@
     </div>
 
     <!-- Student History Modal -->
-    <div id="student-history-modal" class="fixed inset-0 z-[70] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm no-print">
+    <div id="student-history-modal" class="fixed inset-0 z-[70] hidden bg-black/60 items-center justify-center p-4 backdrop-blur-sm no-print">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] border-t-4 border-blue-500 animate-fade-in">
             <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
                 <h3 class="font-bold text-lg text-gray-800 dark:text-white"><i class="fa-solid fa-clock-rotate-left text-blue-500 mr-2"></i> O Meu Histórico Financeiro</h3>
@@ -664,14 +665,10 @@
     <!-- ========================================== -->
     
     <!-- Printable Contract Container -->
-    <div id="printable-contract" class="print-only-element">
-        <!-- JS irá preencher este container dinamicamente -->
-    </div>
+    <div id="printable-contract" class="print-only-element"></div>
 
     <!-- CARTEIRINHA IMPRESSA -->
-    <div id="print-only-qr" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen flex items-center justify-center">
-        <!-- O JS preenche a carteirinha abaixo com a logo na cor original -->
-    </div>
+    <div id="print-only-qr" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen flex items-center justify-center"></div>
 
     <!-- Firebase Logic & Application Code -->
     <script type="module">
@@ -747,31 +744,50 @@
         function parseRobustDate(dateVal) {
             if (!dateVal) return '--/--/----';
             try {
-                if (typeof dateVal.toDate === 'function') return dateVal.toDate().toLocaleDateString('pt-BR');
-                if (dateVal instanceof Date) return dateVal.toLocaleDateString('pt-BR');
-                if (typeof dateVal === 'string') {
+                let d;
+                if (typeof dateVal.toDate === 'function') d = dateVal.toDate();
+                else if (dateVal instanceof Date) d = dateVal;
+                else if (typeof dateVal === 'string') {
                     if (dateVal.includes('/') && dateVal.length === 10) return dateVal;
                     if (dateVal.length === 10 && dateVal.includes('-')) {
                         const parts = dateVal.split('-');
                         return `${parts[2]}/${parts[1]}/${parts[0]}`;
                     }
-                    const d = new Date(dateVal);
-                    if (!isNaN(d.getTime())) return d.toLocaleDateString('pt-BR');
-                }
-                return String(dateVal);
+                    d = new Date(dateVal);
+                } else d = new Date(dateVal);
+                
+                if (isNaN(d.getTime())) return String(dateVal);
+                
+                const dia = String(d.getDate()).padStart(2, '0');
+                const mes = String(d.getMonth() + 1).padStart(2, '0');
+                const ano = d.getFullYear();
+                return `${dia}/${mes}/${ano}`;
             } catch(e) { return '--/--/----'; }
         }
         
         function parseRobustDateTime(dateVal) {
             if (!dateVal) return '--/--/----';
             try {
-                if (typeof dateVal.toDate === 'function') return dateVal.toDate().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                if (dateVal instanceof Date) return dateVal.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                if (typeof dateVal === 'string') {
-                    const d = new Date(dateVal);
-                    if (!isNaN(d.getTime())) return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                }
-                return String(dateVal);
+                let d;
+                if (typeof dateVal.toDate === 'function') d = dateVal.toDate();
+                else if (dateVal instanceof Date) d = dateVal;
+                else if (typeof dateVal === 'string') {
+                    // Fallback to simple date string if it's just YYYY-MM-DD
+                    if (dateVal.length === 10 && dateVal.includes('-')) {
+                        const parts = dateVal.split('-');
+                        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                    }
+                    d = new Date(dateVal);
+                } else d = new Date(dateVal);
+                
+                if (isNaN(d.getTime())) return String(dateVal);
+                
+                const dia = String(d.getDate()).padStart(2, '0');
+                const mes = String(d.getMonth() + 1).padStart(2, '0');
+                const ano = d.getFullYear();
+                const hora = String(d.getHours()).padStart(2, '0');
+                const min = String(d.getMinutes()).padStart(2, '0');
+                return `${dia}/${mes}/${ano} às ${hora}:${min}`;
             } catch(e) { return '--/--/----'; }
         }
 
@@ -1104,6 +1120,7 @@
                     document.getElementById('celebration-text').innerText = "⭐ PARABÉNS PELO NOVO GRAU! ⭐";
                 }
 
+                // Verifica se já foi partilhado
                 const badgeNameToCheck = recentGrad.isNewBelt ? "Nova Faixa" : "Mais um Degrau";
                 const alreadyShared = window.checkIfBadgeShared(badgeNameToCheck);
                 const btn = document.getElementById('btn-share-belt');
@@ -1152,6 +1169,7 @@
             
             const streak = calculateConsecutiveDays(data.attendance || []);
             
+            // Chama as funções globais passando os dados
             window.renderCalendar(data.attendance || []);
             window.renderBadges(totalAtt, streak);
             window.renderRanking(); 
@@ -1353,7 +1371,10 @@
                 const emptyState = document.getElementById('student-history-empty');
                 const modal = document.getElementById('student-history-modal');
                 
-                if (!modal || !historyBody || !emptyState) return;
+                if (!modal || !historyBody || !emptyState) {
+                    console.error("Elementos do modal não encontrados");
+                    return;
+                }
                 
                 historyBody.innerHTML = '';
                 
@@ -1479,12 +1500,15 @@
                 }
 
                 const nowISO = new Date().toISOString();
+                
+                // Fetch ALL feeds without where clause first to avoid missing indices errors
                 const q = query(collection(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'feed'));
                 const snap = await getDocs(q);
                 
                 let posts = [];
                 snap.forEach(doc => {
                     const data = doc.data();
+                    // Filter in memory to avoid Firebase compound query requirement errors
                     if (!data.expiresAt || data.expiresAt > nowISO) {
                         posts.push({ id: doc.id, ...data });
                     }
@@ -1839,62 +1863,7 @@
             document.getElementById('qr-modal').classList.remove('flex');
         }
 
-        window.printQrCard = function() {
-            if (!currentUserData) {
-                alert("Sem dados para impressão.");
-                return;
-            }
-            window.closeMyQrModal();
-
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentUserData.id}`;
-            const name = currentUserData.name;
-            const belt = currentUserData.belt || "Faixa Branca";
-            const plan = PLAN_DICT[currentUserData.plan]?.short || "Plano";
-            
-            let photoHtml = '';
-            if (currentUserData.photoBase64) {
-                photoHtml = `<img src="${currentUserData.photoBase64}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
-            } else {
-                photoHtml = `<span style="font-size: 24px; font-weight: bold; color: #9ca3af; line-height: 70px;">${name.charAt(0).toUpperCase()}</span>`;
-            }
-
-            const htmlContent = `
-                <div style="width: 6.5cm; height: 10.5cm; border: 2px solid #1B1B1B; border-radius: 12px; margin: 0 auto; text-align: center; font-family: 'Arial', sans-serif; overflow: hidden; background: #fff; position: relative; box-sizing: border-box; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                    <div style="background-color: #1B1B1B !important; color: #ffffff !important; padding: 12px 10px; font-weight: bold; text-transform: uppercase; font-size: 13px; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; gap: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
-                        <img src="https://iili.io/qC543c7.png" style="height: 22px;"> 
-                        <span class="qr-header-text" style="color: #ffffff !important;">TANQUE TEAM BJJ</span>
-                    </div>
-                    <img src="https://iili.io/qC543c7.png" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; opacity: 0.05; pointer-events: none; filter: grayscale(100%);">
-                    <div style="padding: 15px; display: flex; flex-direction: column; align-items: center; height: calc(100% - 46px); box-sizing: border-box; position: relative; z-index: 10;">
-                        <div style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid #D90429; margin-bottom: 8px; margin-top: 10px; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center;">
-                            ${photoHtml}
-                        </div>
-                        <h4 style="margin: 0 0 4px 0; font-size: 15px; font-weight: 800; text-transform: uppercase; color: #1B1B1B; line-height: 1.1;">${name}</h4>
-                        <p style="margin: 0 0 2px 0; color: #D90429; font-size: 11px; font-weight: 900; text-transform: uppercase;">${belt}</p>
-                        <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${plan}</p>
-                        <div style="border: 1px solid #e5e7eb; padding: 4px; border-radius: 8px; background: white; margin-top: auto;">
-                            <img src="${qrUrl}" style="width: 110px; height: 110px; display: block;">
-                        </div>
-                        <p style="margin: 8px 0 0 0; font-size: 8px; color: #9ca3af; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px;">Apresente na Recepção</p>
-                    </div>
-                </div>
-            `;
-            
-            const printContainer = document.getElementById('print-only-qr');
-            printContainer.innerHTML = htmlContent;
-            document.body.classList.add('printing-qr');
-            
-            setTimeout(() => {
-                window.print();
-                setTimeout(() => {
-                    document.body.classList.remove('printing-qr');
-                    printContainer.innerHTML = '';
-                }, 1000);
-            }, 500);
-        };
-
-        window.printStudentContract = async function() {
-            // Se o currentUserData for vazio, tentar resgatar as vars antes de abortar
+        window.printStudentContract = function() {
             if (!currentUserData || !currentUserData.id) {
                 alert("Sem dados de contrato disponíveis. Por favor, atualize a página.");
                 return;
@@ -1903,18 +1872,7 @@
             const s = currentUserData;
             
             const isCombo = String(s.plan).includes('combo'); 
-            let myDependents = [];
-            if (isCombo) {
-                try {
-                    const qSnap = await getDocs(collection(window.dbInstance, 'artifacts', window.appIdVar, 'public', 'data', 'students'));
-                    qSnap.forEach(docSnap => {
-                        const data = docSnap.data();
-                        if(data.titularId === s.id && data.plan === 'dependente' && !data.archived) {
-                            myDependents.push(data);
-                        }
-                    });
-                } catch(e) { console.warn(e); }
-            }
+            let myDependents = isCombo ? (window.myDependents || []) : [];
 
             const pInfo = window.getPlanInfo(s.plan);
             let price = formatCurrency(pInfo.price);
@@ -2017,13 +1975,15 @@
             printContainer.innerHTML = contractHtml;
             document.body.classList.add('printing-contract');
             
+            // Permite que o DOM renderize o conteúdo antes de chamar a janela de impressão
+            void printContainer.offsetHeight;
+            
+            window.print();
+            
             setTimeout(() => {
-                window.print();
-                setTimeout(() => {
-                    document.body.classList.remove('printing-contract');
-                    printContainer.innerHTML = '';
-                }, 1000);
-            }, 500);
+                document.body.classList.remove('printing-contract');
+                printContainer.innerHTML = '';
+            }, 1000);
         };
 
         window.shareTrialLink = function() {
