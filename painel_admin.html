@@ -1228,7 +1228,8 @@
         function isStudentKid(s) {
             const cat = s.category ? String(s.category).toLowerCase() : ''; const plan = s.plan ? String(s.plan).toLowerCase() : '';
             if (cat === 'administração' || plan === 'administracao') return false; 
-            const age = getAge(s.dob); if (age !== null && age < 12) return true;
+            const age = getAge(s.dob); 
+            if (age !== null) return age <= 11;
             if (cat.includes('infantil') || plan.includes('infantil')) return true; return false; 
         }
 
@@ -2451,14 +2452,44 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
             btn.disabled = true;
 
-            const body = `Olá, ${name}!\n\nSeja bem-vindo(a) ao portal do aluno da Tanque Team.\n\nAqui estão seus dados de acesso:\nURL: ${window.location.origin}\nLogin: ${login}\nSenha: ${pass}\n\nOss!\nEquipe Tanque Team`;
+            const bodyHtml = `
+<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+    <div style="background-color: #1B1B1B; padding: 20px; text-align: center;">
+        <img src="https://iili.io/qC543c7.png" alt="Tanque Team Logo" style="height: 60px;">
+    </div>
+    <div style="padding: 30px;">
+        <h2 style="color: #D90429; margin-top: 0;">Olá, ${name}!</h2>
+        <p>Seja muito bem-vindo(a) à família <strong>Tanque Team BJJ</strong>! Estamos muito felizes em ter você com a gente no tatame.</p>
+        <p>Para acompanhar sua evolução, histórico de aulas e pagamentos, preparamos um <strong>Portal do Aluno</strong> exclusivo para você.</p>
+        
+        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #1B1B1B; font-size: 16px;">Seus Dados de Acesso:</h3>
+            <p style="margin: 5px 0;"><strong>Login:</strong> ${login}</p>
+            <p style="margin: 5px 0;"><strong>Senha:</strong> ${pass}</p>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="https://www.tanqueteambjj.com.br/login.html" style="background-color: #D90429; color: #ffffff; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 4px; display: inline-block;">Acessar Portal do Aluno</a>
+        </div>
+
+        <h3 style="color: #1B1B1B; font-size: 16px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px;">Como acessar as aulas?</h3>
+        <p>Ao entrar no Portal do Aluno, você encontrará o seu <strong>QR Code de Acesso</strong>. Basta apresentá-lo na recepção ou no leitor da academia para registrar sua presença nas aulas.</p>
+        
+        <p style="margin-top: 30px;">Nos vemos no tatame!</p>
+        <p><strong>Oss!</strong><br>Equipe Tanque Team</p>
+    </div>
+    <div style="background-color: #f9fafb; padding: 15px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #e5e7eb;">
+        Este é um e-mail automático. Por favor, não responda.
+    </div>
+</div>`;
             
             const templateParams = {
                 to_name: name,
                 to_email: email,
-                message: body,
+                message: bodyHtml,
                 login: login,
-                password: pass
+                password: pass,
+                subject: "Seu Acesso ao Portal do Aluno - Tanque Team BJJ"
             };
 
             emailjs.send('service_yq744mr', 'template_few5bna', templateParams)
