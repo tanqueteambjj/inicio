@@ -1484,13 +1484,24 @@
             document.getElementById('prog-current-belt').innerHTML = '<span class="inline-flex items-center gap-2 align-middle">' + window.getBeltImageHtml(s.belt) + '<span>' + (s.belt || 'Branca') + '</span></span>';
             document.getElementById('prog-new-note').value = ''; document.getElementById('prog-add-date').valueAsDate = new Date();
             const tl = document.getElementById('prog-timeline'); tl.innerHTML = '';
-            let logs = s.progressLog ? [...s.progressLog] : []; logs.push({ type: 'info', text: 'Matrícula realizada.', date: s.registrationDate || new Date().toISOString() }); logs.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+            let logs = s.progressLog ? [...s.progressLog] : []; 
+            if (!logs.some(l => l.text === 'Matrícula realizada.')) {
+                logs.push({ type: 'info', text: 'Matrícula realizada.', date: s.registrationDate || new Date().toISOString(), isVirtual: true }); 
+            }
+            logs.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
             logs.forEach(log => {
                 const dateVal = log.date || '';
                 const d = formatDate(dateVal.includes('T') ? dateVal : dateVal + 'T12:00:00'); let icon = '<i class="fa-solid fa-comment-dots text-teal-500"></i>'; let bg = 'bg-teal-50 border-teal-200 dark:bg-teal-900/20 dark:border-teal-800';
                 if(log.type === 'graduation') { icon = '<i class="fa-solid fa-medal text-yellow-500"></i>'; bg = 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800'; }
                 if(log.type === 'info') { icon = '<i class="fa-solid fa-flag-checkered text-blue-500"></i>'; bg = 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'; }
-                tl.innerHTML += `<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active"><div class="flex items-center justify-center w-8 h-8 rounded-full border border-white dark:border-gray-800 bg-white dark:bg-gray-800 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">${icon}</div><div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-3 rounded border shadow-sm ${bg}"><div class="flex items-center justify-between mb-1"><div class="font-bold text-gray-800 dark:text-gray-200 text-xs">${log.type === 'graduation' ? 'Graduação' : (log.type === 'note' ? 'Anotação' : 'Sistema')}</div><time class="text-[10px] font-medium text-gray-500 dark:text-gray-400">${d}</time></div><div class="text-sm text-gray-600 dark:text-gray-300">${log.text}</div></div></div>`;
+                
+                let deleteBtn = '';
+                if (!log.isVirtual) {
+                    const safeText = log.text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    deleteBtn = `<button onclick="window.deleteProgressNote('${id}', '${log.date}', '${safeText}')" class="text-red-400 hover:text-red-600 ml-2" title="Excluir registro"><i class="fa-solid fa-trash text-xs"></i></button>`;
+                }
+
+                tl.innerHTML += `<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active"><div class="flex items-center justify-center w-8 h-8 rounded-full border border-white dark:border-gray-800 bg-white dark:bg-gray-800 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">${icon}</div><div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-3 rounded border shadow-sm ${bg}"><div class="flex items-center justify-between mb-1"><div class="font-bold text-gray-800 dark:text-gray-200 text-xs">${log.type === 'graduation' ? 'Graduação' : (log.type === 'note' ? 'Anotação' : 'Sistema')}</div><div class="flex items-center"><time class="text-[10px] font-medium text-gray-500 dark:text-gray-400">${d}</time>${deleteBtn}</div></div><div class="text-sm text-gray-600 dark:text-gray-300">${log.text}</div></div></div>`;
             });
             window.filterProgressAttendance();
             document.getElementById('progress-modal').classList.remove('hidden'); document.getElementById('progress-modal').classList.add('flex');
@@ -1501,6 +1512,19 @@
         window.saveProgressNote = async () => {
             const id = document.getElementById('prog-student-id').value; const text = document.getElementById('prog-new-note').value.trim(); if(!text) { alert("Escreva uma anotação."); return; }
             try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { progressLog: arrayUnion({ type: 'note', text: text, date: new Date().toISOString() }) }); const s = window.students.find(st => st.id === id); if(s) { if(!s.progressLog) s.progressLog = []; s.progressLog.push({ type: 'note', text: text, date: new Date().toISOString() }); } window.openProgressModal(id); } catch(e) { alert("Erro ao salvar anotação."); }
+        };
+
+        window.deleteProgressNote = async (studentId, logDate, logText) => {
+            if(!confirm("Tem certeza que deseja excluir este registro do histórico?")) return;
+            const s = window.students.find(st => st.id === studentId); if(!s) return;
+            if(!s.progressLog) return;
+            const logToRemove = s.progressLog.find(l => l.date === logDate && l.text === logText);
+            if(!logToRemove) return;
+            try {
+                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), { progressLog: arrayRemove(logToRemove) });
+                s.progressLog = s.progressLog.filter(l => l !== logToRemove);
+                window.openProgressModal(studentId);
+            } catch(e) { console.error(e); alert("Erro ao excluir registro."); }
         };
 
         window.filterProgressAttendance = () => {
@@ -2614,7 +2638,9 @@
             const printTableBody = document.getElementById('print-prog-table-body');
             printTableBody.innerHTML = '';
             let logs = s.progressLog ? [...s.progressLog] : []; 
-            logs.push({ type: 'info', text: 'Matrícula realizada.', date: s.registrationDate || new Date().toISOString() }); 
+            if (!logs.some(l => l.text === 'Matrícula realizada.')) {
+                logs.push({ type: 'info', text: 'Matrícula realizada.', date: s.registrationDate || new Date().toISOString() }); 
+            }
             logs.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
             
             logs.forEach(log => {
