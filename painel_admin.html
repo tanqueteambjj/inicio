@@ -143,7 +143,7 @@
         <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 relative">
             <!-- VIEW: ALUNOS -->
             <div id="view-students" class="animate-fade-in">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 stats-container">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6 stats-container">
                     <div id="card-all" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-blue-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 transition-all card-active" onclick="window.switchTab('all')">
                         <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-blue-500 pointer-events-none"><i class="fa-solid fa-users"></i></div>
                         <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Total Ativos</p>
@@ -156,8 +156,17 @@
                     </div>
                     <div id="card-adults" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-green-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-green-50 dark:hover:bg-gray-700 transition-all" onclick="window.switchTab('adults')">
                         <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-green-500 pointer-events-none"><i class="fa-solid fa-user"></i></div>
-                        <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Adulto/Admin</p>
+                        <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Adulto</p>
                         <p class="text-3xl font-bold text-gray-800 dark:text-white" id="stat-adulto">0</p>
+                    </div>
+                    <div id="card-admin" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-purple-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-purple-50 dark:hover:bg-gray-700 transition-all" onclick="window.switchTab('admin')">
+                        <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-purple-500 pointer-events-none"><i class="fa-solid fa-user-tie"></i></div>
+                        <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Administração</p>
+                        <p class="text-3xl font-bold text-gray-800 dark:text-white" id="stat-admin">0</p>
+                        <div class="mt-2 text-[10px] text-gray-500 dark:text-gray-400 flex justify-between uppercase font-bold">
+                            <span>Infantil: <b id="stat-admin-kids" class="text-gray-800 dark:text-gray-200">0</b></span>
+                            <span>Adulto: <b id="stat-admin-adults" class="text-gray-800 dark:text-gray-200">0</b></span>
+                        </div>
                     </div>
                     <div id="card-archived" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-gray-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-all" onclick="window.switchTab('archived')">
                         <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-gray-500 pointer-events-none"><i class="fa-solid fa-box-archive"></i></div>
@@ -167,7 +176,7 @@
                 </div>
 
                 <div class="flex flex-wrap mb-0 tabs-container hidden">
-                    <button id="tab-all"></button><button id="tab-adults"></button><button id="tab-kids"></button><button id="tab-archived"></button>
+                    <button id="tab-all"></button><button id="tab-adults"></button><button id="tab-kids"></button><button id="tab-admin"></button><button id="tab-archived"></button>
                 </div>
 
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -1225,11 +1234,16 @@
                 return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR'); 
             } catch (e) { return '--'; } 
         }
+        function isStudentAdmin(s) {
+            const cat = s.category ? String(s.category).toLowerCase() : '';
+            const plan = s.plan ? String(s.plan).toLowerCase() : '';
+            return cat.includes('administração') || cat.includes('administracao') || plan.includes('administração') || plan.includes('administracao');
+        }
+
         function isStudentKid(s) {
-            const cat = s.category ? String(s.category).toLowerCase() : ''; const plan = s.plan ? String(s.plan).toLowerCase() : '';
-            if (cat === 'administração' || plan === 'administracao') return false; 
             const age = getAge(s.dob); 
             if (age !== null) return age <= 11;
+            const cat = s.category ? String(s.category).toLowerCase() : ''; const plan = s.plan ? String(s.plan).toLowerCase() : '';
             if (cat.includes('infantil') || plan.includes('infantil')) return true; return false; 
         }
 
@@ -1277,13 +1291,19 @@
 
         function updateStats() {
             const total = window.students.filter(s => !s.archived).length;
-            let kidsCount = 0, adultsCount = 0, archivedCount = 0;
+            let kidsCount = 0, adultsCount = 0, adminCount = 0, adminKidsCount = 0, adminAdultsCount = 0, archivedCount = 0;
             window.students.forEach(s => {
                 if (s.archived) { archivedCount++; return; }
-                if (isStudentKid(s)) kidsCount++; else adultsCount++;
+                if (isStudentAdmin(s)) {
+                    adminCount++;
+                    if (isStudentKid(s)) adminKidsCount++; else adminAdultsCount++;
+                } else {
+                    if (isStudentKid(s)) kidsCount++; else adultsCount++;
+                }
             });
             const setText = (id, txt) => { const e = document.getElementById(id); if(e) e.innerText = txt; }
             setText('stat-total', total); setText('stat-infantil', kidsCount); setText('stat-adulto', adultsCount); setText('stat-archived', archivedCount);
+            setText('stat-admin', adminCount); setText('stat-admin-kids', adminKidsCount); setText('stat-admin-adults', adminAdultsCount);
         }
 
         // DETALHES, PROGRESSO E EDIÇÃO
@@ -1940,8 +1960,9 @@
             if (window.currentTab === 'archived') filtered = filtered.filter(s => s.archived);
             else {
                 filtered = filtered.filter(s => !s.archived);
-                if (window.currentTab === 'kids') filtered = filtered.filter(s => isStudentKid(s));
-                else if (window.currentTab === 'adults') filtered = filtered.filter(s => !isStudentKid(s));
+                if (window.currentTab === 'kids') filtered = filtered.filter(s => isStudentKid(s) && !isStudentAdmin(s));
+                else if (window.currentTab === 'adults') filtered = filtered.filter(s => !isStudentKid(s) && !isStudentAdmin(s));
+                else if (window.currentTab === 'admin') filtered = filtered.filter(s => isStudentAdmin(s));
             }
 
             const searchInput1 = document.getElementById('searchInput');
@@ -1959,12 +1980,23 @@
                 filtered = filtered.filter(s => s.belt && String(s.belt).toLowerCase().includes(filterBelt.toLowerCase()));
             }
 
-            if (sortOrder === 'az') {
-                filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-            } else if (sortOrder === 'za') {
-                filtered.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+            if (window.currentTab === 'admin') {
+                filtered.sort((a, b) => {
+                    const aKid = isStudentKid(a);
+                    const bKid = isStudentKid(b);
+                    if (aKid !== bKid) return aKid ? -1 : 1;
+                    if (sortOrder === 'az') return (a.name || '').localeCompare(b.name || '');
+                    if (sortOrder === 'za') return (b.name || '').localeCompare(a.name || '');
+                    return new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0);
+                });
             } else {
-                filtered.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
+                if (sortOrder === 'az') {
+                    filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                } else if (sortOrder === 'za') {
+                    filtered.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+                } else {
+                    filtered.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
+                }
             }
 
             const listCount = document.getElementById('list-count');
@@ -2048,8 +2080,18 @@
                 `;
             };
 
+            let lastGroup = null;
+
             filtered.forEach(s => {
                 if (renderedIds.has(s.id)) return;
+
+                if (window.currentTab === 'admin') {
+                    const group = isStudentKid(s) ? 'Infantil (até 11 anos)' : 'Jovem/Adulto (12+ anos)';
+                    if (group !== lastGroup) {
+                        html += `<tr><td colspan="10" class="px-6 py-2 bg-gray-100 dark:bg-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">${group}</td></tr>`;
+                        lastGroup = group;
+                    }
+                }
 
                 if (s.plan && s.plan.includes('combo')) {
                     const myDependents = window.students.filter(d => d.plan === 'dependente' && d.titularId === s.id);
