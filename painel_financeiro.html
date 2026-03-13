@@ -8,6 +8,9 @@
     <link rel="icon" href="https://iili.io/qC543c7.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Chart.js para Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -129,57 +132,83 @@
                     <button onclick="window.loadData()" class="text-gray-500 hover:text-black text-sm flex items-center gap-1 bg-white border px-3 py-1.5 rounded shadow-sm hover:bg-gray-50 transition"><i class="fa-solid fa-rotate"></i> Atualizar</button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <!-- Card Projeção (Nova Funcionalidade 7) -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500 relative overflow-hidden transition-transform transform hover:-translate-y-1">
+                        <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-yellow-500 pointer-events-none"><i class="fa-solid fa-chart-line"></i></div>
+                        <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1" title="Soma do valor base de todos os contratos ativos">Previsão de Receita (Mês)</p>
+                        <p class="text-3xl font-bold text-gray-800" id="stat-projected">R$ 0,00</p>
+                    </div>
+
                     <!-- Card Recebido -->
                     <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500 relative overflow-hidden transition-transform transform hover:-translate-y-1">
                         <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-green-500 pointer-events-none"><i class="fa-solid fa-hand-holding-dollar"></i></div>
-                        <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Receita Confirmada (Mês Atual)</p>
-                        <p class="text-3xl font-bold text-gray-800" id="stat-revenue">R$ 0,00</p>
+                        <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Receita Confirmada</p>
+                        <p class="text-3xl font-bold text-green-600" id="stat-revenue">R$ 0,00</p>
                     </div>
                     
-                    <!-- Card Pendente -->
-                    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500 relative overflow-hidden transition-transform transform hover:-translate-y-1" onclick="window.switchMainView('students'); window.switchFinanceTab('pending')" style="cursor: pointer;">
-                        <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-red-500 pointer-events-none"><i class="fa-solid fa-file-invoice"></i></div>
-                        <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Inadimplência / Pendentes</p>
-                        <p class="text-3xl font-bold text-gray-800" id="stat-overdue">0 alunos</p>
-                    </div>
-
                     <!-- Card Em Dia -->
                     <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500 relative overflow-hidden transition-transform transform hover:-translate-y-1" onclick="window.switchMainView('students'); window.switchFinanceTab('paid')" style="cursor: pointer;">
                         <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-blue-500 pointer-events-none"><i class="fa-solid fa-users"></i></div>
-                        <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Alunos em Dia / Pagantes</p>
+                        <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Em Dia / Pagantes</p>
                         <p class="text-3xl font-bold text-gray-800" id="stat-paid">0 alunos</p>
+                    </div>
+
+                    <!-- Card Pendente -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500 relative overflow-hidden transition-transform transform hover:-translate-y-1" onclick="window.switchMainView('students'); window.switchFinanceTab('pending')" style="cursor: pointer;">
+                        <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-red-500 pointer-events-none"><i class="fa-solid fa-file-invoice"></i></div>
+                        <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Inadimplentes</p>
+                        <p class="text-3xl font-bold text-red-600" id="stat-overdue">0 alunos</p>
                     </div>
                 </div>
 
-                <!-- Histórico Recente -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-                        <h3 class="font-bold text-gray-700 uppercase text-sm"><i class="fa-solid fa-clock-rotate-left mr-2 text-gray-400"></i> Últimos Pagamentos Recebidos</h3>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <!-- Gráfico de Métodos de Pagamento (Nova Funcionalidade 4) -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden col-span-1 flex flex-col">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                            <h3 class="font-bold text-gray-700 uppercase text-sm"><i class="fa-solid fa-chart-pie mr-2 text-gray-400"></i> Formas de Pagamento</h3>
+                        </div>
+                        <div class="p-6 flex-1 flex items-center justify-center relative">
+                            <canvas id="paymentMethodsChart" style="max-height: 200px;"></canvas>
+                            <p id="no-chart-data" class="hidden absolute text-gray-400 text-sm font-medium">Sem dados este mês.</p>
+                        </div>
                     </div>
-                    <div class="p-0 overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-gray-100 text-gray-500 text-xs uppercase">
-                                <tr>
-                                    <th class="px-6 py-3 font-medium">Data</th>
-                                    <th class="px-6 py-3 font-medium">Aluno/Titular</th>
-                                    <th class="px-6 py-3 font-medium">Valor</th>
-                                    <th class="px-6 py-3 font-medium">Método</th>
-                                </tr>
-                            </thead>
-                            <tbody id="recent-payments-body" class="divide-y divide-gray-100">
-                                <tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 italic">Carregando...</td></tr>
-                            </tbody>
-                        </table>
+
+                    <!-- Histórico Recente -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden col-span-1 lg:col-span-2">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                            <h3 class="font-bold text-gray-700 uppercase text-sm"><i class="fa-solid fa-clock-rotate-left mr-2 text-gray-400"></i> Últimos Pagamentos Recebidos</h3>
+                        </div>
+                        <div class="p-0 overflow-x-auto max-h-[250px] overflow-y-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-100 text-gray-500 text-xs uppercase sticky top-0">
+                                    <tr>
+                                        <th class="px-6 py-3 font-medium">Data</th>
+                                        <th class="px-6 py-3 font-medium">Aluno/Titular</th>
+                                        <th class="px-6 py-3 font-medium">Valor</th>
+                                        <th class="px-6 py-3 font-medium">Método</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-payments-body" class="divide-y divide-gray-100">
+                                    <tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 italic">Carregando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- VIEW: MENSALIDADES (LISTA DE ALUNOS) -->
             <div id="view-students" class="hidden animate-fade-in">
-                <div class="mb-6">
-                    <h2 class="font-display text-2xl font-bold text-gray-800">Controle de Mensalidades</h2>
-                    <p class="text-sm text-gray-500">Gestão de pagamentos e cobranças.</p>
+                <div class="mb-6 flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+                    <div>
+                        <h2 class="font-display text-2xl font-bold text-gray-800">Controle de Mensalidades</h2>
+                        <p class="text-sm text-gray-500">Gestão de pagamentos e cobranças.</p>
+                    </div>
+                    <!-- Botão Cobrança em Massa (Nova Funcionalidade 5) -->
+                    <button onclick="window.massChargePending()" id="btn-mass-charge" class="hidden bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition items-center gap-2">
+                        <i class="fa-brands fa-whatsapp text-lg"></i> Cobrar Inadimplentes
+                    </button>
                 </div>
 
                 <!-- Tabs Container -->
@@ -187,8 +216,9 @@
                     <button onclick="window.switchFinanceTab('all')" id="tab-all" class="px-6 py-3 bg-white font-bold text-green-700 border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative">
                         <i class="fa-solid fa-users mr-2"></i> Todos
                     </button>
-                    <button onclick="window.switchFinanceTab('pending')" id="tab-pending" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1 transition-colors">
-                        <i class="fa-solid fa-triangle-exclamation mr-2 text-red-500"></i> Pendentes/Atrasados
+                    <button onclick="window.switchFinanceTab('pending')" id="tab-pending" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1 transition-colors relative">
+                        <i class="fa-solid fa-triangle-exclamation mr-2 text-red-500"></i> Pendentes
+                        <span id="tab-pending-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full shadow hidden">0</span>
                     </button>
                     <button onclick="window.switchFinanceTab('paid')" id="tab-paid" class="px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1 transition-colors">
                         <i class="fa-solid fa-check-circle mr-2 text-green-500"></i> Em Dia
@@ -207,12 +237,12 @@
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto min-h-[400px]">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
                                     <th class="px-6 py-3 border-b font-semibold">Aluno / Titular</th>
-                                    <th class="px-6 py-3 border-b font-semibold">Plano</th>
+                                    <th class="px-6 py-3 border-b font-semibold">Plano Base</th>
                                     <th class="px-6 py-3 border-b font-semibold">Status / Vencimento</th>
                                     <th class="px-6 py-3 border-b font-semibold text-center">Ações</th>
                                 </tr>
@@ -319,14 +349,13 @@
 
                 <div class="flex gap-3 mt-8">
                     <button onclick="window.closeDetailsModal()" class="flex-1 border border-gray-300 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-50 transition shadow-sm">Fechar</button>
-                    <!-- Removido o bloqueio para permitir registrar pagamento mesmo estando "Em dia" -->
                     <button id="btn-open-pay" onclick="window.openPayModal()" class="flex-1 bg-green-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-green-700 transition flex justify-center items-center gap-2 transform active:scale-95"><i class="fa-solid fa-cash-register"></i> Registrar Pagamento</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: REGISTRAR PAGAMENTO -->
+    <!-- MODAL: REGISTRAR PAGAMENTO (Com cálculo automático de multas) -->
     <div id="pay-modal" class="fixed inset-0 z-[70] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-fade-in border-t-4 border-green-500">
             <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-200">
@@ -336,14 +365,21 @@
             <div class="p-6 space-y-4">
                 <input type="hidden" id="pay-student-id">
                 
-                <div class="bg-green-50 p-3 rounded border border-green-100 text-center mb-4 shadow-inner">
+                <div class="bg-green-50 p-3 rounded border border-green-100 text-center mb-2 shadow-inner">
                     <p class="text-xs text-green-600 font-bold uppercase mb-1">Recebendo de:</p>
                     <p class="text-lg font-bold text-gray-800" id="pay-student-name">--</p>
                 </div>
 
+                <!-- Nova Caixa de Alerta de Multa -->
+                <div id="penalty-box" class="hidden bg-red-50 border border-red-200 rounded p-3 mb-2">
+                    <p class="text-xs text-red-600 font-bold uppercase"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Atraso Detectado: <span id="penalty-days">0</span> dias</p>
+                    <p class="text-[10px] text-red-500 mt-1 leading-tight">Valor inclui 2% de multa + 1% de juros ao mês. Você pode editar o valor final manualmente se quiser isentar a multa.</p>
+                </div>
+
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Valor Recebido (R$)</label>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Valor a Receber (R$)</label>
                     <input type="number" id="pay-amount" class="w-full border border-gray-300 rounded-lg p-3 font-bold text-lg text-brand-dark focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" placeholder="Ex: 189.90" step="0.01">
+                    <p class="text-[10px] text-gray-400 mt-1" id="pay-base-hint">Valor base do plano: R$ 0,00</p>
                 </div>
 
                 <div>
@@ -445,6 +481,7 @@
         };
 
         let app, db, auth, appId;
+        let chartInstance = null; // Variável para o gráfico Chart.js
 
         window.students = []; 
         window.currentTab = 'all'; 
@@ -551,29 +588,110 @@
 
         function updateDashboardStats() {
             let totalRevenue = 0;
+            let projectedRevenue = 0;
             let countPaid = 0;
             let countOverdue = 0;
+            let pendingCountReal = 0;
 
             const currentMonth = new Date().getMonth();
             const currentYear = new Date().getFullYear();
 
+            // Objeto para contar os métodos de pagamento
+            let paymentMethodsCount = { 'Pix': 0, 'Dinheiro': 0, 'Cartão de Débito': 0, 'Cartão de Crédito': 0 };
+
             window.students.forEach(s => {
+                // Cálculo da Projeção de Faturamento
+                if (s.plan && s.paymentStatus !== 'Isento') {
+                    projectedRevenue += window.getPlanInfo(s.plan).price;
+                }
+
                 if (s.paymentStatus === 'Em dia') countPaid++;
-                else if (s.paymentStatus === 'Pendente') countOverdue++;
+                else if (s.paymentStatus === 'Pendente') {
+                    countOverdue++;
+                    pendingCountReal++;
+                }
 
                 if (s.paymentHistory && s.paymentHistory.length > 0) {
                     s.paymentHistory.forEach(pay => {
                         const pDate = new Date(pay.timestamp || pay.date);
                         if (!isNaN(pDate) && pDate.getMonth() === currentMonth && pDate.getFullYear() === currentYear) {
                             totalRevenue += Number(pay.amount || 0);
+                            
+                            // Agrupar por método para o gráfico
+                            let method = pay.method || 'Dinheiro';
+                            if (method === 'Débito') method = 'Cartão de Débito';
+                            if (method === 'Crédito') method = 'Cartão de Crédito';
+                            if (paymentMethodsCount[method] !== undefined) {
+                                paymentMethodsCount[method]++;
+                            } else {
+                                paymentMethodsCount[method] = 1;
+                            }
                         }
                     });
                 }
             });
 
             document.getElementById('stat-revenue').innerText = formatCurrency(totalRevenue);
+            document.getElementById('stat-projected').innerText = formatCurrency(projectedRevenue);
             document.getElementById('stat-paid').innerText = `${countPaid} aluno(s)`;
             document.getElementById('stat-overdue').innerText = `${countOverdue} aluno(s)`;
+
+            // Atualiza badge de pendentes na aba
+            const pendingBadge = document.getElementById('tab-pending-count');
+            if (pendingCountReal > 0) {
+                pendingBadge.innerText = pendingCountReal;
+                pendingBadge.classList.remove('hidden');
+            } else {
+                pendingBadge.classList.add('hidden');
+            }
+
+            // --- RENDERIZAR GRÁFICO CHART.JS ---
+            const ctx = document.getElementById('paymentMethodsChart');
+            const noDataMsg = document.getElementById('no-chart-data');
+            
+            // Prepara os dados
+            const labels = [];
+            const dataValues = [];
+            const bgColors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#64748b'];
+
+            Object.keys(paymentMethodsCount).forEach(key => {
+                if (paymentMethodsCount[key] > 0) {
+                    labels.push(key);
+                    dataValues.push(paymentMethodsCount[key]);
+                }
+            });
+
+            if (dataValues.length === 0) {
+                if (chartInstance) chartInstance.destroy();
+                ctx.classList.add('hidden');
+                noDataMsg.classList.remove('hidden');
+            } else {
+                ctx.classList.remove('hidden');
+                noDataMsg.classList.add('hidden');
+
+                if (chartInstance) chartInstance.destroy(); // Destroi o anterior se existir
+
+                chartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: dataValues,
+                            backgroundColor: bgColors.slice(0, labels.length),
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11, family: 'sans-serif' } } }
+                        },
+                        cutout: '65%'
+                    }
+                });
+            }
         }
 
         window.renderRecentPayments = function() {
@@ -616,6 +734,35 @@
             });
         }
 
+        // --- NOVA FUNÇÃO: COBRANÇA EM MASSA (WHATSAPP) ---
+        window.massChargePending = function() {
+            const pendingStudents = window.students.filter(s => s.paymentStatus === 'Pendente' && s.phone);
+            
+            if (pendingStudents.length === 0) {
+                alert("Não há alunos pendentes com número de telefone registado no momento.");
+                return;
+            }
+
+            if (!confirm(`Deseja preparar o envio de cobrança via WhatsApp para ${pendingStudents.length} aluno(s)?\n\nNota: Devido a políticas do WhatsApp, os links abrirão um a um. Terá de clicar em 'Enviar' em cada janela aberta.`)) {
+                return;
+            }
+
+            // Abre janelas do WhatsApp em massa (pode ser bloqueado por pop-up blockers, o utilizador deve permitir)
+            let openedCount = 0;
+            pendingStudents.forEach((s, index) => {
+                // Atraso para não sobrecarregar o navegador e contornar alguns bloqueios de pop-up
+                setTimeout(() => {
+                    const planInfo = window.getPlanInfo(s.plan);
+                    const cleanPhone = (s.phone || '').replace(/\D/g, '');
+                    if (cleanPhone) {
+                        const msg = encodeURIComponent(`Olá ${s.name.split(' ')[0]}, tudo bem? Aqui é do financeiro da Tanque Team BJJ 🥋.\n\nVerificamos que a sua mensalidade referente ao plano *${planInfo.short}* consta como pendente no nosso sistema.\n\nPor favor, regularize o pagamento na recepção ou via Pix. Qualquer dúvida, estamos à disposição. Oss!`);
+                        window.open(`https://wa.me/55${cleanPhone}?text=${msg}`, '_blank');
+                        openedCount++;
+                    }
+                }, index * 1500); // Abre 1 a cada 1.5 segundos
+            });
+        }
+
         // NAVEGAÇÃO
         window.toggleMobileMenu = () => { document.getElementById('sidebar-menu').classList.toggle('-translate-x-full'); document.getElementById('mobile-sidebar-overlay').classList.toggle('hidden'); };
 
@@ -645,13 +792,22 @@
         window.switchFinanceTab = (tab) => {
             window.currentTab = tab;
             const activeClass = "px-6 py-3 bg-white font-bold text-green-700 border-t border-l border-r border-gray-200 rounded-t-lg shadow-sm z-10 relative";
-            const inactiveClass = "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1 transition-colors";
+            const inactiveClass = "px-6 py-3 bg-gray-200 text-gray-500 font-bold border-b border-gray-200 rounded-t-lg hover:bg-gray-100 ml-1 transition-colors relative";
             
-            document.getElementById('tab-all').className = (tab === 'all') ? activeClass : inactiveClass;
-            document.getElementById('tab-pending').className = (tab === 'pending') ? activeClass : inactiveClass;
-            document.getElementById('tab-paid').className = (tab === 'paid') ? activeClass : inactiveClass;
-            document.getElementById('tab-exempt').className = (tab === 'exempt') ? activeClass : inactiveClass;
+            document.getElementById('tab-all').className = (tab === 'all') ? activeClass : inactiveClass.replace('relative', '');
             
+            // Tratamento especial para manter o badge no botão Pendentes
+            const btnPending = document.getElementById('tab-pending');
+            btnPending.className = (tab === 'pending') ? activeClass : inactiveClass;
+            
+            document.getElementById('tab-paid').className = (tab === 'paid') ? activeClass : inactiveClass.replace('relative', '');
+            document.getElementById('tab-exempt').className = (tab === 'exempt') ? activeClass : inactiveClass.replace('relative', '');
+            
+            // Mostra ou esconde botão de cobrança em massa
+            const massChargeBtn = document.getElementById('btn-mass-charge');
+            if (tab === 'pending') massChargeBtn.classList.remove('hidden');
+            else massChargeBtn.classList.add('hidden');
+
             window.renderTable();
         };
 
@@ -923,7 +1079,6 @@
                 });
             }
 
-            // O botão de pagar fica SEMPRE disponível
             const btnPay = document.getElementById('btn-open-pay');
             btnPay.classList.add('bg-green-600', 'hover:bg-green-700');
             btnPay.classList.remove('bg-gray-400', 'cursor-not-allowed');
@@ -939,7 +1094,7 @@
             document.getElementById('details-modal').classList.remove('flex');
         };
 
-        // --- REGISTRO DE PAGAMENTO ---
+        // --- REGISTRO DE PAGAMENTO (COM CÁLCULO DE MULTA/JUROS) ---
         window.openPayModal = (idOverride = null) => {
             let id = idOverride || document.getElementById('pay-student-id').value;
             const s = window.students.find(st => st.id === id); if(!s) return;
@@ -948,7 +1103,41 @@
             document.getElementById('pay-student-name').innerText = s.name;
             
             const price = window.getPlanInfo(s.plan).price;
-            document.getElementById('pay-amount').value = price.toFixed(2);
+            document.getElementById('pay-base-hint').innerText = `Valor base do plano: ${formatCurrency(price)}`;
+            
+            // Lógica de cálculo de atraso
+            let finalPrice = price;
+            const penaltyBox = document.getElementById('penalty-box');
+            const penaltyDaysSpan = document.getElementById('penalty-days');
+
+            if (s.paymentStatus === 'Pendente' && s.nextDueDate) {
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const dueDate = new Date(s.nextDueDate);
+                dueDate.setHours(0,0,0,0);
+
+                const timeDiff = today.getTime() - dueDate.getTime();
+                const daysLate = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+                if (daysLate > 0) {
+                    penaltyBox.classList.remove('hidden');
+                    penaltyDaysSpan.innerText = daysLate;
+
+                    // Multa fixa 2%
+                    const multa = price * 0.02;
+                    // Juros pro rata (1% ao mês = 0.0333% ao dia)
+                    const jurosDiario = 0.01 / 30;
+                    const jurosTotais = price * (jurosDiario * daysLate);
+
+                    finalPrice = price + multa + jurosTotais;
+                } else {
+                    penaltyBox.classList.add('hidden');
+                }
+            } else {
+                penaltyBox.classList.add('hidden');
+            }
+
+            document.getElementById('pay-amount').value = finalPrice.toFixed(2);
             
             const nextD = new Date();
             nextD.setDate(nextD.getDate() + 30);
@@ -1009,9 +1198,7 @@
             if(!s || !s.paymentHistory) return;
             
             try {
-                // Filtramos a array atual removendo o pagamento específico (pelo timestamp)
                 const updatedHistory = s.paymentHistory.filter(p => (p.timestamp || p.date) !== paymentId);
-                
                 await updateDoc(doc(window.db, 'artifacts', window.appIdVar, 'public', 'data', 'students', studentId), {
                     paymentHistory: updatedHistory
                 });
