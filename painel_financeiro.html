@@ -344,7 +344,7 @@
                         <h4 class="text-xs font-bold text-yellow-800 uppercase mb-1">Próximo Vencimento Atual:</h4>
                         <p class="text-sm font-bold text-gray-800" id="det-next-due">--/--/----</p>
                     </div>
-                    <button onclick="window.openEditDueModal()" class="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded font-bold transition shadow-sm"><i class="fa-solid fa-calendar-day"></i> Alterar Vencimento</button>
+                    <button id="btn-edit-due" onclick="window.openEditDueModal()" class="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded font-bold transition shadow-sm"><i class="fa-solid fa-calendar-day"></i> Alterar Vencimento</button>
                 </div>
 
                 <div class="mb-6">
@@ -377,6 +377,7 @@
                 <div>
                     <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Nova Data de Vencimento</label>
                     <input type="date" id="new-due-date" class="w-full border border-gray-300 rounded-lg p-3 font-bold text-gray-700 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500">
+                    <p class="text-[10px] text-gray-400 mt-1"><i class="fa-solid fa-circle-info"></i> Deixe o campo em branco e clique em salvar para remover a data de vencimento.</p>
                 </div>
                 <div class="mt-6 pt-4 border-t border-gray-100 flex gap-2">
                     <button onclick="window.closeEditDueModal()" class="w-1/3 border border-gray-300 rounded-lg font-bold text-gray-600 hover:bg-gray-50 transition shadow-sm">Cancelar</button>
@@ -607,6 +608,8 @@
             today.setHours(0,0,0,0);
 
             window.students.forEach(s => {
+                if (s.paymentStatus === 'Isento') return; // Ignora isentos na checagem de atraso
+
                 if (s.nextDueDate) {
                     const due = new Date(s.nextDueDate);
                     due.setHours(0,0,0,0);
@@ -616,7 +619,7 @@
                         s.paymentStatus = 'Pendente';
                         updateDoc(doc(window.db, 'artifacts', appId, 'public', 'data', 'students', s.id), { paymentStatus: 'Pendente' }).catch(e=>console.log(e));
                     }
-                } else if (s.paymentStatus !== 'Isento' && s.paymentStatus !== 'Pendente') {
+                } else if (s.paymentStatus !== 'Pendente') {
                     s.paymentStatus = 'Pendente';
                 }
             });
@@ -885,6 +888,9 @@
                 return; 
             }
 
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
             filtered.forEach(s => {
                 const planInfo = window.getPlanInfo(s.plan);
                 
@@ -897,11 +903,22 @@
                     statusHtml = `<span class="bg-gray-200 text-gray-600 text-xs font-bold px-2 py-1 rounded uppercase tracking-wider"><i class="fa-solid fa-star mr-1"></i> Isento</span>`;
                 }
 
+                // LÓGICA DE AVISO DE VENCIMENTO (7 DIAS) E TRATAMENTO PARA ISENTOS
                 let dueStr = s.nextDueDate ? formatDateBR(s.nextDueDate) : 'Não definida';
-                if (s.paymentStatus === 'Pendente' && s.nextDueDate) {
-                    dueStr = `<span class="text-red-500 font-bold">${dueStr}</span>`;
-                } else if (s.paymentStatus === 'Isento') {
+                
+                if (s.paymentStatus === 'Isento') {
                     dueStr = 'N/A';
+                } else if (s.paymentStatus === 'Pendente' && s.nextDueDate) {
+                    dueStr = `<span class="text-red-500 font-bold">${dueStr}</span>`;
+                } else if (s.nextDueDate) {
+                    const due = new Date(s.nextDueDate);
+                    due.setHours(0,0,0,0);
+                    const diffTime = due.getTime() - today.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays >= 0 && diffDays <= 7) {
+                        dueStr = `<span class="text-orange-500 font-bold" title="Vence em ${diffDays} dia(s)!"><i class="fa-regular fa-clock text-xs"></i> ${dueStr} (em ${diffDays}d)</span>`;
+                    }
                 }
 
                 const cleanPhone = (s.phone || '').replace(/\D/g, '');
@@ -1088,7 +1105,11 @@
             document.getElementById('pay-student-id').value = id;
 
             const nextDueEl = document.getElementById('det-next-due');
-            if (s.nextDueDate) {
+            
+            if (s.paymentStatus === 'Isento') {
+                nextDueEl.innerText = "N/A (Isento)";
+                nextDueEl.className = "text-sm font-bold text-gray-500";
+            } else if (s.nextDueDate) {
                 nextDueEl.innerText = formatDateBR(s.nextDueDate);
                 nextDueEl.className = "text-sm font-bold text-gray-800";
                 
@@ -1096,9 +1117,14 @@
                 today.setHours(0,0,0,0);
                 const due = new Date(s.nextDueDate);
                 due.setHours(0,0,0,0);
+                const diffTime = due.getTime() - today.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
                 if(today > due && s.paymentStatus === 'Pendente') {
                     nextDueEl.classList.remove('text-gray-800');
                     nextDueEl.classList.add('text-red-600');
+                } else if (diffDays >= 0 && diffDays <= 7) {
+                    nextDueEl.innerHTML = `${formatDateBR(s.nextDueDate)} <span class="text-xs text-orange-500 ml-1">(Vence em ${diffDays} dias)</span>`;
                 }
             } else {
                 nextDueEl.innerText = "Não definida";
@@ -1174,28 +1200,40 @@
         window.saveNewDueDate = async () => {
             const id = document.getElementById('pay-student-id').value;
             const newDate = document.getElementById('new-due-date').value;
-            
-            if(!newDate) { alert("Selecione uma data válida."); return; }
+            const s = window.students.find(st => st.id === id);
             
             try {
-                // Ao atualizar a data manualmente, atualizamos o status baseado nessa nova data
-                const today = new Date();
-                today.setHours(0,0,0,0);
-                const due = new Date(newDate);
-                due.setHours(0,0,0,0);
-                due.setDate(due.getDate() + 2); // 2 dias de tolerância
-                
-                let newStatus = 'Em dia';
-                if (today > due) {
-                    newStatus = 'Pendente';
-                }
+                if(!newDate) {
+                    if(confirm("Pretende remover a data de vencimento deste aluno?")) {
+                        await updateDoc(doc(window.db, 'artifacts', window.appIdVar, 'public', 'data', 'students', id), {
+                            nextDueDate: null
+                        });
+                        alert("Data de vencimento removida.");
+                    } else {
+                        return;
+                    }
+                } else {
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+                    const due = new Date(newDate);
+                    due.setHours(0,0,0,0);
+                    
+                    let newStatus = s.paymentStatus === 'Isento' ? 'Isento' : 'Em dia';
+                    
+                    if (newStatus !== 'Isento') {
+                        due.setDate(due.getDate() + 2); // 2 dias de tolerância
+                        if (today > due) {
+                            newStatus = 'Pendente';
+                        }
+                    }
 
-                await updateDoc(doc(window.db, 'artifacts', window.appIdVar, 'public', 'data', 'students', id), {
-                    nextDueDate: newDate,
-                    paymentStatus: newStatus
-                });
+                    await updateDoc(doc(window.db, 'artifacts', window.appIdVar, 'public', 'data', 'students', id), {
+                        nextDueDate: newDate,
+                        paymentStatus: newStatus
+                    });
+                    alert("Data de vencimento e status atualizados com sucesso!");
+                }
                 
-                alert("Data de vencimento e status atualizados com sucesso!");
                 window.closeEditDueModal();
                 await window.loadData();
                 setTimeout(() => window.viewFinancialDetails(id), 500);
