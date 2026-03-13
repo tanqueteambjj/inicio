@@ -336,6 +336,15 @@
                         <p class="text-lg font-bold text-blue-800 mt-1" id="det-origin">--</p>
                     </div>
                 </div>
+                
+                <!-- Nova secção de Gestão de Vencimento -->
+                <div class="mb-6 bg-yellow-50 p-4 rounded-lg border border-yellow-200 shadow-inner flex items-center justify-between">
+                    <div>
+                        <h4 class="text-xs font-bold text-yellow-800 uppercase mb-1">Próximo Vencimento Atual:</h4>
+                        <p class="text-sm font-bold text-gray-800" id="det-next-due">--/--/----</p>
+                    </div>
+                    <button onclick="window.openEditDueModal()" class="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded font-bold transition shadow-sm"><i class="fa-solid fa-calendar-day"></i> Alterar Vencimento</button>
+                </div>
 
                 <div class="mb-6">
                     <div class="flex justify-between items-center border-b border-gray-200 pb-2 mb-3">
@@ -350,6 +359,27 @@
                 <div class="flex gap-3 mt-8">
                     <button onclick="window.closeDetailsModal()" class="flex-1 border border-gray-300 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-50 transition shadow-sm">Fechar</button>
                     <button id="btn-open-pay" onclick="window.openPayModal()" class="flex-1 bg-green-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-green-700 transition flex justify-center items-center gap-2 transform active:scale-95"><i class="fa-solid fa-cash-register"></i> Registrar Pagamento</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ALTERAR PRÓXIMO VENCIMENTO -->
+    <div id="edit-due-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-fade-in border-t-4 border-yellow-500">
+            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-200">
+                <h3 class="font-bold text-lg text-gray-800"><i class="fa-solid fa-calendar-day text-yellow-600 mr-2"></i> Alterar Vencimento</h3>
+                <button onclick="window.closeEditDueModal()" class="text-gray-400 hover:text-red-500 transition"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-600 mb-2">Defina uma nova data de vencimento. O sistema usará esta data para calcular atrasos e definir o status do aluno como "Pendente" ou "Em Dia".</p>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Nova Data de Vencimento</label>
+                    <input type="date" id="new-due-date" class="w-full border border-gray-300 rounded-lg p-3 font-bold text-gray-700 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500">
+                </div>
+                <div class="mt-6 pt-4 border-t border-gray-100 flex gap-2">
+                    <button onclick="window.closeEditDueModal()" class="w-1/3 border border-gray-300 rounded-lg font-bold text-gray-600 hover:bg-gray-50 transition shadow-sm">Cancelar</button>
+                    <button onclick="window.saveNewDueDate()" class="w-2/3 bg-yellow-500 text-brand-dark rounded-lg font-bold py-3 hover:bg-yellow-600 shadow-md flex items-center justify-center gap-2 transition transform active:scale-95"><i class="fa-solid fa-save"></i> Salvar Data</button>
                 </div>
             </div>
         </div>
@@ -540,6 +570,11 @@
         function formatDateBR(isoString) {
             if(!isoString) return '--';
             try {
+                if (isoString.includes('/') && isoString.length === 10) return isoString;
+                if (isoString.length === 10 && isoString.includes('-')) {
+                    const parts = isoString.split('-');
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
                 const date = new Date(isoString);
                 if(isNaN(date)) return '--';
                 return date.toLocaleDateString('pt-BR');
@@ -1050,6 +1085,24 @@
             document.getElementById('det-origin').innerText = s.howDidYouFindUs || 'Não informado na matrícula';
             document.getElementById('pay-student-id').value = id;
 
+            const nextDueEl = document.getElementById('det-next-due');
+            if (s.nextDueDate) {
+                nextDueEl.innerText = formatDateBR(s.nextDueDate);
+                nextDueEl.className = "text-sm font-bold text-gray-800";
+                
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const due = new Date(s.nextDueDate);
+                due.setHours(0,0,0,0);
+                if(today > due && s.paymentStatus === 'Pendente') {
+                    nextDueEl.classList.remove('text-gray-800');
+                    nextDueEl.classList.add('text-red-600');
+                }
+            } else {
+                nextDueEl.innerText = "Não definida";
+                nextDueEl.className = "text-sm font-bold text-gray-400";
+            }
+
             // Render History
             const historyList = document.getElementById('det-history-list');
             historyList.innerHTML = '';
@@ -1092,6 +1145,62 @@
         window.closeDetailsModal = () => {
             document.getElementById('details-modal').classList.add('hidden');
             document.getElementById('details-modal').classList.remove('flex');
+        };
+
+        // --- GESTÃO MANUAL DE VENCIMENTO ---
+        window.openEditDueModal = () => {
+            const id = document.getElementById('pay-student-id').value;
+            const s = window.students.find(st => st.id === id); if(!s) return;
+            
+            let currentDue = '';
+            if (s.nextDueDate) {
+                currentDue = s.nextDueDate.split('T')[0];
+            }
+            
+            document.getElementById('new-due-date').value = currentDue;
+            
+            window.closeDetailsModal();
+            document.getElementById('edit-due-modal').classList.remove('hidden');
+            document.getElementById('edit-due-modal').classList.add('flex');
+        };
+
+        window.closeEditDueModal = () => {
+            document.getElementById('edit-due-modal').classList.add('hidden');
+            document.getElementById('edit-due-modal').classList.remove('flex');
+        };
+
+        window.saveNewDueDate = async () => {
+            const id = document.getElementById('pay-student-id').value;
+            const newDate = document.getElementById('new-due-date').value;
+            
+            if(!newDate) { alert("Selecione uma data válida."); return; }
+            
+            try {
+                // Ao atualizar a data manualmente, atualizamos o status baseado nessa nova data
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const due = new Date(newDate);
+                due.setHours(0,0,0,0);
+                due.setDate(due.getDate() + 2); // 2 dias de tolerância
+                
+                let newStatus = 'Em dia';
+                if (today > due) {
+                    newStatus = 'Pendente';
+                }
+
+                await updateDoc(doc(window.db, 'artifacts', window.appIdVar, 'public', 'data', 'students', id), {
+                    nextDueDate: newDate,
+                    paymentStatus: newStatus
+                });
+                
+                alert("Data de vencimento e status atualizados com sucesso!");
+                window.closeEditDueModal();
+                await window.loadData();
+                setTimeout(() => window.viewFinancialDetails(id), 500);
+            } catch(e) {
+                console.error(e);
+                alert("Erro ao salvar nova data.");
+            }
         };
 
         // --- REGISTRO DE PAGAMENTO (COM CÁLCULO DE MULTA/JUROS) ---
