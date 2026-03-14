@@ -377,7 +377,7 @@
         };
         initAuth();
 
-        // 1. Lógica de Login com Google
+        // 1. Lógica de Login com Google COM TRATAMENTO DE ERROS AVANÇADO
         document.getElementById('btn-google').addEventListener('click', async function() {
             const btn = document.getElementById('btn-google');
             const originalContent = btn.innerHTML;
@@ -429,10 +429,28 @@
                 btn.disabled = false;
                 btn.innerHTML = originalContent;
                 errorBox.classList.remove('hidden');
-                errorMsg.innerText = error.message === "Nenhum aluno matriculado com este e-mail do Google." 
-                                        ? error.message 
-                                        : "Falha ao fazer login com o Google. Feche a janela e tente novamente.";
-                console.error("Google Login Error", error);
+                
+                // --- TRATAMENTO DETALHADO DE ERROS DO GOOGLE ---
+                let displayError = "Falha ao fazer login. Tente novamente.";
+                
+                if (error.message === "Nenhum aluno matriculado com este e-mail do Google.") {
+                    displayError = "Acesso Negado: " + error.message;
+                } else if (error.code === 'auth/unauthorized-domain') {
+                    displayError = "Erro de Segurança: Este domínio de site não está autorizado no Firebase. Peça ao administrador para adicioná-lo em 'Authentication > Settings > Authorized domains'.";
+                } else if (error.code === 'auth/operation-not-allowed') {
+                    displayError = "Erro: O método de login com o Google está desativado. Ative-o no Firebase Console.";
+                } else if (error.code === 'auth/popup-closed-by-user') {
+                    displayError = "A janela do Google foi fechada antes de concluir o login.";
+                } else if (error.code === 'auth/popup-blocked') {
+                    displayError = "O seu navegador bloqueou a janela do Google. Por favor, permita pop-ups para este site.";
+                } else if (error.code === 'auth/cancelled-popup-request') {
+                    displayError = "A requisição foi cancelada por múltiplas tentativas simultâneas.";
+                } else {
+                    displayError = "Erro (" + (error.code || 'desconhecido') + "): " + (error.message || "Feche a janela e tente novamente.");
+                }
+                
+                errorMsg.innerText = displayError;
+                console.error("Google Login Error:", error);
             }
         });
 
@@ -504,6 +522,7 @@
                 }
 
             } catch (error) {
+                // --- ERRO TRADICIONAL ---
                 btn.disabled = false;
                 btn.innerHTML = '<span>ENTRAR</span><i class="fa-solid fa-arrow-right-to-bracket"></i>';
                 btn.classList.remove('opacity-75');
