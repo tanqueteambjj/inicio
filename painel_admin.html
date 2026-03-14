@@ -24,6 +24,10 @@
     <!-- Leitor de QR Code HTML5 -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     
+    <!-- Cropper.js -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -633,10 +637,23 @@
                     
                     <div class="md:col-span-2 pb-4 border-b border-gray-200 dark:border-gray-700 mb-2">
                         <div class="flex items-center gap-4 mb-4">
-                            <div class="relative w-20 h-20 group cursor-pointer" onclick="document.getElementById('edit-photo').click()">
+                            <div class="relative w-20 h-20 group cursor-pointer" onclick="document.getElementById('photo-options-menu').classList.toggle('hidden'); document.getElementById('photo-options-overlay').classList.toggle('hidden');">
                                 <img id="edit-photo-preview" src="" class="w-full h-full rounded-full object-cover border-2 border-gray-200 shadow-sm hidden">
                                 <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-camera text-white"></i></div>
-                                <input type="file" id="edit-photo" accept="image/*" class="hidden" onchange="window.previewPhoto(event)">
+                                
+                                <div id="photo-options-overlay" class="fixed inset-0 z-40 hidden cursor-default" onclick="event.stopPropagation(); document.getElementById('photo-options-menu').classList.add('hidden'); this.classList.add('hidden');"></div>
+                                
+                                <div id="photo-options-menu" class="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-50 hidden overflow-hidden">
+                                    <button type="button" onclick="event.stopPropagation(); document.getElementById('edit-photo-camera').click(); document.getElementById('photo-options-menu').classList.add('hidden'); document.getElementById('photo-options-overlay').classList.add('hidden');" class="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 border-b border-gray-100 dark:border-gray-700">
+                                        <i class="fa-solid fa-camera w-4 text-center"></i> Tirar Foto
+                                    </button>
+                                    <button type="button" onclick="event.stopPropagation(); document.getElementById('edit-photo-gallery').click(); document.getElementById('photo-options-menu').classList.add('hidden'); document.getElementById('photo-options-overlay').classList.add('hidden');" class="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3">
+                                        <i class="fa-solid fa-image w-4 text-center"></i> Escolher da Galeria
+                                    </button>
+                                </div>
+                                
+                                <input type="file" id="edit-photo-camera" accept="image/*" capture="environment" class="hidden" onchange="window.previewPhoto(event)">
+                                <input type="file" id="edit-photo-gallery" accept="image/*" class="hidden" onchange="window.previewPhoto(event)">
                             </div>
                             <div><h4 class="text-sm font-bold text-brand-red uppercase">Dados Cadastrais</h4><p class="text-xs text-gray-400">Altere as informações básicas do aluno.</p></div>
                         </div>
@@ -734,6 +751,25 @@
             <div class="bg-gray-100 dark:bg-gray-700 px-6 py-4 flex justify-end gap-3 shrink-0 border-t border-gray-200 dark:border-gray-600">
                 <button onclick="window.closeEditModal()" class="px-5 py-2 border border-gray-300 dark:border-gray-600 dark:text-gray-300 rounded font-bold text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition">Cancelar</button>
                 <button onclick="window.saveStudentChanges()" class="px-6 py-2 bg-brand-red text-white rounded font-bold hover:bg-red-700 transition shadow-md">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cropper Modal -->
+    <div id="cropper-modal" class="fixed inset-0 z-[80] hidden bg-black/80 flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-gray-100 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-crop-simple text-brand-red"></i> Ajustar Foto</h3>
+                <button onclick="window.closeCropperModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-4 flex-1 overflow-hidden flex flex-col items-center justify-center bg-black/10 dark:bg-black/30">
+                <div class="w-full h-64 md:h-80 relative">
+                    <img id="cropper-image" src="" class="max-w-full max-h-full block">
+                </div>
+            </div>
+            <div class="bg-gray-100 dark:bg-gray-700 px-6 py-4 flex justify-end gap-3 shrink-0 border-t border-gray-200 dark:border-gray-600">
+                <button onclick="window.closeCropperModal()" class="px-5 py-2 border border-gray-300 dark:border-gray-600 dark:text-gray-300 rounded font-bold text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition">Cancelar</button>
+                <button onclick="window.applyCrop()" class="px-6 py-2 bg-brand-red text-white rounded font-bold hover:bg-red-700 transition shadow-md">Aplicar</button>
             </div>
         </div>
     </div>
@@ -1402,9 +1438,77 @@
                 document.getElementById('edit-modal').classList.remove('hidden'); document.getElementById('edit-modal').classList.add('flex');
             } catch(e) { console.error("Erro edição:", e); alert("Erro ao abrir."); }
         };
-        window.closeEditModal = () => { document.getElementById('edit-modal').classList.add('hidden'); document.getElementById('edit-modal').classList.remove('flex'); };
+        window.closeEditModal = () => { 
+            document.getElementById('edit-modal').classList.add('hidden'); 
+            document.getElementById('edit-modal').classList.remove('flex'); 
+            window.currentCroppedPhoto = null;
+            document.getElementById('edit-photo-camera').value = '';
+            document.getElementById('edit-photo-gallery').value = '';
+            document.getElementById('photo-options-menu').classList.add('hidden');
+            document.getElementById('photo-options-overlay').classList.add('hidden');
+        };
         
-        window.previewPhoto = (event) => { const file = event.target.files[0]; if(file) { const reader = new FileReader(); reader.onload = function(e) { document.getElementById('edit-photo-preview').src = e.target.result; }; reader.readAsDataURL(file); } };
+        let cropperInstance = null;
+        window.previewPhoto = (event) => { 
+            const file = event.target.files[0]; 
+            if(file) { 
+                const reader = new FileReader(); 
+                reader.onload = function(e) { 
+                    const image = document.getElementById('cropper-image');
+                    image.src = e.target.result;
+                    document.getElementById('cropper-modal').classList.remove('hidden');
+                    document.getElementById('cropper-modal').classList.add('flex');
+                    
+                    if (cropperInstance) {
+                        cropperInstance.destroy();
+                    }
+                    cropperInstance = new Cropper(image, {
+                        aspectRatio: 1,
+                        viewMode: 1,
+                        dragMode: 'move',
+                        autoCropArea: 1,
+                        restore: false,
+                        guides: true,
+                        center: true,
+                        highlight: false,
+                        cropBoxMovable: true,
+                        cropBoxResizable: true,
+                        toggleDragModeOnDblclick: false,
+                    });
+                }; 
+                reader.readAsDataURL(file); 
+            } 
+        };
+
+        window.closeCropperModal = () => {
+            document.getElementById('cropper-modal').classList.add('hidden');
+            document.getElementById('cropper-modal').classList.remove('flex');
+            if (cropperInstance) {
+                cropperInstance.destroy();
+                cropperInstance = null;
+            }
+            document.getElementById('edit-photo-camera').value = '';
+            document.getElementById('edit-photo-gallery').value = '';
+        };
+
+        window.applyCrop = () => {
+            if (!cropperInstance) return;
+            const canvas = cropperInstance.getCroppedCanvas({
+                width: 300,
+                height: 300,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+            const base64 = canvas.toDataURL('image/jpeg', 0.8);
+            
+            const preview = document.getElementById('edit-photo-preview');
+            preview.src = base64;
+            preview.classList.remove('hidden');
+            
+            window.currentCroppedPhoto = base64;
+            
+            window.closeCropperModal();
+        };
 
         window.handleEditPlanChange = () => { const plan = document.getElementById('edit-plan').value; const titularContainer = document.getElementById('edit-titular-container'); if (plan === 'dependente') titularContainer.classList.remove('hidden'); else titularContainer.classList.add('hidden'); };
 
@@ -1463,8 +1567,20 @@
             const plan = document.getElementById('edit-plan').value; const titular = document.getElementById('edit-titular').value; const email = document.getElementById('edit-email').value; const phone = document.getElementById('edit-phone').value; const color = document.getElementById('edit-belt-color').value; const degree = document.getElementById('edit-belt-degree').value; const beltStr = `Faixa ${color} - ${degree}º Grau`; const login = document.getElementById('edit-login').value; const pass = document.getElementById('edit-password').value; const status = document.getElementById('edit-enrollment-status').value;
             const originalBelt = document.getElementById('edit-original-belt').value;
             let newCategory = 'Adulto'; if (plan.includes('infantil')) newCategory = 'Infantil'; if (plan.includes('combo')) newCategory = 'Combo Família'; if (plan === 'administracao') newCategory = 'Administração'; if (plan === 'dependente') newCategory = 'Dependente (Combo)';
-            const photoInput = document.getElementById('edit-photo'); let photoBase64 = null;
-            if(photoInput.files && photoInput.files[0]) { const file = photoInput.files[0]; if(file.size > 800 * 1024) { alert("A foto é muito grande."); return; } photoBase64 = await new Promise((resolve) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result); reader.readAsDataURL(file); }); }
+            let photoBase64 = null;
+            if (window.currentCroppedPhoto) {
+                photoBase64 = window.currentCroppedPhoto;
+            } else {
+                const photoInputCam = document.getElementById('edit-photo-camera');
+                const photoInputGal = document.getElementById('edit-photo-gallery');
+                const photoInput = (photoInputCam.files && photoInputCam.files[0]) ? photoInputCam : ((photoInputGal.files && photoInputGal.files[0]) ? photoInputGal : null);
+                
+                if(photoInput && photoInput.files && photoInput.files[0]) { 
+                    const file = photoInput.files[0]; 
+                    if(file.size > 800 * 1024) { alert("A foto é muito grande."); return; } 
+                    photoBase64 = await new Promise((resolve) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result); reader.readAsDataURL(file); }); 
+                }
+            }
             try {
                 const updateData = { name: name, dob: dobIso, cpf: cpf, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf, plan: plan, titularName: titular, category: newCategory, enrollmentStatus: status, belt: beltStr, studentLogin: login, studentPassword: pass, email: email, phone: phone };
                 if (plan === 'administracao') {
