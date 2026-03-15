@@ -121,7 +121,7 @@
 
         @media print {
             @page { margin: 1cm; size: auto; }
-            nav, #home, #about, #jiujitsu, #schedule, #experimental, #plans, #register, footer, #successModal, #confirmationModal, #plan-details-modal, .no-print { display: none !important; }
+            nav, #home, #about, #jiujitsu, #schedule, #experimental, #plans, #register, footer, #successModal, #confirmationModal, #plan-details-modal, #customAlertModal, .no-print { display: none !important; }
             body { background: white; padding: 0; margin: 0; }
 
             /* Contract Mode */
@@ -143,6 +143,22 @@
 </head>
 <body class="bg-brand-light text-slate-800 font-sans antialiased">
 
+    <!-- Global Alert Modal (Replaces window.alert) -->
+    <div id="customAlertModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden transform transition-all animate-fade-in border-t-4 border-brand-red text-center">
+            <div class="p-6">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                    <i class="fa-solid fa-circle-exclamation text-3xl text-brand-red"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Aviso</h3>
+                <p id="customAlertMessage" class="text-gray-600 text-sm"></p>
+            </div>
+            <div class="bg-gray-50 px-6 py-4">
+                <button onclick="closeCustomAlert()" class="w-full bg-brand-red text-white font-bold py-3 rounded-lg hover:bg-red-700 transition shadow-sm">Entendido</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Navigation -->
     <nav class="bg-brand-dark text-white sticky top-0 z-50 shadow-lg">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
@@ -158,7 +174,7 @@
                 <a href="#schedule" class="hover:text-brand-red transition">Horários</a>
                 <a href="#experimental" class="text-brand-red hover:text-red-400 transition font-bold"><i class="fa-solid fa-fire mr-1"></i>Aula Experimental</a>
                 <a href="#plans" class="text-brand-red hover:text-red-400 transition font-bold"><i class="fa-solid fa-tags mr-1"></i>Planos Promocionais</a>
-                <!-- Link Área do Aluno com Destaque em HTTPS -->
+                <!-- Link Área do Aluno com Destaque -->
                 <a href="https://www.tanqueteambjj.com.br/login.html" class="bg-white text-brand-dark px-4 py-2 rounded font-bold hover:bg-gray-200 transition shadow-sm border border-gray-300 flex items-center gap-2">
                     <i class="fa-solid fa-user-lock"></i> Área do Aluno
                 </a>
@@ -184,16 +200,18 @@
     <!-- Hero Section com Vídeo no Fundo -->
     <section id="home" class="relative h-screen flex items-center justify-center text-center px-4 overflow-hidden">
         
-        <!-- VÍDEO DE FUNDO VIMEO ATUALIZADO -->
+        <!-- VÍDEO DE FUNDO VIMEO ATUALIZADO (1173495511) -->
         <div class="absolute top-0 left-0 w-full h-full z-0 pointer-events-none overflow-hidden bg-black">
-            <iframe src="https://player.vimeo.com/video/1173495511?background=1&autoplay=1&loop=1&byline=0&title=0&muted=1" 
-                    frameborder="0" 
-                    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media" 
-                    style="position:absolute; top:50%; left:50%; width:100vw; height:56.25vw; min-height:100vh; min-width:177.77vh; transform:translate(-50%, -50%);"
-                    title="site TTBJJ">
-            </iframe>
+            <div style="position:relative; width: 100%; height: 100%;">
+                <iframe src="https://player.vimeo.com/video/1173495511?background=1&autoplay=1&loop=1&byline=0&title=0&muted=1" 
+                        frameborder="0" 
+                        allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media" 
+                        style="position:absolute; top:50%; left:50%; width:100vw; height:56.25vw; min-height:100vh; min-width:177.77vh; transform:translate(-50%, -50%);"
+                        title="site TTBJJ">
+                </iframe>
+            </div>
+            <script src="https://player.vimeo.com/api/player.js"></script>
         </div>
-        <script src="https://player.vimeo.com/api/player.js"></script>
 
         <!-- Camada Escura (Overlay) sobre o vídeo para garantir legibilidade do texto -->
         <div class="absolute inset-0 bg-black/70 z-10"></div>
@@ -389,7 +407,7 @@
                                 <div>
                                     <label class="block text-xs font-bold mb-1 text-gray-400 uppercase">Data de Nascimento</label>
                                     <input type="text" id="expDob" required maxlength="10" class="w-full bg-gray-800 border border-gray-700 text-white rounded p-3 focus:outline-none focus:border-yellow-500 transition" placeholder="DD/MM/AAAA">
-                                    <p class="text-[10px] text-gray-500 mt-1 font-bold">* Idade mínima: 4 anos (Infantil: 4 a 11 anos | Adulto: 12+ anos)</p>
+                                    <p class="text-[10px] text-gray-500 mt-1 font-bold">* Infantil: 4 a 11 anos<br>* Jovem/Adulto: 12+</p>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold mb-1 text-gray-400 uppercase">WhatsApp</label>
@@ -955,6 +973,23 @@
         
         (function(){ emailjs.init(EMAILJS_PUBLIC_KEY); })();
 
+        // Sistema Global de Alertas Customizados (Sem uso do `alert` nativo do navegador)
+        window.customAlert = function(message) {
+            const modal = document.getElementById('customAlertModal');
+            const msgEl = document.getElementById('customAlertMessage');
+            if(modal && msgEl) {
+                msgEl.innerText = message;
+                modal.classList.remove('hidden');
+            } else {
+                console.warn("Aviso:", message);
+            }
+        };
+
+        window.closeCustomAlert = function() {
+            const modal = document.getElementById('customAlertModal');
+            if(modal) modal.classList.add('hidden');
+        };
+
         document.getElementById('mobile-menu-btn').addEventListener('click', () => document.getElementById('mobile-menu').classList.toggle('hidden'));
         
         // --- LÓGICA DO MODAL SAIBA MAIS (PLANOS) ---
@@ -1141,7 +1176,7 @@
             }
 
             if (!dobVal) {
-                alert("Por favor, preencha a sua Data de Nascimento primeiro para mostrarmos as turmas certas para sua idade.");
+                window.customAlert("Por favor, preencha a sua Data de Nascimento primeiro para mostrarmos as turmas certas para sua idade.");
                 e.target.value = '';
                 document.getElementById('expDob').focus();
                 return;
@@ -1150,7 +1185,7 @@
             // Configurar data mínima (06 de Abril de 2026) -> Validação extra
             const minDateStr = "2026-04-06";
             if (dateVal < minDateStr) {
-                alert("Nossas aulas experimentais começam a partir do dia 06 de Abril de 2026. Por favor, selecione uma data válida.");
+                window.customAlert("Nossas aulas experimentais começam a partir do dia 06 de Abril de 2026. Por favor, selecione uma data válida.");
                 e.target.value = '';
                 return;
             }
@@ -1158,7 +1193,7 @@
             const age = calculateAgeFromDate(dobVal);
             
             if (age < 4) {
-                alert("A idade mínima para participar das aulas é de 4 anos.");
+                window.customAlert("A idade mínima para participar das aulas é de 4 anos.");
                 e.target.value = '';
                 document.getElementById('expDob').focus();
                 return;
@@ -1251,7 +1286,7 @@
             const age = calculateAgeFromDate(dob);
             
             if (age < 4) {
-                alert("A idade mínima para participar das aulas é de 4 anos.");
+                window.customAlert("A idade mínima para participar das aulas é de 4 anos.");
                 btn.innerHTML = originalBtnText;
                 btn.disabled = false;
                 return;
@@ -1263,11 +1298,11 @@
             try {
                 if (!window.firebaseInitialized) throw new Error("Firebase offline.");
 
-                // NOVA TRAVA: Verificar se o E-mail já está cadastrado na aula experimental
+                // Verificar se o E-mail já está cadastrado na aula experimental
                 const qEmail = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'experimental'), window.where('email', '==', email));
                 const snapEmail = await window.getDocs(qEmail);
                 if (!snapEmail.empty) {
-                    alert("Você já possui uma aula experimental agendada com este e-mail. Caso precise alterar, entre em contato através do nosso WhatsApp.");
+                    window.customAlert("Você já possui uma aula experimental agendada com este e-mail. Caso precise alterar, entre em contato através do nosso WhatsApp.");
                     btn.innerHTML = originalBtnText;
                     btn.disabled = false;
                     return;
@@ -1277,10 +1312,9 @@
                 const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'experimental'), window.where('date', '==', date), window.where('time', '==', time));
                 const snap = await window.getDocs(q);
                 if(snap.size >= 10) {
-                    alert("Desculpe, este horário acabou de lotar. Por favor, escolha outro horário ou dia.");
+                    window.customAlert("Desculpe, este horário acabou de lotar. Por favor, escolha outro horário ou dia.");
                     btn.innerHTML = originalBtnText;
                     btn.disabled = false;
-                    // Trigger refresh
                     document.getElementById('expDate').dispatchEvent(new Event('change'));
                     return;
                 }
@@ -1308,7 +1342,7 @@
                     }, EMAILJS_PUBLIC_KEY)
                 ]).catch(e => console.log("Falha silenciosa no envio de e-mails.", e));
 
-                // Exibir a Modal Personalizada em vez de Alert
+                // Exibir a Modal Personalizada em vez de Alert nativo
                 document.getElementById('expModalName').innerText = name.split(' ')[0];
                 document.getElementById('expModalDate').innerText = formattedDate;
                 document.getElementById('expModalTime').innerText = time;
@@ -1319,7 +1353,7 @@
                 document.getElementById('expGuardianContainer').classList.add('hidden');
                 
             } catch(err) {
-                alert("Erro ao agendar. Verifique sua conexão e tente novamente.");
+                window.customAlert("Erro ao agendar. Verifique sua conexão e tente novamente.");
                 console.error(err);
             } finally {
                 btn.innerHTML = originalBtnText;
@@ -1464,18 +1498,18 @@
             e.preventDefault();
             const plan = document.getElementById('selectedPlanInput').value;
             const displayName = document.getElementById('selectedPlanCustomName').value;
-            if(!plan) { alert("Por favor, selecione um plano."); return; }
+            if(!plan) { window.customAlert("Por favor, selecione um plano."); return; }
 
             const msgElement = document.getElementById('age-validation-msg');
             if (!msgElement.classList.contains('hidden')) {
-                alert("Por favor, corrija o conflito entre a Idade do aluno e o Plano selecionado antes de continuar.");
+                window.customAlert("Por favor, corrija o conflito entre a Idade do aluno e o Plano selecionado antes de continuar.");
                 document.getElementById('studentDob').focus();
                 return;
             }
             
             const age = window.validateAge();
             if (age === null) {
-                 alert("Por favor, preencha a Data de Nascimento.");
+                 window.customAlert("Por favor, preencha a Data de Nascimento.");
                  return;
             }
 
@@ -1581,12 +1615,12 @@
                 const howDidYouFindUs = document.getElementById('howDidYouFindUs').value;
                 const contratanteName = needsGuardian ? guardianName : studentName;
 
-                // NOVA TRAVA: Verificar se o CPF já está cadastrado como aluno
+                // Verificar se o CPF já está cadastrado como aluno
                 if (window.firebaseInitialized) {
                     const qCpf = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'students'), window.where('cpf', '==', cpf));
                     const snapCpf = await window.getDocs(qCpf);
                     if (!snapCpf.empty) {
-                        alert("⚠️ Este CPF já possui uma matrícula no nosso sistema. Caso precise renovar, faça login no Portal do Aluno ou contacte a receção.");
+                        window.customAlert("Este CPF já possui uma matrícula no nosso sistema. Caso precise renovar, faça login no Portal do Aluno ou contacte a receção.");
                         confirmBtn.innerText = originalBtnText;
                         confirmBtn.disabled = false;
                         confirmBtn.classList.remove('opacity-75', 'cursor-not-allowed');
@@ -1595,23 +1629,33 @@
                     }
                 }
 
-                let price = "R$ 0,00";
-                if(plan === 'infantil-mensal') price = "R$ 189,90";
-                else if(plan === 'infantil-trimestral') price = "R$ 168,90";
-                else if(plan === 'infantil-semestral') price = "R$ 157,90";
-                else if(plan === 'adulto-mensal') price = "R$ 168,90";
-                else if(plan === 'adulto-trimestral') price = "R$ 147,90";
-                else if(plan === 'adulto-semestral') price = "R$ 126,90";
-                else if(plan === 'combo-dupla') price = "R$ 250,00";
-                else if(plan === 'combo-familia') price = "R$ 362,02";
+                // === LÓGICA DE PREÇOS E PROMOÇÕES (DADOS SALVOS NO FIREBASE) ===
+                let basePriceNum = 0;
+                if(plan === 'infantil-mensal') basePriceNum = 189.90;
+                else if(plan === 'infantil-trimestral') basePriceNum = 168.90;
+                else if(plan === 'infantil-semestral') basePriceNum = 157.90;
+                else if(plan === 'adulto-mensal') basePriceNum = 168.90;
+                else if(plan === 'adulto-trimestral') basePriceNum = 147.90;
+                else if(plan === 'adulto-semestral') basePriceNum = 126.90;
+                else if(plan === 'combo-dupla') basePriceNum = 250.00;
+                else if(plan === 'combo-familia') basePriceNum = 362.02;
 
-                let promoNote = "";
+                let promoNoteText = "";
+                let firstInstallmentPrice = basePriceNum;
+                let hasPromotion = false;
+
                 if (plan && plan.includes('semestral') && !plan.includes('combo')) {
-                    promoNote = " (1ª Mensalidade R$ 29,90)";
+                    promoNoteText = "1ª Mensalidade R$ 29,90";
+                    firstInstallmentPrice = 29.90;
+                    hasPromotion = true;
                 } else if (plan === 'combo-dupla') {
-                    promoNote = " (1ª Mensalidade R$ 59,90)";
+                    promoNoteText = "1ª Mensalidade R$ 59,90";
+                    firstInstallmentPrice = 59.90;
+                    hasPromotion = true;
                 } else if (plan === 'combo-familia') {
-                    promoNote = " (1ª Mensalidade R$ 89,90)";
+                    promoNoteText = "1ª Mensalidade R$ 89,90";
+                    firstInstallmentPrice = 89.90;
+                    hasPromotion = true;
                 }
 
                 const hasGraduation = document.getElementById("hasGraduationCheck").checked;
@@ -1638,6 +1682,7 @@
                     cpf: cpf,
                     belt: graduationText,
                     plan: plan,
+                    planName: displayName,
                     category: category,
                     registrationDate: regDate.toISOString(),
                     contractEndDate: endDate.toISOString(),
@@ -1648,7 +1693,14 @@
                     guardian: guardianName,
                     guardianKinship: guardianKinship,
                     paymentStatus: 'Pendente',
-                    paymentMethod: 'A Confirmar'
+                    paymentMethod: 'A Confirmar',
+                    
+                    // Dados Promocionais / Valores Reais (O Painel Financeiro usará o 'customPrice' para cobrar o 1º Mês)
+                    basePrice: basePriceNum,
+                    firstInstallmentPrice: firstInstallmentPrice,
+                    hasPromotion: hasPromotion,
+                    promoNote: promoNoteText,
+                    customPrice: hasPromotion ? firstInstallmentPrice : null 
                 };
 
                 let titularDocRef = null;
@@ -1672,7 +1724,9 @@
                                 contractEndDate: endDate.toISOString(),
                                 paymentStatus: 'Isento',
                                 email: email,
-                                phone: phone
+                                phone: phone,
+                                basePrice: 0,
+                                hasPromotion: false
                             };
                             await window.addDoc(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'students'), dep1Data);
                         }
@@ -1691,7 +1745,9 @@
                                 contractEndDate: endDate.toISOString(),
                                 paymentStatus: 'Isento',
                                 email: email,
-                                phone: phone
+                                phone: phone,
+                                basePrice: 0,
+                                hasPromotion: false
                             };
                             await window.addDoc(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'students'), dep2Data);
                         }
@@ -1718,9 +1774,12 @@
                     dependentsHtmlEmail += `</ul>`;
                 }
 
-                const messageStudent = `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;"><div style="text-align: center; margin-bottom: 20px; background-color: #000; padding: 20px; border-radius: 8px 8px 0 0;"><img src="https://iili.io/qC543c7.png" alt="Tanque Team BJJ" style="width: 100px; height: auto;"><h2 style="color: #fff; margin: 10px 0 0 0;">TANQUE TEAM BJJ</h2></div><h2 style="color: #D90429;">Olá, ${studentName}!</h2><p>É com grande satisfação que confirmamos a sua pré-matrícula na <strong>Tanque Team BJJ</strong>! \uD83D\uDC4A</p><p>Você acaba de dar o primeiro passo na sua jornada no Jiu-Jitsu. Mais do que técnica, aqui você encontrará disciplina, família e um tatame preparado para o seu desenvolvimento.</p><div style="background-color: #f8f9fa; border-left: 5px solid #D90429; padding: 15px; margin: 20px 0; border-radius: 4px;"><h3 style="margin-top: 0; color: #D90429; border-bottom: 1px solid #ddd; padding-bottom: 10px;">\u2705 Resumo da sua Matrícula</h3><p style="margin: 5px 0;"><strong>Titular:</strong> ${studentName}</p><p style="margin: 5px 0;"><strong>Plano:</strong> ${displayName}</p><p style="margin: 5px 0;"><strong>Valor Base:</strong> ${price} <span style="color: #D90429; font-weight: bold;">${promoNote}</span></p><p style="margin: 5px 0;"><strong>Nascimento:</strong> ${formattedDob}</p><p style="margin: 5px 0;"><strong>Graduação:</strong> ${graduationText}</p><hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">${needsGuardian ? `<p style="margin: 5px 0;"><strong>Responsável:</strong> ${guardianName} (${guardianKinship})</p>` : ''}<p style="margin: 5px 0;"><strong>CPF:</strong> ${cpf}</p><p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p><p style="margin: 5px 0;"><strong>Telefone:</strong> ${phone}</p><p style="margin: 5px 0;"><strong>Endereço:</strong> ${address}</p>${dependentsHtmlEmail}</div><div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #ffeeba;"><h3 style="margin-top: 0;">\uD83D\uDCB0 Informação de Pagamento</h3><p style="margin: 0;">Para concluir a ativação do seu plano e retirar seu patch, por favor realize o pagamento <strong>presencialmente na unidade</strong> ou entre em contato através do nosso <strong>WhatsApp</strong>.</p></div><h3 style="color: #D90429;">\uD83D\uDCCB Próximos Passos:</h3><ul><li style="margin-bottom: 8px;"><strong>Uniforme:</strong> Caso ainda não tenha, nossa equipe está pronta para ajudar com o seu kimono.</li><li style="margin-bottom: 8px;"><strong>Primeiro Treino:</strong> Chegue 15 minutos antes para se ambientar e conhecer a escola.</li><li style="margin-bottom: 8px;"><strong>Higiene:</strong> Lembre-se de trazer chinelos para circular fora do tatame.</li></ul><div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 20px;"><p style="margin: 0;"><strong>\uD83D\uDCCD Localização:</strong> <a href="https://maps.app.goo.gl/Qr4yLUTsVaZPiery9" style="color: #2e7d32; text-decoration: none;">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</a></p></div><p style="margin-top: 20px;">Se tiver dúvidas, responda a este e-mail ou entre em contato pelo WhatsApp: <a href="https://wa.me/5591998192610" style="color: #25D366; font-weight: bold; text-decoration: none;">(91) 99819-2610</a>.</p><p style="font-size: 1.2em;">Estamos ansiosos para te ver no tatame!<br><strong>OSS!</strong></p><hr style="border: 0; border-top: 1px solid #ccc; margin: 30px 0;"><p style="font-size: 12px; color: #777; text-align: center;">Atenciosamente,<br>Equipe Tanque Team BJJ</p></div>`;
+                const priceToDisplay = hasPromotion ? formatCurrency(firstInstallmentPrice) : formatCurrency(basePriceNum);
+                const displayPromoNote = hasPromotion ? `(1º Mês na Promoção)` : '';
 
-                const messageAdmin = `NOVA MATRÍCULA REALIZADA (Cópia Admin):\n-----------------------------------\nAluno/Titular: ${studentName}\nNascimento: ${formattedDob}\nGraduação: ${graduationText}\n${needsGuardian ? `Responsável: ${guardianName} (${guardianKinship})` : ''}\nCPF: ${cpf}\nEmail: ${email}\nTelefone: ${phone}\nEndereço: ${address}\nOrigem (Como conheceu): ${howDidYouFindUs}\n\nDETALHES DO PLANO:\n-----------------------------------\nPlano: ${displayName}\nValor: ${price} ${promoNote}\nData: ${today.toLocaleDateString('pt-BR')}\n\nStatus: Contrato Assinado Digitalmente. Pagamento a ser realizado na recepção.`;
+                const messageStudent = `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;"><div style="text-align: center; margin-bottom: 20px; background-color: #000; padding: 20px; border-radius: 8px 8px 0 0;"><img src="https://iili.io/qC543c7.png" alt="Tanque Team BJJ" style="width: 100px; height: auto;"><h2 style="color: #fff; margin: 10px 0 0 0;">TANQUE TEAM BJJ</h2></div><h2 style="color: #D90429;">Olá, ${studentName}!</h2><p>É com grande satisfação que confirmamos a sua pré-matrícula na <strong>Tanque Team BJJ</strong>! \uD83D\uDC4A</p><p>Você acaba de dar o primeiro passo na sua jornada no Jiu-Jitsu. Mais do que técnica, aqui você encontrará disciplina, família e um tatame preparado para o seu desenvolvimento.</p><div style="background-color: #f8f9fa; border-left: 5px solid #D90429; padding: 15px; margin: 20px 0; border-radius: 4px;"><h3 style="margin-top: 0; color: #D90429; border-bottom: 1px solid #ddd; padding-bottom: 10px;">\u2705 Resumo da sua Matrícula</h3><p style="margin: 5px 0;"><strong>Titular:</strong> ${studentName}</p><p style="margin: 5px 0;"><strong>Plano:</strong> ${displayName}</p><p style="margin: 5px 0;"><strong>Valor a Pagar Agora:</strong> ${priceToDisplay} <span style="color: #D90429; font-weight: bold;">${displayPromoNote}</span></p><p style="margin: 5px 0;"><strong>Valor Base (Próx. meses):</strong> ${formatCurrency(basePriceNum)}</p><p style="margin: 5px 0;"><strong>Nascimento:</strong> ${formattedDob}</p><p style="margin: 5px 0;"><strong>Graduação:</strong> ${graduationText}</p><hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">${needsGuardian ? `<p style="margin: 5px 0;"><strong>Responsável:</strong> ${guardianName} (${guardianKinship})</p>` : ''}<p style="margin: 5px 0;"><strong>CPF:</strong> ${cpf}</p><p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p><p style="margin: 5px 0;"><strong>Telefone:</strong> ${phone}</p><p style="margin: 5px 0;"><strong>Endereço:</strong> ${address}</p>${dependentsHtmlEmail}</div><div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #ffeeba;"><h3 style="margin-top: 0;">\uD83D\uDCB0 Informação de Pagamento</h3><p style="margin: 0;">Para concluir a ativação do seu plano e retirar seu patch, por favor realize o pagamento <strong>presencialmente na unidade</strong> ou entre em contato através do nosso <strong>WhatsApp</strong>.</p></div><h3 style="color: #D90429;">\uD83D\uDCCB Próximos Passos:</h3><ul><li style="margin-bottom: 8px;"><strong>Uniforme:</strong> Caso ainda não tenha, nossa equipe está pronta para ajudar com o seu kimono.</li><li style="margin-bottom: 8px;"><strong>Primeiro Treino:</strong> Chegue 15 minutos antes para se ambientar e conhecer a escola.</li><li style="margin-bottom: 8px;"><strong>Higiene:</strong> Lembre-se de trazer chinelos para circular fora do tatame.</li></ul><div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 20px;"><p style="margin: 0;"><strong>\uD83D\uDCCD Localização:</strong> <a href="https://maps.app.goo.gl/Qr4yLUTsVaZPiery9" style="color: #2e7d32; text-decoration: none;">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</a></p></div><p style="margin-top: 20px;">Se tiver dúvidas, responda a este e-mail ou entre em contato pelo WhatsApp: <a href="https://wa.me/5591998192610" style="color: #25D366; font-weight: bold; text-decoration: none;">(91) 99819-2610</a>.</p><p style="font-size: 1.2em;">Estamos ansiosos para te ver no tatame!<br><strong>OSS!</strong></p><hr style="border: 0; border-top: 1px solid #ccc; margin: 30px 0;"><p style="font-size: 12px; color: #777; text-align: center;">Atenciosamente,<br>Equipe Tanque Team BJJ</p></div>`;
+
+                const messageAdmin = `NOVA MATRÍCULA REALIZADA (Cópia Admin):\n-----------------------------------\nAluno/Titular: ${studentName}\nNascimento: ${formattedDob}\nGraduação: ${graduationText}\n${needsGuardian ? `Responsável: ${guardianName} (${guardianKinship})` : ''}\nCPF: ${cpf}\nEmail: ${email}\nTelefone: ${phone}\nEndereço: ${address}\nOrigem (Como conheceu): ${howDidYouFindUs}\n\nDETALHES DO PLANO:\n-----------------------------------\nPlano: ${displayName}\nValor Base (Sistema): ${formatCurrency(basePriceNum)}\nPrimeira Parcela / Promo: ${priceToDisplay} ${displayPromoNote}\nData: ${today.toLocaleDateString('pt-BR')}\n\nStatus: Contrato Assinado Digitalmente. Pagamento a ser realizado na recepção. O sistema cobrará o valor promocional na primeira vez.`;
 
                 const paramsStudent = { from_name: "TANQUE TEAM BJJ", to_name: contratanteName, to_email: email, plan_name: displayName, reply_to: 'tanqueteambjj@gmail.com', subject: `🥋 Bem-vindo à Família! Confirmação de Matrícula - ${studentName}`, message: messageStudent };
                 const paramsAdmin = { from_name: "Site Tanque Team", to_name: "Administração", to_email: 'tanqueteambjj@gmail.com', plan_name: displayName, reply_to: email, subject: `Nova Matrícula: ${studentName} - ${displayName}`, message: messageAdmin };
@@ -1746,7 +1805,7 @@
                 document.getElementById('successModal').classList.remove('hidden');
 
             } catch (e) {
-                alert("Erro inesperado: " + e.message);
+                window.customAlert("Erro inesperado: " + e.message);
             } finally {
                 confirmBtn.innerText = originalBtnText;
                 confirmBtn.disabled = false;
