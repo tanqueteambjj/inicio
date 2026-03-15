@@ -362,7 +362,12 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj";
+        
         const provider = new GoogleAuthProvider();
+        // Força o Google a pedir para selecionar a conta sempre, evitando erros de cache
+        provider.setCustomParameters({
+            prompt: 'select_account'
+        });
 
         const initAuth = async () => {
             try {
@@ -383,6 +388,11 @@
             const originalContent = btn.innerHTML;
             const errorBox = document.getElementById('error-box');
             const errorMsg = document.getElementById('error-msg');
+            
+            // Aviso explícito sobre iFrames/Preview
+            if (window.self !== window.top) {
+                alert("Atenção: O Google bloqueia logins dentro de janelas de preview/iframes por segurança. Para que o login do Google funcione, tem de aceder à página publicada (ou abrir o URL real numa nova aba).");
+            }
             
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> ACESSANDO...';
@@ -434,7 +444,9 @@
                 let displayError = "Falha ao fazer login. Tente novamente.";
                 
                 if (error.message === "Nenhum aluno matriculado com este e-mail do Google.") {
-                    displayError = "Acesso Negado: " + error.message;
+                    displayError = "Acesso Negado: O seu e-mail do Google não está registado em nenhuma matrícula ativa.";
+                } else if (error.message.includes('The requested action is invalid')) {
+                    displayError = "ERRO DE CONFIGURAÇÃO (Para o Dono do Site): Vá ao Google Cloud Console > APIs & Services > OAuth consent screen e certifique-se de que o 'Support Email' está preenchido e publicado.";
                 } else if (error.code === 'auth/unauthorized-domain') {
                     displayError = "Erro de Segurança: Este domínio de site não está autorizado no Firebase. Peça ao administrador para adicioná-lo em 'Authentication > Settings > Authorized domains'.";
                 } else if (error.code === 'auth/operation-not-allowed') {
