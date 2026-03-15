@@ -780,16 +780,18 @@
                             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                                 try { await signInWithCustomToken(auth, __initial_auth_token); } catch(e) { await signInAnonymously(auth); }
                             } else { await signInAnonymously(auth); }
-                            
-                            // Carrega os planos de forma síncrona e em seguida carrega os dados
-                            if (auth.currentUser) {
-                                await window.loadPlans();
-                                await window.loadData();
-                            }
                         } catch(err) { console.error("Auth error", err); }
                     };
                     
                     initAuth();
+
+                    // O SEGREDO ESTÁ AQUI: O Listener aguarda a luz verde do Firebase antes de pedir os dados, evitando o bloqueio da tabela.
+                    onAuthStateChanged(auth, async (u) => {
+                        if (u) {
+                            await window.loadPlans();
+                            await window.loadData();
+                        }
+                    });
 
                 } catch(initError) { console.error("Erro na inicialização do Firebase:", initError); }
             }
