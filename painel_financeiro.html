@@ -277,9 +277,25 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
+            authDomain: "tanqueteambjj.firebaseapp.com",
+            projectId: "tanqueteambjj",
+            storageBucket: "tanqueteambjj.firebasestorage.app",
+            messagingSenderId: "410605992451",
+            appId: "1:410605992451:web:f0f341f4594fe75f376c36",
+            measurementId: "G-SW8PP8X7WM"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         // Theme Management
-        function toggleTheme() {
+        window.toggleTheme = function() {
             const html = document.documentElement;
             const isDark = html.classList.contains('dark');
             
@@ -307,7 +323,7 @@
         }
 
         // Mobile Menu
-        function toggleMobileMenu() {
+        window.toggleMobileMenu = function() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobile-overlay');
             
@@ -321,29 +337,52 @@
         }
 
         // State
-        let plans = [
-            { id: '1', name: 'Mensal Básico', price: 89.90 },
-            { id: '2', name: 'Trimestral Premium', price: 239.90 },
-            { id: '3', name: 'Anual VIP', price: 899.90 }
+        window.plans = [
+            { id: 'infantil-mensal', name: 'Infantil Mensal', price: 189.90 },
+            { id: 'infantil-trimestral', name: 'Infantil Trimestral', price: 168.90 },
+            { id: 'infantil-semestral', name: 'Infantil Semestral', price: 157.90 },
+            { id: 'adulto-mensal', name: 'Adulto Mensal', price: 168.90 },
+            { id: 'adulto-trimestral', name: 'Adulto Trimestral', price: 147.90 },
+            { id: 'adulto-semestral', name: 'Adulto Semestral', price: 126.90 },
+            { id: 'combo-dupla', name: 'Combo Dupla', price: 250.00 },
+            { id: 'combo-familia', name: 'Combo Família', price: 362.02 }
         ];
 
-        let students = [
-            { id: '1', name: 'Carlos Silva', email: 'carlos@email.com', planId: '1' },
-            { id: '2', name: 'Ana Oliveira', email: 'ana@email.com', planId: '2' },
-            { id: '3', name: 'Lucas Santos', email: 'lucas@email.com', planId: null }
-        ];
+        window.students = [];
 
         // Initialization
-        document.addEventListener('DOMContentLoaded', () => {
-            renderAll();
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadStudents();
+            window.renderAll();
         });
 
+        async function loadStudents() {
+            try {
+                const querySnapshot = await getDocs(collection(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students'));
+                window.students = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data.enrollmentStatus !== 'Inativo' && !data.archived && data.plan !== 'dependente') {
+                        window.students.push({
+                            id: doc.id,
+                            name: data.name || 'Sem Nome',
+                            email: data.email || '',
+                            planId: data.plan || null,
+                            paymentStatus: data.paymentStatus || 'Pendente'
+                        });
+                    }
+                });
+            } catch (error) {
+                console.error("Erro ao carregar alunos:", error);
+            }
+        }
+
         // Navigation
-        function switchTab(tabId) {
+        window.switchTab = function(tabId) {
             // Close mobile menu if open
             const sidebar = document.getElementById('sidebar');
             if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 768) {
-                toggleMobileMenu();
+                window.toggleMobileMenu();
             }
 
             // Update buttons
@@ -360,44 +399,45 @@
         }
 
         // Modals
-        function openModal(modalId) {
+        window.openModal = function(modalId) {
             document.getElementById(modalId).classList.add('active');
             if(modalId === 'modal-student' || modalId === 'modal-change-plan') {
-                updatePlanSelects();
+                window.updatePlanSelects();
             }
         }
 
-        function closeModal(modalId) {
+        window.closeModal = function(modalId) {
             document.getElementById(modalId).classList.remove('active');
             if(modalId === 'modal-plan') document.getElementById('form-plan').reset();
             if(modalId === 'modal-student') document.getElementById('form-student').reset();
         }
 
         // Render Functions
-        function renderAll() {
-            renderDashboard();
-            renderStudents();
-            renderPlans();
-            updatePlanSelects();
+        window.renderAll = function() {
+            window.renderDashboard();
+            window.renderStudents();
+            window.renderPlans();
+            window.updatePlanSelects();
         }
 
-        function renderDashboard() {
-            document.getElementById('stat-students').innerText = students.length;
-            document.getElementById('stat-plans').innerText = plans.length;
+        window.renderDashboard = function() {
+            document.getElementById('stat-students').innerText = window.students.length;
+            document.getElementById('stat-plans').innerText = window.plans.length;
             
-            const revenue = students.reduce((total, student) => {
-                const plan = plans.find(p => p.id === student.planId);
+            const revenue = window.students.reduce((total, student) => {
+                const plan = window.plans.find(p => p.id === student.planId);
                 return total + (plan ? plan.price : 0);
             }, 0);
             
             document.getElementById('stat-revenue').innerText = `R$ ${revenue.toFixed(2).replace('.', ',')}`;
         }
 
-        function renderStudents() {
+        window.renderStudents = function() {
             const tbody = document.getElementById('students-table-body');
-            const searchTerm = document.getElementById('search-student').value.toLowerCase();
+            const searchInput = document.getElementById('search-student');
+            const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
             
-            const filtered = students.filter(s => s.name.toLowerCase().includes(searchTerm) || s.email.toLowerCase().includes(searchTerm));
+            const filtered = window.students.filter(s => s.name.toLowerCase().includes(searchTerm) || s.email.toLowerCase().includes(searchTerm));
             
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500 italic">Nenhum aluno encontrado.</td></tr>`;
@@ -405,7 +445,7 @@
             }
 
             tbody.innerHTML = filtered.map(student => {
-                const plan = plans.find(p => p.id === student.planId);
+                const plan = window.plans.find(p => p.id === student.planId);
                 const planBadge = plan 
                     ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 uppercase tracking-wider">${plan.name}</span>`
                     : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 uppercase tracking-wider">Sem plano</span>`;
@@ -416,10 +456,10 @@
                         <td class="px-6 py-4 align-middle text-gray-600 dark:text-gray-400">${student.email}</td>
                         <td class="px-6 py-4 align-middle">${planBadge}</td>
                         <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
-                            <button onclick="openChangePlan('${student.id}')" class="text-blue-500 hover:text-white dark:text-blue-400 dark:hover:text-white mx-1 bg-blue-50 hover:bg-blue-600 dark:bg-blue-900/30 dark:hover:bg-blue-600 w-8 h-8 rounded-full transition shadow-sm inline-flex items-center justify-center" title="Alterar Plano">
+                            <button onclick="window.openChangePlan('${student.id}')" class="text-blue-500 hover:text-white dark:text-blue-400 dark:hover:text-white mx-1 bg-blue-50 hover:bg-blue-600 dark:bg-blue-900/30 dark:hover:bg-blue-600 w-8 h-8 rounded-full transition shadow-sm inline-flex items-center justify-center" title="Alterar Plano">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button onclick="deleteStudent('${student.id}')" class="text-red-500 hover:text-white dark:text-red-400 dark:hover:text-white mx-1 bg-red-50 hover:bg-red-600 dark:bg-red-900/30 dark:hover:bg-red-600 w-8 h-8 rounded-full transition shadow-sm inline-flex items-center justify-center" title="Excluir">
+                            <button onclick="window.deleteStudent('${student.id}')" class="text-red-500 hover:text-white dark:text-red-400 dark:hover:text-white mx-1 bg-red-50 hover:bg-red-600 dark:bg-red-900/30 dark:hover:bg-red-600 w-8 h-8 rounded-full transition shadow-sm inline-flex items-center justify-center" title="Excluir">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </td>
@@ -428,21 +468,21 @@
             }).join('');
         }
 
-        function renderPlans() {
+        window.renderPlans = function() {
             const grid = document.getElementById('plans-grid');
             
-            if (plans.length === 0) {
+            if (window.plans.length === 0) {
                 grid.innerHTML = `<div class="col-span-3 p-8 text-center text-gray-400 dark:text-gray-500 italic bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">Nenhum plano cadastrado.</div>`;
                 return;
             }
 
-            grid.innerHTML = plans.map(plan => {
-                const count = students.filter(s => s.planId === plan.id).length;
+            grid.innerHTML = window.plans.map(plan => {
+                const count = window.students.filter(s => s.planId === plan.id).length;
                 return `
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col transition-transform transform hover:-translate-y-1">
                         <div class="flex justify-between items-start mb-4">
                             <h3 class="text-xl font-bold text-gray-900 dark:text-white">${plan.name}</h3>
-                            <button onclick="deletePlan('${plan.id}')" class="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                            <button onclick="window.deletePlan('${plan.id}')" class="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -457,83 +497,113 @@
             }).join('');
         }
 
-        function updatePlanSelects() {
+        window.updatePlanSelects = function() {
             const options = `<option value="">Sem plano (Remover)</option>` + 
-                plans.map(p => `<option value="${p.id}">${p.name} - R$ ${p.price.toFixed(2)}</option>`).join('');
+                window.plans.map(p => `<option value="${p.id}">${p.name} - R$ ${p.price.toFixed(2)}</option>`).join('');
             
             document.getElementById('student-plan').innerHTML = options;
             document.getElementById('change-plan-select').innerHTML = options;
         }
 
         // Actions
-        function handleCreatePlan(e) {
+        window.handleCreatePlan = function(e) {
             e.preventDefault();
             const name = document.getElementById('plan-name').value;
             const price = parseFloat(document.getElementById('plan-price').value);
             
-            plans.push({
+            window.plans.push({
                 id: Date.now().toString(),
                 name,
                 price
             });
             
-            closeModal('modal-plan');
-            renderAll();
+            window.closeModal('modal-plan');
+            window.renderAll();
         }
 
-        function deletePlan(id) {
+        window.deletePlan = function(id) {
             if(confirm('Tem certeza que deseja excluir este plano? Alunos associados ficarão sem plano.')) {
-                plans = plans.filter(p => p.id !== id);
-                students = students.map(s => s.planId === id ? { ...s, planId: null } : s);
-                renderAll();
+                window.plans = window.plans.filter(p => p.id !== id);
+                window.students = window.students.map(s => s.planId === id ? { ...s, planId: null } : s);
+                window.renderAll();
             }
         }
 
-        function handleCreateStudent(e) {
+        window.handleCreateStudent = async function(e) {
             e.preventDefault();
             const name = document.getElementById('student-name').value;
             const email = document.getElementById('student-email').value;
             const planId = document.getElementById('student-plan').value;
             
-            students.push({
-                id: Date.now().toString(),
-                name,
-                email,
-                planId: planId || null
-            });
-            
-            closeModal('modal-student');
-            renderAll();
-        }
-
-        function deleteStudent(id) {
-            if(confirm('Tem certeza que deseja excluir este aluno?')) {
-                students = students.filter(s => s.id !== id);
-                renderAll();
+            try {
+                const docRef = await addDoc(collection(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students'), {
+                    name,
+                    email,
+                    plan: planId || null,
+                    paymentStatus: 'Pendente',
+                    enrollmentStatus: 'Ativo',
+                    archived: false
+                });
+                
+                window.students.push({
+                    id: docRef.id,
+                    name,
+                    email,
+                    planId: planId || null,
+                    paymentStatus: 'Pendente'
+                });
+                
+                window.closeModal('modal-student');
+                window.renderAll();
+            } catch (error) {
+                console.error("Erro ao adicionar aluno:", error);
+                alert("Erro ao adicionar aluno.");
             }
         }
 
-        function openChangePlan(studentId) {
-            const student = students.find(s => s.id === studentId);
+        window.deleteStudent = async function(id) {
+            if(confirm('Tem certeza que deseja excluir este aluno?')) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students', id));
+                    window.students = window.students.filter(s => s.id !== id);
+                    window.renderAll();
+                } catch (error) {
+                    console.error("Erro ao excluir aluno:", error);
+                    alert("Erro ao excluir aluno.");
+                }
+            }
+        }
+
+        window.openChangePlan = function(studentId) {
+            const student = window.students.find(s => s.id === studentId);
             if(student) {
                 document.getElementById('change-student-id').value = student.id;
                 document.getElementById('change-student-name').innerText = student.name;
                 document.getElementById('change-plan-select').value = student.planId || '';
-                openModal('modal-change-plan');
+                window.openModal('modal-change-plan');
             }
         }
 
-        function handleChangePlan(e) {
+        window.handleChangePlan = async function(e) {
             e.preventDefault();
             const studentId = document.getElementById('change-student-id').value;
             const newPlanId = document.getElementById('change-plan-select').value;
             
-            students = students.map(s => 
-                s.id === studentId ? { ...s, planId: newPlanId || null } : s
-            );
-            
-            closeModal('modal-change-plan');
-            renderAll();
+            try {
+                await updateDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students', studentId), {
+                    plan: newPlanId || null
+                });
+                
+                window.students = window.students.map(s => 
+                    s.id === studentId ? { ...s, planId: newPlanId || null } : s
+                );
+                
+                window.closeModal('modal-change-plan');
+                window.renderAll();
+            } catch (error) {
+                console.error("Erro ao atualizar plano:", error);
+                alert("Erro ao atualizar plano.");
+            }
         }
     </script>
 </body>
