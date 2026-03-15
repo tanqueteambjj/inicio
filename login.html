@@ -50,13 +50,13 @@
 </head>
 <body class="bg-brand-dark font-sans antialiased h-screen overflow-hidden relative">
 
-    <!-- VÍDEO DE FUNDO VIMEO ATUALIZADO -->
+    <!-- VÍDEO DE FUNDO VIMEO -->
     <div class="fixed top-0 left-0 w-full h-full z-0 pointer-events-none overflow-hidden bg-black">
-        <iframe src="https://player.vimeo.com/video/1173495511?background=1&autoplay=1&loop=1&byline=0&title=0&muted=1&badge=0&autopause=0&player_id=0&app_id=58479" 
+        <iframe src="https://player.vimeo.com/video/1170395210?background=1&autoplay=1&loop=1&byline=0&title=0&muted=1&badge=0&autopause=0&player_id=0&app_id=58479" 
                 frameborder="0" 
                 allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media" 
                 style="position:absolute; top:50%; left:50%; width:100vw; height:56.25vw; min-height:100vh; min-width:177.77vh; transform:translate(-50%, -50%);"
-                title="Vídeo de Fundo TTBJJ">
+                title="ABERTURA_ABRIL">
         </iframe>
     </div>
     <script src="https://player.vimeo.com/api/player.js"></script>
@@ -136,24 +136,6 @@
                         <i class="fa-solid fa-arrow-right-to-bracket"></i>
                     </button>
                     
-                    <!-- Divisor -->
-                    <div class="relative flex py-3 items-center">
-                        <div class="flex-grow border-t border-gray-300"></div>
-                        <span class="flex-shrink-0 mx-4 text-gray-400 text-xs font-bold uppercase">Ou acesse com</span>
-                        <div class="flex-grow border-t border-gray-300"></div>
-                    </div>
-
-                    <!-- Google Login Button -->
-                    <button type="button" id="btn-google" class="w-full text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 font-bold rounded-lg text-sm px-5 py-3 text-center transition-all duration-300 shadow-sm flex justify-center items-center gap-3">
-                        <svg class="w-5 h-5" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M47.532 24.5528C47.532 22.9214 47.3997 21.2811 47.1175 19.6761H24.48V28.9181H37.4434C36.9055 31.8988 35.177 34.5356 32.6461 36.2111V42.2078H40.3801C44.9217 38.0278 47.532 31.8547 47.532 24.5528Z" fill="#4285F4"/>
-                            <path d="M24.48 48.0016C30.9529 48.0016 36.4116 45.8764 40.3888 42.2078L32.6549 36.2111C30.5031 37.675 27.7252 38.5039 24.4888 38.5039C18.2275 38.5039 12.9187 34.2798 11.0139 28.6006H3.03296V34.7825C7.10718 42.8868 15.4056 48.0016 24.48 48.0016Z" fill="#34A853"/>
-                            <path d="M11.0051 28.6006C9.99973 25.6199 9.99973 22.3922 11.0051 19.4115V13.2296H3.03298C-0.371021 20.0112 -0.371021 28.0009 3.03298 34.7825L11.0051 28.6006Z" fill="#FBBC05"/>
-                            <path d="M24.48 9.49932C27.9016 9.44641 31.2086 10.7339 33.6866 13.0973L40.5387 6.24523C36.2 2.17101 30.4414 -0.068932 24.48 0.00161733C15.4055 0.00161733 7.10718 5.11644 3.03296 13.2296L11.005 19.4115C12.901 13.7235 18.2187 9.49932 24.48 9.49932Z" fill="#EA4335"/>
-                        </svg>
-                        Conta Google
-                    </button>
-
                     <!-- PWA Native Install Button (Hidden by default) -->
                     <button type="button" id="btn-install-pwa" class="hidden w-full bg-gray-800 hover:bg-black text-white focus:ring-4 focus:outline-none focus:ring-gray-300 font-bold rounded-lg text-sm px-5 py-3 text-center transition-all duration-300 shadow-md transform active:scale-95 flex justify-center items-center gap-2">
                         <i class="fa-solid fa-download"></i>
@@ -344,7 +326,7 @@
     <!-- Firebase Authentication Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Configuração de Segurança Padrão
@@ -362,12 +344,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : "tanqueteam-bjj";
-        
-        const provider = new GoogleAuthProvider();
-        // Força o Google a pedir para selecionar a conta sempre, evitando erros de cache
-        provider.setCustomParameters({
-            prompt: 'select_account'
-        });
 
         const initAuth = async () => {
             try {
@@ -382,91 +358,7 @@
         };
         initAuth();
 
-        // 1. Lógica de Login com Google COM TRATAMENTO DE ERROS AVANÇADO
-        document.getElementById('btn-google').addEventListener('click', async function() {
-            const btn = document.getElementById('btn-google');
-            const originalContent = btn.innerHTML;
-            const errorBox = document.getElementById('error-box');
-            const errorMsg = document.getElementById('error-msg');
-            
-            // Aviso explícito sobre iFrames/Preview
-            if (window.self !== window.top) {
-                alert("Atenção: O Google bloqueia logins dentro de janelas de preview/iframes por segurança. Para que o login do Google funcione, tem de aceder à página publicada (ou abrir o URL real numa nova aba).");
-            }
-            
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> ACESSANDO...';
-            errorBox.classList.add('hidden');
-            
-            try {
-                const result = await signInWithPopup(auth, provider);
-                const userEmail = result.user.email;
-                
-                // Checagem Contas Especiais (Admin/Financeiro/Jurídico)
-                if (userEmail === "administrativo@tanqueteambjj.com.br") {
-                    localStorage.setItem('tanque_user_session', JSON.stringify({ role: 'admin', name: 'Administrador', email: userEmail }));
-                    window.safeRedirect("painel_admin.html");
-                    return;
-                }
-                if (userEmail === "financeiro@tanqueteambjj.com.br") {
-                    localStorage.setItem('tanque_user_session', JSON.stringify({ role: 'financeiro', name: 'Gestor Financeiro', email: userEmail }));
-                    window.safeRedirect("painel_financeiro.html");
-                    return;
-                }
-                if (userEmail === "juridico@tanqueteambjj.com.br") {
-                    localStorage.setItem('tanque_user_session', JSON.stringify({ role: 'juridico', name: 'Departamento Jurídico', email: userEmail }));
-                    window.safeRedirect("painel_juridico.html");
-                    return;
-                }
-
-                // Checagem Alunos Regulares
-                const studentsRef = collection(db, 'artifacts', appId, 'public', 'data', 'students');
-                const q = query(studentsRef, where('email', '==', userEmail));
-                const snapshot = await getDocs(q);
-
-                if (!snapshot.empty) {
-                    const docSnap = snapshot.docs[0];
-                    const studentData = { id: docSnap.id, ...docSnap.data(), role: 'student' };
-                    localStorage.setItem('tanque_user_session', JSON.stringify(studentData));
-                    
-                    btn.innerHTML = '<i class="fa-solid fa-check text-green-500"></i> SUCESSO!';
-                    setTimeout(() => { window.safeRedirect("painel_aluno.html"); }, 1000);
-                } else {
-                    throw new Error("Nenhum aluno matriculado com este e-mail do Google.");
-                }
-                
-            } catch (error) {
-                btn.disabled = false;
-                btn.innerHTML = originalContent;
-                errorBox.classList.remove('hidden');
-                
-                // --- TRATAMENTO DETALHADO DE ERROS DO GOOGLE ---
-                let displayError = "Falha ao fazer login. Tente novamente.";
-                
-                if (error.message === "Nenhum aluno matriculado com este e-mail do Google.") {
-                    displayError = "Acesso Negado: O seu e-mail do Google não está registado em nenhuma matrícula ativa.";
-                } else if (error.message.includes('The requested action is invalid')) {
-                    displayError = "ERRO DE CONFIGURAÇÃO (Para o Dono do Site): Vá ao Google Cloud Console > APIs & Services > OAuth consent screen e certifique-se de que o 'Support Email' está preenchido e publicado.";
-                } else if (error.code === 'auth/unauthorized-domain') {
-                    displayError = "Erro de Segurança: Este domínio de site não está autorizado no Firebase. Peça ao administrador para adicioná-lo em 'Authentication > Settings > Authorized domains'.";
-                } else if (error.code === 'auth/operation-not-allowed') {
-                    displayError = "Erro: O método de login com o Google está desativado. Ative-o no Firebase Console.";
-                } else if (error.code === 'auth/popup-closed-by-user') {
-                    displayError = "A janela do Google foi fechada antes de concluir o login.";
-                } else if (error.code === 'auth/popup-blocked') {
-                    displayError = "O seu navegador bloqueou a janela do Google. Por favor, permita pop-ups para este site.";
-                } else if (error.code === 'auth/cancelled-popup-request') {
-                    displayError = "A requisição foi cancelada por múltiplas tentativas simultâneas.";
-                } else {
-                    displayError = "Erro (" + (error.code || 'desconhecido') + "): " + (error.message || "Feche a janela e tente novamente.");
-                }
-                
-                errorMsg.innerText = displayError;
-                console.error("Google Login Error:", error);
-            }
-        });
-
-        // 2. Tratamento do Formulário de Login Tradicional
+        // Tratamento do Formulário de Login isolado e seguro no Firebase
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
