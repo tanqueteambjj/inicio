@@ -626,7 +626,7 @@
     <!-- SCRIPT DE INTERAÇÃO UI E FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs, doc, updateDoc, arrayUnion, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // === GLOBAL STATE E UTILITÁRIOS ROBUSTOS ===
@@ -649,23 +649,27 @@
             'dependente': { name: 'Dependente', price: 0.00, fidelityMonths: 120 }
         };
 
-        // Parse robusto de datas para lidar com Timestamps do Firebase, ISO Strings e Dates JS
+        // Parse robusto de datas para evitar crashes ao ler o Firebase
         function parseRobustDateObj(val) {
             if (!val) return new Date(NaN);
-            if (typeof val.toDate === 'function') return val.toDate(); // Firebase Timestamp
-            if (val instanceof Date) return val;
-            if (val.seconds) return new Date(val.seconds * 1000); // Objeto serializado
-            if (typeof val === 'string') {
-                if (val.includes('/') && val.length === 10) {
-                    const parts = val.split('/');
-                    return new Date(parts[2], parts[1] - 1, parts[0]);
+            try {
+                if (typeof val.toDate === 'function') return val.toDate(); 
+                if (val instanceof Date) return val;
+                if (val.seconds) return new Date(val.seconds * 1000); 
+                if (typeof val === 'string') {
+                    if (val.includes('/') && val.length === 10) {
+                        const parts = val.split('/');
+                        return new Date(parts[2], parts[1] - 1, parts[0]);
+                    }
+                    if (val.length === 10 && val.includes('-')) {
+                        const parts = val.split('-');
+                        return new Date(parts[0], parts[1] - 1, parts[2]); 
+                    }
                 }
-                if (val.length === 10 && val.includes('-')) {
-                    const parts = val.split('-');
-                    return new Date(parts[0], parts[1] - 1, parts[2]); 
-                }
+                return new Date(val);
+            } catch(e) {
+                return new Date(NaN);
             }
-            return new Date(val);
         }
 
         function formatDateBR(val) {
@@ -703,7 +707,9 @@
                 docEl.classList.add('dark'); localStorage.setItem('tanque_theme', 'dark');
                 themeIcons.forEach(id => { const el = document.getElementById(id); if(el) { el.classList.remove('fa-moon'); el.classList.add('fa-sun'); } });
             }
-            if (window.chartInstance && window.updateDashboardStats) window.updateDashboardStats(); 
+            if (window.chartInstance && window.updateDashboardStats) {
+                try { window.updateDashboardStats(); } catch(e) {}
+            }
         };
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -741,7 +747,7 @@
             } catch(e) { console.error(e); }
         };
 
-        // === FIREBASE INIT E CARREGAMENTO DE DADOS ===
+        // === FIREBASE INIT E CARREGAMENTO DE DADOS (NOVO FLUXO SEGURO) ===
         let session = null;
         try { session = localStorage.getItem('tanque_user_session'); } catch (e) { localStorage.removeItem('tanque_user_session'); session = null; }
 
@@ -774,14 +780,14 @@
                             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                                 try { await signInWithCustomToken(auth, __initial_auth_token); } catch(e) { await signInAnonymously(auth); }
                             } else { await signInAnonymously(auth); }
+                            
+                            // Carrega os planos de forma síncrona e em seguida carrega os dados
+                            if (auth.currentUser) {
+                                await window.loadPlans();
+                                await window.loadData();
+                            }
                         } catch(err) { console.error("Auth error", err); }
                     };
-
-                    onAuthStateChanged(auth, (u) => {
-                        if (u) {
-                            window.loadPlans().then(() => window.loadData());
-                        }
-                    });
                     
                     initAuth();
 
@@ -804,6 +810,7 @@
                         window.dynamicPlans[d.id] = { id: d.id, ...d.data() };
                     });
                 }
+                
                 if(window.currentView === 'plans') window.renderPlansTable();
             } catch(e) {
                 console.error("Erro ao carregar planos", e);
@@ -815,21 +822,33 @@
         window.loadData = async function() {
             try {
                 if(!window.db) return;
+                
+                const tbody = document.getElementById('finance-table-body');
+                if(tbody) tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500 italic"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Atualizando dados...</td></tr>`;
+
                 const querySnapshot = await getDocs(collection(window.db, 'artifacts', window.appIdVar, 'public', 'data', 'students'));
                 window.students = [];
                 querySnapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (data.enrollmentStatus !== 'Inativo' && !data.archived && data.plan !== 'dependente') {
-                        window.students.push({ id: doc.id, ...data });
+                    try {
+                        const data = doc.data();
+                        if (data.enrollmentStatus !== 'Inativo' && !data.archived && data.plan !== 'dependente') {
+                            window.students.push({ id: doc.id, ...data });
+                        }
+                    } catch(err) {
+                        console.error("Erro ao processar aluno individual", doc.id, err);
                     }
                 });
                 
-                checkDueDates();
+                try { checkDueDates(); } catch(e) { console.error("Error in checkDueDates", e); }
                 try { updateDashboardStats(); } catch(e) { console.error("Error in updateDashboardStats", e); }
                 try { if(window.currentView === 'students') window.renderTable(); } catch(e) { console.error("Error in renderTable", e); }
                 try { if(window.currentView === 'dashboard') window.renderRecentPayments(); } catch(e) { console.error("Error in renderRecentPayments", e); }
 
-            } catch (error) { console.error("Erro ao carregar alunos:", error); }
+            } catch (error) { 
+                console.error("Erro crítico ao carregar alunos:", error); 
+                const tbody = document.getElementById('finance-table-body');
+                if(tbody) tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-red-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i> Erro ao carregar alunos. Tente novamente.</td></tr>`;
+            }
         }
 
         function checkDueDates() {
@@ -901,11 +920,13 @@
                     if (window.chartInstance) window.chartInstance.destroy(); 
                     const isDark = document.documentElement.classList.contains('dark'); const legendColor = isDark ? '#d1d5db' : '#4b5563';
 
-                    window.chartInstance = new Chart(ctx, {
-                        type: 'doughnut',
-                        data: { labels: labels, datasets: [{ data: dataValues, backgroundColor: bgColors.slice(0, labels.length), borderWidth: 0, hoverOffset: 4 }] },
-                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: legendColor, boxWidth: 12, font: { size: 11, family: 'sans-serif' } } } }, cutout: '65%' }
-                    });
+                    if (typeof Chart !== 'undefined') {
+                        window.chartInstance = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: { labels: labels, datasets: [{ data: dataValues, backgroundColor: bgColors.slice(0, labels.length), borderWidth: 0, hoverOffset: 4 }] },
+                            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: legendColor, boxWidth: 12, font: { size: 11, family: 'sans-serif' } } } }, cutout: '65%' }
+                        });
+                    }
                 }
             } catch(e) { console.warn("ChartJS erro", e); }
         }
@@ -919,7 +940,12 @@
                 }
             });
 
-            allPayments.sort((a,b) => parseRobustDateObj(b.timestamp).getTime() - parseRobustDateObj(a.timestamp).getTime());
+            allPayments.sort((a,b) => {
+                const timeA = parseRobustDateObj(a.timestamp).getTime();
+                const timeB = parseRobustDateObj(b.timestamp).getTime();
+                return (timeB || 0) - (timeA || 0);
+            });
+            
             const recent = allPayments.slice(0, 10);
             if(recent.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500 italic">Nenhum pagamento registrado recentemente.</td></tr>'; return; }
 
@@ -943,7 +969,7 @@
             }
 
             plansArray.sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
-                const isIsento = p.price === 0;
+                const isIsento = Number(p.price) === 0;
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-blue-50 dark:hover:bg-blue-900/10 transition border-b border-gray-100 dark:border-gray-700";
                 tr.innerHTML = `
@@ -969,7 +995,7 @@
                 document.getElementById('plan-modal-title').innerText = "Editar Plano";
                 document.getElementById('plan-id').value = p.id;
                 document.getElementById('plan-name').value = p.name;
-                document.getElementById('plan-price').value = p.price.toFixed(2);
+                document.getElementById('plan-price').value = Number(p.price).toFixed(2);
                 document.getElementById('plan-fidelity').value = p.fidelityMonths || 1;
             } else {
                 document.getElementById('plan-modal-title').innerText = "Novo Plano";
@@ -1041,7 +1067,7 @@
             if(!tbody) return; tbody.innerHTML = '';
 
             let filtered = window.students.filter(s => {
-                const matchesSearch = (s.name || '').toLowerCase().includes(search) || (s.cpf || '').includes(search);
+                const matchesSearch = String(s.name || '').toLowerCase().includes(search) || String(s.cpf || '').includes(search);
                 const stat = s.paymentStatus || 'Pendente';
                 let matchesTab = true;
                 if (window.currentTab === 'pending' && stat !== 'Pendente') matchesTab = false;
@@ -1058,7 +1084,7 @@
                     return 4;
                 };
                 const wA = getStatusWeight(a.paymentStatus); const wB = getStatusWeight(b.paymentStatus);
-                if (wA !== wB) return wA - wB; return (a.name || '').localeCompare(b.name || '');
+                if (wA !== wB) return wA - wB; return String(a.name || '').localeCompare(String(b.name || ''));
             });
 
             if (filtered.length === 0) { 
@@ -1091,14 +1117,14 @@
                     }
                 }
 
-                const cleanPhone = (s.phone || '').replace(/\D/g, '');
+                const cleanPhone = String(s.phone || '').replace(/\D/g, '');
                 let waBtn = '';
                 if (cleanPhone) {
                     if (s.paymentStatus === 'Pendente') {
-                        const msg = encodeURIComponent(`Olá ${s.name.split(' ')[0]}, tudo bem? Aqui é do financeiro da Tanque Team BJJ 🥋.\n\nVerificamos que a sua mensalidade referente ao plano *${planInfo.short}* consta como pendente no nosso sistema.\n\nPor favor, regularize o pagamento na recepção ou via Pix. Qualquer dúvida, estamos à disposição. Oss!`);
+                        const msg = encodeURIComponent(`Olá ${String(s.name || '').split(' ')[0]}, tudo bem? Aqui é do financeiro da Tanque Team BJJ 🥋.\n\nVerificamos que a sua mensalidade referente ao plano *${planInfo.short}* consta como pendente no nosso sistema.\n\nPor favor, regularize o pagamento na recepção ou via Pix. Qualquer dúvida, estamos à disposição. Oss!`);
                         waBtn = `<a href="https://wa.me/55${cleanPhone}?text=${msg}" target="_blank" class="text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 mx-1 transition w-8 h-8 rounded-full bg-green-50 dark:bg-green-900/20 inline-flex items-center justify-center shadow-sm" title="Cobrar no WhatsApp"><i class="fa-brands fa-whatsapp text-lg"></i></a>`;
                     } else {
-                        const msg = encodeURIComponent(`Olá ${s.name.split(' ')[0]}, tudo bem? Aqui é da Tanque Team BJJ 🥋.`);
+                        const msg = encodeURIComponent(`Olá ${String(s.name || '').split(' ')[0]}, tudo bem? Aqui é da Tanque Team BJJ 🥋.`);
                         waBtn = `<a href="https://wa.me/55${cleanPhone}?text=${msg}" target="_blank" class="text-gray-400 hover:text-green-600 dark:text-gray-500 dark:hover:text-green-400 mx-1 transition w-8 h-8 rounded-full hover:bg-green-50 dark:hover:bg-green-900/20 inline-flex items-center justify-center" title="Chamar no WhatsApp"><i class="fa-brands fa-whatsapp text-lg"></i></a>`;
                     }
                 }
@@ -1450,7 +1476,7 @@
 
             if (type === 'inadimplentes') {
                 html += `<h3 style="font-size:18px; font-weight:bold; margin-bottom:15px;">ALUNOS INADIMPLENTES (PENDENTES)</h3><table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:left;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Nome</th><th style="border: 1px solid #ddd; padding: 8px;">Plano</th><th style="border: 1px solid #ddd; padding: 8px;">Vencimento</th><th style="border: 1px solid #ddd; padding: 8px;">Contato</th></tr></thead><tbody>`;
-                window.students.filter(s => s.paymentStatus === 'Pendente').sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(s => {
+                window.students.filter(s => s.paymentStatus === 'Pendente').sort((a,b) => String(a.name||'').localeCompare(String(b.name||''))).forEach(s => {
                     const dueStr = s.nextDueDate ? formatDateBR(s.nextDueDate) : 'Não definido';
                     tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${s.name}</td><td style="border: 1px solid #ddd; padding: 8px; text-transform:uppercase;">${window.getPlanInfo(s.plan, s).short}</td><td style="border: 1px solid #ddd; padding: 8px;">${dueStr}</td><td style="border: 1px solid #ddd; padding: 8px;">${s.phone||'-'}</td></tr>`;
                 });
@@ -1458,7 +1484,7 @@
                 html += tableRows + `</tbody></table>`;
             } else if (type === 'pagantes') {
                 html += `<h3 style="font-size:18px; font-weight:bold; margin-bottom:15px;">ALUNOS PAGANTES (EM DIA)</h3><table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:left;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Nome</th><th style="border: 1px solid #ddd; padding: 8px;">Plano</th><th style="border: 1px solid #ddd; padding: 8px;">Próx. Vencimento</th></tr></thead><tbody>`;
-                window.students.filter(s => s.paymentStatus === 'Em dia' || s.paymentStatus === 'Pago').sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(s => {
+                window.students.filter(s => s.paymentStatus === 'Em dia' || s.paymentStatus === 'Pago').sort((a,b) => String(a.name||'').localeCompare(String(b.name||''))).forEach(s => {
                     const dueStr = s.nextDueDate ? formatDateBR(s.nextDueDate) : 'Não definido';
                     tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${s.name}</td><td style="border: 1px solid #ddd; padding: 8px; text-transform:uppercase;">${window.getPlanInfo(s.plan, s).short}</td><td style="border: 1px solid #ddd; padding: 8px;">${dueStr}</td></tr>`;
                 });
@@ -1466,7 +1492,7 @@
                 html += tableRows + `</tbody></table>`;
             } else if (type === 'isentos') {
                 html += `<h3 style="font-size:18px; font-weight:bold; margin-bottom:15px;">ALUNOS ISENTOS / BOLSISTAS</h3><table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:left;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Nome</th><th style="border: 1px solid #ddd; padding: 8px;">Plano</th><th style="border: 1px solid #ddd; padding: 8px;">Contato</th></tr></thead><tbody>`;
-                window.students.filter(s => s.paymentStatus === 'Isento').sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(s => {
+                window.students.filter(s => s.paymentStatus === 'Isento').sort((a,b) => String(a.name||'').localeCompare(String(b.name||''))).forEach(s => {
                     tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${s.name}</td><td style="border: 1px solid #ddd; padding: 8px; text-transform:uppercase;">${window.getPlanInfo(s.plan, s).short}</td><td style="border: 1px solid #ddd; padding: 8px;">${s.phone||'-'}</td></tr>`;
                 });
                 if(tableRows === '') tableRows = '<tr><td colspan="3" style="border: 1px solid #ddd; padding: 8px; text-align: center;">Nenhum aluno isento.</td></tr>';
