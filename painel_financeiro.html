@@ -166,9 +166,18 @@
                 
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex flex-wrap gap-4 items-center text-sm">
-                        <div class="w-full relative mb-2">
+                        <div class="w-full md:w-1/2 relative mb-2 md:mb-0">
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fas fa-search"></i></span>
                             <input type="text" id="search-student" onkeyup="renderStudents()" placeholder="Buscar aluno por nome ou email..." class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 transition">
+                        </div>
+                        <div class="w-full md:w-auto">
+                            <select id="filter-status" onchange="renderStudents()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 transition">
+                                <option value="all">Todos os Status</option>
+                                <option value="em-dia">Em dia</option>
+                                <option value="proximo">Próximo do Vencimento</option>
+                                <option value="atrasado">Atrasado</option>
+                                <option value="pendente">Pendente</option>
+                            </select>
                         </div>
                     </div>
 
@@ -179,6 +188,7 @@
                                     <th class="px-6 py-3 border-b dark:border-gray-700 font-semibold">Aluno</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-700 font-semibold">Email</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-700 font-semibold">Plano Atual</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-700 font-semibold">Status</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-700 font-semibold text-center">Ações</th>
                                 </tr>
                             </thead>
@@ -229,7 +239,8 @@
                                 <tr class="bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">
                                     <th class="px-6 py-3 border-b dark:border-gray-700 font-semibold">Data</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-700 font-semibold">Aluno</th>
-                                    <th class="px-6 py-3 border-b dark:border-gray-700 font-semibold">Plano</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-700 font-semibold">Referência</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-700 font-semibold">Método</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-700 font-semibold">Valor</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-700 font-semibold text-center">Ações</th>
                                 </tr>
@@ -338,19 +349,46 @@
                 <input type="hidden" id="payment-student-id">
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Aluno: <span id="payment-student-name" class="font-bold text-gray-900 dark:text-white"></span></p>
                 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data do Pagamento</label>
-                    <input type="date" id="payment-date" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Plano</label>
+                        <select id="payment-plan" onchange="updatePaymentAmount()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none">
+                            <option value="">Selecione um plano</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mês de Referência</label>
+                        <input type="month" id="payment-reference" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none">
+                    </div>
                 </div>
                 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Valor Pago (R$)</label>
-                    <input type="number" id="payment-amount" step="0.01" min="0" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Valor Pago (R$)</label>
+                        <input type="number" id="payment-amount" step="0.01" min="0" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meio de Pagamento</label>
+                        <select id="payment-method" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none">
+                            <option value="Pix">Pix</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="Cartão de Crédito">Cartão de Crédito</option>
+                            <option value="Cartão de Débito">Cartão de Débito</option>
+                            <option value="Transferência">Transferência</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Próximo Vencimento</label>
+                        <input type="date" id="payment-next-due" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none">
+                    </div>
                 </div>
                 
                 <div class="pt-4 flex justify-end gap-3">
                     <button type="button" onclick="closeModal('modal-payment')" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-bold shadow-sm">Salvar Pagamento</button>
+                    <button type="submit" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-bold shadow-sm">Registrar Pagamento</button>
                 </div>
             </form>
         </div>
@@ -477,6 +515,9 @@
                         studentId: data.studentId,
                         date: data.date,
                         amount: data.amount,
+                        reference: data.reference,
+                        method: data.method,
+                        nextDueDate: data.nextDueDate,
                         timestamp: data.timestamp
                     });
                 });
@@ -494,12 +535,18 @@
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
                     if (data.enrollmentStatus !== 'Inativo' && !data.archived && data.plan !== 'dependente') {
+                        let planName = data.plan;
+                        if (data.plan && window.plans.some(p => p.id === data.plan)) {
+                            planName = window.plans.find(p => p.id === data.plan).name;
+                        }
+
                         window.students.push({
                             id: doc.id,
                             name: data.name || 'Sem Nome',
                             email: data.email || '',
-                            planId: data.plan || null,
-                            paymentStatus: data.paymentStatus || 'Pendente'
+                            planName: planName || null,
+                            paymentStatus: data.paymentStatus || 'Pendente',
+                            nextDueDate: data.nextDueDate || null
                         });
                     }
                 });
@@ -557,7 +604,7 @@
             document.getElementById('stat-plans').innerText = window.plans.length;
             
             const revenue = window.students.reduce((total, student) => {
-                const plan = window.plans.find(p => p.id === student.planId);
+                const plan = window.plans.find(p => p.name === student.planName);
                 return total + (plan ? plan.price : 0);
             }, 0);
             
@@ -572,8 +619,7 @@
                 
                 const planCounts = {};
                 window.students.forEach(s => {
-                    const plan = window.plans.find(p => p.id === s.planId);
-                    const planName = plan ? plan.name : 'Sem Plano';
+                    const planName = s.planName || 'Sem Plano';
                     planCounts[planName] = (planCounts[planName] || 0) + 1;
                 });
 
@@ -609,29 +655,78 @@
             }
         }
 
+        window.getPaymentStatusBadge = function(nextDueDate) {
+            if (!nextDueDate) {
+                return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 uppercase tracking-wider">Pendente</span>`;
+            }
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const dueDate = new Date(nextDueDate);
+            dueDate.setMinutes(dueDate.getMinutes() + dueDate.getTimezoneOffset());
+            dueDate.setHours(0, 0, 0, 0);
+            
+            const diffTime = dueDate.getTime() - today.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 0) {
+                return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 uppercase tracking-wider">Atrasado</span>`;
+            } else if (diffDays <= 5) {
+                return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 uppercase tracking-wider">Vence em ${diffDays} dia(s)</span>`;
+            } else {
+                return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 uppercase tracking-wider">Em dia</span>`;
+            }
+        }
+
         window.renderStudents = function() {
             const tbody = document.getElementById('students-table-body');
             const searchInput = document.getElementById('search-student');
             const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+            const statusFilter = document.getElementById('filter-status') ? document.getElementById('filter-status').value : 'all';
             
-            const filtered = window.students.filter(s => s.name.toLowerCase().includes(searchTerm) || s.email.toLowerCase().includes(searchTerm));
+            const filtered = window.students.filter(s => {
+                const matchesSearch = s.name.toLowerCase().includes(searchTerm) || s.email.toLowerCase().includes(searchTerm);
+                if (!matchesSearch) return false;
+                
+                if (statusFilter === 'all') return true;
+                
+                let status = 'pendente';
+                if (s.nextDueDate) {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const dueDate = new Date(s.nextDueDate);
+                    dueDate.setMinutes(dueDate.getMinutes() + dueDate.getTimezoneOffset());
+                    dueDate.setHours(0, 0, 0, 0);
+                    const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays < 0) status = 'atrasado';
+                    else if (diffDays <= 5) status = 'proximo';
+                    else status = 'em-dia';
+                }
+                
+                return status === statusFilter;
+            });
             
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500 italic">Nenhum aluno encontrado.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500 italic">Nenhum aluno encontrado.</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = filtered.map(student => {
-                const plan = window.plans.find(p => p.id === student.planId);
-                const planBadge = plan 
-                    ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 uppercase tracking-wider">${plan.name}</span>`
+                const planName = student.planName;
+                const planBadge = planName 
+                    ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 uppercase tracking-wider">${planName}</span>`
                     : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 uppercase tracking-wider">Sem plano</span>`;
+                
+                const statusBadge = window.getPaymentStatusBadge(student.nextDueDate);
 
                 return `
                     <tr class="hover:bg-green-50 dark:hover:bg-green-900/10 transition border-b border-gray-100 dark:border-gray-700">
                         <td class="px-6 py-4 align-middle font-bold text-gray-800 dark:text-gray-200">${student.name}</td>
                         <td class="px-6 py-4 align-middle text-gray-600 dark:text-gray-400">${student.email}</td>
                         <td class="px-6 py-4 align-middle">${planBadge}</td>
+                        <td class="px-6 py-4 align-middle">${statusBadge}</td>
                         <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
                             <button onclick="window.openPaymentModal('${student.id}')" class="text-green-500 hover:text-white dark:text-green-400 dark:hover:text-white mx-1 bg-green-50 hover:bg-green-600 dark:bg-green-900/30 dark:hover:bg-green-600 w-8 h-8 rounded-full transition shadow-sm inline-flex items-center justify-center" title="Informar Pagamento">
                                 <i class="fas fa-dollar-sign"></i>
@@ -657,7 +752,7 @@
             }
 
             grid.innerHTML = window.plans.map(plan => {
-                const count = window.students.filter(s => s.planId === plan.id).length;
+                const count = window.students.filter(s => s.planName === plan.name).length;
                 return `
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col transition-transform transform hover:-translate-y-1">
                         <div class="flex justify-between items-start mb-4">
@@ -682,25 +777,28 @@
             if (!tbody) return;
 
             if (window.payments.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500 italic">Nenhum pagamento registrado.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500 italic">Nenhum pagamento registrado.</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = window.payments.map(payment => {
                 const student = window.students.find(s => s.id === payment.studentId);
                 const studentName = student ? student.name : 'Aluno Removido';
-                const plan = student ? window.plans.find(p => p.id === student.planId) : null;
-                const planName = plan ? plan.name : '-';
+                const planName = student ? (student.planName || '-') : '-';
                 
                 // Format date (YYYY-MM-DD to DD/MM/YYYY)
                 const dateParts = payment.date.split('-');
                 const formattedDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : payment.date;
+                
+                const reference = payment.reference || '-';
+                const method = payment.method || '-';
 
                 return `
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition border-b border-gray-100 dark:border-gray-700">
                         <td class="px-6 py-4 align-middle text-gray-800 dark:text-gray-200">${formattedDate}</td>
                         <td class="px-6 py-4 align-middle font-bold text-gray-800 dark:text-gray-200">${studentName}</td>
-                        <td class="px-6 py-4 align-middle text-gray-600 dark:text-gray-400">${planName}</td>
+                        <td class="px-6 py-4 align-middle text-gray-600 dark:text-gray-400">${reference}</td>
+                        <td class="px-6 py-4 align-middle text-gray-600 dark:text-gray-400">${method}</td>
                         <td class="px-6 py-4 align-middle font-bold text-green-600 dark:text-green-400">R$ ${payment.amount.toFixed(2).replace('.', ',')}</td>
                         <td class="px-6 py-4 align-middle text-center whitespace-nowrap">
                             <button onclick="window.printReceipt('${payment.id}')" class="text-blue-500 hover:text-white dark:text-blue-400 dark:hover:text-white mx-1 bg-blue-50 hover:bg-blue-600 dark:bg-blue-900/30 dark:hover:bg-blue-600 w-8 h-8 rounded-full transition shadow-sm inline-flex items-center justify-center" title="Imprimir Recibo">
@@ -717,10 +815,12 @@
 
         window.updatePlanSelects = function() {
             const options = `<option value="">Sem plano (Remover)</option>` + 
-                window.plans.map(p => `<option value="${p.id}">${p.name} - R$ ${p.price.toFixed(2)}</option>`).join('');
+                window.plans.map(p => `<option value="${p.name}">${p.name} - R$ ${p.price.toFixed(2)}</option>`).join('');
             
             document.getElementById('student-plan').innerHTML = options;
             document.getElementById('change-plan-select').innerHTML = options;
+            document.getElementById('payment-plan').innerHTML = `<option value="">Selecione um plano</option>` + 
+                window.plans.map(p => `<option value="${p.name}">${p.name} - R$ ${p.price.toFixed(2)}</option>`).join('');
         }
 
         // Actions
@@ -752,16 +852,19 @@
         window.deletePlan = async function(id) {
             if(confirm('Tem certeza que deseja excluir este plano? Alunos associados ficarão sem plano.')) {
                 try {
+                    const planToDelete = window.plans.find(p => p.id === id);
                     await deleteDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'plans', id));
                     window.plans = window.plans.filter(p => p.id !== id);
                     
                     // Update students that had this plan
-                    for (const student of window.students) {
-                        if (student.planId === id) {
-                            await updateDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students', student.id), {
-                                plan: null
-                            });
-                            student.planId = null;
+                    if (planToDelete) {
+                        for (const student of window.students) {
+                            if (student.planName === planToDelete.name) {
+                                await updateDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students', student.id), {
+                                    plan: null
+                                });
+                                student.planName = null;
+                            }
                         }
                     }
                     
@@ -777,13 +880,13 @@
             e.preventDefault();
             const name = document.getElementById('student-name').value;
             const email = document.getElementById('student-email').value;
-            const planId = document.getElementById('student-plan').value;
+            const planName = document.getElementById('student-plan').value;
             
             try {
                 const docRef = await addDoc(collection(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students'), {
                     name,
                     email,
-                    plan: planId || null,
+                    plan: planName || null,
                     paymentStatus: 'Pendente',
                     enrollmentStatus: 'Ativo',
                     archived: false
@@ -793,8 +896,9 @@
                     id: docRef.id,
                     name,
                     email,
-                    planId: planId || null,
-                    paymentStatus: 'Pendente'
+                    planName: planName || null,
+                    paymentStatus: 'Pendente',
+                    nextDueDate: null
                 });
                 
                 window.closeModal('modal-student');
@@ -823,7 +927,7 @@
             if(student) {
                 document.getElementById('change-student-id').value = student.id;
                 document.getElementById('change-student-name').innerText = student.name;
-                document.getElementById('change-plan-select').value = student.planId || '';
+                document.getElementById('change-plan-select').value = student.planName || '';
                 window.openModal('modal-change-plan');
             }
         }
@@ -831,15 +935,15 @@
         window.handleChangePlan = async function(e) {
             e.preventDefault();
             const studentId = document.getElementById('change-student-id').value;
-            const newPlanId = document.getElementById('change-plan-select').value;
+            const newPlanName = document.getElementById('change-plan-select').value;
             
             try {
                 await updateDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students', studentId), {
-                    plan: newPlanId || null
+                    plan: newPlanName || null
                 });
                 
                 window.students = window.students.map(s => 
-                    s.id === studentId ? { ...s, planId: newPlanId || null } : s
+                    s.id === studentId ? { ...s, planName: newPlanName || null } : s
                 );
                 
                 window.closeModal('modal-change-plan');
@@ -856,29 +960,64 @@
                 document.getElementById('payment-student-id').value = student.id;
                 document.getElementById('payment-student-name').innerText = student.name;
                 
-                // Set default date to today
-                const today = new Date().toISOString().split('T')[0];
-                document.getElementById('payment-date').value = today;
+                const today = new Date();
+                const currentMonth = today.toISOString().slice(0, 7);
+                document.getElementById('payment-reference').value = currentMonth;
                 
-                // Set default amount based on plan
-                const plan = window.plans.find(p => p.id === student.planId);
+                const nextMonth = new Date(today);
+                nextMonth.setMonth(nextMonth.getMonth() + 1);
+                document.getElementById('payment-next-due').value = nextMonth.toISOString().split('T')[0];
+                
+                const plan = window.plans.find(p => p.name === student.planName);
                 document.getElementById('payment-amount').value = plan ? plan.price.toFixed(2) : '';
                 
+                const planSelect = document.getElementById('payment-plan');
+                if (student.planName) {
+                    for (let i = 0; i < planSelect.options.length; i++) {
+                        if (planSelect.options[i].value === student.planName) {
+                            planSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                } else {
+                    planSelect.value = "";
+                }
+                
                 window.openModal('modal-payment');
+            }
+        }
+
+        window.updatePaymentAmount = function() {
+            const planName = document.getElementById('payment-plan').value;
+            if (planName) {
+                const plan = window.plans.find(p => p.name === planName);
+                if (plan) {
+                    document.getElementById('payment-amount').value = plan.price.toFixed(2);
+                }
+            } else {
+                document.getElementById('payment-amount').value = '';
             }
         }
 
         window.handleCreatePayment = async function(e) {
             e.preventDefault();
             const studentId = document.getElementById('payment-student-id').value;
-            const date = document.getElementById('payment-date').value;
+            const reference = document.getElementById('payment-reference').value;
             const amount = parseFloat(document.getElementById('payment-amount').value);
+            const method = document.getElementById('payment-method').value;
+            const nextDueDate = document.getElementById('payment-next-due').value;
+            const planName = document.getElementById('payment-plan').value;
+            const date = new Date().toISOString().split('T')[0];
             
             try {
                 const docRef = await addDoc(collection(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'payments'), {
                     studentId,
                     date,
+                    reference,
                     amount,
+                    method,
+                    nextDueDate,
+                    plan: planName || null,
                     timestamp: Date.now()
                 });
                 
@@ -886,12 +1025,28 @@
                     id: docRef.id,
                     studentId,
                     date,
+                    reference,
                     amount,
+                    method,
+                    nextDueDate,
+                    plan: planName || null,
                     timestamp: Date.now()
                 });
                 
-                // Sort by date descending
                 window.payments.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                await updateDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students', studentId), {
+                    nextDueDate: nextDueDate,
+                    paymentStatus: 'Em dia',
+                    plan: planName || null
+                });
+
+                const student = window.students.find(s => s.id === studentId);
+                if (student) {
+                    student.nextDueDate = nextDueDate;
+                    student.paymentStatus = 'Em dia';
+                    student.planName = planName || null;
+                }
                 
                 window.closeModal('modal-payment');
                 window.renderAll();
@@ -961,7 +1116,7 @@
                     </div>
                     <script>
                         window.onload = function() { window.print(); window.close(); }
-                    <\/script>
+                    </scr` + `ipt>
                 </body>
                 </html>
             `);
@@ -974,17 +1129,20 @@
             let tableRows = window.payments.map(payment => {
                 const student = window.students.find(s => s.id === payment.studentId);
                 const studentName = student ? student.name : 'Aluno Removido';
-                const plan = student ? window.plans.find(p => p.id === student.planId) : null;
-                const planName = plan ? plan.name : '-';
+                const planName = student ? (student.planName || '-') : '-';
                 
                 const dateParts = payment.date.split('-');
                 const formattedDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : payment.date;
+                
+                const reference = payment.reference || '-';
+                const method = payment.method || '-';
                 
                 return `
                     <tr>
                         <td style="padding: 8px; border-bottom: 1px solid #eee;">${formattedDate}</td>
                         <td style="padding: 8px; border-bottom: 1px solid #eee;">${studentName}</td>
-                        <td style="padding: 8px; border-bottom: 1px solid #eee;">${planName}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">${reference}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">${method}</td>
                         <td style="padding: 8px; border-bottom: 1px solid #eee;">R$ ${payment.amount.toFixed(2).replace('.', ',')}</td>
                     </tr>
                 `;
@@ -1016,7 +1174,8 @@
                             <tr>
                                 <th>Data</th>
                                 <th>Aluno</th>
-                                <th>Plano</th>
+                                <th>Referência</th>
+                                <th>Método</th>
                                 <th>Valor</th>
                             </tr>
                         </thead>
@@ -1029,7 +1188,7 @@
                     </div>
                     <script>
                         window.onload = function() { window.print(); window.close(); }
-                    <\/script>
+                    </scr` + `ipt>
                 </body>
                 </html>
             `);
