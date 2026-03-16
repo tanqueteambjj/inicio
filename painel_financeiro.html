@@ -205,9 +205,14 @@
                         <h2 class="font-display text-2xl font-bold text-gray-800 dark:text-white">Planos da Academia</h2>
                         <p class="text-sm text-gray-500 dark:text-gray-400">Gerencie os planos oferecidos.</p>
                     </div>
-                    <button onclick="openModal('modal-plan')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition flex items-center gap-2">
-                        <i class="fas fa-plus"></i> Novo Plano
-                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="window.cleanInvalidPlans()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition flex items-center gap-2" title="Remove planos de alunos que não existem mais no sistema">
+                            <i class="fas fa-broom"></i> Limpar Planos Inválidos
+                        </button>
+                        <button onclick="openModal('modal-plan')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition flex items-center gap-2">
+                            <i class="fas fa-plus"></i> Novo Plano
+                        </button>
+                    </div>
                 </div>
                 
                 <div id="plans-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -524,28 +529,6 @@
                         price: data.price
                     });
                 });
-                // Fallback if no plans exist
-                if (window.plans.length === 0) {
-                    window.plans = [
-                        { id: 'infantil-mensal', name: 'Infantil Mensal', price: 189.90 },
-                        { id: 'infantil-trimestral', name: 'Infantil Trimestral', price: 168.90 },
-                        { id: 'infantil-semestral', name: 'Infantil Semestral', price: 157.90 },
-                        { id: 'adulto-mensal', name: 'Adulto Mensal', price: 168.90 },
-                        { id: 'adulto-trimestral', name: 'Adulto Trimestral', price: 147.90 },
-                        { id: 'adulto-semestral', name: 'Adulto Semestral', price: 126.90 },
-                        { id: 'combo-dupla', name: 'Combo Dupla', price: 250.00 },
-                        { id: 'combo-familia', name: 'Combo Família', price: 362.02 }
-                    ];
-                    // Save default plans to Firestore
-                    for (const plan of window.plans) {
-                        await addDoc(collection(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'plans'), {
-                            name: plan.name,
-                            price: plan.price
-                        });
-                    }
-                    // Reload to get actual IDs
-                    await loadPlans();
-                }
             } catch (error) {
                 console.error("Erro ao carregar planos:", error);
             }
@@ -592,6 +575,7 @@
                             name: data.name || 'Sem Nome',
                             email: data.email || '',
                             phone: data.phone || '',
+                            planId: data.plan || null,
                             planName: planName || null,
                             paymentStatus: data.paymentStatus || 'Pendente',
                             nextDueDate: data.nextDueDate || null
@@ -936,6 +920,37 @@
                 }
             }
         }
+
+        window.cleanInvalidPlans = async function() {
+            if (!confirm('Tem certeza que deseja limpar os planos inválidos dos alunos? Isso removerá o plano de qualquer aluno cujo plano não esteja cadastrado na aba Planos.')) return;
+            
+            try {
+                let updatedCount = 0;
+                for (const student of window.students) {
+                    if (student.planName || student.planId) {
+                        const planExists = window.plans.some(p => p.name === student.planName || p.id === student.planId);
+                        if (!planExists) {
+                            await updateDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students', student.id), {
+                                plan: null,
+                                planName: null
+                            });
+                            student.planId = null;
+                            student.planName = null;
+                            updatedCount++;
+                        }
+                    }
+                }
+                if (updatedCount > 0) {
+                    alert(`Sucesso! ${updatedCount} alunos tiveram seus planos limpos.`);
+                    window.renderAll();
+                } else {
+                    alert('Nenhum aluno com plano inválido encontrado.');
+                }
+            } catch (error) {
+                console.error('Erro ao limpar planos:', error);
+                alert('Erro ao limpar planos. Verifique o console.');
+            }
+        };
 
         window.deleteStudent = async function(id) {
             if(confirm('Tem certeza que deseja excluir este aluno?')) {
