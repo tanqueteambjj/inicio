@@ -272,12 +272,12 @@
 
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Vencimento do Contrato (Fidelidade)</label>
-                        <input type="date" id="edit-end-date" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-purple-500 focus:outline-none">
+                        <input type="date" id="edit-end-date" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-purple-500 focus:outline-none [color-scheme:light] dark:[color-scheme:dark]">
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data de Início (Matrícula)</label>
-                        <input type="date" id="edit-start-date" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-purple-500 focus:outline-none">
+                        <input type="date" id="edit-start-date" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-purple-500 focus:outline-none [color-scheme:light] dark:[color-scheme:dark]">
                     </div>
 
                     <div>
@@ -375,9 +375,34 @@
 
         // --- Utilitários de Formatação ---
         function formatCurrency(val) { return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+        
+        function parseRobustDateObj(val) {
+            if (!val) return new Date(NaN);
+            try {
+                if (typeof val.toDate === 'function') return val.toDate(); 
+                if (val instanceof Date) return val;
+                if (val.seconds) return new Date(val.seconds * 1000); 
+                if (typeof val === 'string') {
+                    if (val.includes('/') && val.length === 10) {
+                        const parts = val.split('/');
+                        return new Date(parts[2], parts[1] - 1, parts[0]);
+                    }
+                    if (val.length === 10 && val.includes('-')) {
+                        const parts = val.split('-');
+                        return new Date(parts[0], parts[1] - 1, parts[2]); 
+                    }
+                }
+                return new Date(val);
+            } catch(e) {
+                return new Date(NaN);
+            }
+        }
+
         function formatDateBR(isoString) {
             if(!isoString) return '--';
-            try { const date = new Date(isoString); if(isNaN(date)) return '--'; return date.toLocaleDateString('pt-BR'); } catch(e) { return '--'; }
+            const date = parseRobustDateObj(isoString);
+            if(isNaN(date.getTime())) return '--';
+            return date.toLocaleDateString('pt-BR');
         }
 
         const PLAN_DICT = {
@@ -393,7 +418,21 @@
             'dependente': { price: 0.00, short: 'Dependente' }
         };
 
-        window.getPlanInfo = (planKey) => PLAN_DICT[planKey] || { price: 0, short: String(planKey||'').toUpperCase() };
+        window.getPlanInfo = (planKey, studentObj = null) => {
+            let basePrice = 0; let shortName = String(planKey||'').toUpperCase(); let fid = 1;
+
+            if (PLAN_DICT[planKey]) { 
+                basePrice = PLAN_DICT[planKey].price; 
+                shortName = PLAN_DICT[planKey].short; 
+            }
+
+            let finalPrice = basePrice; let isCustom = false;
+            if (studentObj && studentObj.customPrice !== undefined && studentObj.customPrice !== null && studentObj.customPrice !== "") {
+                finalPrice = Number(studentObj.customPrice); isCustom = true;
+            }
+
+            return { short: shortName, price: finalPrice, basePrice: basePrice, isCustom: isCustom };
+        };
 
         // Máscara CPF
         document.addEventListener('DOMContentLoaded', () => {
@@ -431,7 +470,6 @@
                 window.location.href = "https://www.tanqueteambjj.com.br/login.html";
             } else {
                 
-                // Autenticação com carregamento direto sem onAuthStateChanged para evitar latências
                 const initApp = async () => {
                     try {
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -444,7 +482,6 @@
                         await signInAnonymously(auth); 
                     }
                     
-                    // Chamar a base de dados instantaneamente após autenticar
                     window.loadData();
                     window.loadExperimentalData();
                 };
@@ -455,7 +492,9 @@
 
         window.loadData = async function() {
             try {
-                // Preenche os alunos na interface
+                const tbody = document.getElementById('contracts-table-body');
+                if(tbody) tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400 dark:text-gray-500 italic"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Atualizando dados...</td></tr>`;
+
                 const querySnapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'students'));
                 window.students = [];
                 querySnapshot.forEach(doc => {
@@ -516,7 +555,7 @@
             today.setHours(0,0,0,0);
 
             filtered.forEach(s => {
-                const planInfo = window.getPlanInfo(s.plan);
+                const planInfo = window.getPlanInfo(s.plan, s);
                 
                 let guardianText = s.guardian ? `<div class="text-[10px] text-gray-400 mt-0.5">Resp: ${s.guardian}</div>` : '';
                 if(s.plan === 'dependente' && s.titularName) guardianText = `<div class="text-[10px] text-purple-500 font-bold mt-0.5">Titular: ${s.titularName}</div>`;
@@ -529,8 +568,9 @@
                 let endDateStr = 'Não definido';
                 let endColor = 'text-gray-500 dark:text-gray-400';
                 if (s.contractEndDate) {
-                    const endDate = new Date(s.contractEndDate);
+                    const endDate = parseRobustDateObj(s.contractEndDate);
                     if (!isNaN(endDate.getTime())) {
+                        endDate.setHours(0,0,0,0);
                         endDateStr = endDate.toLocaleDateString('pt-BR');
                         const timeDiff = endDate.getTime() - today.getTime();
                         const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
@@ -635,9 +675,16 @@
                 });
             }
 
-            const pInfo = window.getPlanInfo(s.plan);
-            let price = formatCurrency(pInfo.price);
-            let displayName = pInfo.short;
+            const pInfo = window.getPlanInfo(s.plan, s);
+            
+            let priceToDisplay = formatCurrency(pInfo.basePrice);
+            if (pInfo.isCustom) {
+                 priceToDisplay = formatCurrency(pInfo.price);
+            } else if (s.basePrice) {
+                 priceToDisplay = formatCurrency(s.basePrice);
+            }
+
+            let displayName = s.planName || pInfo.short;
 
             let formattedDob = '--/--/----';
             if (s.dob) { 
@@ -657,18 +704,21 @@
             if(s.belt && !s.belt.includes("Branca - 0º") && !s.belt.includes("Iniciante")) beltInfo = `| Graduação Atual: ${s.belt}`;
             
             let regDate = new Date(); 
-            if (s.registrationDate) { const parsed = new Date(s.registrationDate); if (!isNaN(parsed)) regDate = parsed; }
+            if (s.registrationDate) { const parsed = parseRobustDateObj(s.registrationDate); if (!isNaN(parsed.getTime())) regDate = parsed; }
             const printDateStr = regDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
             
             const isFidelity = String(s.plan).includes('semestral') || String(s.plan).includes('trimestral') || isCombo;
             
-            let promoNote = "";
-            if (s.plan.includes('semestral') && !s.plan.includes('combo')) {
-                promoNote = "A 1ª Mensalidade terá o valor reduzido de R$ 29,90.";
-            } else if (s.plan === 'combo-dupla') {
-                promoNote = "A 1ª Mensalidade terá o valor reduzido de R$ 59,90.";
-            } else if (s.plan === 'combo-familia') {
-                promoNote = "A 1ª Mensalidade terá o valor reduzido de R$ 89,90.";
+            let promoNote = s.promoNote || "";
+            // Tenta resgatar info antiga se a atual não tiver
+            if (!promoNote) {
+                if (s.plan.includes('semestral') && !s.plan.includes('combo')) {
+                    promoNote = "A 1ª Mensalidade terá o valor reduzido de R$ 29,90.";
+                } else if (s.plan === 'combo-dupla') {
+                    promoNote = "A 1ª Mensalidade terá o valor reduzido de R$ 59,90.";
+                } else if (s.plan === 'combo-familia') {
+                    promoNote = "A 1ª Mensalidade terá o valor reduzido de R$ 89,90.";
+                }
             }
 
             let dependentsHtml = '';
@@ -689,13 +739,13 @@
 
             let clauseNum = 3;
             let clausesHtmlABNT = `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA 1ª - DO OBJETO:</strong> O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial <strong>JIU-JITSU</strong> pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.</p>`;
-            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: ${promoNote ? '5px' : '15px'}; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong>${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong>${price}</strong>. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.</p>`;
+            clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: ${promoNote ? '5px' : '15px'}; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA 2ª - DO PLANO E VALORES:</strong> O CONTRATANTE opta pelo plano esportivo <strong>${displayName}</strong>, comprometendo-se ao pagamento da mensalidade no valor de <strong>${priceToDisplay}</strong>. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.</p>`;
 
             if (promoNote) {
-                clausesHtmlABNT += `<p style="margin-bottom: 15px; font-style: italic; font-size: 11pt; text-align: justify; line-height: 1.5;">OBS: Promoção de Inauguração aplicada. ${promoNote}</p>`;
+                clausesHtmlABNT += `<p style="margin-bottom: 15px; font-style: italic; font-size: 11pt; text-align: justify; line-height: 1.5;">OBS: Condição Promocional Aplicada. ${promoNote}</p>`;
             }
 
-            if (isFidelity) { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade correspondente à sua nomenclatura (Trimestral ou Semestral). O cancelamento exige aviso prévio de 30 dias por escrito. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>`; clauseNum++; } 
+            if (isFidelity) { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO E DA QUEBRA DE CONTRATO (FIDELIDADE):</strong> O plano escolhido possui prazo de fidelidade correspondente à sua vigência (Trimestral ou Semestral). O cancelamento exige aviso prévio de 30 dias por escrito. A rescisão imotivada antes do término do período de fidelidade contratado acarretará multa rescisória de 20% (vinte por cento) calculada sobre o valor total das parcelas vincendas (restantes) do contrato.</p>`; clauseNum++; } 
             else { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DO CANCELAMENTO:</strong> O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.</p>`; clauseNum++; }
             
             if (isCombo) { clausesHtmlABNT += `<p style="text-indent: 1.25cm; margin-bottom: 15px; text-align: justify; line-height: 1.5; font-size: 12pt;"><strong>CLÁUSULA ${clauseNum}ª - DAS REGRAS DO PLANO FAMÍLIA (COMBO):</strong> O pagamento das mensalidades é unificado e de inteira responsabilidade do CONTRATANTE titular. O cancelamento ou afastamento de um dos beneficiários dependentes não dá direito a desconto ou reembolso parcial, e reverte automaticamente o plano dos membros restantes para o valor da tabela individual vigente.</p>`; clauseNum++; }
@@ -716,7 +766,7 @@
                     </div>
                     
                     <div style="text-align: left; font-size: 10pt; line-height: 1.3; margin-bottom: 10px;">
-                        <p style="margin: 0;">CNPJ: 00.000.000/0001-00</p>
+                        <p style="margin: 0;">CNPJ: 65.678.191/0001-90</p>
                         <p style="margin: 0;">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, CEP 66635-110</p>
                         <p style="margin: 0;">Tel: (91) 99819-2610 | Email: administrativo@tanqueteambjj.com.br</p>
                     </div>
@@ -768,11 +818,17 @@
             document.getElementById('edit-plan').value = s.plan || 'infantil-mensal';
             
             let endDate = '';
-            if (s.contractEndDate) endDate = s.contractEndDate.split('T')[0];
+            if (s.contractEndDate) {
+                const dateEnd = parseRobustDateObj(s.contractEndDate);
+                if (!isNaN(dateEnd.getTime())) endDate = dateEnd.toISOString().split('T')[0];
+            }
             document.getElementById('edit-end-date').value = endDate;
 
             let startDate = '';
-            if (s.registrationDate) startDate = s.registrationDate.split('T')[0];
+            if (s.registrationDate) {
+                const dateStart = parseRobustDateObj(s.registrationDate);
+                if (!isNaN(dateStart.getTime())) startDate = dateStart.toISOString().split('T')[0];
+            }
             document.getElementById('edit-start-date').value = startDate;
 
             document.getElementById('edit-enrollment-status').value = s.enrollmentStatus || 'Ativo';
@@ -835,7 +891,7 @@
             } else if (type === 'frequencia') {
                 html += `<h3 style="font-size:18px; font-weight:bold; margin-bottom:15px;">FREQUÊNCIA - TOP 15 ALUNOS (Últimos 30 dias)</h3><table style="width:100%; border-collapse: collapse; font-size: 12px; text-align:left;"><thead><tr style="background-color: #f3f3f3;"><th style="border: 1px solid #ddd; padding: 8px;">Posição</th><th style="border: 1px solid #ddd; padding: 8px;">Nome</th><th style="border: 1px solid #ddd; padding: 8px; text-align:center;">Aulas (30 dias)</th><th style="border: 1px solid #ddd; padding: 8px;">Faixa</th></tr></thead><tbody>`;
                 const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).map(s => ({ name: s.name, belt: s.belt, classes: s.attendance ? s.attendance.filter(d => new Date(d) >= thirtyDaysAgo).length : 0 })).sort((a,b) => b.classes - a.classes).slice(0, 15).forEach((d, i) => { tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px;">#${i+1}</td><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${d.name}</td><td style="border: 1px solid #ddd; padding: 8px; text-align:center;">${d.classes}</td><td style="border: 1px solid #ddd; padding: 8px;">${d.belt||'-'}</td></tr>`; });
+                window.students.filter(s => s.enrollmentStatus !== 'Inativo' && !s.archived).map(s => ({ name: s.name, belt: s.belt, classes: s.attendance ? s.attendance.filter(d => parseRobustDateObj(d) >= thirtyDaysAgo).length : 0 })).sort((a,b) => b.classes - a.classes).slice(0, 15).forEach((d, i) => { tableRows += `<tr><td style="border: 1px solid #ddd; padding: 8px;">#${i+1}</td><td style="border: 1px solid #ddd; padding: 8px; font-weight:bold;">${d.name}</td><td style="border: 1px solid #ddd; padding: 8px; text-align:center;">${d.classes}</td><td style="border: 1px solid #ddd; padding: 8px;">${d.belt||'-'}</td></tr>`; });
                 if(tableRows === '') tableRows = '<tr><td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: center;">Nenhum registro.</td></tr>';
                 html += tableRows + `</tbody></table>`;
             } else if (type === 'experimental') {
@@ -853,8 +909,9 @@
                 let expContracts = [];
                 window.students.filter(s => !s.archived && s.enrollmentStatus !== 'Inativo').forEach(s => {
                     if (s.contractEndDate) {
-                        const endDate = new Date(s.contractEndDate);
+                        const endDate = parseRobustDateObj(s.contractEndDate);
                         if(!isNaN(endDate.getTime())) {
+                            endDate.setHours(0,0,0,0);
                             const timeDiff = endDate.getTime() - today.getTime();
                             const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
                             if (daysDiff <= 30) {
