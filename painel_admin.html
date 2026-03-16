@@ -701,10 +701,7 @@
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Plano Atual</label>
                                 <select id="edit-plan" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none" onchange="window.handleEditPlanChange()">
-                                    <option value="infantil-mensal">Infantil Mensal</option><option value="infantil-trimestral">Infantil Trimestral</option><option value="infantil-semestral">Infantil Semestral</option>
-                                    <option value="adulto-mensal">Adulto Mensal</option><option value="adulto-trimestral">Adulto Trimestral</option><option value="adulto-semestral">Adulto Semestral</option>
-                                    <option value="combo-dupla">Combo Dupla</option><option value="combo-casal">Combo Casal</option><option value="combo-familia">Combo Família</option>
-                                    <option value="dependente">Dependente (Isento)</option><option value="administracao">Administração (Isento)</option>
+                                    <option value="" disabled selected>Carregando planos...</option>
                                 </select>
                             </div>
                             
@@ -916,7 +913,7 @@
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Selecione o Plano</label>
                         <select id="reg-plan" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none font-bold" onchange="window.handleAdminPlanChange()">
-                            <option value="infantil-mensal">Infantil Mensal</option><option value="infantil-trimestral">Infantil Trimestral</option><option value="infantil-semestral">Infantil Semestral</option><option value="adulto-mensal">Adulto Mensal</option><option value="adulto-trimestral">Adulto Trimestral</option><option value="adulto-semestral">Adulto Semestral</option><option value="combo-dupla">Combo Dupla (1 Ad + 1 Inf)</option><option value="combo-casal">Combo Casal (2 Adultos)</option><option value="combo-familia">Combo Família (3 Pessoas)</option><option value="dependente">Dependente (Isento no Combo)</option><option value="administracao">Administração (Isento)</option>
+                            <option value="" disabled selected>Carregando planos...</option>
                         </select>
                     </div>
                     <div class="col-span-1 hidden" id="admin-reg-titular-container">
@@ -1074,6 +1071,99 @@
         };
 
         window.getPlanInfo = (planKey) => window.PLAN_DICT[planKey] || { price: 0, short: String(planKey||'').toUpperCase(), long: 'NÃO INFORMADO' };
+
+        window.getPlanType = function(planId) {
+            if (!planId) return 'adulto';
+            if (planId === 'dependente') return 'dependente';
+            if (planId === 'combo-dupla' || planId === 'combo-casal') return 'combo-dupla';
+            if (planId === 'combo-familia') return 'combo-familia';
+            if (planId === 'administracao') return 'administracao';
+            if (planId.includes('infantil')) return 'infantil';
+            
+            const plan = window.PLAN_DICT[planId];
+            if (!plan) return 'adulto';
+            
+            const name = (plan.name || plan.short || '').toLowerCase();
+            if (name.includes('dependente')) return 'dependente';
+            if (name.includes('combo') && name.includes('fam')) return 'combo-familia';
+            if (name.includes('combo')) return 'combo-dupla';
+            if (name.includes('admin')) return 'administracao';
+            if (name.includes('infantil')) return 'infantil';
+            
+            return 'adulto';
+        };
+
+        window.getPlanDurationMonths = function(planId) {
+            if (!planId) return 1;
+            if (planId.includes('trimestral')) return 3;
+            if (planId.includes('semestral')) return 6;
+            if (planId.includes('anual')) return 12;
+            if (planId === 'administracao') return 12;
+            if (planId.includes('combo')) return 6;
+            if (planId === 'dependente') return 6;
+            
+            const plan = window.PLAN_DICT[planId];
+            if (!plan) return 1;
+            const name = (plan.name || plan.short || '').toLowerCase();
+            
+            if (name.includes('trimestral')) return 3;
+            if (name.includes('semestral')) return 6;
+            if (name.includes('anual')) return 12;
+            if (name.includes('combo') || name.includes('dependente')) return 6;
+            if (name.includes('admin')) return 12;
+            
+            return 1;
+        };
+
+        window.loadPlans = async function() {
+            try {
+                if (!window.db) return;
+                const querySnapshot = await getDocs(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'plans'));
+                window.plansList = [];
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    const planId = doc.id;
+                    const planName = data.name || 'Plano Sem Nome';
+                    const planPrice = parseFloat(data.price) || 0;
+                    
+                    window.PLAN_DICT[planId] = {
+                        price: planPrice,
+                        short: planName,
+                        long: planName.toUpperCase(),
+                        ...data
+                    };
+                    window.plansList.push({ id: planId, ...data });
+                });
+                window.populatePlanSelects();
+            } catch (error) {
+                console.error("Erro ao carregar planos:", error);
+            }
+        };
+
+        window.populatePlanSelects = function() {
+            let optionsHtml = '<option value="" disabled selected>Selecione um plano...</option>';
+            if (window.plansList && window.plansList.length > 0) {
+                window.plansList.sort((a, b) => (a.name || '').localeCompare(b.name || '')).forEach(p => {
+                    optionsHtml += `<option value="${p.id}">${p.name} - R$ ${Number(p.price || 0).toFixed(2)}</option>`;
+                });
+            } else {
+                optionsHtml += '<option value="" disabled>Nenhum plano cadastrado</option>';
+            }
+            
+            const regPlan = document.getElementById('reg-plan');
+            const editPlan = document.getElementById('edit-plan');
+            
+            if (regPlan) {
+                const currentReg = regPlan.value;
+                regPlan.innerHTML = optionsHtml;
+                if (currentReg && window.PLAN_DICT[currentReg]) regPlan.value = currentReg;
+            }
+            if (editPlan) {
+                const currentEdit = editPlan.value;
+                editPlan.innerHTML = optionsHtml;
+                if (currentEdit && window.PLAN_DICT[currentEdit]) editPlan.value = currentEdit;
+            }
+        };
 
         // TOGGLE MODO NOTURNO
         window.toggleTheme = function() {
@@ -1240,6 +1330,7 @@
                             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
                             else await signInAnonymously(auth);
                         } catch (e) { console.error("Auth error", e); }
+                        await window.loadPlans();
                         window.loadData(); window.loadNotices(); window.loadExperimentalData();
                     };
                     initAuth();
@@ -1305,9 +1396,9 @@
         };
 
         window.populateTitularSelects = function() {
-            const comboStudents = window.students.filter(s => s.plan && s.plan.includes('combo') && s.enrollmentStatus !== 'Inativo' && !s.archived);
+            const comboStudents = window.students.filter(s => s.plan && window.getPlanType(s.plan).includes('combo') && s.enrollmentStatus !== 'Inativo' && !s.archived);
             let optionsHtml = '<option value="">-- Selecione o Titular --</option>';
-            comboStudents.sort((a, b) => (a.name || '').localeCompare(b.name || '')).forEach(s => optionsHtml += `<option value="${s.name}">${s.name}</option>`);
+            comboStudents.sort((a, b) => (a.name || '').localeCompare(b.name || '')).forEach(s => optionsHtml += `<option value="${s.id}">${s.name}</option>`);
             if (document.getElementById('reg-titular')) document.getElementById('reg-titular').innerHTML = optionsHtml;
             if (document.getElementById('edit-titular')) document.getElementById('edit-titular').innerHTML = optionsHtml;
         }
@@ -1376,12 +1467,12 @@
                 const titularBox = document.getElementById('detail-titular-box'); if (s.titularName && String(s.titularName).trim() !== "") { document.getElementById('detail-titular-name').innerText = s.titularName; titularBox.classList.remove('hidden'); } else titularBox.classList.add('hidden');
                 document.getElementById('detail-qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${id}`; document.getElementById('detail-qr-id').value = id; document.getElementById('detail-student-id').value = id;
                 const familyBox = document.getElementById('detail-family-box'); familyBox.innerHTML = '';
-                if (s.plan === 'dependente' && s.titularId) {
+                if (window.getPlanType(s.plan) === 'dependente' && s.titularId) {
                     const titular = window.students.find(t => t.id === s.titularId); const tName = titular ? titular.name : 'Titular Desconhecido';
                     familyBox.innerHTML = `<h4 class="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase mb-2"><i class="fa-solid fa-link"></i> Vínculo Familiar</h4><p class="text-sm text-purple-900 dark:text-purple-200 mb-2">Este aluno é dependente de <strong>${tName}</strong>.</p>`;
                     familyBox.classList.remove('hidden');
                 } else {
-                    const deps = window.students.filter(d => d.titularId === s.id && d.plan === 'dependente');
+                    const deps = window.students.filter(d => d.titularId === s.id && window.getPlanType(d.plan) === 'dependente');
                     if (deps.length > 0) {
                         let html = `<h4 class="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase mb-2"><i class="fa-solid fa-users"></i> Dependentes Vinculados (${deps.length})</h4><ul class="space-y-2">`;
                         deps.forEach(d => { html += `<li class="flex justify-between items-center bg-white dark:bg-gray-700 p-2 rounded shadow-sm border border-purple-100 dark:border-purple-800"><div><p class="font-bold text-xs text-purple-900 dark:text-purple-200">${d.name}</p><p class="text-[10px] text-purple-600 dark:text-purple-400">${d.belt || 'Branca'} • Freq: ${d.attendance ? d.attendance.length : 0}</p></div></li>`; });
@@ -1394,20 +1485,26 @@
         window.closeDetailsModal = () => { document.getElementById('details-modal').classList.add('hidden'); document.getElementById('details-modal').classList.remove('flex'); };
 
         window.handleAdminPlanChange = () => {
-            const plan = document.getElementById('reg-plan').value;
+            const planId = document.getElementById('reg-plan').value;
+            const planType = window.getPlanType(planId);
             const titularContainer = document.getElementById('admin-reg-titular-container'); const depsContainer = document.getElementById('admin-reg-deps-container'); const dep1 = document.getElementById('admin-reg-dep1'); const dep2 = document.getElementById('admin-reg-dep2');
             if(titularContainer) titularContainer.classList.add('hidden'); if(depsContainer) depsContainer.classList.add('hidden'); if(dep1) dep1.classList.add('hidden'); if(dep2) dep2.classList.add('hidden');
-            if (plan === 'dependente') { if(titularContainer) titularContainer.classList.remove('hidden'); }
-            else if (plan === 'combo-dupla' || plan === 'combo-casal') { if(depsContainer) depsContainer.classList.remove('hidden'); if(dep1) dep1.classList.remove('hidden'); } 
-            else if (plan === 'combo-familia') { if(depsContainer) depsContainer.classList.remove('hidden'); if(dep1) dep1.classList.remove('hidden'); if(dep2) dep2.classList.remove('hidden'); }
+            if (planType === 'dependente') { if(titularContainer) titularContainer.classList.remove('hidden'); }
+            else if (planType === 'combo-dupla') { if(depsContainer) depsContainer.classList.remove('hidden'); if(dep1) dep1.classList.remove('hidden'); } 
+            else if (planType === 'combo-familia') { if(depsContainer) depsContainer.classList.remove('hidden'); if(dep1) dep1.classList.remove('hidden'); if(dep2) dep2.classList.remove('hidden'); }
         };
 
-        window.openAdminRegisterModal = () => { document.getElementById('admin-register-modal').classList.remove('hidden'); document.getElementById('admin-register-modal').classList.add('flex'); window.handleAdminPlanChange(); };
+        window.openAdminRegisterModal = async () => { 
+            await window.loadPlans();
+            document.getElementById('admin-register-modal').classList.remove('hidden'); 
+            document.getElementById('admin-register-modal').classList.add('flex'); 
+            window.handleAdminPlanChange(); 
+        };
         window.closeAdminRegisterModal = () => {
             document.getElementById('admin-register-modal').classList.add('hidden'); document.getElementById('admin-register-modal').classList.remove('flex');
             document.getElementById('reg-name').value = ''; document.getElementById('reg-dob').value = ''; document.getElementById('reg-cpf').value = ''; document.getElementById('reg-email').value = ''; document.getElementById('reg-phone').value = ''; document.getElementById('reg-address').value = '';
             if(document.getElementById('reg-guardian')) document.getElementById('reg-guardian').value = ''; if(document.getElementById('reg-guardian-cpf')) document.getElementById('reg-guardian-cpf').value = '';
-            document.getElementById('reg-plan').value = 'infantil-mensal'; document.getElementById('reg-belt-color').value = 'Branca'; document.getElementById('reg-belt-degree').value = '0'; document.getElementById('reg-student-login').value = ''; document.getElementById('reg-student-pass').value = '';
+            document.getElementById('reg-plan').value = ''; document.getElementById('reg-belt-color').value = 'Branca'; document.getElementById('reg-belt-degree').value = '0'; document.getElementById('reg-student-login').value = ''; document.getElementById('reg-student-pass').value = '';
             
             // Reset Payment Fields
             document.getElementById('reg-payment-status').value = 'Pendente';
@@ -1417,15 +1514,33 @@
             window.handleAdminPlanChange();
         };
 
-        window.openEditModal = (id) => {
+        window.openEditModal = async (id) => {
             try {
+                await window.loadPlans();
                 const s = window.students.find(st => st.id === id); if(!s) return;
                 document.getElementById('edit-id').value = id; document.getElementById('edit-name').value = s.name || ''; 
                 let formattedDob = String(s.dob || ''); if (formattedDob && formattedDob.includes('-')) { const parts = formattedDob.split('-'); if(parts.length === 3) formattedDob = `${parts[2].substring(0,2)}/${parts[1]}/${parts[0]}`; } document.getElementById('edit-dob').value = formattedDob;
                 document.getElementById('edit-cpf').value = s.cpf || ''; document.getElementById('edit-address').value = s.address || ''; document.getElementById('edit-guardian').value = s.guardian || ''; 
                 if (document.getElementById('edit-guardian-kinship')) document.getElementById('edit-guardian-kinship').value = s.guardianKinship || ''; 
                 if (document.getElementById('edit-guardian-cpf')) document.getElementById('edit-guardian-cpf').value = s.guardianCpf || '';
-                document.getElementById('edit-plan').value = s.plan || 'infantil-mensal'; document.getElementById('edit-titular').value = s.titularName || ''; document.getElementById('edit-email').value = s.email || ''; document.getElementById('edit-phone').value = s.phone || '';
+                
+                // Ensure the plan exists in the options, otherwise add it temporarily
+                const editPlanSelect = document.getElementById('edit-plan');
+                let optionExists = Array.from(editPlanSelect.options).some(opt => opt.value === s.plan);
+                if (!optionExists && s.plan) {
+                    const planInfo = window.getPlanInfo(s.plan);
+                    const newOption = new Option(`${planInfo.short} (Plano Antigo)`, s.plan);
+                    editPlanSelect.add(newOption);
+                }
+                editPlanSelect.value = s.plan || '';
+                
+                let tId = s.titularId || '';
+                if (!tId && s.titularName) {
+                    const t = window.students.find(st => st.name === s.titularName);
+                    if (t) tId = t.id;
+                }
+                document.getElementById('edit-titular').value = tId;
+                document.getElementById('edit-email').value = s.email || ''; document.getElementById('edit-phone').value = s.phone || '';
                 
                 const preview = document.getElementById('edit-photo-preview');
                 if(s.photoBase64) { preview.src = s.photoBase64; preview.classList.remove('hidden'); } else { preview.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name || 'Aluno')}&background=random`; preview.classList.remove('hidden'); }
@@ -1514,12 +1629,22 @@
             window.closeCropperModal();
         };
 
-        window.handleEditPlanChange = () => { const plan = document.getElementById('edit-plan').value; const titularContainer = document.getElementById('edit-titular-container'); if (plan === 'dependente') titularContainer.classList.remove('hidden'); else titularContainer.classList.add('hidden'); };
+        window.handleEditPlanChange = () => { 
+            const planId = document.getElementById('edit-plan').value; 
+            const planType = window.getPlanType(planId);
+            const titularContainer = document.getElementById('edit-titular-container'); 
+            if (planType === 'dependente') titularContainer.classList.remove('hidden'); 
+            else titularContainer.classList.add('hidden'); 
+        };
 
         window.saveAdminNewStudent = async () => {
             const name = String(document.getElementById('reg-name').value).toUpperCase(); const dob = toISODate(document.getElementById('reg-dob').value); const cpf = document.getElementById('reg-cpf').value; const email = document.getElementById('reg-email').value; const phone = document.getElementById('reg-phone').value; const address = document.getElementById('reg-address').value; 
             const guardian = document.getElementById('reg-guardian') ? document.getElementById('reg-guardian').value : ''; const guardianCpf = document.getElementById('reg-guardian-cpf') ? document.getElementById('reg-guardian-cpf').value : ''; const guardianKinship = 'Pai/Mãe'; 
-            const plan = document.getElementById('reg-plan').value; const titular = plan === 'dependente' ? document.getElementById('reg-titular').value : ""; 
+            const planId = document.getElementById('reg-plan').value; 
+            const planType = window.getPlanType(planId);
+            const titularSelect = document.getElementById('reg-titular');
+            const titularId = planType === 'dependente' ? titularSelect.value : ""; 
+            const titularName = planType === 'dependente' && titularSelect.selectedIndex > 0 ? titularSelect.options[titularSelect.selectedIndex].text : ""; 
             const beltColor = document.getElementById('reg-belt-color').value; const beltDegree = document.getElementById('reg-belt-degree').value; const login = document.getElementById('reg-student-login').value; const pass = document.getElementById('reg-student-pass').value;
             const origin = document.getElementById('reg-origin') ? document.getElementById('reg-origin').value : 'Não informado';
             
@@ -1528,16 +1653,22 @@
             const payAmount = document.getElementById('reg-pay-amount').value;
             const payMethod = document.getElementById('reg-pay-method').value;
 
-            if (plan === 'administracao') {
+            if (planType === 'administracao') {
                 payStatus = 'Isento';
             }
 
-            if(!name || !plan) { alert("Preencha nome e plano."); return; }
-            if(plan === 'dependente' && !titular) { alert("Selecione o Titular do plano."); return; }
+            if(!name || !planId) { alert("Preencha nome e plano."); return; }
+            if(planType === 'dependente' && !titular) { alert("Selecione o Titular do plano."); return; }
             
             const beltStr = `Faixa ${beltColor} - ${beltDegree}º Grau`; const regDate = new Date(); let endDate = new Date(regDate);
-            if(plan.includes('mensal')) endDate.setMonth(endDate.getMonth() + 1); else if(plan.includes('trimestral')) endDate.setMonth(endDate.getMonth() + 3); else if(plan.includes('semestral') || plan.includes('combo') || plan === 'dependente') endDate.setMonth(endDate.getMonth() + 6); else if(plan === 'administracao') endDate.setFullYear(endDate.getFullYear() + 1); else endDate.setMonth(endDate.getMonth() + 1);
-            let category = 'Adulto'; if (plan.includes('infantil')) category = 'Infantil'; if (plan.includes('combo')) category = 'Combo Família'; if (plan === 'administracao') category = 'Administração'; if (plan === 'dependente') category = 'Dependente (Combo)';
+            const durationMonths = window.getPlanDurationMonths(planId);
+            endDate.setMonth(endDate.getMonth() + durationMonths);
+            
+            let category = 'Adulto'; 
+            if (planType === 'infantil') category = 'Infantil'; 
+            if (planType.includes('combo')) category = 'Combo Família'; 
+            if (planType === 'administracao') category = 'Administração'; 
+            if (planType === 'dependente') category = 'Dependente (Combo)';
 
             let initialPaymentHistory = [];
             if (payStatus === 'Em dia' && payAmount) {
@@ -1550,13 +1681,13 @@
             }
 
             try {
-                const titularDocRef = await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name, dob, cpf, email, phone, address, guardian, guardianCpf, plan, titularName: titular, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
+                const titularDocRef = await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name, dob, cpf, email, phone, address, guardian, guardianCpf, plan: planId, titularName: titularName, titularId: titularId, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 
-                if (plan === 'combo-dupla' || plan === 'combo-casal' || plan === 'combo-familia') {
+                if (planType === 'combo-dupla' || planType === 'combo-casal' || planType === 'combo-familia') {
                     const d1Name = String(document.getElementById('admin-dep1-name').value).toUpperCase();
                     if(d1Name) await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name: d1Name, dob: toISODate(document.getElementById('admin-dep1-dob').value), titularName: name, titularId: titularDocRef.id, guardianKinship: document.getElementById('admin-dep1-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', category: 'Dependente (Combo)', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 }
-                if (plan === 'combo-familia') {
+                if (planType === 'combo-familia') {
                     const d2Name = String(document.getElementById('admin-dep2-name').value).toUpperCase();
                     if(d2Name) await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name: d2Name, dob: toISODate(document.getElementById('admin-dep2-dob').value), titularName: name, titularId: titularDocRef.id, guardianKinship: document.getElementById('admin-dep2-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', category: 'Dependente (Combo)', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 }
@@ -1568,9 +1699,20 @@
             const id = document.getElementById('edit-id').value; const name = String(document.getElementById('edit-name').value).toUpperCase(); const dobIso = toISODate(document.getElementById('edit-dob').value); const cpf = document.getElementById('edit-cpf').value; const address = document.getElementById('edit-address').value; const guardian = document.getElementById('edit-guardian').value;
             let guardianKinship = ''; if(document.getElementById('edit-guardian-kinship')) guardianKinship = document.getElementById('edit-guardian-kinship').value;
             let guardianCpf = ''; if(document.getElementById('edit-guardian-cpf')) guardianCpf = document.getElementById('edit-guardian-cpf').value;
-            const plan = document.getElementById('edit-plan').value; const titular = document.getElementById('edit-titular').value; const email = document.getElementById('edit-email').value; const phone = document.getElementById('edit-phone').value; const color = document.getElementById('edit-belt-color').value; const degree = document.getElementById('edit-belt-degree').value; const beltStr = `Faixa ${color} - ${degree}º Grau`; const login = document.getElementById('edit-login').value; const pass = document.getElementById('edit-password').value; const status = document.getElementById('edit-enrollment-status').value;
+            const planId = document.getElementById('edit-plan').value; 
+            const planType = window.getPlanType(planId);
+            const titularSelect = document.getElementById('edit-titular');
+            const titularId = planType === 'dependente' ? titularSelect.value : "";
+            const titularName = planType === 'dependente' && titularSelect.selectedIndex > 0 ? titularSelect.options[titularSelect.selectedIndex].text : "";
+            const email = document.getElementById('edit-email').value; const phone = document.getElementById('edit-phone').value; const color = document.getElementById('edit-belt-color').value; const degree = document.getElementById('edit-belt-degree').value; const beltStr = `Faixa ${color} - ${degree}º Grau`; const login = document.getElementById('edit-login').value; const pass = document.getElementById('edit-password').value; const status = document.getElementById('edit-enrollment-status').value;
             const originalBelt = document.getElementById('edit-original-belt').value;
-            let newCategory = 'Adulto'; if (plan.includes('infantil')) newCategory = 'Infantil'; if (plan.includes('combo')) newCategory = 'Combo Família'; if (plan === 'administracao') newCategory = 'Administração'; if (plan === 'dependente') newCategory = 'Dependente (Combo)';
+            
+            let newCategory = 'Adulto'; 
+            if (planType === 'infantil') newCategory = 'Infantil'; 
+            if (planType.includes('combo')) newCategory = 'Combo Família'; 
+            if (planType === 'administracao') newCategory = 'Administração'; 
+            if (planType === 'dependente') newCategory = 'Dependente (Combo)';
+            
             let photoBase64 = null;
             if (window.currentCroppedPhoto) {
                 photoBase64 = window.currentCroppedPhoto;
@@ -1586,8 +1728,8 @@
                 }
             }
             try {
-                const updateData = { name: name, dob: dobIso, cpf: cpf, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf, plan: plan, titularName: titular, category: newCategory, enrollmentStatus: status, belt: beltStr, studentLogin: login, studentPassword: pass, email: email, phone: phone };
-                if (plan === 'administracao') {
+                const updateData = { name: name, dob: dobIso, cpf: cpf, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf, plan: planId, titularName: titularName, titularId: titularId, category: newCategory, enrollmentStatus: status, belt: beltStr, studentLogin: login, studentPassword: pass, email: email, phone: phone };
+                if (planType === 'administracao') {
                     updateData.paymentStatus = 'Isento';
                 }
                 if(photoBase64) updateData.photoBase64 = photoBase64;
@@ -2166,9 +2308,9 @@
                 if(s.photoBase64) photoHtml = `<img src="${s.photoBase64}" class="w-8 h-8 rounded-full object-cover border border-gray-300 shrink-0">`;
 
                 let subNameHtml = '';
-                if (s.plan === 'dependente' && s.titularName) {
+                if (window.getPlanType(s.plan) === 'dependente' && s.titularName) {
                     subNameHtml += `<div class="text-[10px] text-purple-600 dark:text-purple-400 font-bold mt-0.5"><i class="fa-solid fa-link"></i> Dep. de ${s.titularName}</div>`;
-                } else if (s.plan && s.plan.includes('combo')) {
+                } else if (s.plan && window.getPlanType(s.plan).includes('combo')) {
                     subNameHtml += `<div class="text-[10px] text-purple-600 dark:text-purple-400 font-bold mt-0.5"><i class="fa-solid fa-users"></i> Titular Combo</div>`;
                 }
                 
@@ -2237,8 +2379,8 @@
                     }
                 }
 
-                if (s.plan && s.plan.includes('combo')) {
-                    const myDependents = window.students.filter(d => d.plan === 'dependente' && d.titularId === s.id);
+                if (s.plan && window.getPlanType(s.plan).includes('combo')) {
+                    const myDependents = window.students.filter(d => window.getPlanType(d.plan) === 'dependente' && d.titularId === s.id);
                     html += renderStudentRow(s, false, null, myDependents.length > 0);
                     renderedIds.add(s.id);
 
@@ -2246,10 +2388,10 @@
                         html += renderStudentRow(dep, true, s.id, false);
                         renderedIds.add(dep.id);
                     });
-                } else if (s.plan === 'dependente' && s.titularId) {
+                } else if (window.getPlanType(s.plan) === 'dependente' && s.titularId) {
                     const titular = filtered.find(t => t.id === s.titularId);
                     if (titular && !renderedIds.has(titular.id)) {
-                        const myDependents = window.students.filter(d => d.plan === 'dependente' && d.titularId === titular.id);
+                        const myDependents = window.students.filter(d => window.getPlanType(d.plan) === 'dependente' && d.titularId === titular.id);
                         html += renderStudentRow(titular, false, null, myDependents.length > 0);
                         renderedIds.add(titular.id);
                         myDependents.forEach(dep => {
@@ -2746,13 +2888,8 @@
             document.getElementById('print-prog-start').innerText = formatDate(s.registrationDate);
             document.getElementById('print-prog-belt').innerText = s.belt || 'Branca';
             
-            let planName = 'Não informado';
-            if (s.plan === 'infantil-mensal') planName = 'Infantil Mensal (R$ 150)';
-            else if (s.plan === 'infantil-trimestral') planName = 'Infantil Trimestral (R$ 400)';
-            else if (s.plan === 'adulto-mensal') planName = 'Adulto Mensal (R$ 180)';
-            else if (s.plan === 'adulto-trimestral') planName = 'Adulto Trimestral (R$ 480)';
-            else if (s.plan === 'combo-familia') planName = 'Combo Família';
-            else if (s.plan === 'dependente') planName = 'Dependente';
+            const planInfo = window.getPlanInfo(s.plan);
+            const planName = planInfo.price > 0 ? `${planInfo.short} (R$ ${Number(planInfo.price).toFixed(2)})` : planInfo.short;
             document.getElementById('print-prog-plan').innerText = planName;
 
             const printTableBody = document.getElementById('print-prog-table-body');
