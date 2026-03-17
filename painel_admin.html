@@ -1074,11 +1074,12 @@
 
         window.getPlanType = function(planId) {
             if (!planId) return 'adulto';
-            if (planId === 'dependente') return 'dependente';
-            if (planId === 'combo-dupla' || planId === 'combo-casal') return 'combo-dupla';
-            if (planId === 'combo-familia') return 'combo-familia';
-            if (planId === 'administracao') return 'administracao';
-            if (planId.includes('infantil')) return 'infantil';
+            const lowerId = String(planId).toLowerCase();
+            if (lowerId === 'dependente') return 'dependente';
+            if (lowerId === 'combo-dupla' || lowerId === 'combo-casal') return 'combo-dupla';
+            if (lowerId === 'combo-familia') return 'combo-familia';
+            if (lowerId === 'administracao') return 'administracao';
+            if (lowerId.includes('infantil')) return 'infantil';
             
             const plan = window.PLAN_DICT[planId];
             if (!plan) return 'adulto';
@@ -1095,12 +1096,13 @@
 
         window.getPlanDurationMonths = function(planId) {
             if (!planId) return 1;
-            if (planId.includes('trimestral')) return 3;
-            if (planId.includes('semestral')) return 6;
-            if (planId.includes('anual')) return 12;
-            if (planId === 'administracao') return 12;
-            if (planId.includes('combo')) return 6;
-            if (planId === 'dependente') return 6;
+            const lowerId = String(planId).toLowerCase();
+            if (lowerId.includes('trimestral')) return 3;
+            if (lowerId.includes('semestral')) return 6;
+            if (lowerId.includes('anual')) return 12;
+            if (lowerId === 'administracao') return 12;
+            if (lowerId.includes('combo')) return 6;
+            if (lowerId === 'dependente') return 6;
             
             const plan = window.PLAN_DICT[planId];
             if (!plan) return 1;
@@ -1132,6 +1134,7 @@
                         long: planName.toUpperCase(),
                         ...data
                     };
+                    window.PLAN_DICT[planName] = window.PLAN_DICT[planId];
                     window.plansList.push({ id: planId, ...data });
                 });
                 window.populatePlanSelects();
@@ -1144,7 +1147,7 @@
             let optionsHtml = '<option value="" disabled selected>Selecione um plano...</option>';
             if (window.plansList && window.plansList.length > 0) {
                 window.plansList.sort((a, b) => (a.name || '').localeCompare(b.name || '')).forEach(p => {
-                    optionsHtml += `<option value="${p.id}">${p.name} - R$ ${Number(p.price || 0).toFixed(2)}</option>`;
+                    optionsHtml += `<option value="${p.name}">${p.name} - R$ ${Number(p.price || 0).toFixed(2)}</option>`;
                 });
             } else {
                 optionsHtml += '<option value="" disabled>Nenhum plano cadastrado</option>';
@@ -1640,8 +1643,11 @@
         window.saveAdminNewStudent = async () => {
             const name = String(document.getElementById('reg-name').value).toUpperCase(); const dob = toISODate(document.getElementById('reg-dob').value); const cpf = document.getElementById('reg-cpf').value; const email = document.getElementById('reg-email').value; const phone = document.getElementById('reg-phone').value; const address = document.getElementById('reg-address').value; 
             const guardian = document.getElementById('reg-guardian') ? document.getElementById('reg-guardian').value : ''; const guardianCpf = document.getElementById('reg-guardian-cpf') ? document.getElementById('reg-guardian-cpf').value : ''; const guardianKinship = 'Pai/Mãe'; 
-            const planId = document.getElementById('reg-plan').value; 
-            const planType = window.getPlanType(planId);
+            const planValueFromSelect = document.getElementById('reg-plan').value; 
+            const planInfo = window.getPlanInfo(planValueFromSelect);
+            const planName = planInfo.name || planValueFromSelect;
+            const planType = window.getPlanType(planName);
+            const planValue = planInfo.price || 0;
             const titularSelect = document.getElementById('reg-titular');
             const titularId = planType === 'dependente' ? titularSelect.value : ""; 
             const titularName = planType === 'dependente' && titularSelect.selectedIndex > 0 ? titularSelect.options[titularSelect.selectedIndex].text : ""; 
@@ -1657,11 +1663,11 @@
                 payStatus = 'Isento';
             }
 
-            if(!name || !planId) { alert("Preencha nome e plano."); return; }
-            if(planType === 'dependente' && !titular) { alert("Selecione o Titular do plano."); return; }
+            if(!name || !planName) { alert("Preencha nome e plano."); return; }
+            if(planType === 'dependente' && !titularId) { alert("Selecione o Titular do plano."); return; }
             
             const beltStr = `Faixa ${beltColor} - ${beltDegree}º Grau`; const regDate = new Date(); let endDate = new Date(regDate);
-            const durationMonths = window.getPlanDurationMonths(planId);
+            const durationMonths = window.getPlanDurationMonths(planName);
             endDate.setMonth(endDate.getMonth() + durationMonths);
             
             let category = 'Adulto'; 
@@ -1681,15 +1687,15 @@
             }
 
             try {
-                const titularDocRef = await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name, dob, cpf, email, phone, address, guardian, guardianCpf, plan: planId, titularName: titularName, titularId: titularId, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
+                const titularDocRef = await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name, dob, cpf, email, phone, address, guardian, guardianCpf, plan: planName, planValue: planValue, titularName: titularName, titularId: titularId, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 
                 if (planType === 'combo-dupla' || planType === 'combo-casal' || planType === 'combo-familia') {
                     const d1Name = String(document.getElementById('admin-dep1-name').value).toUpperCase();
-                    if(d1Name) await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name: d1Name, dob: toISODate(document.getElementById('admin-dep1-dob').value), titularName: name, titularId: titularDocRef.id, guardianKinship: document.getElementById('admin-dep1-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', category: 'Dependente (Combo)', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
+                    if(d1Name) await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name: d1Name, dob: toISODate(document.getElementById('admin-dep1-dob').value), titularName: name, titularId: titularDocRef.id, guardianKinship: document.getElementById('admin-dep1-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'Dependente', planValue: 0, category: 'Dependente (Combo)', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 }
                 if (planType === 'combo-familia') {
                     const d2Name = String(document.getElementById('admin-dep2-name').value).toUpperCase();
-                    if(d2Name) await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name: d2Name, dob: toISODate(document.getElementById('admin-dep2-dob').value), titularName: name, titularId: titularDocRef.id, guardianKinship: document.getElementById('admin-dep2-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', category: 'Dependente (Combo)', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
+                    if(d2Name) await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name: d2Name, dob: toISODate(document.getElementById('admin-dep2-dob').value), titularName: name, titularId: titularDocRef.id, guardianKinship: document.getElementById('admin-dep2-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'Dependente', planValue: 0, category: 'Dependente (Combo)', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 }
                 window.closeAdminRegisterModal(); window.loadData(); alert("Aluno cadastrado com sucesso!");
             } catch(e) { console.error(e); alert("Erro ao cadastrar."); }
@@ -1699,8 +1705,11 @@
             const id = document.getElementById('edit-id').value; const name = String(document.getElementById('edit-name').value).toUpperCase(); const dobIso = toISODate(document.getElementById('edit-dob').value); const cpf = document.getElementById('edit-cpf').value; const address = document.getElementById('edit-address').value; const guardian = document.getElementById('edit-guardian').value;
             let guardianKinship = ''; if(document.getElementById('edit-guardian-kinship')) guardianKinship = document.getElementById('edit-guardian-kinship').value;
             let guardianCpf = ''; if(document.getElementById('edit-guardian-cpf')) guardianCpf = document.getElementById('edit-guardian-cpf').value;
-            const planId = document.getElementById('edit-plan').value; 
-            const planType = window.getPlanType(planId);
+            const planValueFromSelect = document.getElementById('edit-plan').value; 
+            const planInfo = window.getPlanInfo(planValueFromSelect);
+            const planName = planInfo.name || planValueFromSelect;
+            const planType = window.getPlanType(planName);
+            const planValue = planInfo.price || 0;
             const titularSelect = document.getElementById('edit-titular');
             const titularId = planType === 'dependente' ? titularSelect.value : "";
             const titularName = planType === 'dependente' && titularSelect.selectedIndex > 0 ? titularSelect.options[titularSelect.selectedIndex].text : "";
@@ -1728,7 +1737,7 @@
                 }
             }
             try {
-                const updateData = { name: name, dob: dobIso, cpf: cpf, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf, plan: planId, titularName: titularName, titularId: titularId, category: newCategory, enrollmentStatus: status, belt: beltStr, studentLogin: login, studentPassword: pass, email: email, phone: phone };
+                const updateData = { name: name, dob: dobIso, cpf: cpf, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf, plan: planName, planValue: planValue, titularName: titularName, titularId: titularId, category: newCategory, enrollmentStatus: status, belt: beltStr, studentLogin: login, studentPassword: pass, email: email, phone: phone };
                 if (planType === 'administracao') {
                     updateData.paymentStatus = 'Isento';
                 }
