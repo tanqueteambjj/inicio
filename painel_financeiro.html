@@ -479,7 +479,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
@@ -609,7 +609,9 @@
                             planId: data.plan || null,
                             planName: planName || null,
                             paymentStatus: data.paymentStatus || 'Pendente',
-                            nextDueDate: data.nextDueDate || null
+                            nextDueDate: data.nextDueDate || null,
+                            dueDate: data.dueDate || data.nextDueDate || null,
+                            paymentHistory: data.paymentHistory || []
                         });
                     }
                 });
@@ -1160,15 +1162,34 @@
                 
                 await updateDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students', studentId), {
                     nextDueDate: nextDueDate,
+                    dueDate: nextDueDate,
                     paymentStatus: 'Em dia',
-                    plan: planName || null
+                    plan: planName || null,
+                    paymentHistory: arrayUnion({
+                        id: docRef.id,
+                        date: date,
+                        amount: amount,
+                        method: method,
+                        referenceMonth: reference,
+                        timestamp: Date.now()
+                    })
                 });
 
                 const student = window.students.find(s => s.id === studentId);
                 if (student) {
                     student.nextDueDate = nextDueDate;
+                    student.dueDate = nextDueDate;
                     student.paymentStatus = 'Em dia';
                     student.planName = planName || null;
+                    if (!student.paymentHistory) student.paymentHistory = [];
+                    student.paymentHistory.push({
+                        id: docRef.id,
+                        date: date,
+                        amount: amount,
+                        method: method,
+                        referenceMonth: reference,
+                        timestamp: Date.now()
+                    });
                 }
                 
                 window.closeModal('modal-payment');
@@ -1187,6 +1208,20 @@
                     const studentId = payment ? payment.studentId : null;
                     
                     await deleteDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'payments', id));
+                    
+                    if (studentId) {
+                        const student = window.students.find(s => s.id === studentId);
+                        if (student && student.paymentHistory) {
+                            const paymentToRemove = student.paymentHistory.find(ph => ph.id === id);
+                            if (paymentToRemove) {
+                                await updateDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students', studentId), {
+                                    paymentHistory: arrayRemove(paymentToRemove)
+                                });
+                                student.paymentHistory = student.paymentHistory.filter(ph => ph.id !== id);
+                            }
+                        }
+                    }
+                    
                     window.payments = window.payments.filter(p => p.id !== id);
                     window.renderAll();
                     
@@ -1250,13 +1285,36 @@
                 
                 // Update student next due date if it's the most recent payment
                 // For simplicity, we just update the student's next due date to this one
-                await updateDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students', studentId), {
-                    nextDueDate: nextDueDate
-                });
-
                 const student = window.students.find(s => s.id === studentId);
+                
                 if (student) {
+                    let updatedPaymentHistory = student.paymentHistory ? [...student.paymentHistory] : [];
+                    const phIndex = updatedPaymentHistory.findIndex(ph => ph.id === paymentId);
+                    
+                    if (phIndex !== -1) {
+                        updatedPaymentHistory[phIndex] = {
+                            ...updatedPaymentHistory[phIndex],
+                            referenceMonth: reference,
+                            date,
+                            amount,
+                            method
+                        };
+                    }
+                    
+                    await updateDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students', studentId), {
+                        nextDueDate: nextDueDate,
+                        dueDate: nextDueDate,
+                        paymentHistory: updatedPaymentHistory
+                    });
+                    
                     student.nextDueDate = nextDueDate;
+                    student.dueDate = nextDueDate;
+                    student.paymentHistory = updatedPaymentHistory;
+                } else {
+                    await updateDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students', studentId), {
+                        nextDueDate: nextDueDate,
+                        dueDate: nextDueDate
+                    });
                 }
                 
                 window.closeModal('modal-edit-payment');
