@@ -1345,6 +1345,10 @@
         window.handleLogout = () => { localStorage.removeItem('tanque_user_session'); window.location.href = "https://www.tanqueteambjj.com.br/login.html"; }
 
         // UTILITÁRIOS E VALIDAÇÕES
+        function getLocalISODate(d = new Date()) {
+            const tzOffset = d.getTimezoneOffset() * 60000;
+            return new Date(d.getTime() - tzOffset).toISOString().split('T')[0];
+        }
         function getAge(dobStr) {
             if (!dobStr) return null; let dobDate;
             try {
@@ -1360,8 +1364,11 @@
         function formatDate(isoStr) { 
             try { 
                 if (!isoStr) return '--';
-                if (isoStr.length >= 10 && isoStr.indexOf('-') === 4) {
-                    const parts = isoStr.split('T')[0].split('-');
+                if (isoStr.includes('T')) {
+                    const d = new Date(isoStr);
+                    return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR');
+                } else if (isoStr.length >= 10 && isoStr.indexOf('-') === 4) {
+                    const parts = isoStr.split('-');
                     return `${parts[2]}/${parts[1]}/${parts[0]}`;
                 }
                 const d = new Date(isoStr); 
@@ -1682,7 +1689,7 @@
                     amount: parseFloat(payAmount),
                     method: payMethod,
                     timestamp: new Date().toISOString(),
-                    date: new Date().toISOString().split('T')[0]
+                    date: getLocalISODate()
                 });
             }
 
@@ -1890,7 +1897,7 @@
                 if (!student) { resDiv.innerHTML = '<i class="fa-solid fa-circle-xmark text-3xl text-red-500 mb-2"></i> QR Code Inválido.'; resDiv.className = "text-center py-4 w-full rounded-lg bg-red-50 border border-red-200 font-medium text-red-700 min-h-[100px] flex flex-col items-center justify-center"; setTimeout(() => { window.resetScanner(resDiv); }, 3000); return; }
                 if (student.paymentStatus === 'Pendente') { resDiv.innerHTML = `<i class="fa-solid fa-lock text-3xl text-red-500 mb-2"></i> Acesso Bloqueado!<br><span class="text-sm font-bold text-gray-800">${student.name}</span><br><span class="text-xs">Mensalidade Pendente.</span>`; resDiv.className = "text-center py-4 w-full rounded-lg bg-red-50 border border-red-300 font-medium text-red-700 min-h-[100px] flex flex-col items-center justify-center"; setTimeout(() => { window.resetScanner(resDiv); }, 4000); return; }
 
-                const todayISO = new Date().toISOString().split('T')[0]; const className = document.getElementById('checkin-class-selector').value;
+                const todayISO = getLocalISODate(); const className = document.getElementById('checkin-class-selector').value;
                 if (student.attendanceLog && student.attendanceLog.some(l => l.date === todayISO && l.time === className)) { resDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-3xl text-yellow-600 mb-2"></i> Check-in já realizado!<br><span class="text-sm font-bold text-gray-800">${student.name}</span><br><span class="text-xs text-yellow-800">Já tem presença registada na turma: ${className}</span>`; resDiv.className = "text-center py-4 w-full rounded-lg bg-yellow-50 border border-yellow-300 font-medium text-yellow-800 min-h-[100px] flex flex-col items-center justify-center shadow-inner"; setTimeout(() => { window.resetScanner(resDiv); }, 3500); return; }
 
                 const newLog = { date: todayISO, time: className, timestamp: new Date().toISOString() };
@@ -1946,7 +1953,7 @@
             try {
                 if(!window.db) return;
                 const querySnapshot = await getDocs(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'notices')); window.noticesList = [];
-                const today = new Date().toISOString().split('T')[0];
+                const today = getLocalISODate();
                 
                 for (const document of querySnapshot.docs) {
                     const data = document.data();
@@ -2528,7 +2535,7 @@
             const timeStr = document.getElementById('bulk-class-selector').value;
             if (!timeStr) return;
 
-            const dateStr = new Date().toISOString().split('T')[0];
+            const dateStr = getLocalISODate();
             const newLog = { date: dateStr, time: timeStr, timestamp: new Date().toISOString() };
 
             window.closeBulkAttendanceModal();
@@ -2653,7 +2660,7 @@
             } else {
                 nextDue.setMonth(nextDue.getMonth() + 1);
             }
-            document.getElementById('pay-next-due').value = nextDue.toISOString().split('T')[0];
+            document.getElementById('pay-next-due').value = getLocalISODate(nextDue);
             
             // Render history
             const historyList = document.getElementById('pay-history-list');
@@ -2955,7 +2962,7 @@
             const type = 'success';
             const expiryDate = new Date();
             expiryDate.setDate(expiryDate.getDate() + 3); // Expira em 3 dias
-            const expiryDateStr = expiryDate.toISOString().split('T')[0];
+            const expiryDateStr = getLocalISODate(expiryDate);
 
             try {
                 const data = { title, text, type, expiryDate: expiryDateStr, timestamp: new Date().toISOString() };
