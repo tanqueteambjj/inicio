@@ -1371,17 +1371,85 @@
         function formatDate(isoStr) { 
             try { 
                 if (!isoStr) return '--';
-                if (isoStr.includes('T')) {
-                    const d = new Date(isoStr);
-                    return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                } else if (isoStr.length >= 10 && isoStr.indexOf('-') === 4) {
-                    const parts = isoStr.split('-');
-                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                let d;
+                if (isoStr.toDate && typeof isoStr.toDate === 'function') {
+                    d = isoStr.toDate();
+                } else if (isoStr instanceof Date) {
+                    d = isoStr;
+                } else if (typeof isoStr === 'string') {
+                    if (isoStr.includes('T')) {
+                        d = new Date(isoStr);
+                    } else if (isoStr.length >= 10 && isoStr.indexOf('-') === 4) {
+                        const parts = isoStr.split('-');
+                        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                    } else {
+                        d = new Date(isoStr); 
+                    }
+                } else {
+                    return '--';
                 }
-                const d = new Date(isoStr); 
                 return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }); 
             } catch (e) { return '--'; } 
         }
+        function getAdjustedNextDueDate(s) {
+            if (!s || !s.nextDueDate) return null;
+            let nextDueObj;
+            try {
+                if (s.nextDueDate.toDate && typeof s.nextDueDate.toDate === 'function') {
+                    nextDueObj = s.nextDueDate.toDate();
+                } else if (s.nextDueDate instanceof Date) {
+                    nextDueObj = new Date(s.nextDueDate);
+                } else if (typeof s.nextDueDate === 'string') {
+                    if (s.nextDueDate.includes('T')) {
+                        nextDueObj = new Date(s.nextDueDate);
+                    } else {
+                        const parts = s.nextDueDate.split('-');
+                        if (parts.length === 3) {
+                            nextDueObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                        }
+                    }
+                }
+                
+                if (nextDueObj && !isNaN(nextDueObj)) {
+                    if (s.paymentHistory && s.paymentHistory.length > 0) {
+                        const sortedHistory = [...s.paymentHistory].sort((a, b) => new Date(a.date) - new Date(b.date));
+                        const firstPaymentDateStr = sortedHistory[0].date;
+                        let day = null;
+                        if (firstPaymentDateStr) {
+                            if (firstPaymentDateStr.includes('T')) {
+                                const d = new Date(firstPaymentDateStr);
+                                if (!isNaN(d)) day = d.getDate();
+                            } else {
+                                const parts = firstPaymentDateStr.split('-');
+                                if (parts.length >= 3) {
+                                    day = parseInt(parts[2].split(' ')[0], 10);
+                                }
+                            }
+                        }
+                        if (day !== null && !isNaN(day)) {
+                            nextDueObj.setDate(day);
+                        }
+                    }
+                    return nextDueObj;
+                }
+            } catch (e) { return null; }
+            return null;
+        }
+
+        function isPaymentLate(s) {
+            if (!s || s.paymentStatus === 'Isento' || !s.nextDueDate) return false;
+            if (s.paymentStatus === 'Pendente') return true;
+            try {
+                const nextDueObj = getAdjustedNextDueDate(s);
+                if (nextDueObj && !isNaN(nextDueObj)) {
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+                    return nextDueObj < today;
+                }
+            } catch (e) { return false; }
+            return false;
+        }
+
         function isStudentAdmin(s) {
             const cat = s.category ? String(s.category).toLowerCase() : '';
             const plan = s.plan ? String(s.plan).toLowerCase() : '';
@@ -1485,7 +1553,8 @@
                 
                 let nextDueText = '--';
                 if (s.nextDueDate) {
-                    nextDueText = formatDate(s.nextDueDate);
+                    const adjDate = getAdjustedNextDueDate(s);
+                    nextDueText = adjDate ? formatDate(adjDate) : formatDate(s.nextDueDate);
                 }
                 document.getElementById('detail-next-due').innerText = nextDueText;
 
@@ -1919,7 +1988,7 @@
             try {
                 const studentId = decodedText; const student = window.students.find(s => s.id === studentId);
                 if (!student) { resDiv.innerHTML = '<i class="fa-solid fa-circle-xmark text-3xl text-red-500 mb-2"></i> QR Code Inválido.'; resDiv.className = "text-center py-4 w-full rounded-lg bg-red-50 border border-red-200 font-medium text-red-700 min-h-[100px] flex flex-col items-center justify-center"; setTimeout(() => { window.resetScanner(resDiv); }, 3000); return; }
-                if (student.paymentStatus === 'Pendente') { resDiv.innerHTML = `<i class="fa-solid fa-lock text-3xl text-red-500 mb-2"></i> Acesso Bloqueado!<br><span class="text-sm font-bold text-gray-800">${student.name}</span><br><span class="text-xs">Mensalidade Pendente.</span>`; resDiv.className = "text-center py-4 w-full rounded-lg bg-red-50 border border-red-300 font-medium text-red-700 min-h-[100px] flex flex-col items-center justify-center"; setTimeout(() => { window.resetScanner(resDiv); }, 4000); return; }
+                if (isPaymentLate(student)) { resDiv.innerHTML = `<i class="fa-solid fa-lock text-3xl text-red-500 mb-2"></i> Acesso Bloqueado!<br><span class="text-sm font-bold text-gray-800">${student.name}</span><br><span class="text-xs">Mensalidade Pendente.</span>`; resDiv.className = "text-center py-4 w-full rounded-lg bg-red-50 border border-red-300 font-medium text-red-700 min-h-[100px] flex flex-col items-center justify-center"; setTimeout(() => { window.resetScanner(resDiv); }, 4000); return; }
 
                 const todayISO = getLocalISODate(); const className = document.getElementById('checkin-class-selector').value;
                 if (student.attendanceLog && student.attendanceLog.some(l => l.date === todayISO && l.time === className)) { resDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-3xl text-yellow-600 mb-2"></i> Check-in já realizado!<br><span class="text-sm font-bold text-gray-800">${student.name}</span><br><span class="text-xs text-yellow-800">Já tem presença registada na turma: ${className}</span>`; resDiv.className = "text-center py-4 w-full rounded-lg bg-yellow-50 border border-yellow-300 font-medium text-yellow-800 min-h-[100px] flex flex-col items-center justify-center shadow-inner"; setTimeout(() => { window.resetScanner(resDiv); }, 3500); return; }
@@ -2340,8 +2409,13 @@
                 else if(s.enrollmentStatus === 'Inativo') statusBadge = `<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">Inativo</span>`;
                 else if(s.enrollmentStatus === 'Trancado') statusBadge = `<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">Trancado</span>`;
                 
-                let payBadge = `<span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-check"></i> Em dia</span>`;
-                if(s.paymentStatus === 'Pendente') payBadge = `<span class="text-red-600 font-bold text-xs"><i class="fa-solid fa-xmark"></i> Pendente</span>`;
+                let nextDueStr = '--';
+                if (s.nextDueDate) {
+                    const adjDate = getAdjustedNextDueDate(s);
+                    nextDueStr = adjDate ? formatDate(adjDate) : formatDate(s.nextDueDate);
+                }
+                let payBadge = `<div class="flex flex-col"><span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-check"></i> Em dia</span><span class="text-[10px] text-gray-500 mt-0.5">Venc: ${nextDueStr}</span></div>`;
+                if(isPaymentLate(s)) payBadge = `<div class="flex flex-col"><span class="text-red-600 font-bold text-xs"><i class="fa-solid fa-xmark"></i> Pendente</span><span class="text-[10px] text-red-500 mt-0.5">Venc: ${nextDueStr}</span></div>`;
                 else if(s.paymentStatus === 'Isento') payBadge = `<span class="text-gray-500 font-bold text-xs">Isento</span>`;
 
                 let photoHtml = `<div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 text-xs font-bold shrink-0">${s.name.charAt(0).toUpperCase()}</div>`;
@@ -2678,9 +2752,20 @@
             // Calculate next due date (monthly)
             let nextDue = new Date();
             if (s.nextDueDate) {
-                const parts = s.nextDueDate.split('T')[0].split('-');
-                if (parts.length === 3) {
-                    nextDue = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                const adjDate = getAdjustedNextDueDate(s);
+                if (adjDate && !isNaN(adjDate)) {
+                    nextDue = new Date(adjDate);
+                } else {
+                    if (s.nextDueDate.toDate && typeof s.nextDueDate.toDate === 'function') {
+                        nextDue = s.nextDueDate.toDate();
+                    } else if (s.nextDueDate instanceof Date) {
+                        nextDue = new Date(s.nextDueDate);
+                    } else if (typeof s.nextDueDate === 'string') {
+                        const parts = s.nextDueDate.split('T')[0].split('-');
+                        if (parts.length === 3) {
+                            nextDue = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                        }
+                    }
                 }
             }
             nextDue.setMonth(nextDue.getMonth() + 1);
