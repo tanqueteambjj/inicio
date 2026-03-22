@@ -831,8 +831,10 @@
                             <h4 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase">Detalhes do Plano</h4>
                         </div>
                         <input type="hidden" id="detail-student-id">
-                        <div class="grid grid-cols-1 gap-y-2 text-sm">
-                            <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Plano Registrado</span><span class="font-medium font-bold text-brand-dark dark:text-white uppercase" id="detail-plan">--</span></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-y-2 text-sm">
+                            <div class="md:col-span-2"><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Plano Registrado</span><span class="font-medium font-bold text-brand-dark dark:text-white uppercase" id="detail-plan">--</span></div>
+                            <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Vencimento Mensal</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-next-due">--</span></div>
+                            <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Fim do Contrato</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-contract-end">--</span></div>
                         </div>
                         <div id="detail-titular-box" class="hidden mt-3 p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded border border-purple-200 dark:border-purple-800 text-xs">
                             <span class="font-bold">Titular do Plano Família:</span> <span id="detail-titular-name">--</span>
@@ -1346,8 +1348,13 @@
 
         // UTILITÁRIOS E VALIDAÇÕES
         function getLocalISODate(d = new Date()) {
-            const tzOffset = d.getTimezoneOffset() * 60000;
-            return new Date(d.getTime() - tzOffset).toISOString().split('T')[0];
+            try {
+                const parts = d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric' }).split('/');
+                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            } catch (e) {
+                const tzOffset = d.getTimezoneOffset() * 60000;
+                return new Date(d.getTime() - tzOffset).toISOString().split('T')[0];
+            }
         }
         function getAge(dobStr) {
             if (!dobStr) return null; let dobDate;
@@ -1366,13 +1373,13 @@
                 if (!isoStr) return '--';
                 if (isoStr.includes('T')) {
                     const d = new Date(isoStr);
-                    return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR');
+                    return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
                 } else if (isoStr.length >= 10 && isoStr.indexOf('-') === 4) {
                     const parts = isoStr.split('-');
                     return `${parts[2]}/${parts[1]}/${parts[0]}`;
                 }
                 const d = new Date(isoStr); 
-                return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR'); 
+                return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }); 
             } catch (e) { return '--'; } 
         }
         function isStudentAdmin(s) {
@@ -1475,6 +1482,19 @@
                 const guardianBox = document.getElementById('detail-guardian-box'); if (s.guardian && String(s.guardian).trim() !== "") { document.getElementById('detail-guardian-name').innerText = s.guardian; guardianBox.classList.remove('hidden'); } else guardianBox.classList.add('hidden');
                 document.getElementById('detail-plan').innerText = window.getPlanInfo(s.plan).long;
                 const titularBox = document.getElementById('detail-titular-box'); if (s.titularName && String(s.titularName).trim() !== "") { document.getElementById('detail-titular-name').innerText = s.titularName; titularBox.classList.remove('hidden'); } else titularBox.classList.add('hidden');
+                
+                let nextDueText = '--';
+                if (s.nextDueDate) {
+                    nextDueText = formatDate(s.nextDueDate);
+                }
+                document.getElementById('detail-next-due').innerText = nextDueText;
+
+                let contractEndText = '--';
+                if (s.contractEndDate) {
+                    contractEndText = formatDate(s.contractEndDate);
+                }
+                document.getElementById('detail-contract-end').innerText = contractEndText;
+                
                 document.getElementById('detail-qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${id}`; document.getElementById('detail-qr-id').value = id; document.getElementById('detail-student-id').value = id;
                 const familyBox = document.getElementById('detail-family-box'); familyBox.innerHTML = '';
                 if (window.getPlanType(s.plan) === 'dependente' && s.titularId) {
@@ -1684,6 +1704,7 @@
             if (planType === 'dependente') category = 'Dependente (Combo)';
 
             let initialPaymentHistory = [];
+            let nextDue = new Date(regDate);
             if (payStatus === 'Em dia' && payAmount) {
                 initialPaymentHistory.push({
                     amount: parseFloat(payAmount),
@@ -1691,10 +1712,13 @@
                     timestamp: new Date().toISOString(),
                     date: getLocalISODate()
                 });
+                nextDue.setMonth(nextDue.getMonth() + 1);
             }
+            const nextDueDate = nextDue.toISOString();
 
             try {
-                const titularDocRef = await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name, dob, cpf, email, phone, address, guardian, guardianCpf, plan: planName, planValue: planValue, titularName: titularName, titularId: titularId, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
+                const studentData = { name, dob, cpf, email, phone, address, guardian, guardianCpf, plan: planName, planValue: planValue, titularName: titularName, titularId: titularId, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), nextDueDate: nextDueDate, studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] };
+                const titularDocRef = await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), studentData);
                 
                 if (planType === 'combo-dupla' || planType === 'combo-casal' || planType === 'combo-familia') {
                     const d1Name = String(document.getElementById('admin-dep1-name').value).toUpperCase();
@@ -2651,15 +2675,15 @@
             document.getElementById('pay-amount').value = planInfo.price > 0 ? planInfo.price.toFixed(2) : '';
             document.getElementById('pay-method').value = 'Pix';
             
-            // Calculate next due date based on plan
+            // Calculate next due date (monthly)
             let nextDue = new Date();
-            if (s.plan && s.plan.includes('trimestral')) {
-                nextDue.setMonth(nextDue.getMonth() + 3);
-            } else if (s.plan && s.plan.includes('semestral')) {
-                nextDue.setMonth(nextDue.getMonth() + 6);
-            } else {
-                nextDue.setMonth(nextDue.getMonth() + 1);
+            if (s.nextDueDate) {
+                const parts = s.nextDueDate.split('T')[0].split('-');
+                if (parts.length === 3) {
+                    nextDue = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                }
             }
+            nextDue.setMonth(nextDue.getMonth() + 1);
             document.getElementById('pay-next-due').value = getLocalISODate(nextDue);
             
             // Render history
@@ -2713,7 +2737,25 @@
                     paymentHistory: arrayUnion(newPayment)
                 };
                 if (nextDue) {
-                    updateData.contractEndDate = nextDue;
+                    updateData.nextDueDate = nextDue;
+                }
+                
+                // Calculate contract end date if it's the first payment or if it has expired
+                const durationMonths = window.getPlanDurationMonths(s.plan);
+                let shouldUpdateContract = false;
+                if (!s.contractEndDate) {
+                    shouldUpdateContract = true;
+                } else {
+                    const currentContractEnd = new Date(s.contractEndDate);
+                    if (currentContractEnd < new Date()) {
+                        shouldUpdateContract = true;
+                    }
+                }
+                
+                if (shouldUpdateContract) {
+                    const newContractEnd = new Date();
+                    newContractEnd.setMonth(newContractEnd.getMonth() + durationMonths);
+                    updateData.contractEndDate = newContractEnd.toISOString();
                 }
                 
                 await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), updateData);
