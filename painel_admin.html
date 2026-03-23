@@ -222,6 +222,12 @@
                         <select id="filter-belt" onchange="window.filterTable()" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-1.5 text-gray-700 dark:text-gray-300 focus:outline-none focus:border-brand-red bg-gray-50 dark:bg-gray-700 font-medium">
                             <option value="">🥋 Todas as Faixas</option><option value="branca">Branca</option><option value="cinza">Cinza</option><option value="amarela">Amarela</option><option value="laranja">Laranja</option><option value="verde">Verde</option><option value="azul">Azul</option><option value="roxa">Roxa</option><option value="marrom">Marrom</option><option value="preta">Preta</option>
                         </select>
+                        <select id="filter-payment" onchange="window.filterTable()" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-1.5 text-gray-700 dark:text-gray-300 focus:outline-none focus:border-brand-red bg-gray-50 dark:bg-gray-700 font-medium">
+                            <option value="">💰 Todos os Pagamentos</option>
+                            <option value="Em dia">Em dia</option>
+                            <option value="Pendente">Pendente / Atrasado</option>
+                            <option value="Isento">Isento</option>
+                        </select>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -939,15 +945,25 @@
                     
                     <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 dark:border-gray-700">
                         <h4 class="text-sm font-bold text-green-700 dark:text-green-500 uppercase mb-3"><i class="fa-solid fa-cash-register"></i> Primeiro Pagamento (Opcional)</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Status Inicial</label>
-                                <select id="reg-payment-status" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
+                                <select id="reg-payment-status" onchange="window.handleRegPaymentStatusChange()" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
                                     <option value="Pendente">Pendente (Paga depois)</option>
                                     <option value="Em dia">Em dia (Já pagou)</option>
                                     <option value="Isento">Isento</option>
                                 </select>
                             </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Mês de Referência</label>
+                                <input type="month" id="reg-pay-ref-month" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Próximo Vencimento</label>
+                                <input type="date" id="reg-pay-next-due" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Valor Pago (R$)</label>
                                 <input type="number" id="reg-pay-amount" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none" placeholder="Ex: 189.90" step="0.01">
@@ -1593,10 +1609,26 @@
             else if (planType === 'combo-familia') { if(depsContainer) depsContainer.classList.remove('hidden'); if(dep1) dep1.classList.remove('hidden'); if(dep2) dep2.classList.remove('hidden'); }
         };
 
+        window.handleRegPaymentStatusChange = () => {
+            const status = document.getElementById('reg-payment-status').value;
+            const nextDueInput = document.getElementById('reg-pay-next-due');
+            const now = new Date();
+            if (status === 'Em dia') {
+                now.setMonth(now.getMonth() + 1);
+            }
+            nextDueInput.value = getLocalISODate(now);
+        };
+
         window.openAdminRegisterModal = async () => { 
             await window.loadPlans();
             document.getElementById('admin-register-modal').classList.remove('hidden'); 
             document.getElementById('admin-register-modal').classList.add('flex'); 
+            
+            const now = new Date();
+            const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            document.getElementById('reg-pay-ref-month').value = currentMonth;
+            
+            window.handleRegPaymentStatusChange();
             window.handleAdminPlanChange(); 
         };
         window.closeAdminRegisterModal = () => {
@@ -1609,6 +1641,8 @@
             document.getElementById('reg-payment-status').value = 'Pendente';
             document.getElementById('reg-pay-amount').value = '';
             document.getElementById('reg-pay-method').value = 'Pix';
+            document.getElementById('reg-pay-ref-month').value = '';
+            document.getElementById('reg-pay-next-due').value = '';
             
             window.handleAdminPlanChange();
         };
@@ -1754,6 +1788,8 @@
             let payStatus = document.getElementById('reg-payment-status').value;
             const payAmount = document.getElementById('reg-pay-amount').value;
             const payMethod = document.getElementById('reg-pay-method').value;
+            const payRefMonth = document.getElementById('reg-pay-ref-month').value;
+            const payNextDue = document.getElementById('reg-pay-next-due').value;
 
             if (planType === 'administracao') {
                 payStatus = 'Isento';
@@ -1774,14 +1810,20 @@
 
             let initialPaymentHistory = [];
             let nextDue = new Date(regDate);
+            if (payNextDue) {
+                nextDue = new Date(payNextDue + 'T12:00:00');
+            } else {
+                nextDue.setMonth(nextDue.getMonth() + 1);
+            }
+            
             if (payStatus === 'Em dia' && payAmount) {
                 initialPaymentHistory.push({
                     amount: parseFloat(payAmount),
                     method: payMethod,
+                    refMonth: payRefMonth || `${regDate.getFullYear()}-${String(regDate.getMonth() + 1).padStart(2, '0')}`,
                     timestamp: new Date().toISOString(),
-                    date: getLocalISODate()
+                    date: new Date().toISOString()
                 });
-                nextDue.setMonth(nextDue.getMonth() + 1);
             }
             const nextDueDate = nextDue.toISOString();
 
@@ -2370,9 +2412,19 @@
 
             const sortOrder = document.getElementById('sort-order') ? document.getElementById('sort-order').value : 'recent';
             const filterBelt = document.getElementById('filter-belt') ? document.getElementById('filter-belt').value : '';
+            const filterPayment = document.getElementById('filter-payment') ? document.getElementById('filter-payment').value : '';
 
             if (filterBelt) {
                 filtered = filtered.filter(s => s.belt && String(s.belt).toLowerCase().includes(filterBelt.toLowerCase()));
+            }
+
+            if (filterPayment) {
+                filtered = filtered.filter(s => {
+                    if (filterPayment === 'Isento') return s.paymentStatus === 'Isento';
+                    if (filterPayment === 'Em dia') return s.paymentStatus === 'Em dia' && !isPaymentLate(s);
+                    if (filterPayment === 'Pendente') return s.paymentStatus === 'Pendente' || isPaymentLate(s);
+                    return true;
+                });
             }
 
             if (window.currentTab === 'admin') {
