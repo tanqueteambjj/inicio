@@ -1397,6 +1397,17 @@
                     const planName = data.name || 'Plano Sem Nome';
                     const planPrice = parseFloat(data.price) || 0;
                     
+                    // Check if a default plan with the same name exists
+                    const existingDefaultKey = Object.keys(window.PLAN_DICT).find(key => 
+                        window.PLAN_DICT[key].long === planName.toUpperCase() || 
+                        window.PLAN_DICT[key].short.toUpperCase() === planName.toUpperCase()
+                    );
+                    
+                    if (existingDefaultKey && existingDefaultKey !== planId) {
+                        // If it's a custom plan with the same name as a default, remove the default to avoid duplication
+                        delete window.PLAN_DICT[existingDefaultKey];
+                    }
+                    
                     window.PLAN_DICT[planId] = {
                         price: planPrice,
                         short: planName,
@@ -1980,13 +1991,27 @@
                 
                 // Ensure the plan exists in the options, otherwise add it temporarily
                 const editPlanSelect = document.getElementById('edit-plan');
-                let optionExists = Array.from(editPlanSelect.options).some(opt => opt.value === s.plan);
-                if (!optionExists && s.plan) {
-                    const planInfo = window.getPlanInfo(s.plan);
-                    const newOption = new Option(`${planInfo.short} (Plano Antigo)`, s.plan);
+                
+                // Check if s.plan is a name instead of an ID
+                let planIdToSelect = s.plan;
+                if (s.plan && !window.PLAN_DICT[s.plan]) {
+                    const lowerPlan = String(s.plan).toLowerCase();
+                    const foundKey = Object.keys(window.PLAN_DICT).find(key => 
+                        window.PLAN_DICT[key].short.toLowerCase() === lowerPlan || 
+                        window.PLAN_DICT[key].long.toLowerCase() === lowerPlan
+                    );
+                    if (foundKey) {
+                        planIdToSelect = foundKey;
+                    }
+                }
+
+                let optionExists = Array.from(editPlanSelect.options).some(opt => opt.value === planIdToSelect);
+                if (!optionExists && planIdToSelect) {
+                    const planInfo = window.getPlanInfo(planIdToSelect);
+                    const newOption = new Option(`${planInfo.short} (Plano Antigo)`, planIdToSelect);
                     editPlanSelect.add(newOption);
                 }
-                editPlanSelect.value = s.plan || '';
+                editPlanSelect.value = planIdToSelect || '';
                 
                 let tId = s.titularId || '';
                 if (!tId && s.titularName) {
@@ -2887,15 +2912,27 @@
                     }
                 }
                 
+                const daysSinceRegistration = Math.floor((new Date() - new Date(s.registrationDate)) / (1000 * 60 * 60 * 24));
+                const isNewStudent = daysSinceRegistration <= 7;
+
                 let payBadge = `<div class="flex flex-col"><span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-check"></i> Em dia</span><span class="text-[10px] text-gray-500 mt-0.5">Venc: ${nextDueStr}</span></div>`;
                 if(isBlocked) payBadge = `<div class="flex flex-col"><span class="text-red-800 font-bold text-xs"><i class="fa-solid fa-ban"></i> Bloqueado</span><span class="text-[10px] text-red-600 mt-0.5">Venc: ${nextDueStr}</span></div>`;
-                else if(isPaymentLate(s)) payBadge = `<div class="flex flex-col"><span class="text-red-600 font-bold text-xs"><i class="fa-solid fa-xmark"></i> Pendente</span><span class="text-[10px] text-red-500 mt-0.5">Venc: ${nextDueStr}</span></div>`;
+                else if(isPaymentLate(s) || s.paymentStatus === 'Pendente') {
+                    if (isNewStudent) {
+                        payBadge = `<div class="flex flex-col"><span class="text-orange-500 font-bold text-xs"><i class="fa-solid fa-clock"></i> 1º Pagamento</span><span class="text-[10px] text-orange-400 mt-0.5">Pendente</span></div>`;
+                    } else {
+                        payBadge = `<div class="flex flex-col"><span class="text-red-600 font-bold text-xs"><i class="fa-solid fa-xmark"></i> Pendente</span><span class="text-[10px] text-red-500 mt-0.5">Venc: ${nextDueStr}</span></div>`;
+                    }
+                }
                 else if(s.paymentStatus === 'Isento') payBadge = `<span class="text-gray-500 font-bold text-xs">Isento</span>`;
 
                 let photoHtml = `<div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 text-xs font-bold shrink-0">${s.name.charAt(0).toUpperCase()}</div>`;
                 if(s.photoBase64) photoHtml = `<img src="${s.photoBase64}" class="w-8 h-8 rounded-full object-cover border border-gray-300 shrink-0">`;
 
                 let subNameHtml = '';
+                if (isNewStudent) {
+                    subNameHtml += `<div class="text-[10px] text-brand-red font-bold mt-0.5 uppercase tracking-wider"><i class="fa-solid fa-star"></i> Aluno Novo</div>`;
+                }
                 if (window.getPlanType(s.plan) === 'dependente' && s.titularName) {
                     subNameHtml += `<div class="text-[10px] text-purple-600 dark:text-purple-400 font-bold mt-0.5"><i class="fa-solid fa-link"></i> Dep. de ${s.titularName}</div>`;
                 } else if (s.plan && window.getPlanType(s.plan).includes('combo')) {
@@ -2940,6 +2977,9 @@
                 `;
 
                 let rowClass = "border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition";
+                if (isNewStudent) {
+                    rowClass += " border-l-2 border-l-brand-red bg-red-50/10 dark:bg-red-900/10";
+                }
                 if (isDependent) {
                     rowClass += ` bg-gray-50/50 dark:bg-gray-800/50 hidden dependent-of-${titularId}`;
                 }
