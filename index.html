@@ -1732,16 +1732,18 @@
                 
                 const studentMsg = `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;"><div style="text-align: center; margin-bottom: 20px; background-color: #000; padding: 20px; border-radius: 8px 8px 0 0;"><img src="https://iili.io/qC543c7.png" alt="Tanque Team BJJ" style="width: 100px; height: auto;"><h2 style="color: #fff; margin: 10px 0 0 0;">TANQUE TEAM BJJ</h2></div><h2 style="color: #D90429;">Sua Aula Experimental está Confirmada! \uD83E\uDD4B</h2><p>Olá, <strong>${name.split(' ')[0]}</strong>! Tudo bem?</p><p>Sua vaga para a aula experimental gratuita foi agendada com sucesso. Estamos muito felizes em recebê-lo(a) no nosso tatame!</p><div style="background-color: #f8f9fa; border-left: 5px solid #D90429; padding: 15px; margin: 20px 0; border-radius: 4px;"><h3 style="margin-top: 0; color: #D90429; border-bottom: 1px solid #ddd; padding-bottom: 10px;">\uD83D\uDCC5 Detalhes do Agendamento</h3><p style="margin: 5px 0;"><strong>Data:</strong> ${formattedDate}</p><p style="margin: 5px 0;"><strong>Horário:</strong> ${time}</p><p style="margin: 5px 0;"><strong>Local:</strong> Rua José Custodio de Almeida, Nº 9 - Parque Verde, Belém-PA</p></div><div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center;"><p style="margin: 0; font-size: 16px;"><strong>\uD83D\uDCCD Como Chegar (Google Maps)</strong></p><a href="https://maps.app.goo.gl/Qr4yLUTsVaZPiery9" target="_blank" style="display: inline-block; margin-top: 10px; background-color: #2e7d32; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Abrir no Mapa</a></div><h3 style="color: #D90429; margin-top: 30px;">\uD83D\uDCA1 Dicas para o seu primeiro treino:</h3><ul><li style="margin-bottom: 8px;"><strong>Chegue Cedo:</strong> Tente chegar de 10 a 15 minutos antes do horário para conhecer o espaço e o professor.</li><li style="margin-bottom: 8px;"><strong>O que vestir:</strong> Se você não tem kimono, venha com roupas leves de ginástica (sem zíper).</li><li style="margin-bottom: 8px;"><strong>Higiene:</strong> Traga a sua garrafa de água e <strong>não esqueça os chinelos</strong> (é obrigatório usar chinelos fora do tatame).</li></ul><p style="margin-top: 20px;">Caso precise reagendar ou tenha qualquer dúvida, é só nos chamar no WhatsApp: <a href="https://wa.me/5591998192610" style="color: #25D366; font-weight: bold; text-decoration: none;">(91) 99819-2610</a>.</p><p style="font-size: 1.2em;">Nos vemos no tatame!<br><strong>OSS!</strong></p><hr style="border: 0; border-top: 1px solid #ccc; margin: 30px 0;"><p style="font-size: 12px; color: #777; text-align: center;">Equipe Tanque Team BJJ</p></div>`;
 
-                Promise.all([
-                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+                try {
+                    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
                         from_name: "Tanque Team BJJ", to_name: name, to_email: email,
                         subject: `🥋 Confirmação de Aula Experimental - ${name.split(' ')[0]}`, message: studentMsg, reply_to: "tanqueteambjj@gmail.com"
-                    }, EMAILJS_PUBLIC_KEY),
-                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+                    }, EMAILJS_PUBLIC_KEY);
+                    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
                         from_name: "Site Tanque Team", to_name: "Administração", to_email: "tanqueteambjj@gmail.com",
                         subject: `🚨 Nova Aula Experimental Agendada: ${name}`, message: adminMsg, reply_to: email
-                    }, EMAILJS_PUBLIC_KEY)
-                ]).catch(e => console.log("Falha silenciosa no envio de e-mails.", e));
+                    }, EMAILJS_PUBLIC_KEY);
+                } catch (e) {
+                    console.error("Erro no EmailJS (Experimental):", e);
+                }
 
                 document.getElementById('expModalName').innerText = name.split(' ')[0];
                 document.getElementById('expModalDate').innerText = formattedDate;
@@ -2203,21 +2205,24 @@
                 const paramsStudent = { from_name: "TANQUE TEAM BJJ", to_name: contratanteName, to_email: email, plan_name: displayName, reply_to: 'tanqueteambjj@gmail.com', subject: `🥋 Bem-vindo à Família! Confirmação de Matrícula - ${studentName}`, message: messageStudent };
                 const paramsAdmin = { from_name: "Site Tanque Team", to_name: "Administração", to_email: 'tanqueteambjj@gmail.com', plan_name: displayName, reply_to: email, subject: `Nova Matrícula: ${studentName} - ${displayName}`, message: messageAdmin };
 
-                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 7000));
-                
-                const emailPromise = Promise.all([
-                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, paramsStudent, EMAILJS_PUBLIC_KEY),
-                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, paramsAdmin, EMAILJS_PUBLIC_KEY)
-                ]);
-
                 try {
-                     await Promise.race([emailPromise, timeoutPromise]);
-                     const emailMsg = document.getElementById('email-status-msg');
-                     if(emailMsg) { emailMsg.className = "text-sm text-green-600 mt-2 font-semibold"; emailMsg.innerHTML = `<i class="fa-solid fa-envelope-circle-check"></i> Pré-matrícula confirmada! E-mail enviado para ${email}.`; }
+                    console.log("Enviando emails via EmailJS...");
+                    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, paramsStudent, EMAILJS_PUBLIC_KEY);
+                    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, paramsAdmin, EMAILJS_PUBLIC_KEY);
+                    
+                    const emailMsg = document.getElementById('email-status-msg');
+                    if(emailMsg) { 
+                        emailMsg.className = "text-sm text-green-600 mt-2 font-semibold"; 
+                        emailMsg.innerHTML = `<i class="fa-solid fa-envelope-circle-check"></i> Pré-matrícula confirmada! E-mail enviado para ${email}.`; 
+                    }
                 } catch (e) {
-                     console.log("Email status:", e.message); 
-                     const emailMsg = document.getElementById('email-status-msg');
-                     if(emailMsg) { emailMsg.className = "text-sm text-red-600 mt-2 font-semibold bg-red-100 p-2 rounded border border-red-200"; emailMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> <strong>Aviso:</strong> A pré-matrícula foi gerada, mas houve uma demora no envio do e-mail.'; }
+                    console.error("ERRO EMAILJS:", e); 
+                    const emailMsg = document.getElementById('email-status-msg');
+                    if(emailMsg) { 
+                        emailMsg.className = "text-sm text-red-600 mt-2 font-semibold bg-red-100 p-2 rounded border border-red-200"; 
+                        let errorTxt = e.text || e.message || JSON.stringify(e);
+                        emailMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <strong>Aviso:</strong> A matrícula foi salva, mas o email falhou. Motivo: ${errorTxt}`; 
+                    }
                 }
 
                 window.closeConfirmation();
