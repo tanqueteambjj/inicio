@@ -319,7 +319,7 @@
             <div class="text-center mb-10">
                 <h2 class="font-display text-4xl font-bold text-brand-dark mb-4">BENEFÍCIOS DO <span class="text-brand-red">JIU-JITSU</span></h2>
                 <div class="w-24 h-1 bg-brand-red mx-auto"></div>
-                <p class="text-gray-600 mt-4 max-w-2xl mx-auto text-sm md:text-base">Descubra como a prática da arte suave pode transform a sua vida fora dos tatames em Belém.</p>
+                <p class="text-gray-600 mt-4 max-w-2xl mx-auto text-sm md:text-base">Descubra como a prática da arte suave pode transformar a sua vida fora dos tatames em Belém.</p>
             </div>
 
             <!-- Wrapper do Slider -->
@@ -1728,15 +1728,36 @@
                 });
 
                 const formattedDate = date.split('-').reverse().join('/');
-                const adminMsg = `NOVO AGENDAMENTO EXPERIMENTAL:\nNome: ${name}\nIdade: ${age} anos\nTelefone: ${phone}\nE-mail: ${email}\nData Escolhida: ${formattedDate}\nHorário: ${time}\n${guardian ? `Responsável: ${guardian} (${kinship})` : ''}`;
                 
                 const studentMsg = `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;"><div style="text-align: center; margin-bottom: 20px; background-color: #000; padding: 20px; border-radius: 8px 8px 0 0;"><img src="https://iili.io/qC543c7.png" alt="Tanque Team BJJ" style="width: 100px; height: auto;"><h2 style="color: #fff; margin: 10px 0 0 0;">TANQUE TEAM BJJ</h2></div><h2 style="color: #D90429;">Sua Aula Experimental está Confirmada! \uD83E\uDD4B</h2><p>Olá, <strong>${name.split(' ')[0]}</strong>! Tudo bem?</p><p>Sua vaga para a aula experimental gratuita foi agendada com sucesso. Estamos muito felizes em recebê-lo(a) no nosso tatame!</p><div style="background-color: #f8f9fa; border-left: 5px solid #D90429; padding: 15px; margin: 20px 0; border-radius: 4px;"><h3 style="margin-top: 0; color: #D90429; border-bottom: 1px solid #ddd; padding-bottom: 10px;">\uD83D\uDCC5 Detalhes do Agendamento</h3><p style="margin: 5px 0;"><strong>Data:</strong> ${formattedDate}</p><p style="margin: 5px 0;"><strong>Horário:</strong> ${time}</p><p style="margin: 5px 0;"><strong>Local:</strong> Rua José Custodio de Almeida, Nº 9 - Parque Verde, Belém-PA</p></div><div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center;"><p style="margin: 0; font-size: 16px;"><strong>\uD83D\uDCCD Como Chegar (Google Maps)</strong></p><a href="https://maps.app.goo.gl/Qr4yLUTsVaZPiery9" target="_blank" style="display: inline-block; margin-top: 10px; background-color: #2e7d32; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Abrir no Mapa</a></div><h3 style="color: #D90429; margin-top: 30px;">\uD83D\uDCA1 Dicas para o seu primeiro treino:</h3><ul><li style="margin-bottom: 8px;"><strong>Chegue Cedo:</strong> Tente chegar de 10 a 15 minutos antes do horário para conhecer o espaço e o professor.</li><li style="margin-bottom: 8px;"><strong>O que vestir:</strong> Se você não tem kimono, venha com roupas leves de ginástica (sem zíper).</li><li style="margin-bottom: 8px;"><strong>Higiene:</strong> Traga a sua garrafa de água e <strong>não esqueça os chinelos</strong> (é obrigatório usar chinelos fora do tatame).</li></ul><p style="margin-top: 20px;">Caso precise reagendar ou tenha qualquer dúvida, é só nos chamar no WhatsApp: <a href="https://wa.me/5591998192610" style="color: #25D366; font-weight: bold; text-decoration: none;">(91) 99819-2610</a>.</p><p style="font-size: 1.2em;">Nos vemos no tatame!<br><strong>OSS!</strong></p><hr style="border: 0; border-top: 1px solid #ccc; margin: 30px 0;"><p style="font-size: 12px; color: #777; text-align: center;">Equipe Tanque Team BJJ</p></div>`;
 
+                const adminMsg = `
+                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                    <div style="background-color: #D90429; padding: 15px; text-align: center; color: white;">
+                        <h2 style="margin: 0;">🚨 Nova Aula Experimental</h2>
+                    </div>
+                    <div style="padding: 20px;">
+                        <p><strong>Nome:</strong> ${name}</p>
+                        <p><strong>Idade:</strong> ${age} anos</p>
+                        <p><strong>Telefone:</strong> ${phone}</p>
+                        <p><strong>E-mail:</strong> ${email}</p>
+                        <p><strong>Data Escolhida:</strong> ${formattedDate}</p>
+                        <p><strong>Horário:</strong> ${time}</p>
+                        ${guardian ? `<p><strong>Responsável:</strong> ${guardian} (${kinship})</p>` : ''}
+                    </div>
+                </div>`;
+
                 try {
+                    console.log("Enviando email para o Aluno...");
                     await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
                         from_name: "Tanque Team BJJ", to_name: name, to_email: email,
                         subject: `🥋 Confirmação de Aula Experimental - ${name.split(' ')[0]}`, message: studentMsg, reply_to: "tanqueteambjj@gmail.com"
                     }, EMAILJS_PUBLIC_KEY);
+                    
+                    // Pequena pausa para garantir que o EmailJS processe os dois envios sem bloqueio
+                    await new Promise(resolve => setTimeout(resolve, 800));
+
+                    console.log("Enviando email para a Escola...");
                     await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
                         from_name: "Site Tanque Team", to_name: "Administração", to_email: "tanqueteambjj@gmail.com",
                         subject: `🚨 Nova Aula Experimental Agendada: ${name}`, message: adminMsg, reply_to: email
@@ -2183,7 +2204,7 @@
 
                 let dependentsHtmlEmail = '';
                 if (plan === 'combo-dupla' || plan === 'combo-familia') {
-                    dependentsHtmlEmail = `<h4 style="color: #D90429; margin-bottom: 5px;">Dependentes Cadastrados:</h4><ul>`;
+                    dependentsHtmlEmail = `<h3 style="color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px;">Dependentes Cadastrados</h3><ul>`;
                     const d1N = document.getElementById('dep1Name').value;
                     const d1K = document.getElementById('dep1Kinship').value;
                     dependentsHtmlEmail += `<li>${d1N} (${d1K})</li>`;
@@ -2198,16 +2219,45 @@
                 const priceToDisplay = hasPromotion ? formatCurrency(firstInstallmentPrice) : formatCurrency(basePriceNum);
                 const displayPromoNote = hasPromotion ? `(1º Mês na Promoção)` : '';
 
-                const messageStudent = `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;"><div style="text-align: center; margin-bottom: 20px; background-color: #000; padding: 20px; border-radius: 8px 8px 0 0;"><img src="https://iili.io/qC543c7.png" alt="Tanque Team BJJ" style="width: 100px; height: auto;"><h2 style="color: #fff; margin: 10px 0 0 0;">TANQUE TEAM BJJ</h2></div><h2 style="color: #D90429;">Olá, ${studentName}!</h2><p>É com grande satisfação que confirmamos a sua pré-matrícula na <strong>Tanque Team BJJ</strong>! \uD83D\uDC4A</p><p>Você acaba de dar o primeiro passo na sua jornada no Jiu-Jitsu. Mais do que técnica, aqui você encontrará disciplina, família e um tatame preparado para o seu desenvolvimento.</p><div style="background-color: #f8f9fa; border-left: 5px solid #D90429; padding: 15px; margin: 20px 0; border-radius: 4px;"><h3 style="margin-top: 0; color: #D90429; border-bottom: 1px solid #ddd; padding-bottom: 10px;">\u2705 Resumo da sua Matrícula</h3><p style="margin: 5px 0;"><strong>Titular:</strong> ${studentName}</p><p style="margin: 5px 0;"><strong>Plano:</strong> ${displayName}</p><p style="margin: 5px 0;"><strong>Valor a Pagar Agora:</strong> ${priceToDisplay} <span style="color: #D90429; font-weight: bold;">${displayPromoNote}</span></p><p style="margin: 5px 0;"><strong>Valor Base (Próx. meses):</strong> ${formatCurrency(basePriceNum)}</p><p style="margin: 5px 0;"><strong>Nascimento:</strong> ${formattedDob}</p><p style="margin: 5px 0;"><strong>Graduação:</strong> ${graduationText}</p><hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">${needsGuardian ? `<p style="margin: 5px 0;"><strong>Responsável:</strong> ${guardianName} (${guardianKinship})</p>` : ''}<p style="margin: 5px 0;"><strong>CPF:</strong> ${cpf}</p><p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p><p style="margin: 5px 0;"><strong>Telefone:</strong> ${phone}</p><p style="margin: 5px 0;"><strong>Endereço:</strong> ${address}</p>${dependentsHtmlEmail}</div><div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #ffeeba;"><h3 style="margin-top: 0;">\uD83D\uDCB0 Informação de Pagamento</h3><p style="margin: 0;">Para concluir a ativação do seu plano e retirar seu patch, por favor realize o pagamento <strong>presencialmente na unidade</strong> ou entre em contato através do nosso <strong>WhatsApp</strong>.</p></div><h3 style="color: #D90429;">\uD83D\uDCCB Próximos Passos:</h3><ul><li style="margin-bottom: 8px;"><strong>Uniforme:</strong> Caso ainda não tenha, nossa equipe está pronta para ajudar com o seu kimono.</li><li style="margin-bottom: 8px;"><strong>Primeiro Treino:</strong> Chegue 15 minutos antes para se ambientar e conhecer a escola.</li><li style="margin-bottom: 8px;"><strong>Higiene:</strong> Lembre-se de trazer chinelos para circular fora do tatame.</li></ul><div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 20px;"><p style="margin: 0;"><strong>\uD83D\uDCCD Localização:</strong> <a href="https://maps.app.goo.gl/Qr4yLUTsVaZPiery9" style="color: #2e7d32; text-decoration: none;">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</a></p></div><p style="margin-top: 20px;">Se tiver dúvidas, responda a este e-mail ou entre em contato pelo WhatsApp: <a href="https://wa.me/5591998192610" style="color: #25D366; font-weight: bold; text-decoration: none;">(91) 99819-2610</a>.</p><p style="font-size: 1.2em;">Estamos ansiosos para te ver no tatame!<br><strong>OSS!</strong></p><hr style="border: 0; border-top: 1px solid #ccc; margin: 30px 0;"><p style="font-size: 12px; color: #777; text-align: center;">Atenciosamente,<br>Equipe Tanque Team BJJ</p></div>`;
+                const messageStudent = `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;"><div style="text-align: center; margin-bottom: 20px; background-color: #000; padding: 20px; border-radius: 8px 8px 0 0;"><img src="https://iili.io/qC543c7.png" alt="Tanque Team BJJ" style="width: 100px; height: auto;"><h2 style="color: #fff; margin: 10px 0 0 0;">TANQUE TEAM BJJ</h2></div><h2 style="color: #D90429;">Olá, ${studentName}!</h2><p>É com grande satisfação que confirmamos a sua pré-matrícula na <strong>Tanque Team BJJ</strong>! \uD83D\uDC4A</p><p>Você acaba de dar o primeiro passo na sua jornada no Jiu-Jitsu. Mais do que técnica, aqui você encontrará disciplina, família e um tatame preparado para o seu desenvolvimento.</p><div style="background-color: #f8f9fa; border-left: 5px solid #D90429; padding: 15px; margin: 20px 0; border-radius: 4px;"><h3 style="margin-top: 0; color: #D90429; border-bottom: 1px solid #ddd; padding-bottom: 10px;">\u2705 Resumo da sua Matrícula</h3><p style="margin: 5px 0;"><strong>Titular:</strong> ${studentName}</p><p style="margin: 5px 0;"><strong>Plano:</strong> ${displayName}</p><p style="margin: 5px 0;"><strong>Valor a Pagar Agora:</strong> ${priceToDisplay} <span style="color: #D90429; font-weight: bold;">${displayPromoNote}</span></p><p style="margin: 5px 0;"><strong>Valor Base (Próx. meses):</strong> ${formatCurrency(basePriceNum)}</p><p style="margin: 5px 0;"><strong>Nascimento:</strong> ${formattedDob}</p><p style="margin: 5px 0;"><strong>Graduação:</strong> ${graduationText}</p><hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">${needsGuardian ? `<p style="margin: 5px 0;"><strong>Responsável:</strong> ${guardianName} (${guardianKinship})</p>` : ''}<p style="margin: 5px 0;"><strong>CPF:</strong> ${cpf}</p><p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p><p style="margin: 5px 0;"><strong>Telefone:</strong> ${phone}</p><p style="margin: 5px 0;"><strong>Endereço:</strong> ${address}</p>${dependentsHtmlEmail.replace(/color: #333;/g, 'color: #D90429;')}</div><div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #ffeeba;"><h3 style="margin-top: 0;">\uD83D\uDCB0 Informação de Pagamento</h3><p style="margin: 0;">Para concluir a ativação do seu plano e retirar seu patch, por favor realize o pagamento <strong>presencialmente na unidade</strong> ou entre em contato através do nosso <strong>WhatsApp</strong>.</p></div><h3 style="color: #D90429;">\uD83D\uDCCB Próximos Passos:</h3><ul><li style="margin-bottom: 8px;"><strong>Uniforme:</strong> Caso ainda não tenha, nossa equipe está pronta para ajudar com o seu kimono.</li><li style="margin-bottom: 8px;"><strong>Primeiro Treino:</strong> Chegue 15 minutos antes para se ambientar e conhecer a escola.</li><li style="margin-bottom: 8px;"><strong>Higiene:</strong> Lembre-se de trazer chinelos para circular fora do tatame.</li></ul><div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 20px;"><p style="margin: 0;"><strong>\uD83D\uDCCD Localização:</strong> <a href="https://maps.app.goo.gl/Qr4yLUTsVaZPiery9" style="color: #2e7d32; text-decoration: none;">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA</a></p></div><p style="margin-top: 20px;">Se tiver dúvidas, responda a este e-mail ou entre em contato pelo WhatsApp: <a href="https://wa.me/5591998192610" style="color: #25D366; font-weight: bold; text-decoration: none;">(91) 99819-2610</a>.</p><p style="font-size: 1.2em;">Estamos ansiosos para te ver no tatame!<br><strong>OSS!</strong></p><hr style="border: 0; border-top: 1px solid #ccc; margin: 30px 0;"><p style="font-size: 12px; color: #777; text-align: center;">Atenciosamente,<br>Equipe Tanque Team BJJ</p></div>`;
 
-                const messageAdmin = `NOVA MATRÍCULA REALIZADA (Cópia Admin):\n-----------------------------------\nAluno/Titular: ${studentName}\nNascimento: ${formattedDob}\nGraduação: ${graduationText}\n${needsGuardian ? `Responsável: ${guardianName} (${guardianKinship})` : ''}\nCPF: ${cpf}\nEmail: ${email}\nTelefone: ${phone}\nEndereço: ${address}\nOrigem (Como conheceu): ${howDidYouFindUs}\n\nDETALHES DO PLANO:\n-----------------------------------\nPlano: ${displayName}\nValor Base (Sistema): ${formatCurrency(basePriceNum)}\nPrimeira Parcela / Promo: ${priceToDisplay} ${displayPromoNote}\nData: ${today.toLocaleDateString('pt-BR')}\n\nStatus: Contrato Assinado Digitalmente. Pagamento a ser realizado na recepção. O sistema cobrará o valor promocional na primeira vez.`;
+                const messageAdmin = `
+                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                    <div style="background-color: #1B1B1B; padding: 15px; text-align: center; color: white;">
+                        <h2 style="margin: 0;">📝 Nova Matrícula no Site</h2>
+                    </div>
+                    <div style="padding: 20px;">
+                        <h3 style="color: #D90429; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Dados do Aluno</h3>
+                        <p><strong>Nome:</strong> ${studentName}</p>
+                        <p><strong>Nascimento:</strong> ${formattedDob}</p>
+                        <p><strong>Graduação:</strong> ${graduationText}</p>
+                        ${needsGuardian ? `<p><strong>Responsável:</strong> ${guardianName} (${guardianKinship})</p>` : ''}
+                        <p><strong>CPF:</strong> ${cpf}</p>
+                        <p><strong>E-mail:</strong> ${email}</p>
+                        <p><strong>Telefone:</strong> ${phone}</p>
+                        <p><strong>Endereço:</strong> ${address}</p>
+                        <p><strong>Como conheceu:</strong> ${howDidYouFindUs}</p>
+                        
+                        <h3 style="color: #D90429; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px;">Detalhes do Plano</h3>
+                        <p><strong>Plano:</strong> ${displayName}</p>
+                        <p><strong>Valor Base:</strong> ${formatCurrency(basePriceNum)}</p>
+                        <p><strong>1ª Parcela:</strong> ${priceToDisplay} <span style="color: #D90429; font-size: 12px;">${displayPromoNote}</span></p>
+                        ${dependentsHtmlEmail}
+                        <p style="margin-top: 20px; font-size: 12px; color: #777; background-color: #f9f9f9; padding: 10px; border-radius: 4px;"><strong>Status:</strong> Pré-matrícula concluída online. O aluno foi instruído a realizar o pagamento na recepção ou via WhatsApp.</p>
+                    </div>
+                </div>`;
 
                 const paramsStudent = { from_name: "TANQUE TEAM BJJ", to_name: contratanteName, to_email: email, plan_name: displayName, reply_to: 'tanqueteambjj@gmail.com', subject: `🥋 Bem-vindo à Família! Confirmação de Matrícula - ${studentName}`, message: messageStudent };
                 const paramsAdmin = { from_name: "Site Tanque Team", to_name: "Administração", to_email: 'tanqueteambjj@gmail.com', plan_name: displayName, reply_to: email, subject: `Nova Matrícula: ${studentName} - ${displayName}`, message: messageAdmin };
 
                 try {
-                    console.log("Enviando emails via EmailJS...");
+                    console.log("Enviando email para o Aluno...");
                     await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, paramsStudent, EMAILJS_PUBLIC_KEY);
+                    
+                    // Pequena pausa para garantir que o EmailJS processe os dois envios sem bloqueio
+                    await new Promise(resolve => setTimeout(resolve, 800));
+
+                    console.log("Enviando email para a Escola...");
                     await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, paramsAdmin, EMAILJS_PUBLIC_KEY);
                     
                     const emailMsg = document.getElementById('email-status-msg');
