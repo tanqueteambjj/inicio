@@ -1179,24 +1179,16 @@
             tbody.innerHTML = '';
             
             for (const [key, plan] of Object.entries(window.PLAN_DICT)) {
-                // Skip the duplicate name keys that loadPlans adds
-                if (key === plan.short || key === plan.long) continue;
-
-                const isCustom = !window.DEFAULT_PLAN_KEYS.includes(key);
-                
-                let actionsHtml = '<span class="text-xs text-gray-400">Padrão</span>';
-                if (isCustom) {
-                    actionsHtml = `
-                        <button onclick="window.editPlan('${key}')" class="text-blue-500 hover:text-blue-700 transition-colors mr-3" title="Editar Plano"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="window.deletePlan('${key}')" class="text-red-500 hover:text-red-700 transition-colors" title="Excluir Plano"><i class="fa-solid fa-trash"></i></button>
-                    `;
-                }
+                let actionsHtml = `
+                    <button onclick="window.editPlan('${key}')" class="text-blue-500 hover:text-blue-700 transition-colors mr-3" title="Editar Plano"><i class="fa-solid fa-pen"></i></button>
+                    <button onclick="window.deletePlan('${key}')" class="text-red-500 hover:text-red-700 transition-colors" title="Excluir Plano"><i class="fa-solid fa-trash"></i></button>
+                `;
 
                 let durationText = plan.durationMonths ? `${plan.durationMonths} mes(es)` : 'Automático';
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                        <td class="p-3 text-gray-800 dark:text-gray-200">${plan.long} ${isCustom ? '<span class="ml-2 text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Personalizado</span>' : ''}</td>
+                        <td class="p-3 text-gray-800 dark:text-gray-200">${plan.long}</td>
                         <td class="p-3 text-gray-800 dark:text-gray-200">R$ ${Number(plan.price).toFixed(2)}</td>
                         <td class="p-3 text-gray-800 dark:text-gray-200">${durationText}</td>
                         <td class="p-3 text-right">
@@ -1240,8 +1232,8 @@
                 }
 
                 if (editId) {
-                    // Update existing plan
-                    await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'plans', editId), planData);
+                    // Update existing plan or create override for default plan
+                    await setDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'plans', editId), planData, { merge: true });
                 } else {
                     // Add new plan
                     planData.createdAt = new Date().toISOString();
@@ -1292,7 +1284,8 @@
             if (!confirm('Tem certeza que deseja excluir este plano?')) return;
             
             try {
-                await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'plans', key));
+                // Set as deleted so it overrides defaults
+                await setDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'plans', key), { deleted: true }, { merge: true });
                 
                 // Remove from PLAN_DICT to reflect immediately
                 delete window.PLAN_DICT[key];
@@ -1305,27 +1298,20 @@
             }
         };
         
-        function updatePlanSelects() {
-            const selects = ['reg-plan', 'edit-plan'];
-            selects.forEach(id => {
-                const select = document.getElementById(id);
-                if (select) {
-                    const currentValue = select.value;
-                    select.innerHTML = '';
-                    for (const [key, plan] of Object.entries(window.PLAN_DICT)) {
-                        const option = document.createElement('option');
-                        option.value = key;
-                        option.text = `${plan.long} - R$ ${plan.price.toFixed(2)}`;
-                        select.appendChild(option);
-                    }
-                    if (window.PLAN_DICT[currentValue]) {
-                        select.value = currentValue;
-                    }
+        window.getPlanInfo = (planKey) => {
+            if (!planKey) return { price: 0, short: 'NÃO INFORMADO', long: 'NÃO INFORMADO' };
+            if (window.PLAN_DICT[planKey]) return window.PLAN_DICT[planKey];
+            
+            // Fallback: search by name
+            const lowerKey = String(planKey).toLowerCase();
+            for (const plan of Object.values(window.PLAN_DICT)) {
+                if (plan.short.toLowerCase() === lowerKey || plan.long.toLowerCase() === lowerKey) {
+                    return plan;
                 }
-            });
-        }
-
-        window.getPlanInfo = (planKey) => window.PLAN_DICT[planKey] || { price: 0, short: String(planKey||'').toUpperCase(), long: 'NÃO INFORMADO' };
+            }
+            
+            return { price: 0, short: String(planKey).toUpperCase(), long: 'NÃO INFORMADO' };
+        };
 
         window.getPlanType = function(planId) {
             if (!planId) return 'adulto';
@@ -1336,8 +1322,7 @@
             if (lowerId === 'administracao') return 'administracao';
             if (lowerId.includes('infantil')) return 'infantil';
             
-            const plan = window.PLAN_DICT[planId];
-            if (!plan) return 'adulto';
+            const plan = window.getPlanInfo(planId);
             
             const name = (plan.name || plan.short || '').toLowerCase();
             if (name.includes('dependente')) return 'dependente';
@@ -1352,7 +1337,7 @@
         window.getPlanDurationMonths = function(planId) {
             if (!planId) return 1;
             
-            const plan = window.PLAN_DICT[planId];
+            const plan = window.getPlanInfo(planId);
             if (plan && plan.durationMonths) {
                 return parseInt(plan.durationMonths);
             }
@@ -1403,6 +1388,12 @@
                 querySnapshot.forEach(doc => {
                     const data = doc.data();
                     const planId = doc.id;
+                    
+                    if (data.deleted) {
+                        delete window.PLAN_DICT[planId];
+                        return;
+                    }
+                    
                     const planName = data.name || 'Plano Sem Nome';
                     const planPrice = parseFloat(data.price) || 0;
                     
@@ -1412,7 +1403,6 @@
                         long: planName.toUpperCase(),
                         ...data
                     };
-                    window.PLAN_DICT[planName] = window.PLAN_DICT[planId];
                     window.plansList.push({ id: planId, ...data });
                 });
                 window.populatePlanSelects();
