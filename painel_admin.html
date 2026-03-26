@@ -1310,6 +1310,11 @@
                 }
             }
             
+            // If it's a 20-character string, it's likely a deleted Firestore document ID
+            if (String(planKey).length === 20) {
+                return { price: 0, short: 'Plano Excluído', long: 'PLANO EXCLUÍDO' };
+            }
+            
             return { price: 0, short: String(planKey).toUpperCase(), long: 'NÃO INFORMADO' };
         };
 
@@ -2148,7 +2153,7 @@
             const payRefMonth = document.getElementById('reg-pay-ref-month').value;
             const payNextDue = document.getElementById('reg-pay-next-due').value;
 
-            if (planType === 'administracao') {
+            if (planType === 'administracao' || planValue === 0) {
                 payStatus = 'Isento';
             }
 
@@ -2213,6 +2218,7 @@
                 return;
             }
             const id = document.getElementById('edit-id').value; const name = String(document.getElementById('edit-name').value).toUpperCase(); const dobIso = toISODate(document.getElementById('edit-dob').value); const address = document.getElementById('edit-address').value; const guardian = document.getElementById('edit-guardian').value;
+            const s = window.students.find(st => st.id === id);
             let guardianKinship = ''; if(document.getElementById('edit-guardian-kinship')) guardianKinship = document.getElementById('edit-guardian-kinship').value;
             const cep = document.getElementById('edit-cep') ? document.getElementById('edit-cep').value : '';
             const planValueFromSelect = document.getElementById('edit-plan').value; 
@@ -2248,8 +2254,10 @@
             }
             try {
                 const updateData = { name: name, dob: dobIso, cpf: cpf, cep: cep, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf, plan: planValueFromSelect, planValue: planValue, titularName: titularName, titularId: titularId, category: newCategory, enrollmentStatus: status, belt: beltStr, studentLogin: login, studentPassword: pass, email: email, phone: phone };
-                if (planType === 'administracao') {
+                if (planType === 'administracao' || planValue === 0) {
                     updateData.paymentStatus = 'Isento';
+                } else if (s && s.paymentStatus === 'Isento' && planValue > 0) {
+                    updateData.paymentStatus = 'Pendente';
                 }
                 if(photoBase64) updateData.photoBase64 = photoBase64;
                 if (beltStr !== originalBelt) { updateData.lastGraduationDate = new Date().toISOString(); updateData.progressLog = arrayUnion({ type: 'graduation', text: `Graduado para ${beltStr}`, date: new Date().toISOString() }); }
