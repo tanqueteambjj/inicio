@@ -1134,7 +1134,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query, where, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
@@ -1305,7 +1305,10 @@
             // Fallback: search by name
             const lowerKey = String(planKey).toLowerCase();
             for (const plan of Object.values(window.PLAN_DICT)) {
-                if (plan.short.toLowerCase() === lowerKey || plan.long.toLowerCase() === lowerKey) {
+                const shortLower = plan.short.toLowerCase();
+                const longLower = plan.long.toLowerCase();
+                if (lowerKey === shortLower || lowerKey === longLower || 
+                    lowerKey.startsWith(shortLower + ' - r$') || lowerKey.startsWith(longLower + ' - r$')) {
                     return plan;
                 }
             }
@@ -2001,10 +2004,12 @@
                 let planIdToSelect = s.plan;
                 if (s.plan && !window.PLAN_DICT[s.plan]) {
                     const lowerPlan = String(s.plan).toLowerCase();
-                    const foundKey = Object.keys(window.PLAN_DICT).find(key => 
-                        window.PLAN_DICT[key].short.toLowerCase() === lowerPlan || 
-                        window.PLAN_DICT[key].long.toLowerCase() === lowerPlan
-                    );
+                    const foundKey = Object.keys(window.PLAN_DICT).find(key => {
+                        const shortLower = window.PLAN_DICT[key].short.toLowerCase();
+                        const longLower = window.PLAN_DICT[key].long.toLowerCase();
+                        return shortLower === lowerPlan || longLower === lowerPlan ||
+                               lowerPlan.startsWith(shortLower + ' - r$') || lowerPlan.startsWith(longLower + ' - r$');
+                    });
                     if (foundKey) {
                         planIdToSelect = foundKey;
                     }
@@ -2190,7 +2195,8 @@
             const nextDueDate = nextDue.toISOString();
 
             try {
-                const studentData = { name, dob, cpf, cep, email, phone, address, guardian, guardianCpf, plan: planValueFromSelect, planValue: planValue, titularName: titularName, titularId: titularId, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), nextDueDate: nextDueDate, studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] };
+                const planDisplayString = planInfo.short + ' - R$ ' + Number(planValue).toFixed(2).replace('.', ',');
+                const studentData = { name, dob, cpf, cep, email, phone, address, guardian, guardianCpf, plan: planDisplayString, planValue: planValue, titularName: titularName, titularId: titularId, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), nextDueDate: nextDueDate, studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] };
                 if (photoBase64) studentData.photoBase64 = photoBase64;
                 const titularDocRef = await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), studentData);
                 
@@ -2253,7 +2259,8 @@
                 }
             }
             try {
-                const updateData = { name: name, dob: dobIso, cpf: cpf, cep: cep, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf, plan: planValueFromSelect, planValue: planValue, titularName: titularName, titularId: titularId, category: newCategory, enrollmentStatus: status, belt: beltStr, studentLogin: login, studentPassword: pass, email: email, phone: phone };
+                const planDisplayString = planInfo.short + ' - R$ ' + Number(planValue).toFixed(2).replace('.', ',');
+                const updateData = { name: name, dob: dobIso, cpf: cpf, cep: cep, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf, plan: planDisplayString, planValue: planValue, titularName: titularName, titularId: titularId, category: newCategory, enrollmentStatus: status, belt: beltStr, studentLogin: login, studentPassword: pass, email: email, phone: phone };
                 if (planType === 'administracao' || planValue === 0) {
                     updateData.paymentStatus = 'Isento';
                 } else if (s && s.paymentStatus === 'Isento' && planValue > 0) {
