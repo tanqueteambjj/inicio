@@ -23,7 +23,7 @@ const client = new MercadoPagoConfig({
 });
 
 // 2. Rota que o painel_aluno.html vai chamar para gerar o PIX
-app.post('/api/create-pix-payment', async (req, res) => {
+app.post('https://backend-pix-7owo.onrender.com', async (req, res) => {
   try {
     const { transaction_amount, description, payer_email, payer_first_name, payer_last_name, payer_identification } = req.body;
 
