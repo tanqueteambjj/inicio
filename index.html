@@ -16,6 +16,27 @@
     <meta property="og:image" content="https://iili.io/qC543c7.png">
     <meta property="og:url" content="https://www.tanqueteambjj.com.br">
 
+    <!-- Dados Estruturados para o Google (Ajuda no Google Maps) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SportsActivityLocation",
+      "name": "Tanque Team BJJ",
+      "image": "https://iili.io/qC543c7.png",
+      "url": "https://www.tanqueteambjj.com.br",
+      "telephone": "+5591984533817",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Rua José Custodio de Almeida, Nº 9 - Parque Verde",
+        "addressLocality": "Belém",
+        "addressRegion": "PA",
+        "postalCode": "66635-110",
+        "addressCountry": "BR"
+      },
+      "description": "Academia de Jiu-Jitsu para adultos e crianças em Belém."
+    }
+    </script>
+    
     <!-- Favicon -->
     <link rel="icon" href="https://iili.io/qC543c7.png" type="image/png">
     
@@ -653,11 +674,11 @@
                     <ul class="text-gray-400 text-sm space-y-3">
                         <li class="flex items-center justify-center md:justify-start gap-3">
                             <i class="fa-brands fa-whatsapp text-brand-red text-lg w-5"></i>
-                            <a href="https://wa.me/5591998192610" target="_blank" class="hover:text-white transition">(91) 99819-2610</a>
+                            <a href="https://wa.me/5591984533817?text=Ol%C3%A1!%20Gostaria%20de%20saber%20mais%20informa%C3%A7%C3%B5es%20sobre%20a%20Tanque%20Team%20BJJ." target="_blank" class="hover:text-white transition">(91) 98453-3817</a>
                         </li>
                         <li class="flex items-center justify-center md:justify-start gap-3">
                             <i class="fa-solid fa-phone text-brand-red text-lg w-5"></i>
-                            <a href="tel:+5591998192610" class="hover:text-white transition">(91) 99819-2610</a>
+                            <a href="tel:+5591984533817" class="hover:text-white transition">(91) 98453-3817</a>
                         </li>
                         <li class="flex items-center justify-center md:justify-start gap-3">
                             <i class="fa-solid fa-envelope text-brand-red text-lg w-5"></i>
@@ -699,7 +720,7 @@
     <a href="https://www.instagram.com/tanqueteam.bjj" target="_blank" class="fixed bottom-24 right-6 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:opacity-90 transition-transform transform hover:scale-110 z-[60] insta-btn" aria-label="Siga-nos no Instagram">
         <i class="fa-brands fa-instagram text-3xl"></i>
     </a>
-    <a href="https://wa.me/5591998192610" target="_blank" class="fixed bottom-6 right-6 bg-[#25D366] text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:bg-[#1ebe5d] transition-transform transform hover:scale-110 z-[60] whatsapp-btn" aria-label="Fale conosco no WhatsApp">
+    <a href="https://wa.me/5591984533817?text=Ol%C3%A1!%20Gostaria%20de%20saber%20mais%20informa%C3%A7%C3%B5es%20sobre%20a%20Tanque%20Team%20BJJ." target="_blank" class="fixed bottom-6 right-6 bg-[#25D366] text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:bg-[#1ebe5d] transition-transform transform hover:scale-110 z-[60] whatsapp-btn" aria-label="Fale conosco no WhatsApp">
         <i class="fa-brands fa-whatsapp text-3xl"></i>
     </a>
 
@@ -1097,17 +1118,18 @@
             try {
                 if (!window.firebaseInitialized) throw new Error("Firebase offline.");
 
-                const qEmail = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'experimental'), window.where('email', '==', email));
-                const snapEmail = await window.getDocs(qEmail);
-                if (!snapEmail.empty) {
-                    window.customAlert("Este E-mail já está vinculado a um agendamento experimental anterior. Por norma, permitimos apenas uma aula experimental gratuita por pessoa. Caso necessite remarcar, contacte-nos pelo WhatsApp.");
-                    btn.innerHTML = originalBtnText; btn.disabled = false; return;
-                }
-
                 const qCpf = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'experimental'), window.where('cpf', '==', finalCpf));
                 const snapCpf = await window.getDocs(qCpf);
-                if (!snapCpf.empty) {
-                    window.customAlert("Este CPF já está vinculado a um agendamento experimental anterior. Por norma, permitimos apenas uma aula experimental gratuita por pessoa. Caso necessite remarcar, contacte-nos pelo WhatsApp.");
+                
+                let isDuplicate = false;
+                snapCpf.forEach(doc => {
+                    if(doc.data().name.toLowerCase().trim() === name.toLowerCase().trim()) {
+                        isDuplicate = true;
+                    }
+                });
+
+                if (isDuplicate) {
+                    window.customAlert("Este aluno (mesmo Nome e CPF) já possui um agendamento experimental anterior. Por norma, permitimos apenas uma aula experimental gratuita por pessoa. Caso necessite remarcar, contacte-nos pelo WhatsApp.");
                     btn.innerHTML = originalBtnText; btn.disabled = false; return;
                 }
 
@@ -1128,7 +1150,7 @@
 
                 const formattedDate = date.split('-').reverse().join('/');
                 
-                const studentMsg = `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;"><div style="text-align: center; margin-bottom: 20px; background-color: #000; padding: 20px; border-radius: 8px 8px 0 0;"><img src="https://iili.io/qC543c7.png" alt="Tanque Team BJJ" style="width: 100px; height: auto;"><h2 style="color: #fff; margin: 10px 0 0 0;">TANQUE TEAM BJJ</h2></div><h2 style="color: #D90429;">Sua Aula Experimental está Confirmada! \uD83E\uDD4B</h2><p>Olá, <strong>${name.split(' ')[0]}</strong>! Tudo bem?</p><p>Sua vaga para a aula experimental gratuita foi agendada com sucesso. Estamos muito felizes em recebê-lo(a) no nosso tatame!</p><div style="background-color: #f8f9fa; border-left: 5px solid #D90429; padding: 15px; margin: 20px 0; border-radius: 4px;"><h3 style="margin-top: 0; color: #D90429; border-bottom: 1px solid #ddd; padding-bottom: 10px;">\uD83D\uDCC5 Detalhes do Agendamento</h3><p style="margin: 5px 0;"><strong>Data:</strong> ${formattedDate}</p><p style="margin: 5px 0;"><strong>Horário:</strong> ${time}</p><p style="margin: 5px 0;"><strong>Local:</strong> Rua José Custodio de Almeida, Nº 9 - Parque Verde, Belém-PA</p></div><div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center;"><p style="margin: 0; font-size: 16px;"><strong>\uD83D\uDCCD Como Chegar (Google Maps)</strong></p><a href="https://maps.app.goo.gl/Qr4yLUTsVaZPiery9" target="_blank" style="display: inline-block; margin-top: 10px; background-color: #2e7d32; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Abrir no Mapa</a></div><h3 style="color: #D90429; margin-top: 30px;">\uD83D\uDCA1 Como vir para a Aula Experimental:</h3><ul><li style="margin-bottom: 8px;"><strong>Vestimenta:</strong> Se não tiver kimono, venha com roupas leves de desporto (t-shirt e calções/legging). <strong>Atenção:</strong> As roupas não podem ter fechos de correr (zíper), botões metálicos ou bolsos largos.</li><li style="margin-bottom: 8px;"><strong>Higiene:</strong> Mantenha as unhas das mãos e pés cortadas e limpas.</li><li style="margin-bottom: 8px;"><strong>Fora do Tatame:</strong> O uso de chinelos é <strong>obrigatório</strong>.</li><li style="margin-bottom: 8px;"><strong>Hidratação:</strong> Traga a sua própria garrafa de água.</li></ul><p style="margin-top: 20px;">Caso precise reagendar ou tenha qualquer dúvida, é só nos chamar no WhatsApp: <a href="https://wa.me/5591998192610" style="color: #25D366; font-weight: bold; text-decoration: none;">(91) 99819-2610</a>.</p><p style="font-size: 1.2em;">Nos vemos no tatame!<br><strong>OSS!</strong></p><hr style="border: 0; border-top: 1px solid #ccc; margin: 30px 0;"><p style="font-size: 12px; color: #777; text-align: center;">Equipe Tanque Team BJJ</p></div>`;
+                const studentMsg = `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;"><div style="text-align: center; margin-bottom: 20px; background-color: #000; padding: 20px; border-radius: 8px 8px 0 0;"><img src="https://iili.io/qC543c7.png" alt="Tanque Team BJJ" style="width: 100px; height: auto;"><h2 style="color: #fff; margin: 10px 0 0 0;">TANQUE TEAM BJJ</h2></div><h2 style="color: #D90429;">Sua Aula Experimental está Confirmada! \uD83E\uDD4B</h2><p>Olá, <strong>${name.split(' ')[0]}</strong>! Tudo bem?</p><p>Sua vaga para a aula experimental gratuita foi agendada com sucesso. Estamos muito felizes em recebê-lo(a) no nosso tatame!</p><div style="background-color: #f8f9fa; border-left: 5px solid #D90429; padding: 15px; margin: 20px 0; border-radius: 4px;"><h3 style="margin-top: 0; color: #D90429; border-bottom: 1px solid #ddd; padding-bottom: 10px;">\uD83D\uDCC5 Detalhes do Agendamento</h3><p style="margin: 5px 0;"><strong>Data:</strong> ${formattedDate}</p><p style="margin: 5px 0;"><strong>Horário:</strong> ${time}</p><p style="margin: 5px 0;"><strong>Local:</strong> Rua José Custodio de Almeida, Nº 9 - Parque Verde, Belém-PA</p></div><div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center;"><p style="margin: 0; font-size: 16px;"><strong>\uD83D\uDCCD Como Chegar (Google Maps)</strong></p><a href="https://maps.app.goo.gl/Qr4yLUTsVaZPiery9" target="_blank" style="display: inline-block; margin-top: 10px; background-color: #2e7d32; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Abrir no Mapa</a></div><h3 style="color: #D90429; margin-top: 30px;">\uD83D\uDCA1 Como vir para a Aula Experimental:</h3><ul><li style="margin-bottom: 8px;"><strong>Vestimenta:</strong> Se não tiver kimono, venha com roupas leves de desporto (t-shirt e calções/legging). <strong>Atenção:</strong> As roupas não podem ter fechos de correr (zíper), botões metálicos ou bolsos largos.</li><li style="margin-bottom: 8px;"><strong>Higiene:</strong> Mantenha as unhas das mãos e pés cortadas e limpas.</li><li style="margin-bottom: 8px;"><strong>Fora do Tatame:</strong> O uso de chinelos é <strong>obrigatório</strong>.</li><li style="margin-bottom: 8px;"><strong>Hidratação:</strong> Traga a sua própria garrafa de água.</li></ul><p style="margin-top: 20px;">Caso precise reagendar ou tenha qualquer dúvida, é só nos chamar no WhatsApp: <a href="https://wa.me/5591984533817?text=Ol%C3%A1!%20Gostaria%20de%20saber%20mais%20informa%C3%A7%C3%B5es%20sobre%20a%20Tanque%20Team%20BJJ." style="color: #25D366; font-weight: bold; text-decoration: none;">(91) 98453-3817</a>.</p><p style="font-size: 1.2em;">Nos vemos no tatame!<br><strong>OSS!</strong></p><hr style="border: 0; border-top: 1px solid #ccc; margin: 30px 0;"><p style="font-size: 12px; color: #777; text-align: center;">Equipe Tanque Team BJJ</p></div>`;
 
                 const adminMsg = `
                 <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
