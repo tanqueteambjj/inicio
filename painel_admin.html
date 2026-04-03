@@ -539,6 +539,10 @@
                             <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Vencimento Contrato (Fidelidade)</label>
                             <input type="date" id="pay-end-date" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-blue-500 focus:outline-none">
                         </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data de Vencimento (Mensalidade)</label>
+                            <input type="date" id="pay-contract-next-due" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-blue-500 focus:outline-none">
+                        </div>
                     </div>
                     <div class="mt-4 flex justify-end">
                         <button onclick="window.saveContractData()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 transition shadow-sm">Atualizar Contrato</button>
@@ -548,6 +552,10 @@
                 <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-100 dark:border-green-800 mb-6">
                     <h5 class="font-bold text-green-800 dark:text-green-400 mb-3 uppercase text-xs tracking-wider">Registrar Novo Pagamento</h5>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data do Pagamento</label>
+                            <input type="date" id="pay-date" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
+                        </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Mês de Referência</label>
                             <input type="month" id="pay-ref-month" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
@@ -2310,6 +2318,7 @@
             const titularId = planType === 'dependente' ? titularSelect.value : "";
             const titularName = planType === 'dependente' && titularSelect.selectedIndex > 0 ? titularSelect.options[titularSelect.selectedIndex].text : "";
             const endDate = document.getElementById('pay-end-date').value;
+            const nextDue = document.getElementById('pay-contract-next-due').value;
 
             let newCategory = 'Adulto'; 
             if (planType === 'infantil') newCategory = 'Infantil'; 
@@ -2331,6 +2340,10 @@
                 updateData.contractEndDate = toISODate(endDate);
             } else {
                 updateData.contractEndDate = null;
+            }
+            
+            if (nextDue) {
+                updateData.nextDueDate = toISODate(nextDue);
             }
 
             if (planType === 'administracao' || planValue === 0) {
@@ -3590,8 +3603,31 @@
                 document.getElementById('pay-end-date').value = '';
             }
             
+            if (s.nextDueDate) {
+                let currentNextDue = new Date();
+                const adjDate = getAdjustedNextDueDate(s);
+                if (adjDate && !isNaN(adjDate)) {
+                    currentNextDue = new Date(adjDate);
+                } else {
+                    if (s.nextDueDate.toDate && typeof s.nextDueDate.toDate === 'function') {
+                        currentNextDue = s.nextDueDate.toDate();
+                    } else if (s.nextDueDate instanceof Date) {
+                        currentNextDue = new Date(s.nextDueDate);
+                    } else if (typeof s.nextDueDate === 'string') {
+                        const parts = s.nextDueDate.split('T')[0].split('-');
+                        if (parts.length === 3) {
+                            currentNextDue = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                        }
+                    }
+                }
+                document.getElementById('pay-contract-next-due').value = getLocalISODate(currentNextDue);
+            } else {
+                document.getElementById('pay-contract-next-due').value = '';
+            }
+            
             // Pre-fill fields
             const now = new Date();
+            document.getElementById('pay-date').value = getLocalISODate(now);
             const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             document.getElementById('pay-ref-month').value = currentMonth;
             
@@ -3652,6 +3688,7 @@
 
         window.savePayment = async () => {
             const id = document.getElementById('pay-student-id').value;
+            const payDateStr = document.getElementById('pay-date').value;
             const refMonth = document.getElementById('pay-ref-month').value;
             const amount = document.getElementById('pay-amount').value;
             const method = document.getElementById('pay-method').value;
@@ -3664,8 +3701,18 @@
             
             const s = window.students.find(st => st.id === id); if(!s) return;
             
+            let paymentDateIso = new Date().toISOString();
+            if (payDateStr) {
+                const parts = payDateStr.split('-');
+                if (parts.length === 3) {
+                    const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                    d.setHours(12, 0, 0); // Set to noon to avoid timezone issues
+                    paymentDateIso = d.toISOString();
+                }
+            }
+            
             const newPayment = {
-                date: new Date().toISOString(),
+                date: paymentDateIso,
                 refMonth: refMonth,
                 amount: parseFloat(amount),
                 method: method
