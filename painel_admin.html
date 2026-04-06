@@ -118,6 +118,9 @@
             <a href="#" onclick="window.switchMainView('experimental')" id="nav-experimental" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
                 <i class="fa-solid fa-fire w-6"></i> <span class="ml-2">Aulas Exp.</span>
             </a>
+            <a href="#" onclick="window.switchMainView('contracts')" id="nav-contracts" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
+                <i class="fa-solid fa-file-contract w-6"></i> <span class="ml-2">Contratos</span>
+            </a>
             <a href="#" onclick="window.switchMainView('notices')" id="nav-notices" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
                 <i class="fa-solid fa-bullhorn w-6"></i> <span class="ml-2">Mural de Avisos</span>
             </a>
@@ -257,6 +260,41 @@
                                 <tr><td colspan="7" class="px-6 py-4 text-center">A carregar dados...</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: CONTRATOS -->
+            <div id="view-contracts" class="hidden animate-fade-in">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex justify-between items-center no-print">
+                        <div>
+                            <h3 class="font-bold text-gray-800 dark:text-white uppercase text-lg"><i class="fa-solid fa-file-contract text-purple-500 mr-2"></i> Emissão de Contratos</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Selecione um aluno para gerar e imprimir o contrato</p>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="mb-6">
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Selecione o Aluno</label>
+                            <select id="contract-student-select" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-3 text-sm focus:border-purple-500 focus:outline-none" onchange="window.loadContractPreview()">
+                                <option value="">-- Selecione um aluno --</option>
+                                <!-- Preenchido via JS -->
+                            </select>
+                        </div>
+                        
+                        <div id="contract-preview-container" class="hidden flex-col gap-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300">Texto do Contrato (Editável)</label>
+                                <button onclick="window.loadContractPreview()" class="text-xs text-blue-500 hover:underline"><i class="fa-solid fa-rotate-left"></i> Restaurar Padrão</button>
+                            </div>
+                            <textarea id="contract-tab-text" class="w-full h-96 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-4 text-sm focus:border-purple-500 focus:outline-none font-serif leading-relaxed resize-none"></textarea>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                <strong>Variáveis disponíveis:</strong> [NOME_ALUNO], [CPF_ALUNO], [RG_ALUNO], [ENDERECO_ALUNO], [TELEFONE_ALUNO], [EMAIL_ALUNO], [DATA_NASC], [FAIXA], [GRAU], [PLANO_ALUNO], [VALOR_PLANO], [DATA_ATUAL]
+                            </div>
+                            <div class="flex justify-end mt-4">
+                                <button onclick="window.printTabContract()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded font-bold text-sm shadow-md transition transform active:scale-95"><i class="fa-solid fa-print mr-2"></i> Imprimir Contrato</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -404,6 +442,33 @@
                 <div class="mt-auto bg-white p-2 border border-gray-300 rounded z-10 inline-block mb-4">
                     <img id="qr-image" src="" alt="QR Code" class="w-32 h-32">
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RELATÓRIO GENÉRICO / CONTRATO -->
+    <div id="report-container" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen hidden">
+        <div class="text-center mb-6 border-b-2 border-black pb-4">
+            <img src="https://iili.io/qC543c7.png" alt="Logo" class="h-16 mx-auto mb-2 filter grayscale">
+            <h1 class="text-2xl font-bold uppercase tracking-wider mb-2">Tanque Team BJJ</h1>
+            <p class="text-sm text-gray-800">CNPJ: 65.678.191/0001-90</p>
+            <p class="text-sm text-gray-800">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, CEP 66635-110</p>
+            <p class="text-sm text-gray-800">Tel: (91) 99819-2610 | Email: administrativo@tanqueteambjj.com.br</p>
+            <h2 class="text-xl font-bold mt-6 uppercase underline" id="report-title">Documento</h2>
+            <p class="text-xs text-gray-500 mt-2 hidden" id="report-date-container">Gerado em <span id="report-date"></span></p>
+        </div>
+        <div id="report-content" class="text-sm leading-relaxed text-justify whitespace-pre-wrap font-serif">
+            <!-- Conteúdo injetado via JS -->
+        </div>
+        <div class="mt-16 pt-8 flex justify-around">
+            <div class="text-center w-5/12">
+                <div class="border-b border-black w-full mx-auto mb-2"></div>
+                <p class="text-xs font-bold uppercase">Tanque Team BJJ</p>
+            </div>
+            <div class="text-center w-5/12">
+                <div class="border-b border-black w-full mx-auto mb-2"></div>
+                <p class="text-xs font-bold uppercase" id="report-student-name">CONTRATANTE / RESP. FINANCEIRO</p>
+                <p class="text-[10px] text-gray-600 uppercase">CONTRATANTE / RESP. FINANCEIRO</p>
             </div>
         </div>
     </div>
@@ -605,6 +670,31 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Imprimir Contrato -->
+    <div id="contract-modal" class="fixed inset-0 z-[90] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl animate-fade-in border-t-4 border-purple-500 flex flex-col max-h-[90vh]">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white"><i class="fa-solid fa-file-contract text-purple-500 mr-2"></i> Imprimir Contrato</h3>
+                <button onclick="window.closeContractModal()"><i class="fa-solid fa-times text-gray-400 hover:text-gray-800 dark:hover:text-white"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 flex flex-col gap-4">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300">Texto do Contrato (Editável)</label>
+                    <button onclick="window.resetContractText()" class="text-xs text-blue-500 hover:underline"><i class="fa-solid fa-rotate-left"></i> Restaurar Padrão</button>
+                </div>
+                <input type="hidden" id="contract-student-id">
+                <textarea id="contract-text" class="w-full h-96 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-4 text-sm focus:border-purple-500 focus:outline-none font-serif leading-relaxed resize-none"></textarea>
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                    <strong>Variáveis disponíveis:</strong> [NOME_ALUNO], [CPF_ALUNO], [RG_ALUNO], [ENDERECO_ALUNO], [PLANO_ALUNO], [VALOR_PLANO], [DATA_ATUAL]
+                </div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-end gap-2 border-t border-gray-200 dark:border-gray-600 rounded-b-lg shrink-0">
+                <button onclick="window.closeContractModal()" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded font-bold text-sm transition">Cancelar</button>
+                <button onclick="window.printContract()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded font-bold text-sm shadow-md transition transform active:scale-95"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
             </div>
         </div>
     </div>
@@ -2201,6 +2291,199 @@
             window.handleAdminPlanChange();
         };
 
+        const defaultContractTemplate = `1. CONTRATADA: TANQUE TEAM ACADEMIA DE ARTES MARCIAIS LTDA.
+
+2. CONTRATANTE: [NOME_ALUNO], CPF: [CPF_ALUNO], Endereço: [ENDERECO_ALUNO], Tel: [TELEFONE_ALUNO], E-mail: [EMAIL_ALUNO].
+
+3. ALUNO(A): [NOME_ALUNO], Nasc: [DATA_NASC]. | Graduação Atual: [FAIXA] - [GRAU]
+
+CLÁUSULA 1ª - DO OBJETO: O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial JIU-JITSU pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente.
+
+CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo [PLANO_ALUNO] - R$ [VALOR_PLANO], comprometendo-se ao pagamento da mensalidade no valor de R$ [VALOR_PLANO]. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.
+
+OBS: Condição Promocional Aplicada. 1ª Mensalidade R$ [VALOR_PLANO]
+
+CLÁUSULA 3ª - DO CANCELAMENTO: O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.
+
+CLÁUSULA 4ª - DA INADIMPLÊNCIA: O atraso superior a 30 dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e cobrança dos valores devidos acrescidos de multa de 2% e juros de mora legais.
+
+CLÁUSULA 5ª - DA SAÚDE E APTIDÃO FÍSICA: O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate, isentando a CONTRATADA de qualquer responsabilidade sobre moléstias pré-existentes não declaradas formalmente no ato desta matrícula.
+
+CLÁUSULA 6ª - DAS REGRAS DE CONDUTA (DOJO KUN): É obrigatório o uso de uniforme (Kimono) estipulado pela academia, limpo e conservado. Atos de indisciplina, desrespeito à hierarquia, agressão fora do contexto do treino esportivo ou falta de higiene poderão acarretar na suspensão ou rescisão unilateral deste contrato por parte da CONTRATADA, sem devolução de valores.
+
+CLÁUSULA 7ª - DO DIREITO DE IMAGEM: O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da academia ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.
+
+Belém-PA, [DATA_ATUAL].`;
+
+        window.populateContractStudents = () => {
+            const select = document.getElementById('contract-student-select');
+            if (!select) return;
+            
+            select.innerHTML = '<option value="">-- Selecione um aluno --</option>';
+            
+            const activeStudents = window.students.filter(s => !s.archived).sort((a, b) => a.name.localeCompare(b.name));
+            
+            activeStudents.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = `${s.name} (${s.cpf || 'Sem CPF'})`;
+                select.appendChild(opt);
+            });
+            
+            document.getElementById('contract-preview-container').classList.add('hidden');
+            document.getElementById('contract-preview-container').classList.remove('flex');
+        };
+
+        window.loadContractPreview = () => {
+            const select = document.getElementById('contract-student-select');
+            if (!select) return;
+            
+            const id = select.value;
+            const container = document.getElementById('contract-preview-container');
+            
+            if (!id) {
+                container.classList.add('hidden');
+                container.classList.remove('flex');
+                return;
+            }
+            
+            const s = window.students.find(st => st.id === id);
+            if (!s) return;
+            
+            let text = defaultContractTemplate;
+            text = text.replace(/\[NOME_ALUNO\]/g, s.name || '_______________________');
+            text = text.replace(/\[CPF_ALUNO\]/g, s.cpf || '_______________________');
+            text = text.replace(/\[RG_ALUNO\]/g, s.rg || '_______________________');
+            text = text.replace(/\[ENDERECO_ALUNO\]/g, s.address || '_______________________');
+            text = text.replace(/\[TELEFONE_ALUNO\]/g, s.phone || '_______________________');
+            text = text.replace(/\[EMAIL_ALUNO\]/g, s.email || '_______________________');
+            
+            let dob = '_______________________';
+            if (s.dob) {
+                const parts = s.dob.split('-');
+                if (parts.length === 3) dob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            text = text.replace(/\[DATA_NASC\]/g, dob);
+            
+            let faixa = 'Branca';
+            let grau = '0º Grau';
+            if (s.belt) {
+                const parts = s.belt.split(' - ');
+                if (parts.length > 0) faixa = parts[0];
+                if (parts.length > 1) grau = parts[1];
+            }
+            text = text.replace(/\[FAIXA\]/g, faixa);
+            text = text.replace(/\[GRAU\]/g, grau);
+            
+            let planName = s.plan || '_______________________';
+            let planValue = '________';
+            if (s.plan && window.plansData && window.plansData[s.plan]) {
+                planValue = window.plansData[s.plan].price.toFixed(2).replace('.', ',');
+            }
+            text = text.replace(/\[PLANO_ALUNO\]/g, planName);
+            text = text.replace(/\[VALOR_PLANO\]/g, planValue);
+            
+            const today = new Date().toLocaleDateString('pt-BR');
+            text = text.replace(/\[DATA_ATUAL\]/g, today);
+            
+            document.getElementById('contract-tab-text').value = text;
+            container.classList.remove('hidden');
+            container.classList.add('flex');
+        };
+
+        window.printTabContract = () => {
+            const text = document.getElementById('contract-tab-text').value;
+            const select = document.getElementById('contract-student-select');
+            const sId = select ? select.value : null;
+            const s = window.students.find(st => st.id === sId);
+            
+            document.getElementById('report-title').innerText = 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS';
+            document.getElementById('report-date').innerText = new Date().toLocaleString('pt-BR');
+            document.getElementById('report-content').innerText = text;
+            document.getElementById('report-student-name').innerText = s ? (s.name || 'CONTRATANTE') : 'CONTRATANTE';
+            
+            document.body.classList.add('printing-report');
+            window.print();
+            setTimeout(() => {
+                document.body.classList.remove('printing-report');
+            }, 500);
+        };
+
+        window.openContractModal = (id) => {
+            const s = window.students.find(st => st.id === id);
+            if (!s) return;
+            
+            document.getElementById('contract-student-id').value = id;
+            
+            // Substituir variáveis no template
+            let text = defaultContractTemplate;
+            text = text.replace(/\[NOME_ALUNO\]/g, s.name || '_______________________');
+            text = text.replace(/\[CPF_ALUNO\]/g, s.cpf || '_______________________');
+            text = text.replace(/\[RG_ALUNO\]/g, s.rg || '_______________________');
+            text = text.replace(/\[ENDERECO_ALUNO\]/g, s.address || '_______________________');
+            text = text.replace(/\[TELEFONE_ALUNO\]/g, s.phone || '_______________________');
+            text = text.replace(/\[EMAIL_ALUNO\]/g, s.email || '_______________________');
+            
+            let dob = '_______________________';
+            if (s.dob) {
+                const parts = s.dob.split('-');
+                if (parts.length === 3) dob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            text = text.replace(/\[DATA_NASC\]/g, dob);
+            
+            let faixa = 'Branca';
+            let grau = '0º Grau';
+            if (s.belt) {
+                const parts = s.belt.split(' - ');
+                if (parts.length > 0) faixa = parts[0];
+                if (parts.length > 1) grau = parts[1];
+            }
+            text = text.replace(/\[FAIXA\]/g, faixa);
+            text = text.replace(/\[GRAU\]/g, grau);
+            
+            let planName = s.plan || '_______________________';
+            let planValue = '________';
+            if (s.plan && window.plansData && window.plansData[s.plan]) {
+                planValue = window.plansData[s.plan].price.toFixed(2).replace('.', ',');
+            }
+            text = text.replace(/\[PLANO_ALUNO\]/g, planName);
+            text = text.replace(/\[VALOR_PLANO\]/g, planValue);
+            
+            const today = new Date().toLocaleDateString('pt-BR');
+            text = text.replace(/\[DATA_ATUAL\]/g, today);
+            
+            document.getElementById('contract-text').value = text;
+            document.getElementById('contract-modal').classList.remove('hidden');
+            document.getElementById('contract-modal').classList.add('flex');
+        };
+
+        window.closeContractModal = () => {
+            document.getElementById('contract-modal').classList.add('hidden');
+            document.getElementById('contract-modal').classList.remove('flex');
+        };
+
+        window.resetContractText = () => {
+            const id = document.getElementById('contract-student-id').value;
+            if (id) window.openContractModal(id);
+        };
+
+        window.printContract = () => {
+            const text = document.getElementById('contract-text').value;
+            const sId = document.getElementById('contract-student-id').value;
+            const s = window.students.find(st => st.id === sId);
+            
+            document.getElementById('report-title').innerText = 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS';
+            document.getElementById('report-date').innerText = new Date().toLocaleString('pt-BR');
+            document.getElementById('report-content').innerText = text;
+            document.getElementById('report-student-name').innerText = s ? (s.name || 'CONTRATANTE') : 'CONTRATANTE';
+            
+            document.body.classList.add('printing-report');
+            window.print();
+            setTimeout(() => {
+                document.body.classList.remove('printing-report');
+            }, 500);
+        };
+
         window.openEditModal = async (id) => {
             try {
                 await window.loadPlans();
@@ -3222,6 +3505,7 @@
                     <button onclick="window.sendWhatsAppReminder('${s.id}')" class="text-green-600 hover:text-green-800 mx-1" title="Lembrete WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
                     <button onclick="window.informPayment('${s.id}')" class="text-green-500 hover:text-green-700 mx-1" title="Informar Pagamento"><i class="fa-solid fa-hand-holding-dollar"></i></button>
                     <button onclick="window.openProgressModal('${s.id}')" class="text-blue-500 hover:text-blue-700 mx-1" title="Progresso"><i class="fa-solid fa-chart-line"></i></button>
+                    <button onclick="window.openContractModal('${s.id}')" class="text-purple-500 hover:text-purple-700 mx-1" title="Imprimir Contrato"><i class="fa-solid fa-file-contract"></i></button>
                     <button onclick="window.openEditModal('${s.id}')" class="text-orange-500 hover:text-orange-700 mx-1" title="Editar"><i class="fa-solid fa-pen"></i></button>
                     <button onclick="window.toggleArchive('${s.id}')" class="text-red-500 hover:text-red-700 mx-1" title="${s.archived ? 'Desarquivar' : 'Arquivar'}"><i class="fa-solid ${s.archived ? 'fa-box-open' : 'fa-box-archive'}"></i></button>
                     ${s.archived ? `<button onclick="window.deleteStudentPermanently('${s.id}')" class="text-red-700 hover:text-red-900 mx-1" title="Excluir Definitivamente"><i class="fa-solid fa-trash"></i></button>` : ''}
@@ -3870,6 +4154,7 @@
             document.getElementById('view-students').classList.add('hidden'); 
             document.getElementById('view-experimental').classList.add('hidden'); 
             document.getElementById('view-notices').classList.add('hidden');
+            document.getElementById('view-contracts').classList.add('hidden');
             document.getElementById(`view-${viewId}`).classList.remove('hidden');
             
             document.querySelectorAll('#sidebar-menu a').forEach(l => { 
@@ -3884,6 +4169,7 @@
             
             if(viewId === 'students') window.renderTable();
             if(viewId === 'experimental') window.renderExperimentalTable();
+            if(viewId === 'contracts') window.populateContractStudents();
             if(window.innerWidth < 1024) window.toggleMobileMenu();
         };
 
