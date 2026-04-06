@@ -1073,6 +1073,7 @@
 
             if(times.length === 0) {
                 timeSelect.innerHTML = '<option value="" disabled selected>Sem turmas neste dia</option>';
+                // Mantém o campo desabilitado, mas a nova trava no submitExperimental vai impedir o envio.
                 return;
             }
 
@@ -1128,6 +1129,14 @@
             const email = document.getElementById('expEmail').value;
             const date = document.getElementById('expDate').value;
             const time = document.getElementById('expTime').value;
+            
+            // TRAVA DE SEGURANÇA: Impede o envio se o horário não foi selecionado ou se o dia não tem turmas.
+            if (!date || !time || time.trim() === "") {
+                window.customAlert("Por favor, selecione uma data e um horário disponíveis para a aula.");
+                btn.innerHTML = originalBtnText; 
+                btn.disabled = false; 
+                return;
+            }
             
             const age = calculateAgeFromDate(dob);
             
