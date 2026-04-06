@@ -490,16 +490,20 @@
                         <h4 class="font-bold text-lg text-gray-800 dark:text-white border-b pb-2 w-full"><i class="fa-solid fa-tags mr-2 text-brand-red"></i> Gerenciar Planos</h4>
                     </div>
                     
-                    <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600 mb-4 hidden">
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600 mb-4">
                         <h5 id="plan-form-title" class="font-bold text-sm text-gray-700 dark:text-gray-300 mb-3">Adicionar Novo Plano</h5>
                         <input type="hidden" id="edit-plan-id" value="">
-                        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                        <div class="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
                             <div class="md:col-span-2">
                                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nome do Plano</label>
                                 <input type="text" id="new-plan-name" placeholder="Ex: Trimestral Promocional" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-brand-red focus:outline-none">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Valor (R$)</label>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Valor Total (R$)</label>
+                                <input type="number" id="new-plan-base-price" placeholder="0.00" step="0.01" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-brand-red focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Valor Venc. (R$)</label>
                                 <input type="number" id="new-plan-price" placeholder="0.00" step="0.01" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-brand-red focus:outline-none">
                             </div>
                             <div>
@@ -518,9 +522,10 @@
                             <thead>
                                 <tr class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider">
                                     <th class="p-3 font-bold rounded-tl-lg">Plano</th>
-                                    <th class="p-3 font-bold">Valor</th>
+                                    <th class="p-3 font-bold">Valor Total</th>
+                                    <th class="p-3 font-bold">Valor Venc.</th>
                                     <th class="p-3 font-bold">Duração</th>
-                                    <th class="p-3 font-bold text-right rounded-tr-lg hidden">Ações</th>
+                                    <th class="p-3 font-bold text-right rounded-tr-lg">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="settings-plans-list" class="text-sm divide-y divide-gray-100 dark:divide-gray-700">
@@ -1317,9 +1322,10 @@
                 tbody.innerHTML += `
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                         <td class="p-3 text-gray-800 dark:text-gray-200">${plan.long}</td>
+                        <td class="p-3 text-gray-800 dark:text-gray-200">R$ ${Number(plan.basePrice || plan.price).toFixed(2)}</td>
                         <td class="p-3 text-gray-800 dark:text-gray-200">R$ ${Number(plan.price).toFixed(2)}</td>
                         <td class="p-3 text-gray-800 dark:text-gray-200">${durationText}</td>
-                        <td class="p-3 text-right hidden">
+                        <td class="p-3 text-right">
                             ${actionsHtml}
                         </td>
                     </tr>
@@ -1329,18 +1335,20 @@
 
         window.addPlan = async () => {
             const nameInput = document.getElementById('new-plan-name');
+            const basePriceInput = document.getElementById('new-plan-base-price');
             const priceInput = document.getElementById('new-plan-price');
             const durationInput = document.getElementById('new-plan-duration');
             const idInput = document.getElementById('edit-plan-id');
             const saveBtn = document.getElementById('save-plan-btn');
             
             const name = nameInput.value.trim();
+            const basePrice = parseFloat(basePriceInput.value);
             const price = parseFloat(priceInput.value);
             const duration = parseInt(durationInput.value);
             const editId = idInput.value;
             
-            if (!name || isNaN(price)) {
-                alert('Preencha o nome e o valor do plano corretamente.');
+            if (!name || isNaN(price) || isNaN(basePrice)) {
+                alert('Preencha o nome e os valores do plano corretamente.');
                 return;
             }
             
@@ -1350,6 +1358,7 @@
             try {
                 const planData = {
                     name: name,
+                    basePrice: basePrice,
                     price: price,
                     updatedAt: new Date().toISOString()
                 };
@@ -1384,7 +1393,8 @@
             const plan = window.PLAN_DICT[key];
             if (!plan) return;
 
-            document.getElementById('new-plan-name').value = plan.short;
+            document.getElementById('new-plan-name').value = plan.short || plan.name;
+            document.getElementById('new-plan-base-price').value = plan.basePrice || plan.price;
             document.getElementById('new-plan-price').value = plan.price;
             document.getElementById('new-plan-duration').value = plan.durationMonths || '';
             document.getElementById('edit-plan-id').value = key;
@@ -1399,6 +1409,7 @@
 
         window.cancelEditPlan = () => {
             document.getElementById('new-plan-name').value = '';
+            document.getElementById('new-plan-base-price').value = '';
             document.getElementById('new-plan-price').value = '';
             document.getElementById('new-plan-duration').value = '';
             document.getElementById('edit-plan-id').value = '';
@@ -1515,14 +1526,26 @@
                 const querySnapshot = await getDocs(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'plans'));
                 window.plansList = [];
                 
-                // Delete all existing custom plans to enforce the new plan scheme
-                const deletePromises = [];
-                querySnapshot.forEach(doc => {
-                    deletePromises.push(deleteDoc(doc.ref));
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const id = doc.id;
+                    
+                    if (data.deleted) {
+                        delete window.PLAN_DICT[id];
+                        return;
+                    }
+                    
+                    window.plansList.push({ id, ...data });
+                    
+                    // Add to PLAN_DICT
+                    window.PLAN_DICT[id] = {
+                        price: data.price || 0,
+                        basePrice: data.basePrice || data.price || 0,
+                        short: data.name,
+                        long: data.name.toUpperCase(),
+                        durationMonths: data.durationMonths || window.inferPlanDuration(data)
+                    };
                 });
-                if (deletePromises.length > 0) {
-                    await Promise.all(deletePromises);
-                }
                 
                 window.populatePlanSelects();
             } catch (error) {
@@ -2275,7 +2298,7 @@ CLÁUSULA 1ª - DO OBJETO: O presente contrato tem por objeto a prestação de s
 
 CLÁUSULA 3ª - DO CANCELAMENTO: O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.
 
-CLÁUSULA 4ª - DA INADIMPLÊNCIA: O atraso superior a 30 dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e cobrança dos valores devidos acrescidos de multa de 2% e juros de mora legais.
+CLÁUSULA 4ª - DA INADIMPLÊNCIA: O atraso superior a 30 dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e cobrança dos valores devidos acrescidos de multa de 2% e juros de mora legais. Em caso de inadimplência, a empresa se reserva ao direito de protestar o título em cartório e incluir o nome do CONTRATANTE nos órgãos de proteção ao crédito (Serasa, SPC e outros).
 
 CLÁUSULA 5ª - DA SAÚDE E APTIDÃO FÍSICA: O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate. A academia está apta para prestar os primeiros socorros básicos, zelamos pela integridade dos alunos e trabalhamos com metodologias para evitar lesões. Contudo, o CONTRATANTE isenta a CONTRATADA de qualquer responsabilidade sobre moléstias pré-existentes, condições cardíacas, respiratórias ou ortopédicas não declaradas formalmente no ato desta matrícula.
 
@@ -2347,7 +2370,7 @@ Belém-PA, [DATA_ATUAL].`;
             
             let planName = s.plan || '_______________________';
             let planValue = '________';
-            let clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo [PLANO_ALUNO] - R$ [VALOR_PLANO], comprometendo-se ao pagamento da mensalidade no valor de R$ [VALOR_PLANO]. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.`;
+            let clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo [PLANO_ALUNO], comprometendo-se ao pagamento da mensalidade no valor de R$ [VALOR_PLANO]. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.`;
             
             if (s.plan && window.PLAN_DICT && window.PLAN_DICT[s.plan]) {
                 const p = window.PLAN_DICT[s.plan];
@@ -2355,11 +2378,14 @@ Belém-PA, [DATA_ATUAL].`;
                 planValue = p.price.toFixed(2).replace('.', ',');
                 
                 if (p.durationMonths === 1) {
-                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo ${p.long} (Sem fidelidade) - R$ ${p.basePrice.toFixed(2).replace('.', ',')} / mês, comprometendo-se ao pagamento da mensalidade no valor de R$ ${p.basePrice.toFixed(2).replace('.', ',')}. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.`;
+                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo ${p.long} (Sem fidelidade), comprometendo-se ao pagamento da mensalidade no valor de R$ ${p.basePrice.toFixed(2).replace('.', ',')}. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.`;
                 } else if (p.durationMonths === 3) {
-                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo ${p.long} - R$ ${p.basePrice.toFixed(2).replace('.', ',')} / mês, comprometendo-se ao pagamento da mensalidade no valor de R$ ${p.basePrice.toFixed(2).replace('.', ',')} com desconto de R$ ${p.discount.toFixed(2).replace('.', ',')} se o pagamento for efetuado até a data do vencimento (R$ ${p.price.toFixed(2).replace('.', ',')} / mês). As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.`;
+                    const discount = p.basePrice - p.price;
+                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo ${p.long}, comprometendo-se ao pagamento da mensalidade no valor de R$ ${p.basePrice.toFixed(2).replace('.', ',')} com desconto de R$ ${discount.toFixed(2).replace('.', ',')} se o pagamento for efetuado até a data do vencimento. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.`;
                 } else if (p.durationMonths === 6) {
-                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo ${p.long} - R$ ${p.basePrice.toFixed(2).replace('.', ',')} / mês, comprometendo-se ao pagamento da mensalidade no valor de R$ ${p.basePrice.toFixed(2).replace('.', ',')} com desconto de R$ ${p.discount.toFixed(2).replace('.', ',')} se o pagamento for efetuado até a data do vencimento (R$ ${p.price.toFixed(2).replace('.', ',')} / mês). As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.\n\nOBS: Desconto Promocional Aplicado na 1ª Mensalidade R$ ${p.firstMonth.toFixed(2).replace('.', ',')}`;
+                    const discount = p.basePrice - p.price;
+                    const firstMonthDiscount = p.basePrice - (p.firstMonth || p.price);
+                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo ${p.long}, comprometendo-se ao pagamento da mensalidade no valor de R$ ${p.basePrice.toFixed(2).replace('.', ',')} com desconto de R$ ${discount.toFixed(2).replace('.', ',')} se o pagamento for efetuado até a data do vencimento. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.\n\nOBS: desconto Promocional Aplicado na 1ª Mensalidade de R$ ${firstMonthDiscount.toFixed(2).replace('.', ',')}`;
                 }
             } else if (s.plan && window.plansData && window.plansData[s.plan]) {
                 planValue = window.plansData[s.plan].price.toFixed(2).replace('.', ',');
@@ -2429,7 +2455,7 @@ Belém-PA, [DATA_ATUAL].`;
             
             let planName = s.plan || '_______________________';
             let planValue = '________';
-            let clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo [PLANO_ALUNO] - R$ [VALOR_PLANO], comprometendo-se ao pagamento da mensalidade no valor de R$ [VALOR_PLANO]. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.`;
+            let clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo [PLANO_ALUNO], comprometendo-se ao pagamento da mensalidade no valor de R$ [VALOR_PLANO]. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.`;
             
             if (s.plan && window.PLAN_DICT && window.PLAN_DICT[s.plan]) {
                 const p = window.PLAN_DICT[s.plan];
@@ -2437,11 +2463,14 @@ Belém-PA, [DATA_ATUAL].`;
                 planValue = p.price.toFixed(2).replace('.', ',');
                 
                 if (p.durationMonths === 1) {
-                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo ${p.long} (Sem fidelidade) - R$ ${p.basePrice.toFixed(2).replace('.', ',')} / mês, comprometendo-se ao pagamento da mensalidade no valor de R$ ${p.basePrice.toFixed(2).replace('.', ',')}. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.`;
+                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo ${p.long} (Sem fidelidade), comprometendo-se ao pagamento da mensalidade no valor de R$ ${p.basePrice.toFixed(2).replace('.', ',')}. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.`;
                 } else if (p.durationMonths === 3) {
-                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo ${p.long} - R$ ${p.basePrice.toFixed(2).replace('.', ',')} / mês, comprometendo-se ao pagamento da mensalidade no valor de R$ ${p.basePrice.toFixed(2).replace('.', ',')} com desconto de R$ ${p.discount.toFixed(2).replace('.', ',')} se o pagamento for efetuado até a data do vencimento (R$ ${p.price.toFixed(2).replace('.', ',')} / mês). As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.`;
+                    const discount = p.basePrice - p.price;
+                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo ${p.long}, comprometendo-se ao pagamento da mensalidade no valor de R$ ${p.basePrice.toFixed(2).replace('.', ',')} com desconto de R$ ${discount.toFixed(2).replace('.', ',')} se o pagamento for efetuado até a data do vencimento. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.`;
                 } else if (p.durationMonths === 6) {
-                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo ${p.long} - R$ ${p.basePrice.toFixed(2).replace('.', ',')} / mês, comprometendo-se ao pagamento da mensalidade no valor de R$ ${p.basePrice.toFixed(2).replace('.', ',')} com desconto de R$ ${p.discount.toFixed(2).replace('.', ',')} se o pagamento for efetuado até a data do vencimento (R$ ${p.price.toFixed(2).replace('.', ',')} / mês). As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.\n\nOBS: Desconto Promocional Aplicado na 1ª Mensalidade R$ ${p.firstMonth.toFixed(2).replace('.', ',')}`;
+                    const discount = p.basePrice - p.price;
+                    const firstMonthDiscount = p.basePrice - (p.firstMonth || p.price);
+                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo ${p.long}, comprometendo-se ao pagamento da mensalidade no valor de R$ ${p.basePrice.toFixed(2).replace('.', ',')} com desconto de R$ ${discount.toFixed(2).replace('.', ',')} se o pagamento for efetuado até a data do vencimento. As mensalidades deverão ser pagas conforme a data de vencimento prevista e acordada no ato da matrícula.\n\nOBS: desconto Promocional Aplicado na 1ª Mensalidade de R$ ${firstMonthDiscount.toFixed(2).replace('.', ',')}`;
                 }
             } else if (s.plan && window.plansData && window.plansData[s.plan]) {
                 planValue = window.plansData[s.plan].price.toFixed(2).replace('.', ',');
