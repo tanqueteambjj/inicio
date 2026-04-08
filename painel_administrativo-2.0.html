@@ -69,10 +69,15 @@
             html, body { height: auto !important; min-height: 100% !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; background-color: #fff !important; color: #000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             body > *:not(.print-only-element) { display: none !important; }
             
-            body.printing-progress #printable-progress, body.printing-qr #print-only-qr { 
+            body.printing-progress #printable-progress, body.printing-experimental #printable-experimental, body.printing-qr #print-only-qr { 
                 display: block !important; position: static !important; width: 100% !important; height: auto !important; visibility: visible !important; background: #fff !important; color: #000 !important; margin: 0 !important; padding: 0 !important;
             }
-            body.printing-progress #printable-progress *, body.printing-qr #print-only-qr * { visibility: visible !important; color: #000 !important; }
+            body.printing-progress #printable-progress *, body.printing-experimental #printable-experimental *, body.printing-qr #print-only-qr * { visibility: visible !important; color: #000 !important; }
+            
+            body.printing-report #report-container { 
+                display: block !important; position: static !important; width: 100% !important; height: auto !important; visibility: visible !important; background: #fff !important; color: #000 !important; margin: 0 !important; padding: 0 !important;
+            }
+            body.printing-report #report-container * { visibility: visible !important; color: #000 !important; }
             
             body.printing-qr #print-only-qr { display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: flex-start !important; padding: 2cm 0 !important; }
             
@@ -113,8 +118,14 @@
             <a href="#" onclick="window.switchMainView('experimental')" id="nav-experimental" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
                 <i class="fa-solid fa-fire w-6"></i> <span class="ml-2">Aulas Exp.</span>
             </a>
+            <a href="#" onclick="window.switchMainView('contracts')" id="nav-contracts" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
+                <i class="fa-solid fa-file-contract w-6"></i> <span class="ml-2">Contratos</span>
+            </a>
             <a href="#" onclick="window.switchMainView('notices')" id="nav-notices" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
                 <i class="fa-solid fa-bullhorn w-6"></i> <span class="ml-2">Mural de Avisos</span>
+            </a>
+            <a href="#" onclick="window.openSettingsModal()" id="nav-settings" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
+                <i class="fa-solid fa-gear w-6"></i> <span class="ml-2">Configurações</span>
             </a>
         </nav>
         <div class="p-4 border-t border-gray-800">
@@ -167,15 +178,6 @@
                         <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Adulto</p>
                         <p class="text-3xl font-bold text-gray-800 dark:text-white" id="stat-adulto">0</p>
                     </div>
-                    <div id="card-admin" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-purple-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-purple-50 dark:hover:bg-gray-700 transition-all" onclick="window.switchTab('admin')">
-                        <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-purple-500 pointer-events-none"><i class="fa-solid fa-user-tie"></i></div>
-                        <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Administração</p>
-                        <p class="text-3xl font-bold text-gray-800 dark:text-white" id="stat-admin">0</p>
-                        <div class="mt-2 text-[10px] text-gray-500 dark:text-gray-400 flex justify-between uppercase font-bold">
-                            <span>Infantil: <b id="stat-admin-kids" class="text-gray-800 dark:text-gray-200">0</b></span>
-                            <span>Adulto: <b id="stat-admin-adults" class="text-gray-800 dark:text-gray-200">0</b></span>
-                        </div>
-                    </div>
                     <div id="card-archived" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-gray-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-all" onclick="window.switchTab('archived')">
                         <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-gray-500 pointer-events-none"><i class="fa-solid fa-box-archive"></i></div>
                         <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Arquivo</p>
@@ -222,6 +224,13 @@
                         <select id="filter-belt" onchange="window.filterTable()" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-1.5 text-gray-700 dark:text-gray-300 focus:outline-none focus:border-brand-red bg-gray-50 dark:bg-gray-700 font-medium">
                             <option value="">🥋 Todas as Faixas</option><option value="branca">Branca</option><option value="cinza">Cinza</option><option value="amarela">Amarela</option><option value="laranja">Laranja</option><option value="verde">Verde</option><option value="azul">Azul</option><option value="roxa">Roxa</option><option value="marrom">Marrom</option><option value="preta">Preta</option>
                         </select>
+                        <select id="filter-payment" onchange="window.filterTable()" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-1.5 text-gray-700 dark:text-gray-300 focus:outline-none focus:border-brand-red bg-gray-50 dark:bg-gray-700 font-medium">
+                            <option value="">💰 Todos os Pagamentos</option>
+                            <option value="Em dia">Em dia</option>
+                            <option value="Vencendo">Vencendo (10 dias)</option>
+                            <option value="Pendente">Pendente / Atrasado</option>
+                            <option value="Isento">Isento</option>
+                        </select>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -246,6 +255,41 @@
                 </div>
             </div>
 
+            <!-- VIEW: CONTRATOS -->
+            <div id="view-contracts" class="hidden animate-fade-in">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex justify-between items-center no-print">
+                        <div>
+                            <h3 class="font-bold text-gray-800 dark:text-white uppercase text-lg"><i class="fa-solid fa-file-contract text-purple-500 mr-2"></i> Emissão de Contratos</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Selecione um aluno para gerar e imprimir o contrato</p>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="mb-6">
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Selecione o Aluno</label>
+                            <select id="contract-student-select" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-3 text-sm focus:border-purple-500 focus:outline-none" onchange="window.loadContractPreview()">
+                                <option value="">-- Selecione um aluno --</option>
+                                <!-- Preenchido via JS -->
+                            </select>
+                        </div>
+                        
+                        <div id="contract-preview-container" class="hidden flex-col gap-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300">Texto do Contrato (Editável)</label>
+                                <button onclick="window.loadContractPreview()" class="text-xs text-blue-500 hover:underline"><i class="fa-solid fa-rotate-left"></i> Restaurar Padrão</button>
+                            </div>
+                            <textarea id="contract-tab-text" class="w-full h-96 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-4 text-sm focus:border-purple-500 focus:outline-none font-serif leading-relaxed resize-none"></textarea>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                <strong>Variáveis disponíveis:</strong> [NOME_ALUNO], [CPF_ALUNO], [RG_ALUNO], [ENDERECO_ALUNO], [TELEFONE_ALUNO], [EMAIL_ALUNO], [DATA_NASC], [FAIXA], [GRAU], [PLANO_ALUNO], [VALOR_PLANO], [DATA_ATUAL]
+                            </div>
+                            <div class="flex justify-end mt-4">
+                                <button onclick="window.printTabContract()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded font-bold text-sm shadow-md transition transform active:scale-95"><i class="fa-solid fa-print mr-2"></i> Imprimir Contrato</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- VIEW: AULA EXPERIMENTAL -->
             <div id="view-experimental" class="hidden animate-fade-in">
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
@@ -255,15 +299,36 @@
                             <p class="text-xs text-gray-500 dark:text-gray-400">Controle os visitantes que agendaram pelo site</p>
                         </div>
                         <div class="flex items-center gap-2">
+                            <button onclick="window.openNewExperimentalModal()" class="bg-brand-red text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-red-700 shadow-sm transition transform active:scale-95"><i class="fa-solid fa-plus mr-1"></i> NOVO AGENDAMENTO</button>
                             <button onclick="window.printExperimentalReport()" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 text-sm bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 px-3 py-1.5 rounded shadow-sm font-bold"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
                             <button onclick="window.loadExperimentalData()" class="text-gray-500 dark:text-gray-300 hover:text-black dark:hover:text-white text-sm bg-white dark:bg-gray-600 border dark:border-gray-500 px-3 py-1.5 rounded shadow-sm"><i class="fa-solid fa-rotate"></i> Atualizar</button>
                         </div>
+                    </div>
+                    <div class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-wrap gap-4 items-center text-sm no-print">
+                        <div class="relative flex-1 min-w-[200px]">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-search"></i></span>
+                            <input type="text" id="filter-exp-name" onkeyup="window.filterExperimentalTable()" placeholder="Buscar por nome..." class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red transition">
+                        </div>
+                        <span class="font-bold text-gray-500 dark:text-gray-400"><i class="fa-solid fa-filter"></i> Filtros:</span>
+                        <select id="filter-exp-status" onchange="window.filterExperimentalTable()" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red">
+                            <option value="all">Todos os Status</option>
+                            <option value="Pendente">Pendente</option>
+                            <option value="Realizada">Realizada</option>
+                            <option value="Cancelada">Cancelada</option>
+                            <option value="Matriculado">Matriculado</option>
+                        </select>
+                        <select id="filter-exp-category" onchange="window.filterExperimentalTable()" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red">
+                            <option value="all">Todas as Categorias</option>
+                            <option value="Infantil">Infantil</option>
+                            <option value="Adulto">Adulto</option>
+                        </select>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider">
                                     <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Nome do Visitante</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">CPF</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Contato</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Data / Hora</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Categoria</th>
@@ -391,7 +456,137 @@
         </div>
     </div>
 
+    <!-- RELATÓRIO GENÉRICO / CONTRATO -->
+    <div id="report-container" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen hidden">
+        <div class="text-center mb-6 border-b-2 border-black pb-4">
+            <img src="https://iili.io/qC543c7.png" alt="Logo" class="h-16 mx-auto mb-2 filter grayscale">
+            <h1 class="text-2xl font-bold uppercase tracking-wider mb-2">Tanque Team BJJ</h1>
+            <p class="text-sm text-gray-800">CNPJ: 65.678.191/0001-90</p>
+            <p class="text-sm text-gray-800">Rua José Custodio de Almeida, Nº 9 - Parque Verde - Belém-PA, CEP 66635-110</p>
+            <p class="text-sm text-gray-800">Tel: (91) 98453-3817 | Email: tanqueteambjj@gmail.com</p>
+            <h2 class="text-xl font-bold mt-6 uppercase" id="report-title">Documento</h2>
+            <p class="text-xs text-gray-500 mt-2 hidden" id="report-date-container">Gerado em <span id="report-date"></span></p>
+        </div>
+        <div id="report-content" class="text-sm leading-relaxed text-justify whitespace-pre-wrap font-serif">
+            <!-- Conteúdo injetado via JS -->
+        </div>
+        <div class="mt-16 pt-8 flex justify-around">
+            <div class="text-center w-5/12">
+                <div class="border-b border-black w-full mx-auto mb-2"></div>
+                <p class="text-xs font-bold uppercase">Tanque Team BJJ</p>
+            </div>
+            <div class="text-center w-5/12">
+                <div class="border-b border-black w-full mx-auto mb-2"></div>
+                <p class="text-xs font-bold uppercase" id="report-student-name">CONTRATANTE / RESP. FINANCEIRO</p>
+                <p class="text-[10px] text-gray-600 uppercase">CONTRATANTE / RESP. FINANCEIRO</p>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAIS DO SISTEMA -->
+
+    <!-- Modal: Configurações -->
+    <div id="settings-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-gray-500">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white"><i class="fa-solid fa-gear text-gray-500 mr-2"></i> Configurações</h3>
+                <button onclick="window.closeSettingsModal()"><i class="fa-solid fa-times text-gray-400 hover:text-gray-800 dark:hover:text-white"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 bg-white dark:bg-gray-800">
+                
+                <!-- Planos -->
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="font-bold text-lg text-gray-800 dark:text-white border-b pb-2 w-full"><i class="fa-solid fa-tags mr-2 text-brand-red"></i> Gerenciar Planos</h4>
+                    </div>
+                    
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600 mb-4">
+                        <h5 id="plan-form-title" class="font-bold text-sm text-gray-700 dark:text-gray-300 mb-3">Adicionar Novo Plano</h5>
+                        <input type="hidden" id="edit-plan-id" value="">
+                        <div class="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nome do Plano</label>
+                                <input type="text" id="new-plan-name" placeholder="Ex: Trimestral Promocional" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-brand-red focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Valor Total (R$)</label>
+                                <input type="number" id="new-plan-base-price" placeholder="0.00" step="0.01" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-brand-red focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Valor Venc. (R$)</label>
+                                <input type="number" id="new-plan-price" placeholder="0.00" step="0.01" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-brand-red focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Duração (Meses)</label>
+                                <input type="number" id="new-plan-duration" placeholder="Ex: 12" min="1" step="1" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-brand-red focus:outline-none">
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="save-plan-btn" onclick="window.addPlan()" class="w-full bg-brand-red hover:bg-red-700 text-white font-bold py-2 px-2 rounded text-sm transition-colors"><i class="fa-solid fa-plus mr-1"></i> Salvar</button>
+                                <button id="cancel-plan-btn" onclick="window.cancelEditPlan()" class="hidden w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-2 rounded text-sm transition-colors"><i class="fa-solid fa-times mr-1"></i> Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider">
+                                    <th class="p-3 font-bold rounded-tl-lg">Plano</th>
+                                    <th class="p-3 font-bold">Valor Total</th>
+                                    <th class="p-3 font-bold">Valor Venc.</th>
+                                    <th class="p-3 font-bold">Duração</th>
+                                    <th class="p-3 font-bold text-right rounded-tr-lg">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="settings-plans-list" class="text-sm divide-y divide-gray-100 dark:divide-gray-700">
+                                <!-- Planos renderizados aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Horários de Check-in -->
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="font-bold text-lg text-gray-800 dark:text-white border-b pb-2 w-full"><i class="fa-solid fa-clock mr-2 text-green-600"></i> Horários do Leitor de Check-in</h4>
+                    </div>
+                    
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600 mb-4">
+                        <h5 id="schedule-form-title" class="font-bold text-sm text-gray-700 dark:text-gray-300 mb-3">Adicionar Novo Horário</h5>
+                        <input type="hidden" id="edit-schedule-id" value="">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                            <div class="md:col-span-3">
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nome da Turma / Horário</label>
+                                <input type="text" id="new-schedule-name" placeholder="Ex: Adulto - 18h00" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="save-schedule-btn" onclick="window.addSchedule()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-2 rounded text-sm transition-colors"><i class="fa-solid fa-plus mr-1"></i> Salvar</button>
+                                <button id="cancel-schedule-btn" onclick="window.cancelEditSchedule()" class="hidden w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-2 rounded text-sm transition-colors"><i class="fa-solid fa-times mr-1"></i> Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider">
+                                    <th class="p-3 font-bold rounded-tl-lg">Turma / Horário</th>
+                                    <th class="p-3 font-bold text-right rounded-tr-lg">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="settings-schedules-list" class="text-sm divide-y divide-gray-100 dark:divide-gray-700">
+                                <!-- Horários renderizados aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-t border-gray-200 dark:border-gray-600 flex justify-end shrink-0">
+                <button onclick="window.closeSettingsModal()" class="px-5 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm rounded text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">Fechar</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal: Informar Pagamento -->
     <div id="payment-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
@@ -406,7 +601,36 @@
                 <div class="flex justify-between items-end mb-6">
                     <div>
                         <h4 class="font-bold text-xl text-gray-900 dark:text-white" id="pay-student-name">--</h4>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Matrícula: <span id="pay-start-date" class="font-medium text-gray-700 dark:text-gray-300">--</span> | Plano: <span id="pay-plan-name" class="font-medium text-gray-700 dark:text-gray-300">--</span></p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Matrícula: <span id="pay-start-date" class="font-medium text-gray-700 dark:text-gray-300">--</span></p>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800 mb-6">
+                    <h5 class="font-bold text-blue-800 dark:text-blue-400 mb-3 uppercase text-xs tracking-wider">Dados do Contrato</h5>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Plano Atual</label>
+                            <select id="pay-plan" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-blue-500 focus:outline-none" onchange="window.handlePayPlanChange()">
+                                <!-- Preenchido via JS -->
+                            </select>
+                        </div>
+                        <div id="pay-titular-container" class="hidden">
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Titular (Responsável pelo Pagamento)</label>
+                            <select id="pay-titular" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-blue-500 focus:outline-none">
+                                <option value="">Selecione o Titular</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Vencimento Contrato (Fidelidade)</label>
+                            <input type="date" id="pay-end-date" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-blue-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data de Vencimento (Mensalidade)</label>
+                            <input type="date" id="pay-contract-next-due" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-blue-500 focus:outline-none">
+                        </div>
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <button onclick="window.saveContractData()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 transition shadow-sm">Atualizar Contrato</button>
                     </div>
                 </div>
 
@@ -414,12 +638,20 @@
                     <h5 class="font-bold text-green-800 dark:text-green-400 mb-3 uppercase text-xs tracking-wider">Registrar Novo Pagamento</h5>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data do Pagamento</label>
+                            <input type="date" id="pay-date" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
+                        </div>
+                        <div>
                             <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Mês de Referência</label>
                             <input type="month" id="pay-ref-month" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Valor Pago (R$)</label>
                             <input type="number" id="pay-amount" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none" step="0.01">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Desconto Promocional (R$)</label>
+                            <input type="number" id="pay-discount" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none" step="0.01" placeholder="0.00">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Meio de Pagamento</label>
@@ -449,6 +681,7 @@
                                 <th class="px-3 py-2 border-b dark:border-gray-600 font-semibold">Referência</th>
                                 <th class="px-3 py-2 border-b dark:border-gray-600 font-semibold">Valor</th>
                                 <th class="px-3 py-2 border-b dark:border-gray-600 font-semibold">Método</th>
+                                <th class="px-3 py-2 border-b dark:border-gray-600 font-semibold text-right">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="pay-history-list" class="text-gray-700 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
@@ -456,6 +689,63 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Imprimir Contrato -->
+    <div id="contract-modal" class="fixed inset-0 z-[90] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl animate-fade-in border-t-4 border-purple-500 flex flex-col max-h-[90vh]">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white"><i class="fa-solid fa-file-contract text-purple-500 mr-2"></i> Imprimir Contrato</h3>
+                <button onclick="window.closeContractModal()"><i class="fa-solid fa-times text-gray-400 hover:text-gray-800 dark:hover:text-white"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 flex flex-col gap-4">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300">Texto do Contrato (Editável)</label>
+                    <button onclick="window.resetContractText()" class="text-xs text-blue-500 hover:underline"><i class="fa-solid fa-rotate-left"></i> Restaurar Padrão</button>
+                </div>
+                <input type="hidden" id="contract-student-id">
+                <textarea id="contract-text" class="w-full h-96 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-4 text-sm focus:border-purple-500 focus:outline-none font-serif leading-relaxed resize-none"></textarea>
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                    <strong>Variáveis disponíveis:</strong> [NOME_ALUNO], [CPF_ALUNO], [RG_ALUNO], [ENDERECO_ALUNO], [PLANO_ALUNO], [VALOR_PLANO], [DATA_ATUAL]
+                </div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-end gap-2 border-t border-gray-200 dark:border-gray-600 rounded-b-lg shrink-0">
+                <button onclick="window.closeContractModal()" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded font-bold text-sm transition">Cancelar</button>
+                <button onclick="window.printContract()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded font-bold text-sm shadow-md transition transform active:scale-95"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Pagamento -->
+    <div id="edit-payment-modal" class="fixed inset-0 z-[90] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-md animate-fade-in border-t-4 border-blue-500">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white"><i class="fa-solid fa-pen text-blue-500 mr-2"></i> Editar Pagamento</h3>
+                <button onclick="window.closeEditPaymentModal()"><i class="fa-solid fa-times text-gray-400 hover:text-gray-800 dark:hover:text-white"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="edit-pay-student-id">
+                <input type="hidden" id="edit-pay-original-date">
+                <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data do Pagamento</label><input type="date" id="edit-pay-date" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-blue-500 focus:outline-none"></div>
+                <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Mês de Referência</label><input type="month" id="edit-pay-ref-month" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-blue-500 focus:outline-none"></div>
+                <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Valor (R$)</label><input type="number" step="0.01" id="edit-pay-amount" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-blue-500 focus:outline-none"></div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Meio de Pagamento</label>
+                    <select id="edit-pay-method" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-blue-500 focus:outline-none">
+                        <option value="Pix">Pix</option>
+                        <option value="Dinheiro">Dinheiro</option>
+                        <option value="Cartão de Crédito">Cartão de Crédito</option>
+                        <option value="Cartão de Débito">Cartão de Débito</option>
+                        <option value="Transferência">Transferência</option>
+                        <option value="Boleto">Boleto</option>
+                    </select>
+                </div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-end gap-2 border-t border-gray-200 dark:border-gray-600 rounded-b-lg">
+                <button onclick="window.closeEditPaymentModal()" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded font-bold text-sm transition">Cancelar</button>
+                <button onclick="window.saveEditedPayment()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-bold text-sm shadow-md transition transform active:scale-95"><i class="fa-solid fa-save mr-1"></i> Salvar Alterações</button>
             </div>
         </div>
     </div>
@@ -472,13 +762,7 @@
                 <div>
                     <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Turma</label>
                     <select id="bulk-class-selector" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
-                        <option value="Turma Mista (Livre)">Geral / Mista</option>
-                        <option value="Adulto - 10h30">Adulto - 10h30</option>
-                        <option value="Adulto - 12h30">Adulto - 12h30</option>
-                        <option value="Adulto - 18h00">Adulto - 18h00</option>
-                        <option value="Adulto - 21h00">Adulto - 21h00</option>
-                        <option value="Infantil - 15h00">Infantil - 15h00</option>
-                        <option value="Infantil - 16h30">Infantil - 16h30</option>
+                        <!-- Populated dynamically -->
                     </select>
                 </div>
                 <div class="mt-6 flex justify-end gap-2 border-t border-gray-100 dark:border-gray-700 pt-4">
@@ -538,13 +822,7 @@
                     <div class="flex gap-2 items-center mb-4 bg-gray-50 dark:bg-gray-700 p-3 rounded border border-gray-200 dark:border-gray-600 shadow-inner">
                         <input type="date" id="prog-add-date" class="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded px-2 py-1.5 text-sm flex-grow focus:outline-none focus:border-green-500">
                         <select id="prog-add-class" class="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded px-2 py-1.5 text-sm flex-grow focus:outline-none focus:border-green-500">
-                            <option value="Turma Mista (Livre)">Geral / Mista</option>
-                            <option value="Adulto - 10h30">Adulto - 10h30</option>
-                            <option value="Adulto - 12h30">Adulto - 12h30</option>
-                            <option value="Adulto - 18h00">Adulto - 18h00</option>
-                            <option value="Adulto - 21h00">Adulto - 21h00</option>
-                            <option value="Infantil - 15h00">Infantil - 15h00</option>
-                            <option value="Infantil - 16h30">Infantil - 16h30</option>
+                            <!-- Populated dynamically -->
                         </select>
                         <button onclick="window.addManualAttendanceFromProg()" class="bg-green-600 text-white px-4 py-1.5 rounded text-sm font-bold hover:bg-green-700 shadow-sm transition">Adicionar</button>
                     </div>
@@ -566,19 +844,16 @@
         <div class="w-full max-w-lg bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-2xl flex flex-col animate-fade-in">
             <div class="bg-green-600 px-6 py-4 flex justify-between items-center text-white shrink-0">
                 <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-camera"></i> Leitor de Check-in</h3>
-                <button onclick="window.closeCheckinModal()" class="hover:text-green-200 text-xl"><i class="fa-solid fa-times"></i></button>
+                <div class="flex items-center gap-4">
+                    <button onclick="window.toggleTotemMode()" class="text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded font-bold transition"><i class="fa-solid fa-expand"></i> Modo Totem</button>
+                    <button onclick="window.closeCheckinModal()" id="btn-close-checkin" class="hover:text-green-200 text-xl"><i class="fa-solid fa-times"></i></button>
+                </div>
             </div>
             
             <div class="bg-gray-100 dark:bg-gray-700 p-4 shrink-0 border-b border-gray-200 dark:border-gray-600">
                 <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase mb-1">Selecione a Turma Atual</label>
                 <select id="checkin-class-selector" class="w-full border-2 border-green-500 rounded-lg p-3 font-bold text-gray-800 dark:text-white bg-white dark:bg-gray-800 shadow-sm focus:outline-none">
-                    <option value="Turma Mista (Livre)">Geral / Mista</option>
-                    <option value="Adulto - 10h30">Adulto - 10h30</option>
-                    <option value="Adulto - 12h30">Adulto - 12h30</option>
-                    <option value="Adulto - 18h00">Adulto - 18h00</option>
-                    <option value="Adulto - 21h00">Adulto - 21h00</option>
-                    <option value="Infantil - 15h00">Infantil - 15h00</option>
-                    <option value="Infantil - 16h30">Infantil - 16h30</option>
+                    <!-- Populated dynamically -->
                 </select>
                 <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1"><i class="fa-solid fa-circle-info"></i> O sistema bloqueará check-ins repetidos na mesma turma no mesmo dia.</p>
             </div>
@@ -605,6 +880,7 @@
                 <input type="hidden" id="edit-exp-id">
                 <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nome Completo</label><input type="text" id="edit-exp-name" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
                 <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">CPF</label><input type="text" id="edit-exp-cpf" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none" placeholder="000.000.000-00"></div>
                     <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">WhatsApp</label><input type="text" id="edit-exp-phone" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none" placeholder="(91) 90000-0000"></div>
                     <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nascimento</label><input type="text" id="edit-exp-dob" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none" placeholder="DD/MM/AAAA"></div>
                     <div class="col-span-2"><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Responsável (se menor)</label><input type="text" id="edit-exp-guardian" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none" placeholder="Nome do responsável"></div>
@@ -676,7 +952,20 @@
                                 </select>
                             </div>
                             
-                            <div class="md:col-span-2"><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Endereço Completo</label><input type="text" id="edit-address" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none"></div>
+                            <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">CEP</label>
+                                    <input type="text" id="edit-cep" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none" placeholder="00000-000" onblur="window.fetchAddressByCep('edit-cep', 'edit-address')">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Endereço</label>
+                                    <input type="text" id="edit-address" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Número</label>
+                                    <input type="text" id="edit-address-number" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none">
+                                </div>
+                            </div>
                             
                             <div id="admin-edit-guardian-container" class="md:col-span-2 bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded border border-yellow-200 dark:border-yellow-800 hidden">
                                 <h4 class="text-xs font-bold text-yellow-800 dark:text-yellow-500 mb-3 uppercase border-b border-yellow-200 dark:border-yellow-800 pb-1"><i class="fa-solid fa-triangle-exclamation"></i> Dados do Responsável Legal</h4>
@@ -698,18 +987,6 @@
                                 </div>
                             </div>
 
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Plano Atual</label>
-                                <select id="edit-plan" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none" onchange="window.handleEditPlanChange()">
-                                    <option value="" disabled selected>Carregando planos...</option>
-                                </select>
-                            </div>
-                            
-                            <div class="col-span-1 hidden" id="edit-titular-container">
-                                <label class="block text-xs font-bold text-purple-600 dark:text-purple-400 mb-1">Titular (Se Dependente)</label>
-                                <select id="edit-titular" class="w-full border border-purple-200 dark:border-purple-800 rounded p-2 bg-purple-50 dark:bg-gray-800 dark:text-white focus:outline-none"><option value="">-- Selecione o Titular --</option></select>
-                            </div>
-
                         </div>
                     </div>
 
@@ -727,11 +1004,6 @@
                                 <option value="0">0º</option><option value="1">1º</option><option value="2">2º</option><option value="3">3º</option><option value="4">4º</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div class="col-span-1 md:col-span-2 pt-2">
-                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Vencimento Contrato (Fidelidade)</label>
-                        <input type="date" id="edit-end-date" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none">
                     </div>
 
                     <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
@@ -808,7 +1080,7 @@
                             <h4 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase border-b dark:border-gray-700 pb-1 mb-2">Informações Cadastrais</h4>
                             <div class="grid grid-cols-2 gap-y-2 text-sm">
                                 <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">CPF</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-cpf">--</span></div>
-                                <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Idade</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-age">--</span></div>
+                                <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Data de Nasc. / Idade</span><span class="font-medium text-gray-800 dark:text-gray-200"><span id="detail-dob">--</span> (<span id="detail-age">--</span>)</span></div>
                                 <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Altura</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-height">--</span></div>
                                 <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Peso</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-weight">--</span></div>
                                 <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Telefone / WhatsApp</span><span class="font-medium" id="detail-phone">--</span></div>
@@ -892,9 +1164,19 @@
                                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Telefone / WhatsApp</label>
                                 <input type="text" id="reg-phone" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none" placeholder="(00) 00000-0000">
                             </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Endereço Completo</label>
-                                <input type="text" id="reg-address" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none" placeholder="Rua, Bairro, Cidade">
+                            <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">CEP</label>
+                                    <input type="text" id="reg-cep" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none" placeholder="00000-000" onblur="window.fetchAddressByCep('reg-cep', 'reg-address')">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Endereço</label>
+                                    <input type="text" id="reg-address" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none" placeholder="Rua, Bairro, Cidade">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Número</label>
+                                    <input type="text" id="reg-address-number" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none" placeholder="123">
+                                </div>
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Como nos conheceu?</label>
@@ -935,34 +1217,6 @@
                                 <option value="0">0º Grau (Liso)</option><option value="1">1º Grau</option><option value="2">2º Grau</option><option value="3">3º Grau</option><option value="4">4º Grau</option>
                             </select>
                         </div>
-                    </div>
-                    
-                    <div class="md:col-span-2 pt-4 mt-2 border-t border-gray-200 dark:border-gray-700">
-                        <h4 class="text-sm font-bold text-green-700 dark:text-green-500 uppercase mb-3"><i class="fa-solid fa-cash-register"></i> Primeiro Pagamento (Opcional)</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Status Inicial</label>
-                                <select id="reg-payment-status" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
-                                    <option value="Pendente">Pendente (Paga depois)</option>
-                                    <option value="Em dia">Em dia (Já pagou)</option>
-                                    <option value="Isento">Isento</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Valor Pago (R$)</label>
-                                <input type="number" id="reg-pay-amount" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none" placeholder="Ex: 189.90" step="0.01">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Forma de Pagamento</label>
-                                <select id="reg-pay-method" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
-                                    <option value="Pix">Pix</option>
-                                    <option value="Dinheiro">Dinheiro</option>
-                                    <option value="Débito">Cartão de Débito</option>
-                                    <option value="Crédito à vista">Cartão de Crédito</option>
-                                </select>
-                            </div>
-                        </div>
-                        <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-2"><i class="fa-solid fa-circle-info"></i> Se marcar "Em dia" e preencher o valor, o sistema já registrará o recebimento no histórico.</p>
                     </div>
 
                     <div id="admin-reg-deps-container" class="md:col-span-2 hidden border-t-2 border-purple-200 dark:border-purple-800 pt-4 mt-2">
@@ -1035,7 +1289,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query, where, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
@@ -1057,22 +1311,222 @@
         window.isScanningPaused = false; 
 
         window.PLAN_DICT = {
-            'infantil-mensal': { price: 189.90, short: 'Infantil Mensal', long: 'INFANTIL MENSAL' },
-            'infantil-trimestral': { price: 168.90, short: 'Infantil Trimestral', long: 'INFANTIL TRIMESTRAL' },
-            'infantil-semestral': { price: 157.90, short: 'Infantil Semestral', long: 'INFANTIL SEMESTRAL' },
-            'adulto-mensal': { price: 168.90, short: 'Adulto Mensal', long: 'JOVEM/ADULTO MENSAL' },
-            'adulto-trimestral': { price: 147.90, short: 'Adulto Trimestral', long: 'JOVEM/ADULTO TRIMESTRAL' },
-            'adulto-semestral': { price: 126.90, short: 'Adulto Semestral', long: 'JOVEM/ADULTO SEMESTRAL' },
-            'combo-dupla': { price: 250.00, short: 'Combo Dupla', long: 'COMBO DUPLA SEMESTRAL' },
-            'combo-casal': { price: 220.00, short: 'Combo Casal', long: 'COMBO CASAL SEMESTRAL' },
-            'combo-familia': { price: 362.02, short: 'Combo Família', long: 'COMBO FAMÍLIA SEMESTRAL' },
-            'administracao': { price: 0.00, short: 'Administração', long: 'ADMINISTRAÇÃO (ISENTO)' },
-            'dependente': { price: 0.00, short: 'Dependente', long: 'DEPENDENTE - COMBO FAMÍLIA' },
-            'isento': { price: 0.00, short: 'Isento', long: 'ISENTO / BOLSISTA' },
-            'outros': { price: 0.00, short: 'Outros', long: 'OUTROS' }
+            'infantil-mensal': { price: 189.90, short: 'Infantil Mensal', long: 'INFANTIL MENSAL', durationMonths: 1 },
+            'infantil-trimestral': { price: 168.90, short: 'Infantil Trimestral', long: 'INFANTIL TRIMESTRAL', durationMonths: 3 },
+            'infantil-semestral': { price: 157.90, short: 'Infantil Semestral', long: 'INFANTIL SEMESTRAL', durationMonths: 6 },
+            'adulto-mensal': { price: 168.90, short: 'Adulto Mensal', long: 'JOVEM/ADULTO MENSAL', durationMonths: 1 },
+            'adulto-trimestral': { price: 147.90, short: 'Adulto Trimestral', long: 'JOVEM/ADULTO TRIMESTRAL', durationMonths: 3 },
+            'adulto-semestral': { price: 126.90, short: 'Adulto Semestral', long: 'JOVEM/ADULTO SEMESTRAL', durationMonths: 6 },
+            'combo-dupla': { price: 250.00, short: 'Combo Dupla', long: 'COMBO DUPLA SEMESTRAL', durationMonths: 6 },
+            'combo-casal': { price: 220.00, short: 'Combo Casal', long: 'COMBO CASAL SEMESTRAL', durationMonths: 6 },
+            'combo-familia': { price: 362.02, short: 'Combo Família', long: 'COMBO FAMÍLIA SEMESTRAL', durationMonths: 6 },
+            'administracao': { price: 0.00, short: 'Administração', long: 'ADMINISTRAÇÃO (ISENTO)', durationMonths: 12 },
+            'dependente': { price: 0.00, short: 'Dependente', long: 'DEPENDENTE - COMBO FAMÍLIA', durationMonths: 6 },
+            'isento': { price: 0.00, short: 'Isento', long: 'ISENTO / BOLSISTA', durationMonths: 1 },
+            'outros': { price: 0.00, short: 'Outros', long: 'OUTROS', durationMonths: 1 }
         };
 
-        window.getPlanInfo = (planKey) => window.PLAN_DICT[planKey] || { price: 0, short: String(planKey||'').toUpperCase(), long: 'NÃO INFORMADO' };
+        window.DEFAULT_PLAN_KEYS = Object.keys(window.PLAN_DICT);
+
+        window.renderSettingsPlans = () => {
+            const tbody = document.getElementById('settings-plans-list');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            for (const [key, plan] of Object.entries(window.PLAN_DICT)) {
+                let actionsHtml = `
+                    <button onclick="window.printPlan('${key}')" class="text-gray-500 hover:text-gray-700 transition-colors mr-3" title="Imprimir Plano"><i class="fa-solid fa-print"></i></button>
+                    <button onclick="window.editPlan('${key}')" class="text-blue-500 hover:text-blue-700 transition-colors mr-3" title="Editar Plano"><i class="fa-solid fa-pen"></i></button>
+                    <button onclick="window.deletePlan('${key}')" class="text-red-500 hover:text-red-700 transition-colors" title="Excluir Plano"><i class="fa-solid fa-trash"></i></button>
+                `;
+
+                let durationText = plan.durationMonths ? `${plan.durationMonths} mes(es)` : 'Automático';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="p-3 text-gray-800 dark:text-gray-200">${plan.long}</td>
+                        <td class="p-3 text-gray-800 dark:text-gray-200">R$ ${Number(plan.basePrice || plan.price).toFixed(2)}</td>
+                        <td class="p-3 text-gray-800 dark:text-gray-200">R$ ${Number(plan.price).toFixed(2)}</td>
+                        <td class="p-3 text-gray-800 dark:text-gray-200">${durationText}</td>
+                        <td class="p-3 text-right">
+                            ${actionsHtml}
+                        </td>
+                    </tr>
+                `;
+            }
+        };
+
+        window.addPlan = async () => {
+            const nameInput = document.getElementById('new-plan-name');
+            const basePriceInput = document.getElementById('new-plan-base-price');
+            const priceInput = document.getElementById('new-plan-price');
+            const durationInput = document.getElementById('new-plan-duration');
+            const idInput = document.getElementById('edit-plan-id');
+            const saveBtn = document.getElementById('save-plan-btn');
+            
+            const name = nameInput.value.trim();
+            const basePrice = parseFloat(basePriceInput.value);
+            const price = parseFloat(priceInput.value);
+            const duration = parseInt(durationInput.value);
+            const editId = idInput.value;
+            
+            if (!name || isNaN(price) || isNaN(basePrice)) {
+                alert('Preencha o nome e os valores do plano corretamente.');
+                return;
+            }
+            
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Salvando...';
+
+            try {
+                const planData = {
+                    name: name,
+                    basePrice: basePrice,
+                    price: price,
+                    updatedAt: new Date().toISOString()
+                };
+                if (!isNaN(duration) && duration > 0) {
+                    planData.durationMonths = duration;
+                } else {
+                    planData.durationMonths = null; // or remove it
+                }
+
+                if (editId) {
+                    // Update existing plan or create override for default plan
+                    await setDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'plans', editId), planData, { merge: true });
+                } else {
+                    // Add new plan
+                    planData.createdAt = new Date().toISOString();
+                    await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'plans'), planData);
+                }
+                
+                window.cancelEditPlan();
+                await window.loadPlans();
+                window.renderSettingsPlans();
+            } catch (e) {
+                console.error("Erro ao salvar plano:", e);
+                alert("Erro ao salvar plano.");
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Salvar';
+            }
+        };
+
+        window.editPlan = (key) => {
+            const plan = window.PLAN_DICT[key];
+            if (!plan) return;
+
+            document.getElementById('new-plan-name').value = plan.short || plan.name;
+            document.getElementById('new-plan-base-price').value = plan.basePrice || plan.price;
+            document.getElementById('new-plan-price').value = plan.price;
+            document.getElementById('new-plan-duration').value = plan.durationMonths || '';
+            document.getElementById('edit-plan-id').value = key;
+            
+            document.getElementById('plan-form-title').innerText = 'Editar Plano';
+            document.getElementById('save-plan-btn').innerHTML = '<i class="fa-solid fa-check mr-1"></i> Salvar';
+            document.getElementById('cancel-plan-btn').classList.remove('hidden');
+            
+            // Scroll to top of modal
+            document.querySelector('#settings-modal .overflow-y-auto').scrollTop = 0;
+        };
+
+        window.cancelEditPlan = () => {
+            document.getElementById('new-plan-name').value = '';
+            document.getElementById('new-plan-base-price').value = '';
+            document.getElementById('new-plan-price').value = '';
+            document.getElementById('new-plan-duration').value = '';
+            document.getElementById('edit-plan-id').value = '';
+            
+            document.getElementById('plan-form-title').innerText = 'Adicionar Novo Plano';
+            document.getElementById('save-plan-btn').innerHTML = '<i class="fa-solid fa-plus mr-1"></i> Adicionar';
+            document.getElementById('cancel-plan-btn').classList.add('hidden');
+        };
+
+        window.deletePlan = async (key) => {
+            if (!confirm('Tem certeza que deseja excluir este plano?')) return;
+            
+            try {
+                // Set as deleted so it overrides defaults
+                await setDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'plans', key), { deleted: true }, { merge: true });
+                
+                // Remove from PLAN_DICT to reflect immediately
+                delete window.PLAN_DICT[key];
+                
+                await window.loadPlans();
+                window.renderSettingsPlans();
+            } catch (e) {
+                console.error("Erro ao excluir plano:", e);
+                alert("Erro ao excluir plano.");
+            }
+        };
+
+        window.printPlan = (key) => {
+            const plan = window.PLAN_DICT[key];
+            if (!plan) return;
+
+            const printDate = new Date().toLocaleString('pt-BR');
+            const durationText = plan.durationMonths ? `${plan.durationMonths} mes(es)` : 'Automático';
+            const basePriceStr = Number(plan.basePrice || plan.price).toFixed(2).replace('.', ',');
+            const priceStr = Number(plan.price).toFixed(2).replace('.', ',');
+
+            const htmlContent = `
+                <div style="width: 100%; max-width: 800px; margin: 0 auto; padding: 40px; font-family: 'Arial', sans-serif; color: #333; border: 1px solid #ddd; border-radius: 8px;">
+                    <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #1B1B1B; padding-bottom: 20px;">
+                        <h1 style="margin: 0; font-size: 24px; color: #1B1B1B; text-transform: uppercase; letter-spacing: 2px;">Tanque Team BJJ</h1>
+                        <p style="margin: 5px 0 0; color: #666; font-size: 14px;">Escola de Artes Marciais</p>
+                        <h2 style="margin: 20px 0 0; font-size: 20px; color: #4CAF50;">INFORMAÇÕES DO PLANO</h2>
+                    </div>
+                    
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px;">
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; width: 40%; color: #666;">Nome do Plano:</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">${plan.long}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; color: #666;">Valor Base:</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">R$ ${basePriceStr}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; color: #666;">Valor com Desconto:</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: #16a34a;">R$ ${priceStr}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; color: #666;">Duração:</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">${durationText}</td>
+                        </tr>
+                    </table>
+                    
+                    <div style="text-align: center; margin-top: 60px;">
+                        <p style="margin: 0; font-size: 14px; color: #666;">Impresso em: ${printDate}</p>
+                    </div>
+                </div>
+            `;
+            
+            window.printHtmlContent(htmlContent, "Plano_" + plan.short.replace(/\s+/g, '_'));
+        };
+        
+        window.getPlanInfo = (planKey) => {
+            if (!planKey) return { price: 0, short: 'NÃO INFORMADO', long: 'NÃO INFORMADO' };
+            if (window.PLAN_DICT[planKey]) return window.PLAN_DICT[planKey];
+            
+            // Fallback: search by name
+            const lowerKey = String(planKey).toLowerCase();
+            for (const plan of Object.values(window.PLAN_DICT)) {
+                const shortLower = plan.short.toLowerCase();
+                const longLower = plan.long.toLowerCase();
+                if (lowerKey === shortLower || lowerKey === longLower || 
+                    lowerKey.startsWith(shortLower + ' - r$') || lowerKey.startsWith(longLower + ' - r$')) {
+                    return plan;
+                }
+            }
+            
+            // If it's a 20-character string, it's likely a deleted Firestore document ID
+            if (String(planKey).length === 20) {
+                return { price: 0, short: 'Plano Excluído', long: 'PLANO EXCLUÍDO' };
+            }
+            
+            return { price: 0, short: String(planKey).toUpperCase(), long: 'NÃO INFORMADO' };
+        };
 
         window.getPlanType = function(planId) {
             if (!planId) return 'adulto';
@@ -1083,8 +1537,7 @@
             if (lowerId === 'administracao') return 'administracao';
             if (lowerId.includes('infantil')) return 'infantil';
             
-            const plan = window.PLAN_DICT[planId];
-            if (!plan) return 'adulto';
+            const plan = window.getPlanInfo(planId);
             
             const name = (plan.name || plan.short || '').toLowerCase();
             if (name.includes('dependente')) return 'dependente';
@@ -1098,6 +1551,12 @@
 
         window.getPlanDurationMonths = function(planId) {
             if (!planId) return 1;
+            
+            const plan = window.getPlanInfo(planId);
+            if (plan && plan.durationMonths) {
+                return parseInt(plan.durationMonths);
+            }
+
             const lowerId = String(planId).toLowerCase();
             if (lowerId.includes('trimestral')) return 3;
             if (lowerId.includes('semestral')) return 6;
@@ -1106,7 +1565,6 @@
             if (lowerId.includes('combo')) return 6;
             if (lowerId === 'dependente') return 6;
             
-            const plan = window.PLAN_DICT[planId];
             if (!plan) return 1;
             const name = (plan.name || plan.short || '').toLowerCase();
             
@@ -1120,53 +1578,254 @@
         };
 
         window.loadPlans = async function() {
+            // Reset PLAN_DICT to defaults
+            window.PLAN_DICT = {
+                'infantil-mensal': { price: 189.90, short: 'Infantil Mensal', long: 'INFANTIL MENSAL', durationMonths: 1, basePrice: 189.90, discount: 0, firstMonth: 189.90 },
+                'infantil-trimestral': { price: 168.90, short: 'Infantil Trimestral', long: 'INFANTIL TRIMESTRAL', durationMonths: 3, basePrice: 189.90, discount: 21.00, firstMonth: 168.90 },
+                'infantil-semestral': { price: 157.90, short: 'Infantil Semestral', long: 'INFANTIL SEMESTRAL', durationMonths: 6, basePrice: 189.90, discount: 32.00, firstMonth: 29.90 },
+                'adulto-mensal': { price: 168.90, short: 'Adulto Mensal', long: 'JOVEM/ADULTO MENSAL', durationMonths: 1, basePrice: 168.90, discount: 0, firstMonth: 168.90 },
+                'adulto-trimestral': { price: 147.90, short: 'Adulto Trimestral', long: 'JOVEM/ADULTO TRIMESTRAL', durationMonths: 3, basePrice: 168.90, discount: 21.00, firstMonth: 147.90 },
+                'adulto-semestral': { price: 126.90, short: 'Adulto Semestral', long: 'JOVEM/ADULTO SEMESTRAL', durationMonths: 6, basePrice: 168.90, discount: 42.00, firstMonth: 29.90 },
+                'combo-dupla': { price: 250.00, short: 'Combo Dupla', long: 'COMBO DUPLA SEMESTRAL', durationMonths: 6, basePrice: 250.00 },
+                'combo-casal': { price: 220.00, short: 'Combo Casal', long: 'COMBO CASAL SEMESTRAL', durationMonths: 6, basePrice: 220.00 },
+                'combo-familia': { price: 362.02, short: 'Combo Família', long: 'COMBO FAMÍLIA SEMESTRAL', durationMonths: 6, basePrice: 362.02 },
+                'administracao': { price: 0.00, short: 'Administração', long: 'ADMINISTRAÇÃO (ISENTO)', durationMonths: 12, basePrice: 0.00 },
+                'dependente': { price: 0.00, short: 'Dependente', long: 'DEPENDENTE - COMBO FAMÍLIA', durationMonths: 6, basePrice: 0.00 },
+                'isento': { price: 0.00, short: 'Isento', long: 'ISENTO / BOLSISTA', durationMonths: 1, basePrice: 0.00 },
+                'outros': { price: 0.00, short: 'Outros', long: 'OUTROS', durationMonths: 1, basePrice: 0.00 }
+            };
+
             try {
-                if (!window.db) return;
+                if (!window.db) {
+                    window.populatePlanSelects();
+                    return;
+                }
+                
                 const querySnapshot = await getDocs(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'plans'));
                 window.plansList = [];
-                querySnapshot.forEach(doc => {
+                
+                querySnapshot.forEach((doc) => {
                     const data = doc.data();
-                    const planId = doc.id;
-                    const planName = data.name || 'Plano Sem Nome';
-                    const planPrice = parseFloat(data.price) || 0;
+                    const id = doc.id;
                     
-                    window.PLAN_DICT[planId] = {
-                        price: planPrice,
-                        short: planName,
-                        long: planName.toUpperCase(),
-                        ...data
+                    if (data.deleted) {
+                        delete window.PLAN_DICT[id];
+                        return;
+                    }
+                    
+                    window.plansList.push({ id, ...data });
+                    
+                    // Add to PLAN_DICT
+                    const defaultPlan = window.PLAN_DICT[id] || {};
+                    window.PLAN_DICT[id] = {
+                        ...defaultPlan,
+                        price: data.price !== undefined ? data.price : (defaultPlan.price || 0),
+                        basePrice: data.basePrice !== undefined ? data.basePrice : (data.price || defaultPlan.basePrice || 0),
+                        short: data.name || defaultPlan.short,
+                        long: (data.name || '').toUpperCase() || defaultPlan.long,
+                        durationMonths: data.durationMonths || window.inferPlanDuration(data) || defaultPlan.durationMonths
                     };
-                    window.PLAN_DICT[planName] = window.PLAN_DICT[planId];
-                    window.plansList.push({ id: planId, ...data });
                 });
-                window.populatePlanSelects();
+                
             } catch (error) {
                 console.error("Erro ao carregar planos:", error);
+            } finally {
+                window.populatePlanSelects();
             }
         };
 
         window.populatePlanSelects = function() {
             let optionsHtml = '<option value="" disabled selected>Selecione um plano...</option>';
-            if (window.plansList && window.plansList.length > 0) {
-                window.plansList.sort((a, b) => (a.name || '').localeCompare(b.name || '')).forEach(p => {
-                    optionsHtml += `<option value="${p.name}">${p.name} - R$ ${Number(p.price || 0).toFixed(2)}</option>`;
-                });
-            } else {
-                optionsHtml += '<option value="" disabled>Nenhum plano cadastrado</option>';
+            
+            for (const [key, plan] of Object.entries(window.PLAN_DICT)) {
+                optionsHtml += `<option value="${key}">${plan.long} - R$ ${Number(plan.price || 0).toFixed(2)}</option>`;
             }
             
             const regPlan = document.getElementById('reg-plan');
-            const editPlan = document.getElementById('edit-plan');
             
             if (regPlan) {
                 const currentReg = regPlan.value;
                 regPlan.innerHTML = optionsHtml;
                 if (currentReg && window.PLAN_DICT[currentReg]) regPlan.value = currentReg;
             }
-            if (editPlan) {
-                const currentEdit = editPlan.value;
-                editPlan.innerHTML = optionsHtml;
-                if (currentEdit && window.PLAN_DICT[currentEdit]) editPlan.value = currentEdit;
+        };
+
+        // HORÁRIOS DE CHECK-IN
+        window.SCHEDULE_DICT = {};
+        window.DEFAULT_SCHEDULES = {
+            'mista': { name: 'Turma Mista (Livre)' },
+            'adulto-1030': { name: 'Adulto - 10h30' },
+            'adulto-1230': { name: 'Adulto - 12h30' },
+            'adulto-1800': { name: 'Adulto - 18h00' },
+            'adulto-2100': { name: 'Adulto - 21h00' },
+            'infantil-1500': { name: 'Infantil - 15h00' },
+            'infantil-1630': { name: 'Infantil - 16h30' }
+        };
+
+        window.loadSchedules = async function() {
+            try {
+                if (!window.db) return;
+                
+                window.SCHEDULE_DICT = { ...window.DEFAULT_SCHEDULES };
+
+                const querySnapshot = await getDocs(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'schedules'));
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    const scheduleId = doc.id;
+                    
+                    if (data.deleted) {
+                        delete window.SCHEDULE_DICT[scheduleId];
+                        return;
+                    }
+                    
+                    const scheduleName = data.name || 'Turma Sem Nome';
+                    
+                    const existingDefaultKey = Object.keys(window.SCHEDULE_DICT).find(key => 
+                        window.SCHEDULE_DICT[key].name.toUpperCase() === scheduleName.toUpperCase()
+                    );
+                    
+                    if (existingDefaultKey && existingDefaultKey !== scheduleId) {
+                        delete window.SCHEDULE_DICT[existingDefaultKey];
+                    }
+                    
+                    window.SCHEDULE_DICT[scheduleId] = {
+                        name: scheduleName,
+                        ...data
+                    };
+                });
+                window.populateScheduleSelects();
+            } catch (error) {
+                console.error("Erro ao carregar horários:", error);
+            }
+        };
+
+        window.populateScheduleSelects = function() {
+            let optionsHtml = '';
+            for (const [key, schedule] of Object.entries(window.SCHEDULE_DICT)) {
+                optionsHtml += `<option value="${schedule.name}">${schedule.name}</option>`;
+            }
+            
+            const checkinSelector = document.getElementById('checkin-class-selector');
+            if (checkinSelector) {
+                const currentVal = checkinSelector.value;
+                checkinSelector.innerHTML = optionsHtml;
+                if (currentVal && Object.values(window.SCHEDULE_DICT).some(s => s.name === currentVal)) {
+                    checkinSelector.value = currentVal;
+                }
+            }
+            
+            const bulkSelector = document.getElementById('bulk-class-selector');
+            if (bulkSelector) {
+                const currentVal = bulkSelector.value;
+                bulkSelector.innerHTML = optionsHtml;
+                if (currentVal && Object.values(window.SCHEDULE_DICT).some(s => s.name === currentVal)) {
+                    bulkSelector.value = currentVal;
+                }
+            }
+            
+            const progAddSelector = document.getElementById('prog-add-class');
+            if (progAddSelector) {
+                const currentVal = progAddSelector.value;
+                progAddSelector.innerHTML = optionsHtml;
+                if (currentVal && Object.values(window.SCHEDULE_DICT).some(s => s.name === currentVal)) {
+                    progAddSelector.value = currentVal;
+                }
+            }
+        };
+
+        window.renderSettingsSchedules = () => {
+            const tbody = document.getElementById('settings-schedules-list');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            for (const [key, schedule] of Object.entries(window.SCHEDULE_DICT)) {
+                let actionsHtml = `
+                    <button onclick="window.editSchedule('${key}')" class="text-blue-500 hover:text-blue-700 transition-colors mr-3" title="Editar Horário"><i class="fa-solid fa-pen"></i></button>
+                    <button onclick="window.deleteSchedule('${key}')" class="text-red-500 hover:text-red-700 transition-colors" title="Excluir Horário"><i class="fa-solid fa-trash"></i></button>
+                `;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="p-3 text-gray-800 dark:text-gray-200">${schedule.name}</td>
+                        <td class="p-3 text-right">
+                            ${actionsHtml}
+                        </td>
+                    </tr>
+                `;
+            }
+        };
+
+        window.addSchedule = async () => {
+            const name = document.getElementById('new-schedule-name').value.trim();
+            const editId = document.getElementById('edit-schedule-id').value;
+            
+            if (!name) {
+                alert("Por favor, preencha o nome da turma/horário.");
+                return;
+            }
+            
+            const saveBtn = document.getElementById('save-schedule-btn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Salvando...';
+            
+            try {
+                let docRef;
+                if (editId) {
+                    docRef = doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'schedules', editId);
+                    await setDoc(docRef, { name: name }, { merge: true });
+                } else {
+                    const newId = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString().slice(-4);
+                    docRef = doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'schedules', newId);
+                    await setDoc(docRef, { name: name });
+                }
+                
+                alert("Horário salvo com sucesso!");
+                window.cancelEditSchedule();
+                await window.loadSchedules();
+                window.renderSettingsSchedules();
+            } catch (e) {
+                console.error("Erro ao salvar horário:", e);
+                alert("Erro ao salvar horário.");
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fa-solid fa-plus mr-1"></i> Salvar';
+            }
+        };
+
+        window.editSchedule = (key) => {
+            const schedule = window.SCHEDULE_DICT[key];
+            if (!schedule) return;
+
+            document.getElementById('new-schedule-name').value = schedule.name;
+            document.getElementById('edit-schedule-id').value = key;
+            
+            document.getElementById('schedule-form-title').innerText = 'Editar Horário';
+            document.getElementById('save-schedule-btn').innerHTML = '<i class="fa-solid fa-check mr-1"></i> Salvar';
+            document.getElementById('cancel-schedule-btn').classList.remove('hidden');
+        };
+
+        window.cancelEditSchedule = () => {
+            document.getElementById('new-schedule-name').value = '';
+            document.getElementById('edit-schedule-id').value = '';
+            
+            document.getElementById('schedule-form-title').innerText = 'Adicionar Novo Horário';
+            document.getElementById('save-schedule-btn').innerHTML = '<i class="fa-solid fa-plus mr-1"></i> Salvar';
+            document.getElementById('cancel-schedule-btn').classList.add('hidden');
+        };
+
+        window.deleteSchedule = async (key) => {
+            if (!confirm('Tem certeza que deseja excluir este horário?')) return;
+            
+            try {
+                await setDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'schedules', key), { deleted: true }, { merge: true });
+                
+                delete window.SCHEDULE_DICT[key];
+                
+                await window.loadSchedules();
+                window.renderSettingsSchedules();
+            } catch (e) {
+                console.error("Erro ao excluir horário:", e);
+                alert("Erro ao excluir horário.");
             }
         };
 
@@ -1214,10 +1873,11 @@
                     <title>${titleStr}</title>
                     <style>
                         @media print {
-                            @page { margin: 1cm; }
-                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                            @page { margin: 1cm; size: A4 portrait; }
+                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0; }
+                            .receipt-container { page-break-inside: avoid; }
                         }
-                        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+                        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; box-sizing: border-box; }
                     </style>
                 </head>
                 <body>
@@ -1281,6 +1941,65 @@
             window.printHtmlContent(htmlContent, "Carteirinha_TanqueTeam");
         };
 
+        window.isValidCPF = (cpf) => {
+            cpf = cpf.replace(/[^\d]+/g,'');
+            if(cpf == '') return false;
+            // Elimina CPFs invalidos conhecidos
+            if (cpf.length != 11 ||
+                cpf == "00000000000" ||
+                cpf == "11111111111" ||
+                cpf == "22222222222" ||
+                cpf == "33333333333" ||
+                cpf == "44444444444" ||
+                cpf == "55555555555" ||
+                cpf == "66666666666" ||
+                cpf == "77777777777" ||
+                cpf == "88888888888" ||
+                cpf == "99999999999")
+                    return false;
+            // Valida 1o digito
+            let add = 0;
+            for (let i=0; i < 9; i ++)
+                add += parseInt(cpf.charAt(i)) * (10 - i);
+            let rev = 11 - (add % 11);
+            if (rev == 10 || rev == 11)
+                rev = 0;
+            if (rev != parseInt(cpf.charAt(9)))
+                return false;
+            // Valida 2o digito
+            add = 0;
+            for (let i = 0; i < 10; i ++)
+                add += parseInt(cpf.charAt(i)) * (11 - i);
+            rev = 11 - (add % 11);
+            if (rev == 10 || rev == 11)
+                rev = 0;
+            if (rev != parseInt(cpf.charAt(10)))
+                return false;
+            return true;
+        };
+
+        window.fetchAddressByCep = async (cepId, addressId) => {
+            const cepInput = document.getElementById(cepId);
+            const addressInput = document.getElementById(addressId);
+            if (!cepInput || !addressInput) return;
+            
+            let cep = cepInput.value.replace(/\D/g, '');
+            if (cep.length !== 8) return;
+            
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const data = await response.json();
+                if (!data.erro) {
+                    addressInput.value = `${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}`;
+                    const numberId = addressId === 'reg-address' ? 'reg-address-number' : 'edit-address-number';
+                    const numberInput = document.getElementById(numberId);
+                    if (numberInput) numberInput.focus();
+                }
+            } catch (error) {
+                console.error("Erro ao buscar CEP:", error);
+            }
+        };
+
         // FORMATAÇÃO E MÁSCARAS
         document.addEventListener('DOMContentLoaded', () => {
             const maskInput = (id, regexStr, replacement) => {
@@ -1294,6 +2013,8 @@
             maskInput('reg-guardian-cpf', '(\\d{0,3})(\\d{0,3})(\\d{0,3})(\\d{0,2})', x => !x[2] ? x[1] : x[1] + '.' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '-' + x[4] : ''));
             maskInput('edit-cpf', '(\\d{0,3})(\\d{0,3})(\\d{0,3})(\\d{0,2})', x => !x[2] ? x[1] : x[1] + '.' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '-' + x[4] : ''));
             maskInput('edit-guardian-cpf', '(\\d{0,3})(\\d{0,3})(\\d{0,3})(\\d{0,2})', x => !x[2] ? x[1] : x[1] + '.' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '-' + x[4] : ''));
+            maskInput('reg-cep', '(\\d{0,5})(\\d{0,3})', x => !x[2] ? x[1] : x[1] + '-' + x[2]);
+            maskInput('edit-cep', '(\\d{0,5})(\\d{0,3})', x => !x[2] ? x[1] : x[1] + '-' + x[2]);
             maskInput('reg-phone', '(\\d{0,2})(\\d{0,5})(\\d{0,4})', x => !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : ''));
             maskInput('edit-phone', '(\\d{0,2})(\\d{0,5})(\\d{0,4})', x => !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : ''));
             maskInput('edit-exp-phone', '(\\d{0,2})(\\d{0,5})(\\d{0,4})', x => !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : ''));
@@ -1336,6 +2057,7 @@
                             else await signInAnonymously(auth);
                         } catch (e) { console.error("Auth error", e); }
                         await window.loadPlans();
+                        await window.loadSchedules();
                         window.loadData(); window.loadNotices(); window.loadExperimentalData();
                     };
                     initAuth();
@@ -1371,17 +2093,104 @@
         function formatDate(isoStr) { 
             try { 
                 if (!isoStr) return '--';
-                if (isoStr.includes('T')) {
-                    const d = new Date(isoStr);
-                    return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                } else if (isoStr.length >= 10 && isoStr.indexOf('-') === 4) {
-                    const parts = isoStr.split('-');
-                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                let d;
+                if (isoStr.toDate && typeof isoStr.toDate === 'function') {
+                    d = isoStr.toDate();
+                } else if (isoStr instanceof Date) {
+                    d = isoStr;
+                } else if (typeof isoStr === 'string') {
+                    if (isoStr.includes('T')) {
+                        d = new Date(isoStr);
+                    } else if (isoStr.length >= 10 && isoStr.indexOf('-') === 4) {
+                        const parts = isoStr.split('-');
+                        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                    } else {
+                        d = new Date(isoStr); 
+                    }
+                } else {
+                    return '--';
                 }
-                const d = new Date(isoStr); 
                 return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }); 
             } catch (e) { return '--'; } 
         }
+        function getAdjustedNextDueDate(s) {
+            if (!s || !s.nextDueDate) return null;
+            let nextDueObj;
+            try {
+                if (s.nextDueDate.toDate && typeof s.nextDueDate.toDate === 'function') {
+                    nextDueObj = s.nextDueDate.toDate();
+                } else if (s.nextDueDate instanceof Date) {
+                    nextDueObj = new Date(s.nextDueDate);
+                } else if (typeof s.nextDueDate === 'string') {
+                    if (s.nextDueDate.includes('T')) {
+                        nextDueObj = new Date(s.nextDueDate);
+                    } else {
+                        const parts = s.nextDueDate.split('-');
+                        if (parts.length === 3) {
+                            nextDueObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                        }
+                    }
+                }
+                
+                if (nextDueObj && !isNaN(nextDueObj)) {
+                    if (s.paymentHistory && s.paymentHistory.length > 0) {
+                        const sortedHistory = [...s.paymentHistory].sort((a, b) => new Date(a.date) - new Date(b.date));
+                        const firstPaymentDateStr = sortedHistory[0].date;
+                        let day = null;
+                        if (firstPaymentDateStr) {
+                            if (firstPaymentDateStr.includes('T')) {
+                                const d = new Date(firstPaymentDateStr);
+                                if (!isNaN(d)) day = d.getDate();
+                            } else {
+                                const parts = firstPaymentDateStr.split('-');
+                                if (parts.length >= 3) {
+                                    day = parseInt(parts[2].split(' ')[0], 10);
+                                }
+                            }
+                        }
+                        if (day !== null && !isNaN(day)) {
+                            nextDueObj.setDate(day);
+                        }
+                    }
+                    return nextDueObj;
+                }
+            } catch (e) { return null; }
+            return null;
+        }
+
+        function isPaymentLate(s) {
+            if (!s || s.paymentStatus === 'Isento' || !s.nextDueDate) return false;
+            if (s.paymentStatus === 'Pendente') return true;
+            try {
+                const nextDueObj = getAdjustedNextDueDate(s);
+                if (nextDueObj && !isNaN(nextDueObj)) {
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+                    
+                    return nextDueObj < today;
+                }
+            } catch (e) { return false; }
+            return false;
+        }
+
+        function isPaymentDueSoon(s) {
+            if (!s || s.paymentStatus === 'Isento' || !s.nextDueDate) return false;
+            if (s.paymentStatus === 'Pendente' || isPaymentLate(s)) return false;
+            try {
+                const nextDueObj = getAdjustedNextDueDate(s);
+                if (nextDueObj && !isNaN(nextDueObj)) {
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+                    
+                    const diffTime = nextDueObj - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    return diffDays >= 0 && diffDays <= 10;
+                }
+            } catch (e) { return false; }
+            return false;
+        }
+
         function isStudentAdmin(s) {
             const cat = s.category ? String(s.category).toLowerCase() : '';
             const plan = s.plan ? String(s.plan).toLowerCase() : '';
@@ -1451,7 +2260,6 @@
             });
             const setText = (id, txt) => { const e = document.getElementById(id); if(e) e.innerText = txt; }
             setText('stat-total', total); setText('stat-infantil', kidsCount); setText('stat-adulto', adultsCount); setText('stat-archived', archivedCount);
-            setText('stat-admin', adminCount); setText('stat-admin-kids', adminKidsCount); setText('stat-admin-adults', adminAdultsCount);
         }
 
         // DETALHES, PROGRESSO E EDIÇÃO
@@ -1459,7 +2267,9 @@
             try {
                 const s = window.students.find(st => st.id === id); if(!s) return;
                 document.getElementById('detail-name').innerText = s.name;
-                const age = getAge(s.dob); document.getElementById('detail-age').innerText = age !== null ? `${age} anos` : '--';
+                const age = getAge(s.dob); 
+                document.getElementById('detail-age').innerText = age !== null ? `${age} anos` : '--';
+                document.getElementById('detail-dob').innerText = s.dob ? formatDate(s.dob) : '--';
                 document.getElementById('detail-belt').innerHTML = '<div class="flex items-center gap-2">' + window.getBeltImageHtml(s.belt) + '<span>' + (s.belt || "Faixa Branca") + '</span></div>';
                 const photoImg = document.getElementById('detail-photo'); const photoIcon = document.getElementById('detail-icon');
                 if(s.photoBase64) { photoImg.src = s.photoBase64; photoImg.classList.remove('hidden'); photoIcon.classList.add('hidden'); } 
@@ -1485,7 +2295,8 @@
                 
                 let nextDueText = '--';
                 if (s.nextDueDate) {
-                    nextDueText = formatDate(s.nextDueDate);
+                    const adjDate = getAdjustedNextDueDate(s);
+                    nextDueText = adjDate ? formatDate(adjDate) : formatDate(s.nextDueDate);
                 }
                 document.getElementById('detail-next-due').innerText = nextDueText;
 
@@ -1528,20 +2339,312 @@
             await window.loadPlans();
             document.getElementById('admin-register-modal').classList.remove('hidden'); 
             document.getElementById('admin-register-modal').classList.add('flex'); 
+            
             window.handleAdminPlanChange(); 
         };
         window.closeAdminRegisterModal = () => {
             document.getElementById('admin-register-modal').classList.add('hidden'); document.getElementById('admin-register-modal').classList.remove('flex');
             document.getElementById('reg-name').value = ''; document.getElementById('reg-dob').value = ''; document.getElementById('reg-cpf').value = ''; document.getElementById('reg-email').value = ''; document.getElementById('reg-phone').value = ''; document.getElementById('reg-address').value = '';
+            if(document.getElementById('reg-address-number')) document.getElementById('reg-address-number').value = '';
+            if(document.getElementById('reg-cep')) document.getElementById('reg-cep').value = '';
             if(document.getElementById('reg-guardian')) document.getElementById('reg-guardian').value = ''; if(document.getElementById('reg-guardian-cpf')) document.getElementById('reg-guardian-cpf').value = '';
             document.getElementById('reg-plan').value = ''; document.getElementById('reg-belt-color').value = 'Branca'; document.getElementById('reg-belt-degree').value = '0'; document.getElementById('reg-student-login').value = ''; document.getElementById('reg-student-pass').value = '';
             
             // Reset Payment Fields
-            document.getElementById('reg-payment-status').value = 'Pendente';
-            document.getElementById('reg-pay-amount').value = '';
-            document.getElementById('reg-pay-method').value = 'Pix';
+            if(document.getElementById('reg-payment-status')) document.getElementById('reg-payment-status').value = 'Pendente';
+            if(document.getElementById('reg-pay-amount')) document.getElementById('reg-pay-amount').value = '';
+            if(document.getElementById('reg-pay-method')) document.getElementById('reg-pay-method').value = 'Pix';
+            if(document.getElementById('reg-pay-ref-month')) document.getElementById('reg-pay-ref-month').value = '';
+            if(document.getElementById('reg-pay-next-due')) document.getElementById('reg-pay-next-due').value = '';
             
             window.handleAdminPlanChange();
+        };
+
+        const defaultContractTemplate = `1. CONTRATADA: TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA, CNPJ: 65.678.191/0001-90.
+
+2. CONTRATANTE: [NOME_CONTRATANTE], CPF: [CPF_CONTRATANTE], Endereço: [ENDERECO_CONTRATANTE], Tel: [TELEFONE_CONTRATANTE], E-mail: [EMAIL_CONTRATANTE].
+
+3. ALUNO(S): 
+[LISTA_ALUNOS]
+
+CLÁUSULA 1ª - DO OBJETO: O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial JIU-JITSU pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente publicada no site da empresa www.tanqueteambjj.com.br.
+
+[CLAUSULA_SEGUNDA]
+
+[CLAUSULA_CANCELAMENTO]
+
+CLÁUSULA 4ª - DA INADIMPLÊNCIA: O atraso superior a 30 dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e cobrança dos valores devidos acrescidos de multa de 2% e juros de mora legais. Em caso de inadimplência, a empresa se reserva ao direito de protestar o título em cartório e incluir o nome do CONTRATANTE nos órgãos de proteção ao crédito (Serasa, SPC e outros).
+
+CLÁUSULA 5ª - DA SAÚDE E APTIDÃO FÍSICA: O CONTRATANTE atesta que o(s) Aluno(s) encontra(m)-se em plenas condições de saúde física e mental para a prática de esportes de combate. A academia está apta para prestar os primeiros socorros básicos, zelamos pela integridade dos alunos e trabalhamos com metodologias para evitar lesões. Contudo, o CONTRATANTE isenta a CONTRATADA de qualquer responsabilidade sobre moléstias pré-existentes, condições cardíacas, respiratórias ou ortopédicas não declaradas formalmente no ato desta matrícula.
+
+CLÁUSULA 6ª - DAS REGRAS DE CONDUTA (DOJO KUN): É obrigatório o uso de uniforme (Kimono) estipulado pela academia, limpo e conservado. Atos de indisciplina, desrespeito à hierarquia, agressão fora do contexto do treino esportivo ou falta de higiene poderão acarretar na suspensão ou rescisão unilateral deste contrato por parte da CONTRATADA, sem devolução de valores.
+
+CLÁUSULA 7ª - DO DIREITO DE IMAGEM: O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da academia ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.
+
+Belém-PA, [DATA_ATUAL].`;
+
+        window.populateContractStudents = () => {
+            const select = document.getElementById('contract-student-select');
+            if (!select) return;
+            
+            select.innerHTML = '<option value="">-- Selecione um aluno --</option>';
+            
+            const activeStudents = window.students.filter(s => !s.archived).sort((a, b) => a.name.localeCompare(b.name));
+            
+            activeStudents.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = `${s.name} (${s.cpf || 'Sem CPF'})`;
+                select.appendChild(opt);
+            });
+            
+            document.getElementById('contract-preview-container').classList.add('hidden');
+            document.getElementById('contract-preview-container').classList.remove('flex');
+        };
+
+        window.generateContractText = (s) => {
+            let text = defaultContractTemplate;
+            
+            // Determine CONTRATANTE and ALUNO(S)
+            let contratanteNome = s.name || '_______________________';
+            let contratanteCpf = s.cpf || '_______________________';
+            let contratanteEndereco = s.address || '_______________________';
+            let contratanteTelefone = s.phone || '_______________________';
+            let contratanteEmail = s.email || '_______________________';
+            
+            let listaAlunos = '';
+            
+            const age = getAge(s.dob);
+            const isMinor = age !== null && age < 18;
+            const planType = window.getPlanType(s.plan);
+            
+            if (planType === 'combo-familia' || planType === 'combo-dupla') {
+                // Titular is the CONTRATANTE
+                // If this student is the titular, they are the CONTRATANTE
+                // If this student is a dependent, we should ideally find the titular, but let's assume the contract is generated from the titular's profile for the whole family.
+                // Or if generated from dependent, we still need the titular.
+                let titular = s;
+                if (s.titularId) {
+                    const foundTitular = window.students.find(t => t.id === s.titularId);
+                    if (foundTitular) titular = foundTitular;
+                }
+                
+                contratanteNome = titular.name || '_______________________';
+                contratanteCpf = titular.cpf || '_______________________';
+                contratanteEndereco = titular.address || '_______________________';
+                contratanteTelefone = titular.phone || '_______________________';
+                contratanteEmail = titular.email || '_______________________';
+                
+                // Add titular as student if they train (usually they do, but let's just add them)
+                let dob = '_______________________';
+                if (titular.dob) {
+                    const parts = titular.dob.split('-');
+                    if (parts.length === 3) dob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                let faixa = 'Branca'; let grau = '0º Grau';
+                if (titular.belt) {
+                    const parts = titular.belt.split(' - ');
+                    if (parts.length > 0) faixa = parts[0];
+                    if (parts.length > 1) grau = parts[1];
+                }
+                listaAlunos += `- ${titular.name}, Nasc: ${dob}. | Graduação Atual: ${faixa} - ${grau}\n`;
+                
+                // Add dependents
+                const deps = window.students.filter(d => d.titularId === titular.id && window.getPlanType(d.plan) === 'dependente');
+                deps.forEach(d => {
+                    let dDob = '_______________________';
+                    if (d.dob) {
+                        const parts = d.dob.split('-');
+                        if (parts.length === 3) dDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                    }
+                    let dFaixa = 'Branca'; let dGrau = '0º Grau';
+                    if (d.belt) {
+                        const parts = d.belt.split(' - ');
+                        if (parts.length > 0) dFaixa = parts[0];
+                        if (parts.length > 1) dGrau = parts[1];
+                    }
+                    listaAlunos += `- ${d.name}, Nasc: ${dDob}. | Graduação Atual: ${dFaixa} - ${dGrau}\n`;
+                });
+                
+            } else if (isMinor || (s.guardian && s.guardian.trim() !== '')) {
+                // Minor: Guardian is CONTRATANTE
+                contratanteNome = s.guardian || '_______________________';
+                contratanteCpf = s.guardianCpf || '_______________________';
+                // Use student's address/phone/email for guardian if not specified separately
+                
+                let dob = '_______________________';
+                if (s.dob) {
+                    const parts = s.dob.split('-');
+                    if (parts.length === 3) dob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                let faixa = 'Branca'; let grau = '0º Grau';
+                if (s.belt) {
+                    const parts = s.belt.split(' - ');
+                    if (parts.length > 0) faixa = parts[0];
+                    if (parts.length > 1) grau = parts[1];
+                }
+                listaAlunos += `- ${s.name}, Nasc: ${dob}. | Graduação Atual: ${faixa} - ${grau}\n`;
+            } else {
+                // Adult, individual plan
+                let dob = '_______________________';
+                if (s.dob) {
+                    const parts = s.dob.split('-');
+                    if (parts.length === 3) dob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                let faixa = 'Branca'; let grau = '0º Grau';
+                if (s.belt) {
+                    const parts = s.belt.split(' - ');
+                    if (parts.length > 0) faixa = parts[0];
+                    if (parts.length > 1) grau = parts[1];
+                }
+                listaAlunos += `- ${s.name}, Nasc: ${dob}. | Graduação Atual: ${faixa} - ${grau}\n`;
+            }
+            
+            text = text.replace(/\[NOME_CONTRATANTE\]/g, contratanteNome);
+            text = text.replace(/\[CPF_CONTRATANTE\]/g, contratanteCpf);
+            text = text.replace(/\[ENDERECO_CONTRATANTE\]/g, contratanteEndereco);
+            text = text.replace(/\[TELEFONE_CONTRATANTE\]/g, contratanteTelefone);
+            text = text.replace(/\[EMAIL_CONTRATANTE\]/g, contratanteEmail);
+            text = text.replace(/\[LISTA_ALUNOS\]/g, listaAlunos.trim());
+            
+            let dueDay = '___';
+            if (s.nextDueDate) {
+                const parts = s.nextDueDate.split('T')[0].split('-');
+                if (parts.length === 3) dueDay = parts[2];
+            }
+            let contractEnd = '___/___/_____';
+            if (s.contractEndDate) {
+                const parts = s.contractEndDate.split('T')[0].split('-');
+                if (parts.length === 3) contractEnd = `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+
+            let planName = s.plan || '_______________________';
+            let planValue = '________';
+            let clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo [PLANO_ALUNO], comprometendo-se ao pagamento da mensalidade no valor total de R$ [VALOR_PLANO]. As mensalidades deverão ser pagas até o dia ${dueDay} de cada mês. O término do contrato está previsto para ${contractEnd}.`;
+            let clausulaCancelamento = `CLÁUSULA 3ª - DO CANCELAMENTO: O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.`;
+            
+            const p = window.getPlanInfo(s.plan);
+            if (p && p.long !== 'NÃO INFORMADO') {
+                planName = p.long;
+                const basePrice = p.basePrice || p.price || 0;
+                planValue = basePrice.toFixed(2).replace('.', ',');
+                
+                if (p.durationMonths && p.durationMonths > 1) {
+                    clausulaCancelamento = `CLÁUSULA 3ª - DO CANCELAMENTO E FIDELIDADE: O presente contrato possui prazo de fidelidade de ${p.durationMonths} meses. O cancelamento da prestação de serviços antes do término deste prazo deverá ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Em caso de rescisão antecipada, será cobrada uma multa rescisória equivalente a 30% (trinta por cento) do valor correspondente às parcelas vincendas (a vencer) até o término do contrato, conforme amparo legal. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.`;
+                }
+                
+                if (p.price === 0) {
+                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo ${p.long}, sendo este isento de mensalidades. O término do contrato está previsto para ${contractEnd}.`;
+                } else {
+                    let baseText = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo ${p.long}, comprometendo-se ao pagamento da mensalidade no valor total de R$ ${basePrice.toFixed(2).replace('.', ',')}.`;
+                    
+                    if (p.basePrice && p.basePrice > p.price) {
+                        const discount = p.basePrice - p.price;
+                        baseText += ` Fica acordado que, pagando até a data de vencimento (dia ${dueDay} de cada mês), o CONTRATANTE pagará o valor com desconto de R$ ${p.price.toFixed(2).replace('.', ',')} (desconto de "R$ ${discount.toFixed(2).replace('.', ',')}"). Após o vencimento, será cobrado o valor total de R$ ${basePrice.toFixed(2).replace('.', ',')}.`;
+                    } else {
+                        baseText += ` As mensalidades deverão ser pagas até o dia ${dueDay} de cada mês. Após o vencimento, será cobrado o valor total de R$ ${basePrice.toFixed(2).replace('.', ',')}.`;
+                    }
+                    
+                    baseText += ` O término do contrato está previsto para ${contractEnd}.`;
+
+                    if (p.durationMonths === 6 && p.firstMonth && p.firstMonth < p.price) {
+                        baseText += `\n\nOBS: Desconto Promocional Aplicado na 1ª Mensalidade, que terá o valor de R$ ${p.firstMonth.toFixed(2).replace('.', ',')}.`;
+                    }
+                    
+                    clausulaSegunda = baseText;
+                }
+            }
+            
+            text = text.replace(/\[CLAUSULA_SEGUNDA\]/g, clausulaSegunda);
+            text = text.replace(/\[CLAUSULA_CANCELAMENTO\]/g, clausulaCancelamento);
+            text = text.replace(/\[PLANO_ALUNO\]/g, planName);
+            text = text.replace(/\[VALOR_PLANO\]/g, planValue);
+            
+            const today = new Date().toLocaleDateString('pt-BR');
+            text = text.replace(/\[DATA_ATUAL\]/g, today);
+            
+            return text;
+        };
+
+        window.loadContractPreview = () => {
+            const select = document.getElementById('contract-student-select');
+            if (!select) return;
+            
+            const id = select.value;
+            const container = document.getElementById('contract-preview-container');
+            
+            if (!id) {
+                container.classList.add('hidden');
+                container.classList.remove('flex');
+                return;
+            }
+            
+            const s = window.students.find(st => st.id === id);
+            if (!s) return;
+            
+            const text = window.generateContractText(s);
+            
+            document.getElementById('contract-tab-text').value = text;
+            container.classList.remove('hidden');
+            container.classList.add('flex');
+        };
+
+        window.printTabContract = () => {
+            const text = document.getElementById('contract-tab-text').value;
+            const select = document.getElementById('contract-student-select');
+            const sId = select ? select.value : null;
+            const s = window.students.find(st => st.id === sId);
+            
+            document.getElementById('report-title').innerText = 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS';
+            document.getElementById('report-date').innerText = new Date().toLocaleString('pt-BR');
+            document.getElementById('report-content').innerText = text;
+            document.getElementById('report-student-name').innerText = s ? (s.name || 'CONTRATANTE') : 'CONTRATANTE';
+            
+            document.body.classList.add('printing-report');
+            window.print();
+            setTimeout(() => {
+                document.body.classList.remove('printing-report');
+            }, 500);
+        };
+
+        window.openContractModal = (id) => {
+            const s = window.students.find(st => st.id === id);
+            if (!s) return;
+            
+            document.getElementById('contract-student-id').value = id;
+            
+            const text = window.generateContractText(s);
+            
+            document.getElementById('contract-text').value = text;
+            document.getElementById('contract-modal').classList.remove('hidden');
+            document.getElementById('contract-modal').classList.add('flex');
+        };
+
+        window.closeContractModal = () => {
+            document.getElementById('contract-modal').classList.add('hidden');
+            document.getElementById('contract-modal').classList.remove('flex');
+        };
+
+        window.resetContractText = () => {
+            const id = document.getElementById('contract-student-id').value;
+            if (id) window.openContractModal(id);
+        };
+
+        window.printContract = () => {
+            const text = document.getElementById('contract-text').value;
+            const sId = document.getElementById('contract-student-id').value;
+            const s = window.students.find(st => st.id === sId);
+            
+            document.getElementById('report-title').innerText = 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS';
+            document.getElementById('report-date').innerText = new Date().toLocaleString('pt-BR');
+            document.getElementById('report-content').innerText = text;
+            document.getElementById('report-student-name').innerText = s ? (s.name || 'CONTRATANTE') : 'CONTRATANTE';
+            
+            document.body.classList.add('printing-report');
+            window.print();
+            setTimeout(() => {
+                document.body.classList.remove('printing-report');
+            }, 500);
         };
 
         window.openEditModal = async (id) => {
@@ -1550,26 +2653,27 @@
                 const s = window.students.find(st => st.id === id); if(!s) return;
                 document.getElementById('edit-id').value = id; document.getElementById('edit-name').value = s.name || ''; 
                 let formattedDob = String(s.dob || ''); if (formattedDob && formattedDob.includes('-')) { const parts = formattedDob.split('-'); if(parts.length === 3) formattedDob = `${parts[2].substring(0,2)}/${parts[1]}/${parts[0]}`; } document.getElementById('edit-dob').value = formattedDob;
-                document.getElementById('edit-cpf').value = s.cpf || ''; document.getElementById('edit-address').value = s.address || ''; document.getElementById('edit-guardian').value = s.guardian || ''; 
+                
+                let addressBase = s.address || '';
+                let addressNumber = '';
+                if (addressBase.includes(',')) {
+                    const parts = addressBase.split(',');
+                    const lastPart = parts[parts.length - 1].trim();
+                    // Check if last part looks like a house number (digits, digits+letter, or s/n)
+                    if (/^\d+$/.test(lastPart) || /^\d+[a-zA-Z]$/.test(lastPart) || lastPart.toLowerCase() === 's/n' || lastPart.toLowerCase() === 'sn') {
+                        addressNumber = lastPart;
+                        parts.pop();
+                        addressBase = parts.join(',').trim();
+                    }
+                }
+                
+                document.getElementById('edit-cpf').value = s.cpf || ''; document.getElementById('edit-address').value = addressBase; 
+                if (document.getElementById('edit-address-number')) document.getElementById('edit-address-number').value = addressNumber;
+                document.getElementById('edit-guardian').value = s.guardian || ''; 
+                if (document.getElementById('edit-cep')) document.getElementById('edit-cep').value = s.cep || '';
                 if (document.getElementById('edit-guardian-kinship')) document.getElementById('edit-guardian-kinship').value = s.guardianKinship || ''; 
                 if (document.getElementById('edit-guardian-cpf')) document.getElementById('edit-guardian-cpf').value = s.guardianCpf || '';
                 
-                // Ensure the plan exists in the options, otherwise add it temporarily
-                const editPlanSelect = document.getElementById('edit-plan');
-                let optionExists = Array.from(editPlanSelect.options).some(opt => opt.value === s.plan);
-                if (!optionExists && s.plan) {
-                    const planInfo = window.getPlanInfo(s.plan);
-                    const newOption = new Option(`${planInfo.short} (Plano Antigo)`, s.plan);
-                    editPlanSelect.add(newOption);
-                }
-                editPlanSelect.value = s.plan || '';
-                
-                let tId = s.titularId || '';
-                if (!tId && s.titularName) {
-                    const t = window.students.find(st => st.name === s.titularName);
-                    if (t) tId = t.id;
-                }
-                document.getElementById('edit-titular').value = tId;
                 document.getElementById('edit-email').value = s.email || ''; document.getElementById('edit-phone').value = s.phone || '';
                 
                 const preview = document.getElementById('edit-photo-preview');
@@ -1583,7 +2687,7 @@
                 document.getElementById('edit-login').value = s.studentLogin || ''; document.getElementById('edit-password').value = s.studentPassword || '';
                 if (document.getElementById('edit-enrollment-status')) document.getElementById('edit-enrollment-status').value = s.enrollmentStatus || 'Ativo';
                 
-                window.handleEditPlanChange(); window.checkAdminEditAge();
+                window.checkAdminEditAge();
                 document.getElementById('edit-modal').classList.remove('hidden'); document.getElementById('edit-modal').classList.add('flex');
             } catch(e) { console.error("Erro edição:", e); alert("Erro ao abrir."); }
         };
@@ -1659,17 +2763,89 @@
             window.closeCropperModal();
         };
 
-        window.handleEditPlanChange = () => { 
-            const planId = document.getElementById('edit-plan').value; 
+        window.handlePayPlanChange = () => { 
+            const planId = document.getElementById('pay-plan').value; 
             const planType = window.getPlanType(planId);
-            const titularContainer = document.getElementById('edit-titular-container'); 
+            const titularContainer = document.getElementById('pay-titular-container'); 
             if (planType === 'dependente') titularContainer.classList.remove('hidden'); 
             else titularContainer.classList.add('hidden'); 
         };
 
+        window.saveContractData = async () => {
+            const id = document.getElementById('pay-student-id').value;
+            const s = window.students.find(st => st.id === id);
+            if (!s) return;
+
+            const planValueFromSelect = document.getElementById('pay-plan').value; 
+            const planInfo = window.getPlanInfo(planValueFromSelect);
+            const planName = planInfo.name || planValueFromSelect;
+            const planType = window.getPlanType(planName);
+            const planValue = planInfo.price || 0;
+            const titularSelect = document.getElementById('pay-titular');
+            const titularId = planType === 'dependente' ? titularSelect.value : "";
+            const titularName = planType === 'dependente' && titularSelect.selectedIndex > 0 ? titularSelect.options[titularSelect.selectedIndex].text : "";
+            const endDate = document.getElementById('pay-end-date').value;
+            const nextDue = document.getElementById('pay-contract-next-due').value;
+
+            let newCategory = 'Adulto'; 
+            if (planType === 'infantil') newCategory = 'Infantil'; 
+            if (planType.includes('combo')) newCategory = 'Combo Família'; 
+            if (planType === 'administracao') newCategory = 'Administração'; 
+            if (planType === 'dependente') newCategory = 'Dependente (Combo)';
+
+            const planDisplayString = planInfo.short + ' - R$ ' + Number(planValue).toFixed(2).replace('.', ',');
+
+            const updateData = { 
+                plan: planDisplayString, 
+                planValue: planValue, 
+                titularName: titularName, 
+                titularId: titularId, 
+                category: newCategory 
+            };
+
+            if (endDate) {
+                updateData.contractEndDate = toISODate(endDate);
+            } else {
+                updateData.contractEndDate = null;
+            }
+            
+            if (nextDue) {
+                updateData.nextDueDate = toISODate(nextDue);
+            }
+
+            if (planType === 'administracao' || planValue === 0) {
+                updateData.paymentStatus = 'Isento';
+            } else if (s && s.paymentStatus === 'Isento' && planValue > 0) {
+                updateData.paymentStatus = 'Pendente';
+            }
+
+            try {
+                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), updateData);
+                window.loadData();
+                alert("Dados do contrato atualizados com sucesso!");
+            } catch(e) {
+                console.error(e);
+                alert("Erro ao atualizar dados do contrato.");
+            }
+        };
+
         window.saveAdminNewStudent = async () => {
-            const name = String(document.getElementById('reg-name').value).toUpperCase(); const dob = toISODate(document.getElementById('reg-dob').value); const cpf = document.getElementById('reg-cpf').value; const email = document.getElementById('reg-email').value; const phone = document.getElementById('reg-phone').value; const address = document.getElementById('reg-address').value; 
-            const guardian = document.getElementById('reg-guardian') ? document.getElementById('reg-guardian').value : ''; const guardianCpf = document.getElementById('reg-guardian-cpf') ? document.getElementById('reg-guardian-cpf').value : ''; const guardianKinship = 'Pai/Mãe'; 
+            const cpf = document.getElementById('reg-cpf').value;
+            if (cpf && !window.isValidCPF(cpf)) {
+                alert("CPF inválido. Por favor, verifique o número digitado.");
+                return;
+            }
+            const guardianCpf = document.getElementById('reg-guardian-cpf') ? document.getElementById('reg-guardian-cpf').value : '';
+            if (guardianCpf && !window.isValidCPF(guardianCpf)) {
+                alert("CPF do responsável inválido. Por favor, verifique o número digitado.");
+                return;
+            }
+            const name = String(document.getElementById('reg-name').value).toUpperCase(); const dob = toISODate(document.getElementById('reg-dob').value); const email = document.getElementById('reg-email').value; const phone = document.getElementById('reg-phone').value; 
+            const addressBase = document.getElementById('reg-address').value;
+            const addressNumber = document.getElementById('reg-address-number') ? document.getElementById('reg-address-number').value : '';
+            const address = addressNumber ? `${addressBase}, ${addressNumber}` : addressBase;
+            const guardian = document.getElementById('reg-guardian') ? document.getElementById('reg-guardian').value : ''; const guardianKinship = 'Pai/Mãe'; 
+            const cep = document.getElementById('reg-cep') ? document.getElementById('reg-cep').value : '';
             const planValueFromSelect = document.getElementById('reg-plan').value; 
             const planInfo = window.getPlanInfo(planValueFromSelect);
             const planName = planInfo.name || planValueFromSelect;
@@ -1681,12 +2857,8 @@
             const beltColor = document.getElementById('reg-belt-color').value; const beltDegree = document.getElementById('reg-belt-degree').value; const login = document.getElementById('reg-student-login').value; const pass = document.getElementById('reg-student-pass').value;
             const origin = document.getElementById('reg-origin') ? document.getElementById('reg-origin').value : 'Não informado';
             
-            // Payment logic
-            let payStatus = document.getElementById('reg-payment-status').value;
-            const payAmount = document.getElementById('reg-pay-amount').value;
-            const payMethod = document.getElementById('reg-pay-method').value;
-
-            if (planType === 'administracao') {
+            let payStatus = 'Pendente';
+            if (planType === 'administracao' || planValue === 0) {
                 payStatus = 'Isento';
             }
 
@@ -1705,53 +2877,51 @@
 
             let initialPaymentHistory = [];
             let nextDue = new Date(regDate);
-            if (payStatus === 'Em dia' && payAmount) {
-                initialPaymentHistory.push({
-                    amount: parseFloat(payAmount),
-                    method: payMethod,
-                    timestamp: new Date().toISOString(),
-                    date: getLocalISODate()
-                });
-                nextDue.setMonth(nextDue.getMonth() + 1);
-            }
+            nextDue.setMonth(nextDue.getMonth() + 1);
+            
             const nextDueDate = nextDue.toISOString();
 
+            let photoBase64 = null;
+
             try {
-                const studentData = { name, dob, cpf, email, phone, address, guardian, guardianCpf, plan: planName, planValue: planValue, titularName: titularName, titularId: titularId, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), nextDueDate: nextDueDate, studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] };
+                const planDisplayString = planInfo.short + ' - R$ ' + Number(planValue).toFixed(2).replace('.', ',');
+                const studentData = { name, dob, cpf, cep, email, phone, address, guardian, guardianCpf, plan: planDisplayString, planValue: planValue, titularName: titularName, titularId: titularId, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), nextDueDate: nextDueDate, studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] };
+                if (photoBase64) studentData.photoBase64 = photoBase64;
                 const titularDocRef = await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), studentData);
                 
                 if (planType === 'combo-dupla' || planType === 'combo-casal' || planType === 'combo-familia') {
                     const d1Name = String(document.getElementById('admin-dep1-name').value).toUpperCase();
-                    if(d1Name) await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name: d1Name, dob: toISODate(document.getElementById('admin-dep1-dob').value), titularName: name, titularId: titularDocRef.id, guardianKinship: document.getElementById('admin-dep1-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'Dependente', planValue: 0, category: 'Dependente (Combo)', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
+                    if(d1Name) await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name: d1Name, dob: toISODate(document.getElementById('admin-dep1-dob').value), titularName: name, titularId: titularDocRef.id, guardianKinship: document.getElementById('admin-dep1-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', planValue: 0, category: 'Dependente (Combo)', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 }
                 if (planType === 'combo-familia') {
                     const d2Name = String(document.getElementById('admin-dep2-name').value).toUpperCase();
-                    if(d2Name) await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name: d2Name, dob: toISODate(document.getElementById('admin-dep2-dob').value), titularName: name, titularId: titularDocRef.id, guardianKinship: document.getElementById('admin-dep2-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'Dependente', planValue: 0, category: 'Dependente (Combo)', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
+                    if(d2Name) await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name: d2Name, dob: toISODate(document.getElementById('admin-dep2-dob').value), titularName: name, titularId: titularDocRef.id, guardianKinship: document.getElementById('admin-dep2-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', planValue: 0, category: 'Dependente (Combo)', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 }
                 window.closeAdminRegisterModal(); window.loadData(); alert("Aluno cadastrado com sucesso!");
             } catch(e) { console.error(e); alert("Erro ao cadastrar."); }
         };
 
         window.saveStudentChanges = async () => {
-            const id = document.getElementById('edit-id').value; const name = String(document.getElementById('edit-name').value).toUpperCase(); const dobIso = toISODate(document.getElementById('edit-dob').value); const cpf = document.getElementById('edit-cpf').value; const address = document.getElementById('edit-address').value; const guardian = document.getElementById('edit-guardian').value;
-            let guardianKinship = ''; if(document.getElementById('edit-guardian-kinship')) guardianKinship = document.getElementById('edit-guardian-kinship').value;
+            const cpf = document.getElementById('edit-cpf').value;
+            if (cpf && !window.isValidCPF(cpf)) {
+                alert("CPF inválido. Por favor, verifique o número digitado.");
+                return;
+            }
             let guardianCpf = ''; if(document.getElementById('edit-guardian-cpf')) guardianCpf = document.getElementById('edit-guardian-cpf').value;
-            const planValueFromSelect = document.getElementById('edit-plan').value; 
-            const planInfo = window.getPlanInfo(planValueFromSelect);
-            const planName = planInfo.name || planValueFromSelect;
-            const planType = window.getPlanType(planName);
-            const planValue = planInfo.price || 0;
-            const titularSelect = document.getElementById('edit-titular');
-            const titularId = planType === 'dependente' ? titularSelect.value : "";
-            const titularName = planType === 'dependente' && titularSelect.selectedIndex > 0 ? titularSelect.options[titularSelect.selectedIndex].text : "";
+            if (guardianCpf && !window.isValidCPF(guardianCpf)) {
+                alert("CPF do responsável inválido. Por favor, verifique o número digitado.");
+                return;
+            }
+            const id = document.getElementById('edit-id').value; const name = String(document.getElementById('edit-name').value).toUpperCase(); const dobIso = toISODate(document.getElementById('edit-dob').value); 
+            const addressBase = document.getElementById('edit-address').value;
+            const addressNumber = document.getElementById('edit-address-number') ? document.getElementById('edit-address-number').value : '';
+            const address = addressNumber ? `${addressBase}, ${addressNumber}` : addressBase;
+            const guardian = document.getElementById('edit-guardian').value;
+            const s = window.students.find(st => st.id === id);
+            let guardianKinship = ''; if(document.getElementById('edit-guardian-kinship')) guardianKinship = document.getElementById('edit-guardian-kinship').value;
+            const cep = document.getElementById('edit-cep') ? document.getElementById('edit-cep').value : '';
             const email = document.getElementById('edit-email').value; const phone = document.getElementById('edit-phone').value; const color = document.getElementById('edit-belt-color').value; const degree = document.getElementById('edit-belt-degree').value; const beltStr = `Faixa ${color} - ${degree}º Grau`; const login = document.getElementById('edit-login').value; const pass = document.getElementById('edit-password').value; const status = document.getElementById('edit-enrollment-status').value;
             const originalBelt = document.getElementById('edit-original-belt').value;
-            
-            let newCategory = 'Adulto'; 
-            if (planType === 'infantil') newCategory = 'Infantil'; 
-            if (planType.includes('combo')) newCategory = 'Combo Família'; 
-            if (planType === 'administracao') newCategory = 'Administração'; 
-            if (planType === 'dependente') newCategory = 'Dependente (Combo)';
             
             let photoBase64 = null;
             if (window.currentCroppedPhoto) {
@@ -1768,10 +2938,7 @@
                 }
             }
             try {
-                const updateData = { name: name, dob: dobIso, cpf: cpf, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf, plan: planName, planValue: planValue, titularName: titularName, titularId: titularId, category: newCategory, enrollmentStatus: status, belt: beltStr, studentLogin: login, studentPassword: pass, email: email, phone: phone };
-                if (planType === 'administracao') {
-                    updateData.paymentStatus = 'Isento';
-                }
+                const updateData = { name: name, dob: dobIso, cpf: cpf, cep: cep, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf, enrollmentStatus: status, belt: beltStr, studentLogin: login, studentPassword: pass, email: email, phone: phone };
                 if(photoBase64) updateData.photoBase64 = photoBase64;
                 if (beltStr !== originalBelt) { updateData.lastGraduationDate = new Date().toISOString(); updateData.progressLog = arrayUnion({ type: 'graduation', text: `Graduado para ${beltStr}`, date: new Date().toISOString() }); }
                 await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), updateData);
@@ -1880,13 +3047,38 @@
         };
 
         // LÓGICA DO LEITOR DE QR CODE (Câmera Contínua)
-        window.playBeep = () => {
+        window.playBeep = (type = 'success') => {
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext; if (!AudioContext) return;
                 const audioCtx = new AudioContext(); const oscillator = audioCtx.createOscillator(); const gainNode = audioCtx.createGain();
-                oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                oscillator.connect(gainNode); gainNode.connect(audioCtx.destination); oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.15);
+                oscillator.type = type === 'success' ? 'sine' : 'sawtooth'; 
+                oscillator.frequency.setValueAtTime(type === 'success' ? 880 : 200, audioCtx.currentTime); 
+                if (type === 'error') {
+                    oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                }
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                oscillator.connect(gainNode); gainNode.connect(audioCtx.destination); oscillator.start(); oscillator.stop(audioCtx.currentTime + (type === 'success' ? 0.15 : 0.3));
             } catch(e) {}
+        };
+
+        window.toggleTotemMode = () => {
+            const modal = document.getElementById('checkin-modal');
+            const btnClose = document.getElementById('btn-close-checkin');
+            if (modal.classList.contains('totem-mode')) {
+                modal.classList.remove('totem-mode', 'bg-black');
+                modal.classList.add('bg-brand-dark', 'p-4');
+                modal.firstElementChild.classList.remove('h-full', 'max-w-none', 'rounded-none');
+                modal.firstElementChild.classList.add('max-w-lg', 'rounded-xl');
+                btnClose.classList.remove('hidden');
+            } else {
+                modal.classList.add('totem-mode', 'bg-black');
+                modal.classList.remove('bg-brand-dark', 'p-4');
+                modal.firstElementChild.classList.add('h-full', 'max-w-none', 'rounded-none');
+                modal.firstElementChild.classList.remove('max-w-lg', 'rounded-xl');
+                btnClose.classList.add('hidden');
+                // Add a way to exit totem mode (e.g. double click on the header)
+                modal.firstElementChild.firstElementChild.ondblclick = window.toggleTotemMode;
+            }
         };
 
         window.openCheckinModal = () => {
@@ -1915,18 +3107,54 @@
         window.onScanSuccess = async (decodedText, decodedResult) => {
             if(window.isScanningPaused) return; window.isScanningPaused = true;
             const resDiv = document.getElementById('checkin-result');
+            const modal = document.getElementById('checkin-modal');
+            const isTotem = modal.classList.contains('totem-mode');
+            
             resDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-blue-500 mb-2"></i> Processando...'; resDiv.className = "text-center py-4 w-full rounded-lg bg-blue-50 border border-blue-200 font-medium text-blue-700 min-h-[100px] flex flex-col items-center justify-center";
             try {
                 const studentId = decodedText; const student = window.students.find(s => s.id === studentId);
-                if (!student) { resDiv.innerHTML = '<i class="fa-solid fa-circle-xmark text-3xl text-red-500 mb-2"></i> QR Code Inválido.'; resDiv.className = "text-center py-4 w-full rounded-lg bg-red-50 border border-red-200 font-medium text-red-700 min-h-[100px] flex flex-col items-center justify-center"; setTimeout(() => { window.resetScanner(resDiv); }, 3000); return; }
-                if (student.paymentStatus === 'Pendente') { resDiv.innerHTML = `<i class="fa-solid fa-lock text-3xl text-red-500 mb-2"></i> Acesso Bloqueado!<br><span class="text-sm font-bold text-gray-800">${student.name}</span><br><span class="text-xs">Mensalidade Pendente.</span>`; resDiv.className = "text-center py-4 w-full rounded-lg bg-red-50 border border-red-300 font-medium text-red-700 min-h-[100px] flex flex-col items-center justify-center"; setTimeout(() => { window.resetScanner(resDiv); }, 4000); return; }
+                if (!student) { 
+                    window.playBeep('error');
+                    if(isTotem) modal.classList.add('bg-red-900');
+                    resDiv.innerHTML = '<i class="fa-solid fa-circle-xmark text-3xl text-red-500 mb-2"></i> QR Code Inválido.'; resDiv.className = "text-center py-4 w-full rounded-lg bg-red-50 border border-red-200 font-medium text-red-700 min-h-[100px] flex flex-col items-center justify-center"; 
+                    setTimeout(() => { if(isTotem) modal.classList.remove('bg-red-900'); window.resetScanner(resDiv); }, 3000); 
+                    return; 
+                }
+                
+                let isBlocked = false;
+                if (student.nextDueDate) {
+                    const adjDate = getAdjustedNextDueDate(student);
+                    if (adjDate && !isNaN(adjDate)) {
+                        const today = new Date();
+                        today.setHours(0,0,0,0);
+                        const daysLate = Math.floor((today - adjDate) / (1000 * 60 * 60 * 24));
+                        if (daysLate > 15) {
+                            isBlocked = true;
+                        }
+                    }
+                }
+                
+                if (isBlocked || isPaymentLate(student)) { 
+                    window.playBeep('error');
+                    if(isTotem) modal.classList.add('bg-red-900');
+                    resDiv.innerHTML = `<i class="fa-solid fa-lock text-3xl text-red-500 mb-2"></i> Acesso Bloqueado!<br><span class="text-sm font-bold text-gray-800">${student.name}</span><br><span class="text-xs">Mensalidade Pendente.</span>`; resDiv.className = "text-center py-4 w-full rounded-lg bg-red-50 border border-red-300 font-medium text-red-700 min-h-[100px] flex flex-col items-center justify-center"; 
+                    setTimeout(() => { if(isTotem) modal.classList.remove('bg-red-900'); window.resetScanner(resDiv); }, 4000); 
+                    return; 
+                }
 
                 const todayISO = getLocalISODate(); const className = document.getElementById('checkin-class-selector').value;
-                if (student.attendanceLog && student.attendanceLog.some(l => l.date === todayISO && l.time === className)) { resDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-3xl text-yellow-600 mb-2"></i> Check-in já realizado!<br><span class="text-sm font-bold text-gray-800">${student.name}</span><br><span class="text-xs text-yellow-800">Já tem presença registada na turma: ${className}</span>`; resDiv.className = "text-center py-4 w-full rounded-lg bg-yellow-50 border border-yellow-300 font-medium text-yellow-800 min-h-[100px] flex flex-col items-center justify-center shadow-inner"; setTimeout(() => { window.resetScanner(resDiv); }, 3500); return; }
+                if (student.attendanceLog && student.attendanceLog.some(l => l.date === todayISO && l.time === className)) { 
+                    window.playBeep('error');
+                    if(isTotem) modal.classList.add('bg-yellow-900');
+                    resDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-3xl text-yellow-600 mb-2"></i> Check-in já realizado!<br><span class="text-sm font-bold text-gray-800">${student.name}</span><br><span class="text-xs text-yellow-800">Já tem presença registada na turma: ${className}</span>`; resDiv.className = "text-center py-4 w-full rounded-lg bg-yellow-50 border border-yellow-300 font-medium text-yellow-800 min-h-[100px] flex flex-col items-center justify-center shadow-inner"; 
+                    setTimeout(() => { if(isTotem) modal.classList.remove('bg-yellow-900'); window.resetScanner(resDiv); }, 3500); 
+                    return; 
+                }
 
                 const newLog = { date: todayISO, time: className, timestamp: new Date().toISOString() };
                 await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), { attendance: arrayUnion(todayISO), attendanceLog: arrayUnion(newLog) });
-                window.playBeep();
+                window.playBeep('success');
+                if(isTotem) modal.classList.add('bg-green-900');
                 
                 resDiv.innerHTML = `<i class="fa-solid fa-check-circle text-4xl text-green-500 mb-2"></i> Check-in Confirmado!<br><span class="text-lg font-bold text-gray-800">${student.name}</span><br><span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded mt-1 inline-block">${className}</span>`;
                 resDiv.className = "text-center py-4 w-full rounded-lg bg-green-50 border border-green-300 font-medium text-green-700 min-h-[100px] flex flex-col items-center justify-center shadow-inner";
@@ -1935,8 +3163,14 @@
                 if(!student.attendanceLog) student.attendanceLog = []; student.attendanceLog.push(newLog);
                 if (window.currentView === 'students') window.renderTable();
 
-                setTimeout(() => { window.resetScanner(resDiv); }, 3000);
-            } catch(e) { console.error(e); resDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-3xl text-orange-500 mb-2"></i> Erro de Conexão.'; resDiv.className = "text-center py-4 w-full rounded-lg bg-orange-50 border border-orange-200 font-medium text-orange-700 min-h-[100px] flex flex-col items-center justify-center"; setTimeout(() => { window.resetScanner(resDiv); }, 3000); }
+                setTimeout(() => { if(isTotem) modal.classList.remove('bg-green-900'); window.resetScanner(resDiv); }, 3000);
+            } catch(e) { 
+                console.error(e); 
+                window.playBeep('error');
+                if(isTotem) modal.classList.add('bg-orange-900');
+                resDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-3xl text-orange-500 mb-2"></i> Erro de Conexão.'; resDiv.className = "text-center py-4 w-full rounded-lg bg-orange-50 border border-orange-200 font-medium text-orange-700 min-h-[100px] flex flex-col items-center justify-center"; 
+                setTimeout(() => { if(isTotem) modal.classList.remove('bg-orange-900'); window.resetScanner(resDiv); }, 3000); 
+            }
         };
 
         window.resetScanner = function(resDiv) { resDiv.innerHTML = '<i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o próximo QR Code...'; resDiv.className = "text-center py-4 w-full rounded-lg bg-gray-50 border border-gray-200 font-medium text-gray-600 min-h-[100px] flex flex-col items-center justify-center"; window.isScanningPaused = false; };
@@ -2034,11 +3268,36 @@
             } catch(e) { console.error(e); }
         };
 
+        window.filterExperimentalTable = () => {
+            const nameFilter = document.getElementById('filter-exp-name').value.toLowerCase();
+            const statusFilter = document.getElementById('filter-exp-status').value;
+            const categoryFilter = document.getElementById('filter-exp-category').value;
+            
+            const tbody = document.getElementById('experimental-table-body');
+            if (!tbody) return;
+            
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach(row => {
+                if (row.children.length === 1) return; // Skip "A carregar dados..." or "Nenhum agendamento" row
+                
+                const name = row.querySelector('td:nth-child(1)').innerText.toLowerCase();
+                let category = row.querySelector('td:nth-child(5)').innerText;
+                const status = row.querySelector('td:nth-child(6)').innerText;
+                
+                let show = true;
+                if (nameFilter && !name.includes(nameFilter)) show = false;
+                if (statusFilter !== 'all' && status !== statusFilter) show = false;
+                if (categoryFilter !== 'all' && !category.includes(categoryFilter)) show = false;
+                
+                row.style.display = show ? '' : 'none';
+            });
+        };
+
         window.renderExperimentalTable = () => {
             const tbody = document.getElementById('experimental-table-body');
             if (!tbody) return;
             tbody.innerHTML = '';
-            if (window.experimentalList.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Nenhum agendamento encontrado.</td></tr>'; return; }
+            if (window.experimentalList.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Nenhum agendamento encontrado.</td></tr>'; return; }
             window.experimentalList.forEach(exp => {
                 const dateStr = formatDate(exp.date);
                 let statusBadge = `<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">Pendente</span>`;
@@ -2048,6 +3307,8 @@
                 
                 let phoneHtml = '-';
                 if(exp.phone) { const cleanPhone = String(exp.phone).replace(/\D/g, ''); phoneHtml = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:underline"><i class="fa-brands fa-whatsapp"></i> ${exp.phone}</a>`; }
+
+                let cpfHtml = exp.cpf || '-';
 
                 let categoryHtml = '--';
                 let guardianHtml = '';
@@ -2072,6 +3333,7 @@
                             ${exp.name}
                             ${guardianHtml}
                         </td>
+                        <td class="p-3 text-sm text-gray-600 dark:text-gray-400">${cpfHtml}</td>
                         <td class="p-3 text-sm text-gray-600 dark:text-gray-400">${phoneHtml}</td>
                         <td class="p-3 text-sm text-gray-600 dark:text-gray-400">${dateStr} às ${exp.time || '--'}</td>
                         <td class="p-3 text-sm text-gray-600 dark:text-gray-400">${categoryHtml}</td>
@@ -2084,12 +3346,27 @@
                     </tr>
                 `;
             });
+            window.filterExperimentalTable();
+        };
+
+        window.openNewExperimentalModal = () => {
+            document.getElementById('edit-exp-id').value = ''; 
+            document.getElementById('edit-exp-name').value = ''; 
+            document.getElementById('edit-exp-cpf').value = ''; 
+            document.getElementById('edit-exp-phone').value = ''; 
+            document.getElementById('edit-exp-dob').value = '';
+            document.getElementById('edit-exp-guardian').value = '';
+            document.getElementById('edit-exp-date').value = ''; 
+            document.getElementById('edit-exp-time').value = ''; 
+            document.getElementById('edit-exp-status').value = 'Pendente';
+            document.getElementById('edit-exp-modal').classList.remove('hidden'); document.getElementById('edit-exp-modal').classList.add('flex');
         };
 
         window.openEditExperimental = (id) => {
             const exp = window.experimentalList.find(x => x.id === id); if(!exp) return;
             document.getElementById('edit-exp-id').value = id; 
             document.getElementById('edit-exp-name').value = exp.name; 
+            document.getElementById('edit-exp-cpf').value = exp.cpf || ''; 
             document.getElementById('edit-exp-phone').value = exp.phone || ''; 
             document.getElementById('edit-exp-dob').value = exp.dob || '';
             document.getElementById('edit-exp-guardian').value = exp.guardian || '';
@@ -2104,14 +3381,25 @@
         window.saveExperimentalChanges = async () => {
             const id = document.getElementById('edit-exp-id').value; 
             const name = document.getElementById('edit-exp-name').value; 
+            const cpf = document.getElementById('edit-exp-cpf').value; 
             const phone = document.getElementById('edit-exp-phone').value; 
             const dob = document.getElementById('edit-exp-dob').value;
             const guardian = document.getElementById('edit-exp-guardian').value;
             const date = document.getElementById('edit-exp-date').value; 
             const time = document.getElementById('edit-exp-time').value; 
             const status = document.getElementById('edit-exp-status').value;
+            
+            if (!name) {
+                alert("O nome é obrigatório.");
+                return;
+            }
+
             try { 
-                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id), { name, phone, dob, guardian, date, time, status }); 
+                if (id) {
+                    await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id), { name, cpf, phone, dob, guardian, date, time, status }); 
+                } else {
+                    await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental'), { name, cpf, phone, dob, guardian, date, time, status, timestamp: new Date().toISOString() });
+                }
                 window.closeEditExperimentalModal(); 
                 window.loadExperimentalData(); 
             } catch(e) { 
@@ -2301,9 +3589,20 @@
 
             const sortOrder = document.getElementById('sort-order') ? document.getElementById('sort-order').value : 'recent';
             const filterBelt = document.getElementById('filter-belt') ? document.getElementById('filter-belt').value : '';
+            const filterPayment = document.getElementById('filter-payment') ? document.getElementById('filter-payment').value : '';
 
             if (filterBelt) {
                 filtered = filtered.filter(s => s.belt && String(s.belt).toLowerCase().includes(filterBelt.toLowerCase()));
+            }
+
+            if (filterPayment) {
+                filtered = filtered.filter(s => {
+                    if (filterPayment === 'Isento') return s.paymentStatus === 'Isento';
+                    if (filterPayment === 'Em dia') return s.paymentStatus === 'Em dia' && !isPaymentLate(s) && !isPaymentDueSoon(s);
+                    if (filterPayment === 'Vencendo') return isPaymentDueSoon(s);
+                    if (filterPayment === 'Pendente') return s.paymentStatus === 'Pendente' || isPaymentLate(s);
+                    return true;
+                });
             }
 
             if (window.currentTab === 'admin') {
@@ -2340,14 +3639,46 @@
                 else if(s.enrollmentStatus === 'Inativo') statusBadge = `<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">Inativo</span>`;
                 else if(s.enrollmentStatus === 'Trancado') statusBadge = `<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">Trancado</span>`;
                 
-                let payBadge = `<span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-check"></i> Em dia</span>`;
-                if(s.paymentStatus === 'Pendente') payBadge = `<span class="text-red-600 font-bold text-xs"><i class="fa-solid fa-xmark"></i> Pendente</span>`;
+                let nextDueStr = '--';
+                let isBlocked = false;
+                if (s.nextDueDate) {
+                    const adjDate = getAdjustedNextDueDate(s);
+                    nextDueStr = adjDate ? formatDate(adjDate) : formatDate(s.nextDueDate);
+                    
+                    if (adjDate && !isNaN(adjDate)) {
+                        const today = new Date();
+                        today.setHours(0,0,0,0);
+                        const daysLate = Math.floor((today - adjDate) / (1000 * 60 * 60 * 24));
+                        if (daysLate > 15) {
+                            isBlocked = true;
+                        }
+                    }
+                }
+                
+                const daysSinceRegistration = Math.floor((new Date() - new Date(s.registrationDate)) / (1000 * 60 * 60 * 24));
+                const isNewStudent = daysSinceRegistration <= 7;
+
+                let payBadge = `<div class="flex flex-col"><span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-check"></i> Em dia</span><span class="text-[10px] text-gray-500 mt-0.5">Venc: ${nextDueStr}</span></div>`;
+                if(isBlocked) payBadge = `<div class="flex flex-col"><span class="text-red-800 font-bold text-xs"><i class="fa-solid fa-ban"></i> Bloqueado</span><span class="text-[10px] text-red-600 mt-0.5">Venc: ${nextDueStr}</span></div>`;
+                else if(isPaymentLate(s) || s.paymentStatus === 'Pendente') {
+                    if (isNewStudent) {
+                        payBadge = `<div class="flex flex-col"><span class="text-orange-500 font-bold text-xs"><i class="fa-solid fa-clock"></i> 1º Pagamento</span><span class="text-[10px] text-orange-400 mt-0.5">Pendente</span></div>`;
+                    } else {
+                        payBadge = `<div class="flex flex-col"><span class="text-red-600 font-bold text-xs"><i class="fa-solid fa-xmark"></i> Pendente</span><span class="text-[10px] text-red-500 mt-0.5">Venc: ${nextDueStr}</span></div>`;
+                    }
+                }
+                else if(isPaymentDueSoon(s)) {
+                    payBadge = `<div class="flex flex-col"><span class="text-yellow-600 font-bold text-xs"><i class="fa-solid fa-triangle-exclamation"></i> Vencendo</span><span class="text-[10px] text-yellow-600 mt-0.5">Venc: ${nextDueStr}</span></div>`;
+                }
                 else if(s.paymentStatus === 'Isento') payBadge = `<span class="text-gray-500 font-bold text-xs">Isento</span>`;
 
                 let photoHtml = `<div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 text-xs font-bold shrink-0">${s.name.charAt(0).toUpperCase()}</div>`;
                 if(s.photoBase64) photoHtml = `<img src="${s.photoBase64}" class="w-8 h-8 rounded-full object-cover border border-gray-300 shrink-0">`;
 
                 let subNameHtml = '';
+                if (isNewStudent) {
+                    subNameHtml += `<div class="text-[10px] text-brand-red font-bold mt-0.5 uppercase tracking-wider"><i class="fa-solid fa-star"></i> Aluno Novo</div>`;
+                }
                 if (window.getPlanType(s.plan) === 'dependente' && s.titularName) {
                     subNameHtml += `<div class="text-[10px] text-purple-600 dark:text-purple-400 font-bold mt-0.5"><i class="fa-solid fa-link"></i> Dep. de ${s.titularName}</div>`;
                 } else if (s.plan && window.getPlanType(s.plan).includes('combo')) {
@@ -2358,15 +3689,44 @@
                     subNameHtml += `<div class="text-[10px] text-yellow-600 dark:text-yellow-500 font-bold mt-0.5"><i class="fa-solid fa-user-shield"></i> Resp: ${s.guardian}</div>`;
                 }
 
+                // Check for 15 days absence
+                let absenceWarning = '';
+                if (s.attendance && s.attendance.length > 0) {
+                    const lastCheckinStr = s.attendance[s.attendance.length - 1];
+                    let lastCheckinDate;
+                    if (lastCheckinStr.includes('T')) {
+                        lastCheckinDate = new Date(lastCheckinStr);
+                    } else {
+                        const parts = lastCheckinStr.split('-');
+                        lastCheckinDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                    }
+                    
+                    const daysSinceLastCheckin = Math.floor((new Date() - lastCheckinDate) / (1000 * 60 * 60 * 24));
+                    if (daysSinceLastCheckin >= 15) {
+                        absenceWarning = `<div class="text-[10px] text-orange-600 dark:text-orange-400 font-bold mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i> Sumido há ${daysSinceLastCheckin} dias</div>`;
+                    }
+                } else {
+                     const daysSinceRegistration = Math.floor((new Date() - new Date(s.registrationDate)) / (1000 * 60 * 60 * 24));
+                     if (daysSinceRegistration >= 15) {
+                         absenceWarning = `<div class="text-[10px] text-orange-600 dark:text-orange-400 font-bold mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i> Nunca fez check-in (${daysSinceRegistration} dias)</div>`;
+                     }
+                }
+                subNameHtml += absenceWarning;
+
                 let actionsHtml = `
+                    <button onclick="window.sendWhatsAppReminder('${s.id}')" class="text-green-600 hover:text-green-800 mx-1" title="Lembrete WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
                     <button onclick="window.informPayment('${s.id}')" class="text-green-500 hover:text-green-700 mx-1" title="Informar Pagamento"><i class="fa-solid fa-hand-holding-dollar"></i></button>
                     <button onclick="window.openProgressModal('${s.id}')" class="text-blue-500 hover:text-blue-700 mx-1" title="Progresso"><i class="fa-solid fa-chart-line"></i></button>
+                    <button onclick="window.openContractModal('${s.id}')" class="text-purple-500 hover:text-purple-700 mx-1" title="Imprimir Contrato"><i class="fa-solid fa-file-contract"></i></button>
                     <button onclick="window.openEditModal('${s.id}')" class="text-orange-500 hover:text-orange-700 mx-1" title="Editar"><i class="fa-solid fa-pen"></i></button>
                     <button onclick="window.toggleArchive('${s.id}')" class="text-red-500 hover:text-red-700 mx-1" title="${s.archived ? 'Desarquivar' : 'Arquivar'}"><i class="fa-solid ${s.archived ? 'fa-box-open' : 'fa-box-archive'}"></i></button>
                     ${s.archived ? `<button onclick="window.deleteStudentPermanently('${s.id}')" class="text-red-700 hover:text-red-900 mx-1" title="Excluir Definitivamente"><i class="fa-solid fa-trash"></i></button>` : ''}
                 `;
 
                 let rowClass = "border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition";
+                if (isNewStudent) {
+                    rowClass += " border-l-2 border-l-brand-red bg-red-50/10 dark:bg-red-900/10";
+                }
                 if (isDependent) {
                     rowClass += ` bg-gray-50/50 dark:bg-gray-800/50 hidden dependent-of-${titularId}`;
                 }
@@ -2658,29 +4018,173 @@
             document.getElementById('payment-modal').classList.remove('flex');
         };
 
+        window.sendWhatsAppReminder = (id) => {
+            const s = window.students.find(st => st.id === id);
+            if (!s || !s.phone) {
+                alert('Aluno não encontrado ou sem telefone cadastrado.');
+                return;
+            }
+            
+            let phone = s.phone.replace(/\D/g, '');
+            if (phone.length === 11) {
+                phone = '55' + phone;
+            }
+            
+            let nextDueStr = '--';
+            if (s.nextDueDate) {
+                const adjDate = getAdjustedNextDueDate(s);
+                nextDueStr = adjDate ? formatDate(adjDate) : formatDate(s.nextDueDate);
+            }
+            
+            const isFirstPayment = !s.paymentHistory || s.paymentHistory.length === 0;
+            const isLate = isPaymentLate(s);
+            const isDueSoon = isPaymentDueSoon(s);
+            const firstName = s.name.split(' ')[0];
+            
+            let message = '';
+            
+            if (isFirstPayment) {
+                message = `Fala ${firstName}, beleza? 🥋 Que bom ter você na Tanque Team! Passando só pra dar um toque sobre o seu primeiro pagamento. Qualquer dúvida, é só chamar! Tamo junto! 🥊`;
+            } else if (isLate) {
+                message = `Opa ${firstName}, tudo tranquilo? Passando aqui rapidinho só pra te lembrar da mensalidade da Tanque Team que venceu no dia ${nextDueStr}. Se já tiver acertado, pode desconsiderar essa mensagem, beleza? Qualquer coisa me dá um grito aqui! Oss! 🥋`;
+            } else if (isDueSoon) {
+                message = `Fala ${firstName}, tudo bem? Passando pra te dar um toque que o vencimento da sua mensalidade da Tanque Team tá chegando (dia ${nextDueStr}). Qualquer dúvida, tô por aqui! Bons treinos! 💪`;
+            } else {
+                message = `Fala ${firstName}, tudo bem? Passando pra te dar um toque sobre a sua mensalidade da Tanque Team (vencimento: ${nextDueStr}). Qualquer dúvida, tô por aqui! Bons treinos! 💪`;
+            }
+            
+            const encodedMessage = encodeURIComponent(message);
+            
+            window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
+        };
+
         window.informPayment = async (id) => {
             const s = window.students.find(st => st.id === id); if(!s) return;
             
             document.getElementById('pay-student-id').value = id;
             document.getElementById('pay-student-name').innerText = s.name;
             document.getElementById('pay-start-date').innerText = formatDate(s.registrationDate);
-            document.getElementById('pay-plan-name').innerText = window.getPlanInfo(s.plan).long;
+            
+            // Populate plans
+            let optionsHtml = '<option value="">-- Selecione o Plano --</option>';
+            for (const [key, plan] of Object.entries(window.PLAN_DICT)) {
+                optionsHtml += `<option value="${key}">${plan.long} - R$ ${Number(plan.price || 0).toFixed(2)}</option>`;
+            }
+            const payPlan = document.getElementById('pay-plan');
+            payPlan.innerHTML = optionsHtml;
+            
+            // Try to select current plan
+            if (s.plan) {
+                if (window.PLAN_DICT[s.plan]) {
+                    payPlan.value = s.plan;
+                } else {
+                    const lowerPlan = String(s.plan).toLowerCase();
+                    const foundKey = Object.keys(window.PLAN_DICT).find(key => {
+                        const shortLower = window.PLAN_DICT[key].short.toLowerCase();
+                        const longLower = window.PLAN_DICT[key].long.toLowerCase();
+                        return shortLower === lowerPlan || longLower === lowerPlan ||
+                               lowerPlan.startsWith(shortLower + ' - r$') || lowerPlan.startsWith(longLower + ' - r$');
+                    });
+                    if (foundKey) {
+                        payPlan.value = foundKey;
+                    } else {
+                        payPlan.innerHTML += `<option value="${s.plan}">${s.plan}</option>`;
+                        payPlan.value = s.plan;
+                    }
+                }
+            }
+            
+            window.handlePayPlanChange();
+            
+            if (s.titularId) {
+                document.getElementById('pay-titular').value = s.titularId;
+            }
+            
+            if (s.contractEndDate) {
+                document.getElementById('pay-end-date').value = s.contractEndDate.split('T')[0];
+            } else {
+                document.getElementById('pay-end-date').value = '';
+            }
+            
+            if (s.nextDueDate) {
+                let currentNextDue = new Date();
+                const adjDate = getAdjustedNextDueDate(s);
+                if (adjDate && !isNaN(adjDate)) {
+                    currentNextDue = new Date(adjDate);
+                } else {
+                    if (s.nextDueDate.toDate && typeof s.nextDueDate.toDate === 'function') {
+                        currentNextDue = s.nextDueDate.toDate();
+                    } else if (s.nextDueDate instanceof Date) {
+                        currentNextDue = new Date(s.nextDueDate);
+                    } else if (typeof s.nextDueDate === 'string') {
+                        const parts = s.nextDueDate.split('T')[0].split('-');
+                        if (parts.length === 3) {
+                            currentNextDue = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                        }
+                    }
+                }
+                document.getElementById('pay-contract-next-due').value = getLocalISODate(currentNextDue);
+            } else {
+                document.getElementById('pay-contract-next-due').value = '';
+            }
             
             // Pre-fill fields
             const now = new Date();
+            document.getElementById('pay-date').value = getLocalISODate(now);
             const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             document.getElementById('pay-ref-month').value = currentMonth;
             
             const planInfo = window.getPlanInfo(s.plan);
-            document.getElementById('pay-amount').value = planInfo.price > 0 ? planInfo.price.toFixed(2) : '';
+            
+            let amountToPay = planInfo.price || 0;
+            if (s.nextDueDate) {
+                let currentNextDue = new Date();
+                const adjDate = getAdjustedNextDueDate(s);
+                if (adjDate && !isNaN(adjDate)) {
+                    currentNextDue = new Date(adjDate);
+                } else {
+                    if (s.nextDueDate.toDate && typeof s.nextDueDate.toDate === 'function') {
+                        currentNextDue = s.nextDueDate.toDate();
+                    } else if (s.nextDueDate instanceof Date) {
+                        currentNextDue = new Date(s.nextDueDate);
+                    } else if (typeof s.nextDueDate === 'string') {
+                        const parts = s.nextDueDate.split('T')[0].split('-');
+                        if (parts.length === 3) {
+                            currentNextDue = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                        }
+                    }
+                }
+                
+                // Compare dates without time
+                const todayStr = getLocalISODate(now);
+                const dueStr = getLocalISODate(currentNextDue);
+                
+                if (todayStr > dueStr) {
+                    amountToPay = planInfo.basePrice || planInfo.price || 0;
+                }
+            }
+            
+            document.getElementById('pay-amount').value = amountToPay > 0 ? amountToPay.toFixed(2) : '';
+            document.getElementById('pay-discount').value = '';
             document.getElementById('pay-method').value = 'Pix';
             
             // Calculate next due date (monthly)
             let nextDue = new Date();
             if (s.nextDueDate) {
-                const parts = s.nextDueDate.split('T')[0].split('-');
-                if (parts.length === 3) {
-                    nextDue = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                const adjDate = getAdjustedNextDueDate(s);
+                if (adjDate && !isNaN(adjDate)) {
+                    nextDue = new Date(adjDate);
+                } else {
+                    if (s.nextDueDate.toDate && typeof s.nextDueDate.toDate === 'function') {
+                        nextDue = s.nextDueDate.toDate();
+                    } else if (s.nextDueDate instanceof Date) {
+                        nextDue = new Date(s.nextDueDate);
+                    } else if (typeof s.nextDueDate === 'string') {
+                        const parts = s.nextDueDate.split('T')[0].split('-');
+                        if (parts.length === 3) {
+                            nextDue = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                        }
+                    }
                 }
             }
             nextDue.setMonth(nextDue.getMonth() + 1);
@@ -2694,26 +4198,103 @@
                 const sortedHistory = [...s.paymentHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
                 sortedHistory.forEach(p => {
                     const row = document.createElement('tr');
+                    const paymentDateEncoded = encodeURIComponent(p.date);
                     row.innerHTML = `
                         <td class="px-3 py-2 border-b dark:border-gray-700">${formatDate(p.date)}</td>
                         <td class="px-3 py-2 border-b dark:border-gray-700">${p.refMonth || '--'}</td>
-                        <td class="px-3 py-2 border-b dark:border-gray-700 font-bold text-green-600 dark:text-green-400">R$ ${parseFloat(p.amount).toFixed(2)}</td>
+                        <td class="px-3 py-2 border-b dark:border-gray-700 font-bold text-green-600 dark:text-green-400">R$ ${parseFloat(p.amount).toFixed(2)}${p.discount ? ` <span class="text-xs text-gray-500 font-normal">(Desc: R$ ${parseFloat(p.discount).toFixed(2)})</span>` : ''}</td>
                         <td class="px-3 py-2 border-b dark:border-gray-700">${p.method || '--'}</td>
+                        <td class="px-3 py-2 border-b dark:border-gray-700 text-right">
+                            <button onclick="window.printReceipt('${s.id}', '${paymentDateEncoded}')" class="text-gray-500 hover:text-gray-700 mx-1" title="Imprimir Recibo"><i class="fa-solid fa-print"></i></button>
+                            <button onclick="window.openEditPaymentModal('${s.id}', '${paymentDateEncoded}')" class="text-blue-500 hover:text-blue-700 mx-1" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="window.deletePayment('${s.id}', '${paymentDateEncoded}')" class="text-red-500 hover:text-red-700 mx-1" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                        </td>
                     `;
                     historyList.appendChild(row);
                 });
             } else {
-                historyList.innerHTML = '<tr><td colspan="4" class="px-3 py-4 text-center text-gray-500">Nenhum pagamento registrado.</td></tr>';
+                historyList.innerHTML = '<tr><td colspan="5" class="px-3 py-4 text-center text-gray-500">Nenhum pagamento registrado.</td></tr>';
             }
             
             document.getElementById('payment-modal').classList.remove('hidden');
             document.getElementById('payment-modal').classList.add('flex');
         };
 
+        window.printReceipt = (studentId, paymentDateEncoded) => {
+            const s = window.students.find(st => st.id === studentId);
+            if (!s) return;
+            
+            const paymentDate = decodeURIComponent(paymentDateEncoded);
+            const p = s.paymentHistory.find(ph => ph.date === paymentDate);
+            if (!p) return;
+            
+            const printDate = new Date().toLocaleString('pt-BR');
+            const payDateStr = formatDate(p.date);
+            const paidAmount = parseFloat(p.amount) || 0;
+            const discountAmount = parseFloat(p.discount) || 0;
+            const totalAmount = paidAmount + discountAmount;
+            
+            const amountStr = paidAmount.toFixed(2).replace('.', ',');
+            const discountStr = discountAmount.toFixed(2).replace('.', ',');
+            const totalStr = totalAmount.toFixed(2).replace('.', ',');
+            
+            const htmlContent = `
+                <div class="receipt-container" style="width: 100%; max-width: 800px; margin: 0 auto; padding: 40px; font-family: 'Arial', sans-serif; color: #333; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+                    <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #1B1B1B; padding-bottom: 20px;">
+                        <h1 style="margin: 0; font-size: 24px; color: #1B1B1B; text-transform: uppercase; letter-spacing: 2px;">Tanque Team BJJ</h1>
+                        <p style="margin: 5px 0 0; color: #666; font-size: 14px;">Escola de Artes Marciais</p>
+                        <h2 style="margin: 20px 0 0; font-size: 20px; color: #4CAF50;">RECIBO DE PAGAMENTO</h2>
+                    </div>
+                    
+                    <div style="margin-bottom: 30px; line-height: 1.6;">
+                        <p style="font-size: 16px; margin: 0;">Recebemos de <strong>${s.name}</strong> (CPF: ${s.cpf || 'Não informado'}), a importância de <strong>R$ ${amountStr}</strong> referente à mensalidade do mês de referência <strong>${p.refMonth || '--'}</strong>.</p>
+                    </div>
+                    
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px;">
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; width: 40%; color: #666;">Data do Pagamento:</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">${payDateStr}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; color: #666;">Valor Total:</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">R$ ${totalStr}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; color: #666;">Desconto:</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: #ef4444;">R$ ${discountStr}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; color: #666;">Valor Pago:</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: #16a34a;">R$ ${amountStr}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; color: #666;">Meio de Pagamento:</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">${p.method || '--'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; color: #666;">Plano:</td>
+                            <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">${window.getPlanInfo(s.plan).long}</td>
+                        </tr>
+                    </table>
+                    
+                    <div style="text-align: center; margin-top: 60px;">
+                        <p style="margin: 0; font-size: 14px; color: #666;">Belém-PA, ${printDate.split(' ')[0]}</p>
+                        <div style="margin: 40px auto 10px; width: 300px; border-top: 1px solid #333;"></div>
+                        <p style="margin: 0; font-weight: bold;">Tanque Team Escola de Artes Marciais Ltda</p>
+                        <p style="margin: 5px 0 0; font-size: 12px; color: #666;">CNPJ: 65.678.191/0001-90</p>
+                    </div>
+                </div>
+            `;
+            
+            window.printHtmlContent(htmlContent, "Recibo_TanqueTeam_" + s.name.replace(/\s+/g, '_'));
+        };
+
         window.savePayment = async () => {
             const id = document.getElementById('pay-student-id').value;
+            const payDateStr = document.getElementById('pay-date').value;
             const refMonth = document.getElementById('pay-ref-month').value;
             const amount = document.getElementById('pay-amount').value;
+            const discount = document.getElementById('pay-discount').value;
             const method = document.getElementById('pay-method').value;
             const nextDue = document.getElementById('pay-next-due').value;
             
@@ -2724,12 +4305,25 @@
             
             const s = window.students.find(st => st.id === id); if(!s) return;
             
+            let paymentDateIso = new Date().toISOString();
+            if (payDateStr) {
+                const parts = payDateStr.split('-');
+                if (parts.length === 3) {
+                    const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                    d.setHours(12, 0, 0); // Set to noon to avoid timezone issues
+                    paymentDateIso = d.toISOString();
+                }
+            }
+            
             const newPayment = {
-                date: new Date().toISOString(),
+                date: paymentDateIso,
                 refMonth: refMonth,
                 amount: parseFloat(amount),
                 method: method
             };
+            if (discount) {
+                newPayment.discount = parseFloat(discount);
+            }
             
             try {
                 const updateData = {
@@ -2740,32 +4334,119 @@
                     updateData.nextDueDate = nextDue;
                 }
                 
-                // Calculate contract end date if it's the first payment or if it has expired
-                const durationMonths = window.getPlanDurationMonths(s.plan);
-                let shouldUpdateContract = false;
-                if (!s.contractEndDate) {
-                    shouldUpdateContract = true;
-                } else {
-                    const currentContractEnd = new Date(s.contractEndDate);
-                    if (currentContractEnd < new Date()) {
-                        shouldUpdateContract = true;
-                    }
-                }
-                
-                if (shouldUpdateContract) {
-                    const newContractEnd = new Date();
-                    newContractEnd.setMonth(newContractEnd.getMonth() + durationMonths);
-                    updateData.contractEndDate = newContractEnd.toISOString();
-                }
-                
                 await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), updateData);
                 
                 alert("Pagamento registrado com sucesso!");
                 window.closePaymentModal();
                 window.loadData();
+                setTimeout(() => window.informPayment(id), 500); // Reload modal
             } catch(e) {
                 console.error(e);
                 alert("Erro ao registrar pagamento.");
+            }
+        };
+
+        window.openEditPaymentModal = (studentId, paymentDateEncoded) => {
+            const s = window.students.find(st => st.id === studentId);
+            if (!s) return;
+            const paymentDate = decodeURIComponent(paymentDateEncoded);
+            const payment = s.paymentHistory.find(p => p.date === paymentDate);
+            if (!payment) return;
+
+            document.getElementById('edit-pay-student-id').value = studentId;
+            document.getElementById('edit-pay-original-date').value = paymentDate;
+            
+            // Format date for input type="date"
+            const dateObj = new Date(payment.date);
+            document.getElementById('edit-pay-date').value = getLocalISODate(dateObj);
+            document.getElementById('edit-pay-ref-month').value = payment.refMonth || '';
+            document.getElementById('edit-pay-amount').value = payment.amount;
+            document.getElementById('edit-pay-method').value = payment.method || 'Pix';
+
+            document.getElementById('edit-payment-modal').classList.remove('hidden');
+            document.getElementById('edit-payment-modal').classList.add('flex');
+        };
+
+        window.closeEditPaymentModal = () => {
+            document.getElementById('edit-payment-modal').classList.add('hidden');
+            document.getElementById('edit-payment-modal').classList.remove('flex');
+        };
+
+        window.saveEditedPayment = async () => {
+            const studentId = document.getElementById('edit-pay-student-id').value;
+            const originalDate = document.getElementById('edit-pay-original-date').value;
+            const newDateStr = document.getElementById('edit-pay-date').value;
+            const refMonth = document.getElementById('edit-pay-ref-month').value;
+            const amount = document.getElementById('edit-pay-amount').value;
+            const method = document.getElementById('edit-pay-method').value;
+
+            if (!newDateStr || !refMonth || !amount || !method) {
+                alert("Preencha todos os campos.");
+                return;
+            }
+
+            const s = window.students.find(st => st.id === studentId);
+            if (!s) return;
+
+            const originalPayment = s.paymentHistory.find(p => p.date === originalDate);
+            if (!originalPayment) return;
+
+            // Create new date object preserving time if possible, or just use new date
+            let newDateIso = new Date().toISOString();
+            if (newDateStr) {
+                const parts = newDateStr.split('-');
+                if (parts.length === 3) {
+                    const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                    d.setHours(12, 0, 0); // Set to noon to avoid timezone issues
+                    newDateIso = d.toISOString();
+                }
+            }
+
+            const updatedPayment = {
+                date: newDateIso,
+                refMonth: refMonth,
+                amount: parseFloat(amount),
+                method: method
+            };
+
+            try {
+                // Remove old, add new
+                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), {
+                    paymentHistory: arrayRemove(originalPayment)
+                });
+                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), {
+                    paymentHistory: arrayUnion(updatedPayment)
+                });
+
+                alert("Pagamento atualizado com sucesso!");
+                window.closeEditPaymentModal();
+                window.loadData();
+                setTimeout(() => window.informPayment(studentId), 500); // Reload modal
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao atualizar pagamento.");
+            }
+        };
+
+        window.deletePayment = async (studentId, paymentDateEncoded) => {
+            if (!confirm("Tem certeza que deseja excluir este pagamento?")) return;
+            
+            const s = window.students.find(st => st.id === studentId);
+            if (!s) return;
+            const paymentDate = decodeURIComponent(paymentDateEncoded);
+            const payment = s.paymentHistory.find(p => p.date === paymentDate);
+            if (!payment) return;
+
+            try {
+                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), {
+                    paymentHistory: arrayRemove(payment)
+                });
+                alert("Pagamento excluído com sucesso!");
+                window.loadData();
+                setTimeout(() => window.informPayment(studentId), 500); // Reload modal
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao excluir pagamento.");
             }
         };
 
@@ -2795,6 +4476,7 @@
             document.getElementById('view-students').classList.add('hidden'); 
             document.getElementById('view-experimental').classList.add('hidden'); 
             document.getElementById('view-notices').classList.add('hidden');
+            document.getElementById('view-contracts').classList.add('hidden');
             document.getElementById(`view-${viewId}`).classList.remove('hidden');
             
             document.querySelectorAll('#sidebar-menu a').forEach(l => { 
@@ -2809,7 +4491,41 @@
             
             if(viewId === 'students') window.renderTable();
             if(viewId === 'experimental') window.renderExperimentalTable();
+            if(viewId === 'contracts') window.populateContractStudents();
             if(window.innerWidth < 1024) window.toggleMobileMenu();
+        };
+
+        window.openSettingsModal = () => {
+            document.getElementById('settings-modal').classList.remove('hidden');
+            document.getElementById('settings-modal').classList.add('flex');
+            window.renderSettingsPlans();
+            window.renderSettingsSchedules();
+            
+            document.querySelectorAll('#sidebar-menu a').forEach(l => { 
+                l.classList.remove('bg-brand-red', 'text-white'); 
+                l.classList.add('text-gray-400', 'hover:bg-gray-800', 'hover:text-white'); 
+            });
+            const activeLink = document.getElementById(`nav-settings`);
+            if(activeLink) { 
+                activeLink.classList.remove('text-gray-400', 'hover:bg-gray-800'); 
+                activeLink.classList.add('bg-brand-red', 'text-white'); 
+            }
+            if(window.innerWidth < 1024) window.toggleMobileMenu();
+        };
+
+        window.closeSettingsModal = () => {
+            document.getElementById('settings-modal').classList.add('hidden');
+            document.getElementById('settings-modal').classList.remove('flex');
+            
+            document.querySelectorAll('#sidebar-menu a').forEach(l => { 
+                l.classList.remove('bg-brand-red', 'text-white'); 
+                l.classList.add('text-gray-400', 'hover:bg-gray-800', 'hover:text-white'); 
+            });
+            const activeLink = document.getElementById(`nav-${window.currentView}`);
+            if(activeLink) { 
+                activeLink.classList.remove('text-gray-400', 'hover:bg-gray-800'); 
+                activeLink.classList.add('bg-brand-red', 'text-white'); 
+            }
         };
 
         window.toggleMobileMenu = () => {
@@ -2930,11 +4646,16 @@
             }
 
             // Hide other printables
-            document.getElementById('printable-progress').classList.add('hidden');
-            document.getElementById('printable-id-card').classList.add('hidden');
+            if (document.getElementById('printable-progress')) document.getElementById('printable-progress').classList.add('hidden');
             document.getElementById('printable-experimental').classList.remove('hidden');
             
+            document.body.classList.add('printing-experimental');
             window.print();
+            
+            setTimeout(() => {
+                document.body.classList.remove('printing-experimental');
+                document.getElementById('printable-experimental').classList.add('hidden');
+            }, 500);
         };
 
         window.printProgressReport = () => {
