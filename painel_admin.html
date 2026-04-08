@@ -1184,9 +1184,21 @@
                             <!-- PAINEL RESPONSÁVEL LEGAL (Apenas para < 18) -->
                             <div id="admin-reg-guardian-container" class="md:col-span-2 bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded border border-yellow-200 dark:border-yellow-800 hidden">
                                 <h4 class="text-xs font-bold text-yellow-800 dark:text-yellow-500 mb-3 uppercase border-b border-yellow-200 dark:border-yellow-800 pb-1"><i class="fa-solid fa-triangle-exclamation"></i> Dados do Responsável Legal (Obrigatório para Menores)</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div><label class="block text-[10px] font-bold text-yellow-800 dark:text-yellow-500 mb-1 uppercase">Nome do Pai/Mãe/Responsável</label><input type="text" id="reg-guardian" class="w-full border border-yellow-300 dark:border-yellow-700 dark:bg-gray-800 dark:text-white rounded p-2 focus:border-yellow-500 focus:outline-none text-sm" placeholder="Nome completo do responsável"></div>
                                     <div><label class="block text-[10px] font-bold text-yellow-800 dark:text-yellow-500 mb-1 uppercase">CPF do Responsável</label><input type="text" id="reg-guardian-cpf" class="w-full border border-yellow-300 dark:border-yellow-700 dark:bg-gray-800 dark:text-white rounded p-2 focus:border-yellow-500 focus:outline-none text-sm" placeholder="000.000.000-00"></div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-yellow-800 dark:text-yellow-500 mb-1 uppercase">Parentesco</label>
+                                        <select id="reg-guardian-relation" class="w-full border border-yellow-300 dark:border-yellow-700 dark:bg-gray-800 dark:text-white rounded p-2 focus:border-yellow-500 focus:outline-none text-sm">
+                                            <option value="" disabled selected>Selecione...</option>
+                                            <option value="Pai">Pai</option>
+                                            <option value="Mãe">Mãe</option>
+                                            <option value="Avô/Avó">Avô/Avó</option>
+                                            <option value="Tio/Tia">Tio/Tia</option>
+                                            <option value="Irmão/Irmã">Irmão/Irmã</option>
+                                            <option value="Outro">Outro</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1197,9 +1209,25 @@
                             <option value="" disabled selected>Carregando planos...</option>
                         </select>
                     </div>
-                    <div class="col-span-1 hidden" id="admin-reg-titular-container">
-                        <label class="block text-xs font-bold text-purple-600 dark:text-purple-400 mb-1">Vincular a um Titular</label>
-                        <select id="reg-titular" class="w-full border border-purple-300 dark:border-purple-800 dark:bg-gray-800 dark:text-white rounded p-2 focus:outline-none focus:border-purple-600 font-bold text-purple-800 dark:text-purple-300"><option value="">-- Selecione o Titular --</option></select>
+                    <div class="md:col-span-2 hidden bg-purple-50 dark:bg-purple-900/20 p-4 rounded border border-purple-200 dark:border-purple-800" id="admin-reg-titular-container">
+                        <h4 class="text-xs font-bold text-purple-800 dark:text-purple-400 mb-3 uppercase border-b border-purple-200 dark:border-purple-800 pb-1"><i class="fa-solid fa-users"></i> Vínculo Familiar (Plano Dependente)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-purple-800 dark:text-purple-400 mb-1 uppercase">Vincular a um Titular</label>
+                                <select id="reg-titular" class="w-full border border-purple-300 dark:border-purple-700 dark:bg-gray-800 dark:text-white rounded p-2 focus:outline-none focus:border-purple-500 font-bold text-purple-800 dark:text-purple-300 text-sm"><option value="">-- Selecione o Titular --</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-purple-800 dark:text-purple-400 mb-1 uppercase">Parentesco com o Titular</label>
+                                <select id="reg-titular-relation" class="w-full border border-purple-300 dark:border-purple-700 dark:bg-gray-800 dark:text-white rounded p-2 focus:outline-none focus:border-purple-500 text-sm">
+                                    <option value="" disabled selected>Selecione...</option>
+                                    <option value="Filho(a)">Filho(a)</option>
+                                    <option value="Cônjuge">Cônjuge</option>
+                                    <option value="Irmão/Irmã">Irmão/Irmã</option>
+                                    <option value="Pai/Mãe">Pai/Mãe</option>
+                                    <option value="Outro">Outro</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <div class="md:col-span-2 grid grid-cols-2 gap-4">
                         <div>
@@ -2378,11 +2406,7 @@ CLÁUSULA 6ª - DAS REGRAS DE CONDUTA (DOJO KUN): É obrigatório o uso de unifo
 
 CLÁUSULA 7ª - DO DIREITO DE IMAGEM: O CONTRATANTE autoriza, a título gratuito, o uso de imagem, voz e nome do(s) Aluno(s) captados nas dependências da academia ou em eventos externos, para fins de publicidade e marketing da Tanque Team BJJ.
 
-Belém-PA, [DATA_ATUAL].
-
-_____________________________________________________
-[NOME_CONTRATANTE]
-CONTRATANTE`;
+Belém-PA, [DATA_ATUAL].`;
 
         window.populateContractStudents = () => {
             const select = document.getElementById('contract-student-select');
@@ -2401,6 +2425,26 @@ CONTRATANTE`;
             
             document.getElementById('contract-preview-container').classList.add('hidden');
             document.getElementById('contract-preview-container').classList.remove('flex');
+        };
+
+        window.getContratanteName = (s) => {
+            if (!s) return 'CONTRATANTE';
+            const age = getAge(s.dob);
+            const isMinor = age !== null && age < 18;
+            const planType = window.getPlanType(s.plan);
+            
+            if (planType === 'combo-familia' || planType === 'combo-dupla') {
+                let titular = s;
+                if (s.titularId) {
+                    const foundTitular = window.students.find(t => t.id === s.titularId);
+                    if (foundTitular) titular = foundTitular;
+                }
+                return titular.name || 'CONTRATANTE';
+            } else if (isMinor || (s.guardian && s.guardian.trim() !== '')) {
+                return s.guardian || 'CONTRATANTE';
+            } else {
+                return s.name || 'CONTRATANTE';
+            }
         };
 
         window.generateContractText = (s) => {
@@ -2599,7 +2643,7 @@ CONTRATANTE`;
             document.getElementById('report-title').innerText = 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS';
             document.getElementById('report-date').innerText = new Date().toLocaleString('pt-BR');
             document.getElementById('report-content').innerText = text;
-            document.getElementById('report-student-name').innerText = s ? (s.name || 'CONTRATANTE') : 'CONTRATANTE';
+            document.getElementById('report-student-name').innerText = window.getContratanteName(s);
             
             document.body.classList.add('printing-report');
             window.print();
@@ -2639,7 +2683,7 @@ CONTRATANTE`;
             document.getElementById('report-title').innerText = 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS';
             document.getElementById('report-date').innerText = new Date().toLocaleString('pt-BR');
             document.getElementById('report-content').innerText = text;
-            document.getElementById('report-student-name').innerText = s ? (s.name || 'CONTRATANTE') : 'CONTRATANTE';
+            document.getElementById('report-student-name').innerText = window.getContratanteName(s);
             
             document.body.classList.add('printing-report');
             window.print();
@@ -2845,7 +2889,8 @@ CONTRATANTE`;
             const addressBase = document.getElementById('reg-address').value;
             const addressNumber = document.getElementById('reg-address-number') ? document.getElementById('reg-address-number').value : '';
             const address = addressNumber ? `${addressBase}, ${addressNumber}` : addressBase;
-            const guardian = document.getElementById('reg-guardian') ? document.getElementById('reg-guardian').value : ''; const guardianKinship = 'Pai/Mãe'; 
+            const guardian = document.getElementById('reg-guardian') ? document.getElementById('reg-guardian').value : ''; 
+            const guardianKinship = document.getElementById('reg-guardian-relation') ? document.getElementById('reg-guardian-relation').value : ''; 
             const cep = document.getElementById('reg-cep') ? document.getElementById('reg-cep').value : '';
             const planValueFromSelect = document.getElementById('reg-plan').value; 
             const planInfo = window.getPlanInfo(planValueFromSelect);
@@ -2855,6 +2900,7 @@ CONTRATANTE`;
             const titularSelect = document.getElementById('reg-titular');
             const titularId = planType === 'dependente' ? titularSelect.value : ""; 
             const titularName = planType === 'dependente' && titularSelect.selectedIndex > 0 ? titularSelect.options[titularSelect.selectedIndex].text : ""; 
+            const titularRelation = document.getElementById('reg-titular-relation') ? document.getElementById('reg-titular-relation').value : '';
             const beltColor = document.getElementById('reg-belt-color').value; const beltDegree = document.getElementById('reg-belt-degree').value; const login = document.getElementById('reg-student-login').value; const pass = document.getElementById('reg-student-pass').value;
             const origin = document.getElementById('reg-origin') ? document.getElementById('reg-origin').value : 'Não informado';
             
@@ -2886,7 +2932,7 @@ CONTRATANTE`;
 
             try {
                 const planDisplayString = planInfo.short + ' - R$ ' + Number(planValue).toFixed(2).replace('.', ',');
-                const studentData = { name, dob, cpf, cep, email, phone, address, guardian, guardianCpf, plan: planDisplayString, planValue: planValue, titularName: titularName, titularId: titularId, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), nextDueDate: nextDueDate, studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] };
+                const studentData = { name, dob, cpf, cep, email, phone, address, guardian, guardianCpf, guardianKinship, plan: planDisplayString, planValue: planValue, titularName: titularName, titularId: titularId, titularRelation: titularRelation, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), nextDueDate: nextDueDate, studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] };
                 if (photoBase64) studentData.photoBase64 = photoBase64;
                 const titularDocRef = await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), studentData);
                 
