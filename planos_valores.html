@@ -23,25 +23,50 @@
         }
     </script>
     <style>
-        @media print {
-            @page { margin: 8mm; size: A4 portrait; }
-            body { background: white !important; padding: 0 !important; }
-            .no-print { display: none !important; }
-            .print-shadow-none { box-shadow: none !important; border: 1px solid #e5e7eb !important; }
-            .print-bg-white { background-color: white !important; }
-            /* Força a impressão das cores de fundo exatas nos navegadores */
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        }
-        
         /* Gradiente personalizado do fundo */
         .bg-custom-gradient {
             background: linear-gradient(135deg, #1B1B1B 0%, #2a080c 50%, #61000e 100%);
         }
+
+        /* Regras exclusivas e forçadas para a Impressão / PDF */
+        @media print {
+            @page { margin: 8mm; size: A4 portrait; }
+            body { background: white !important; padding: 0 !important; margin: 0 !important; }
+            .no-print { display: none !important; }
+            .print-shadow-none { box-shadow: none !important; border: 1px solid #e5e7eb !important; }
+            .print-bg-white { background-color: white !important; }
+            .print-no-transform { transform: none !important; }
+            
+            /* Impede que os cartões sejam cortados a meio da folha */
+            .page-break-avoid { page-break-inside: avoid; break-inside: avoid; }
+            
+            /* Força a impressão das cores de fundo exatas nos navegadores */
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+            /* Escala todo o conteúdo para caber perfeitamente numa única folha A4 */
+            #print-wrapper {
+                zoom: 0.72; /* Escala perfeita para Chrome/Edge/Safari */
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+            }
+        }
+        
+        /* Fallback de Escala para Firefox (que não suporta zoom) */
+        @-moz-document url-prefix() {
+            @media print {
+                #print-wrapper {
+                    transform: scale(0.72);
+                    transform-origin: top left;
+                    width: 138% !important; /* 1 / 0.72 compensação */
+                }
+            }
+        }
     </style>
 </head>
-<body class="bg-custom-gradient font-sans text-gray-800 p-4 md:p-8 print:p-0 min-h-screen print:min-h-0">
+<body class="bg-custom-gradient font-sans text-gray-800 p-4 md:p-8 min-h-screen">
 
-    <div class="max-w-5xl mx-auto relative">
+    <div id="print-wrapper" class="max-w-5xl mx-auto relative">
         
         <!-- Botão Imprimir -->
         <div class="text-right mb-4 no-print">
@@ -51,38 +76,39 @@
         </div>
 
         <!-- Cabeçalho -->
-        <div class="bg-black/80 backdrop-blur-md text-white rounded-t-3xl p-10 print:p-4 text-center border-b-4 border-brand-red print-shadow-none shadow-2xl">
-            <!-- Logo aumentada e com contraste ajustado -->
-            <img src="https://iili.io/qC543c7.png" alt="Tanque Team" class="h-36 md:h-44 print:h-14 w-auto mx-auto mb-6 print:mb-2 filter brightness-200 drop-shadow-[0_0_15px_rgba(255,255,255,0.15)]">
-            <h1 class="font-display text-4xl md:text-5xl print:text-2xl font-bold tracking-widest mb-2 print:mb-0 uppercase text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">Tabela de Planos e Valores</h1>
-            <p class="text-brand-red font-bold tracking-widest uppercase text-sm md:text-base print:text-xs">Inauguração 2026 - Tanque Team Jiu-Jitsu</p>
+        <div class="bg-black/80 backdrop-blur-md text-white rounded-t-3xl p-6 md:p-10 print:p-6 border-b-4 border-brand-red print-shadow-none shadow-2xl page-break-avoid flex flex-col md:flex-row print:flex-row items-center justify-center md:justify-start print:justify-start text-center md:text-left print:text-left gap-4 md:gap-8 print:gap-6">
+            <img src="https://iili.io/qC543c7.png" alt="Tanque Team" class="h-24 md:h-28 print:h-20 w-auto filter brightness-200 drop-shadow-[0_0_15px_rgba(255,255,255,0.15)] print:drop-shadow-none shrink-0">
+            <div>
+                <h1 class="font-display text-3xl md:text-5xl print:text-3xl font-bold tracking-widest mb-1 md:mb-2 print:mb-1 uppercase text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">Tabela de Planos e Valores</h1>
+                <p class="text-brand-red font-bold tracking-widest uppercase text-xs md:text-base print:text-sm">Inauguração 2026 - Tanque Team Jiu-Jitsu</p>
+            </div>
         </div>
 
         <!-- Container dos Planos -->
-        <div class="bg-white/95 backdrop-blur-sm p-6 md:p-10 print:p-4 rounded-b-3xl shadow-2xl print-shadow-none space-y-12 print:space-y-4 print-bg-white">
+        <div class="bg-white/95 backdrop-blur-sm p-6 md:p-10 rounded-b-3xl shadow-2xl print-shadow-none space-y-10 print:space-y-6 print-bg-white">
 
             <!-- BLOCO: INFANTIL -->
-            <div>
-                <div class="flex flex-col md:flex-row md:items-baseline md:justify-between mb-6 print:mb-2 border-b-2 border-blue-500 pb-3 print:pb-1 gap-2">
-                    <div class="flex items-center gap-3 print:gap-2">
-                        <div class="bg-blue-100 text-blue-600 p-3 print:p-1.5 rounded-lg shadow-sm"><i class="fa-solid fa-child text-3xl print:text-xl"></i></div>
-                        <h2 class="font-display text-4xl print:text-xl font-bold text-brand-dark tracking-wide">INFANTIL</h2>
-                        <span class="text-[11px] print:text-[9px] text-gray-400 uppercase tracking-widest font-bold ml-2 self-end mb-1.5 print:mb-0.5">(4 a 11 anos)</span>
+            <div class="page-break-avoid">
+                <div class="flex flex-col md:flex-row md:items-baseline md:justify-between mb-6 border-b-2 border-blue-500 pb-3 gap-2">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-blue-100 text-blue-600 p-3 rounded-lg shadow-sm"><i class="fa-solid fa-child text-3xl"></i></div>
+                        <h2 class="font-display text-4xl font-bold text-brand-dark tracking-wide">INFANTIL</h2>
+                        <span class="text-[11px] text-gray-400 uppercase tracking-widest font-bold ml-2 self-end mb-1.5">(4 a 11 anos)</span>
                     </div>
                     <div class="md:text-right mt-2 md:mt-0 flex items-baseline gap-2 md:block">
-                        <span class="text-[10px] print:text-[8px] text-gray-400 uppercase tracking-widest font-bold">Base:</span>
-                        <span class="text-3xl print:text-lg font-black text-brand-dark tracking-tighter">R$ 189,90</span>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Base:</span>
+                        <span class="text-3xl font-black text-brand-dark tracking-tighter">R$ 189,90</span>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 print:grid-cols-3 gap-6 print:gap-3">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 print:gap-4">
                     <!-- Mensal -->
-                    <div class="bg-gray-50 p-6 print:p-3 rounded-2xl border border-gray-200 flex flex-col h-full shadow-sm hover:shadow-md transition">
-                        <h3 class="font-bold text-gray-700 uppercase tracking-wider mb-1 text-sm print:text-xs">PLANO MENSAL</h3>
-                        <span class="text-xs print:text-[9px] text-gray-500 font-normal mb-4 print:mb-1 block">(Sem fidelidade)</span>
-                        <div class="text-4xl print:text-2xl font-black text-brand-dark mb-6 print:mb-2 tracking-tighter">R$ 189,90<span class="text-base print:text-xs text-gray-500 font-bold ml-1 tracking-normal">/mês</span></div>
+                    <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200 flex flex-col h-full shadow-sm">
+                        <h3 class="font-bold text-gray-700 uppercase tracking-wider mb-1 text-sm">PLANO MENSAL</h3>
+                        <span class="text-xs text-gray-500 font-normal mb-4 block">(Sem fidelidade)</span>
+                        <div class="text-4xl font-black text-brand-dark mb-6 tracking-tighter">R$ 189,90<span class="text-base text-gray-500 font-bold ml-1 tracking-normal">/mês</span></div>
                         
-                        <ul class="text-xs print:text-[9px] text-gray-600 mt-auto space-y-2.5 print:space-y-1 border-t border-gray-200 pt-4 print:pt-2">
+                        <ul class="text-xs text-gray-600 mt-auto space-y-2.5 border-t border-gray-200 pt-4">
                             <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i> Flexibilidade total (renovação avulsa)</li>
                             <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i> Acesso livre à metodologia antibullying</li>
                             <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i> Perfeito para os primeiros passos no tatame</li>
@@ -90,13 +116,13 @@
                     </div>
 
                     <!-- Trimestral -->
-                    <div class="bg-blue-50 p-6 print:p-3 rounded-2xl border border-blue-200 relative flex flex-col h-full shadow-sm hover:shadow-md transition">
-                        <h3 class="font-bold text-blue-800 uppercase tracking-wider mb-1 text-sm print:text-xs">PLANO TRIMESTRAL</h3>
-                        <span class="text-xs print:text-[10px] text-blue-600 font-bold mb-4 print:mb-1 block"><i class="fa-solid fa-tag mr-1"></i> Desconto de R$ 21,00/mês</span>
-                        <p class="text-[10px] print:text-[8px] text-gray-500 uppercase tracking-wider font-bold mb-1 print:mb-0">Pagando até o vencimento:</p>
-                        <div class="text-4xl print:text-2xl font-black text-blue-900 mb-6 print:mb-2 tracking-tighter">R$ 168,90<span class="text-base print:text-xs text-blue-700/70 font-bold ml-1 tracking-normal">/mês</span></div>
+                    <div class="bg-blue-50 p-6 rounded-2xl border border-blue-200 relative flex flex-col h-full shadow-sm">
+                        <h3 class="font-bold text-blue-800 uppercase tracking-wider mb-1 text-sm">PLANO TRIMESTRAL</h3>
+                        <span class="text-xs text-blue-600 font-bold mb-4 block"><i class="fa-solid fa-tag mr-1"></i> Desconto de R$ 21,00/mês</span>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Pagando até o vencimento:</p>
+                        <div class="text-4xl font-black text-blue-900 mb-6 tracking-tighter">R$ 168,90<span class="text-base text-blue-700/70 font-bold ml-1 tracking-normal">/mês</span></div>
                         
-                        <ul class="text-xs print:text-[9px] text-gray-600 mt-auto space-y-2.5 print:space-y-1 border-t border-blue-200 pt-4 print:pt-2">
+                        <ul class="text-xs text-gray-600 mt-auto space-y-2.5 border-t border-blue-200 pt-4">
                             <li class="flex items-start"><i class="fa-solid fa-check text-blue-500 mt-0.5 mr-2"></i> Fidelidade de 3 meses com desconto</li>
                             <li class="flex items-start"><i class="fa-solid fa-check text-blue-500 mt-0.5 mr-2"></i> Foco na disciplina e coordenação motora</li>
                             <li class="flex items-start"><i class="fa-solid fa-check text-blue-500 mt-0.5 mr-2"></i> Acesso garantido ao Portal do Aluno</li>
@@ -104,26 +130,26 @@
                     </div>
 
                     <!-- Semestral -->
-                    <div class="bg-gradient-to-b from-blue-100 to-blue-50 p-6 print:p-3 rounded-2xl border-2 border-blue-500 shadow-lg relative flex flex-col h-full transform md:-translate-y-2 print:translate-y-0">
-                        <div class="absolute -top-4 print:-top-2 right-4 print:right-2 bg-brand-red text-white text-[11px] print:text-[8px] font-black uppercase tracking-widest px-3 print:px-2 py-1.5 print:py-0.5 rounded-lg shadow-md"><i class="fa-solid fa-star mr-1 text-yellow-300"></i> Mais Escolhido</div>
+                    <div class="bg-gradient-to-b from-blue-100 to-blue-50 p-6 rounded-2xl border-2 border-blue-500 shadow-lg relative flex flex-col h-full transform md:-translate-y-2 print-no-transform">
+                        <div class="absolute -top-4 right-4 bg-brand-red text-white text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-md print:shadow-none"><i class="fa-solid fa-star mr-1 text-yellow-300"></i> Mais Escolhido</div>
                         
-                        <h3 class="font-bold text-blue-900 uppercase tracking-wider mb-2 print:mb-1 text-sm print:text-xs mt-2 print:mt-1">PLANO SEMESTRAL</h3>
+                        <h3 class="font-bold text-blue-900 uppercase tracking-wider mb-2 text-sm mt-2">PLANO SEMESTRAL</h3>
                         
                         <!-- Tag de Promoção de Inauguração -->
-                        <div class="bg-brand-red text-white text-xs print:text-[9px] font-bold px-4 print:px-2 py-4 print:py-2 rounded-xl print:rounded-md mb-5 print:mb-2 shadow-lg uppercase tracking-wider leading-tight w-full border border-red-700 text-center relative overflow-hidden">
-                            <div class="absolute inset-0 bg-white opacity-10"></div>
+                        <div class="bg-brand-red text-white text-xs font-bold px-4 py-4 rounded-xl mb-5 shadow-md uppercase tracking-wider leading-tight w-full border border-red-700 text-center relative overflow-hidden">
+                            <div class="absolute inset-0 bg-white opacity-10 print:hidden"></div>
                             <div class="relative z-10">
-                                <span class="text-yellow-300 mb-1 print:mb-0 block"><i class="fa-solid fa-bullhorn text-sm print:text-[10px] mr-1 animate-pulse"></i> Promoção Inauguração</span>
-                                <span class="block text-[11px] print:text-[8px] font-medium text-white/90 mb-0.5 normal-case">1ª mensalidade por:</span>
-                                <span class="block text-yellow-300 text-4xl md:text-5xl print:text-xl font-black tracking-tighter drop-shadow-md">R$ 29,90</span>
+                                <span class="text-yellow-300 mb-1 block"><i class="fa-solid fa-bullhorn text-sm mr-1"></i> Promoção de Inauguração</span>
+                                <span class="block text-[11px] font-medium text-white/90 mb-0.5 normal-case">A primeira mensalidade por:</span>
+                                <span class="block text-yellow-300 text-4xl md:text-5xl font-black tracking-tighter drop-shadow-md print:drop-shadow-none">R$ 29,90</span>
                             </div>
                         </div>
 
-                        <div class="text-xs print:text-[9px] text-blue-700 font-bold mb-1 print:mb-0"><i class="fa-solid fa-tag mr-1"></i> Desconto R$ 32,00 demais meses</div>
-                        <p class="text-[10px] print:text-[8px] text-gray-500 uppercase tracking-wider font-bold mb-1 print:mb-0">Pagando até o vencimento:</p>
-                        <div class="text-4xl print:text-2xl font-black text-brand-dark mb-6 print:mb-2 tracking-tighter">R$ 157,90<span class="text-base print:text-xs text-gray-500 font-bold ml-1 tracking-normal">/mês</span></div>
+                        <div class="text-xs text-blue-700 font-bold mb-1"><i class="fa-solid fa-tag mr-1"></i> Desconto de R$ 32,00 nos demais meses</div>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Pagando até o vencimento:</p>
+                        <div class="text-4xl font-black text-brand-dark mb-6 tracking-tighter">R$ 157,90<span class="text-base text-gray-500 font-bold ml-1 tracking-normal">/mês</span></div>
                         
-                        <ul class="text-xs print:text-[9px] text-gray-700 mt-auto space-y-2.5 print:space-y-1 border-t border-blue-300 pt-4 print:pt-2">
+                        <ul class="text-xs text-gray-700 mt-auto space-y-2.5 border-t border-blue-300 pt-4">
                             <li class="flex items-start"><i class="fa-solid fa-check text-blue-600 mt-0.5 mr-2"></i> O melhor valor mensal da categoria infantil</li>
                             <li class="flex items-start"><i class="fa-solid fa-check text-blue-600 mt-0.5 mr-2"></i> Construção sólida de caráter e autoconfiança</li>
                         </ul>
@@ -132,27 +158,27 @@
             </div>
 
             <!-- BLOCO: ADULTO -->
-            <div>
-                <div class="flex flex-col md:flex-row md:items-baseline md:justify-between mb-6 print:mb-2 border-b-2 border-brand-red pb-3 print:pb-1 gap-2">
-                    <div class="flex items-center gap-3 print:gap-2">
-                        <div class="bg-red-100 text-brand-red p-3 print:p-1.5 rounded-lg shadow-sm"><i class="fa-solid fa-user-ninja text-3xl print:text-xl"></i></div>
-                        <h2 class="font-display text-4xl print:text-xl font-bold text-brand-dark tracking-wide">JOVEM / ADULTO</h2>
-                        <span class="text-[11px] print:text-[9px] text-gray-400 uppercase tracking-widest font-bold ml-2 self-end mb-1.5 print:mb-0.5">(A partir de 12 anos)</span>
+            <div class="page-break-avoid">
+                <div class="flex flex-col md:flex-row md:items-baseline md:justify-between mb-6 border-b-2 border-brand-red pb-3 gap-2">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-red-100 text-brand-red p-3 rounded-lg shadow-sm"><i class="fa-solid fa-user-ninja text-3xl"></i></div>
+                        <h2 class="font-display text-4xl font-bold text-brand-dark tracking-wide">JOVEM / ADULTO</h2>
+                        <span class="text-[11px] text-gray-400 uppercase tracking-widest font-bold ml-2 self-end mb-1.5">(A partir de 12 anos)</span>
                     </div>
                     <div class="md:text-right mt-2 md:mt-0 flex items-baseline gap-2 md:block">
-                        <span class="text-[10px] print:text-[8px] text-gray-400 uppercase tracking-widest font-bold">Base:</span>
-                        <span class="text-3xl print:text-lg font-black text-brand-dark tracking-tighter">R$ 168,90</span>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Base:</span>
+                        <span class="text-3xl font-black text-brand-dark tracking-tighter">R$ 168,90</span>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 print:grid-cols-3 gap-6 print:gap-3">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 print:gap-4">
                     <!-- Mensal -->
-                    <div class="bg-gray-50 p-6 print:p-3 rounded-2xl border border-gray-200 flex flex-col h-full shadow-sm hover:shadow-md transition">
-                        <h3 class="font-bold text-gray-700 uppercase tracking-wider mb-1 text-sm print:text-xs">PLANO MENSAL</h3>
-                        <span class="text-xs print:text-[9px] text-gray-500 font-normal mb-4 print:mb-1 block">(Sem fidelidade)</span>
-                        <div class="text-4xl print:text-2xl font-black text-brand-dark mb-6 print:mb-2 tracking-tighter">R$ 168,90<span class="text-base print:text-xs text-gray-500 font-bold ml-1 tracking-normal">/mês</span></div>
+                    <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200 flex flex-col h-full shadow-sm">
+                        <h3 class="font-bold text-gray-700 uppercase tracking-wider mb-1 text-sm">PLANO MENSAL</h3>
+                        <span class="text-xs text-gray-500 font-normal mb-4 block">(Sem fidelidade)</span>
+                        <div class="text-4xl font-black text-brand-dark mb-6 tracking-tighter">R$ 168,90<span class="text-base text-gray-500 font-bold ml-1 tracking-normal">/mês</span></div>
                         
-                        <ul class="text-xs print:text-[9px] text-gray-600 mt-auto space-y-2.5 print:space-y-1 border-t border-gray-200 pt-4 print:pt-2">
+                        <ul class="text-xs text-gray-600 mt-auto space-y-2.5 border-t border-gray-200 pt-4">
                             <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i> Sem amarras contratuais (renovação livre)</li>
                             <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i> Acesso total a todos os horários da grade</li>
                             <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-0.5 mr-2"></i> Ideal para quem possui rotinas imprevisíveis</li>
@@ -160,13 +186,13 @@
                     </div>
 
                     <!-- Trimestral -->
-                    <div class="bg-red-50 p-6 print:p-3 rounded-2xl border border-red-200 relative flex flex-col h-full shadow-sm hover:shadow-md transition">
-                        <h3 class="font-bold text-red-800 uppercase tracking-wider mb-1 text-sm print:text-xs">PLANO TRIMESTRAL</h3>
-                        <span class="text-xs print:text-[10px] text-red-600 font-bold mb-4 print:mb-1 block"><i class="fa-solid fa-tag mr-1"></i> Desconto de R$ 21,00/mês</span>
-                        <p class="text-[10px] print:text-[8px] text-gray-500 uppercase tracking-wider font-bold mb-1 print:mb-0">Pagando até o vencimento:</p>
-                        <div class="text-4xl print:text-2xl font-black text-red-900 mb-6 print:mb-2 tracking-tighter">R$ 147,90<span class="text-base print:text-xs text-red-700/70 font-bold ml-1 tracking-normal">/mês</span></div>
+                    <div class="bg-red-50 p-6 rounded-2xl border border-red-200 relative flex flex-col h-full shadow-sm">
+                        <h3 class="font-bold text-red-800 uppercase tracking-wider mb-1 text-sm">PLANO TRIMESTRAL</h3>
+                        <span class="text-xs text-red-600 font-bold mb-4 block"><i class="fa-solid fa-tag mr-1"></i> Desconto de R$ 21,00/mês</span>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Pagando até o vencimento:</p>
+                        <div class="text-4xl font-black text-red-900 mb-6 tracking-tighter">R$ 147,90<span class="text-base text-red-700/70 font-bold ml-1 tracking-normal">/mês</span></div>
                         
-                        <ul class="text-xs print:text-[9px] text-gray-600 mt-auto space-y-2.5 print:space-y-1 border-t border-red-200 pt-4 print:pt-2">
+                        <ul class="text-xs text-gray-600 mt-auto space-y-2.5 border-t border-red-200 pt-4">
                             <li class="flex items-start"><i class="fa-solid fa-check text-red-500 mt-0.5 mr-2"></i> Fidelidade de 3 meses para fixar o hábito</li>
                             <li class="flex items-start"><i class="fa-solid fa-check text-red-500 mt-0.5 mr-2"></i> Tempo ideal para melhorar o físico</li>
                             <li class="flex items-start"><i class="fa-solid fa-check text-red-500 mt-0.5 mr-2"></i> Aprendizagem das bases de Defesa Pessoal</li>
@@ -174,26 +200,26 @@
                     </div>
 
                     <!-- Semestral -->
-                    <div class="bg-gradient-to-b from-red-100 to-red-50 p-6 print:p-3 rounded-2xl border-2 border-brand-red shadow-lg relative flex flex-col h-full transform md:-translate-y-2 print:translate-y-0">
-                        <div class="absolute -top-4 print:-top-2 right-4 print:right-2 bg-brand-dark text-white text-[11px] print:text-[8px] font-black uppercase tracking-widest px-3 print:px-2 py-1.5 print:py-0.5 rounded-lg shadow-md"><i class="fa-solid fa-star mr-1 text-yellow-400"></i> Mais Escolhido</div>
+                    <div class="bg-gradient-to-b from-red-100 to-red-50 p-6 rounded-2xl border-2 border-brand-red shadow-lg relative flex flex-col h-full transform md:-translate-y-2 print-no-transform">
+                        <div class="absolute -top-4 right-4 bg-brand-dark text-white text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-md print:shadow-none"><i class="fa-solid fa-star mr-1 text-yellow-400"></i> Mais Escolhido</div>
                         
-                        <h3 class="font-bold text-brand-dark uppercase tracking-wider mb-2 print:mb-1 text-sm print:text-xs mt-2 print:mt-1">PLANO SEMESTRAL</h3>
+                        <h3 class="font-bold text-brand-dark uppercase tracking-wider mb-2 text-sm mt-2">PLANO SEMESTRAL</h3>
                         
-                        <!-- Tag de Promoção de Inauguração GIGANTE -->
-                        <div class="bg-brand-red text-white text-xs print:text-[9px] font-bold px-4 print:px-2 py-4 print:py-2 rounded-xl print:rounded-md mb-5 print:mb-2 shadow-lg uppercase tracking-wider leading-tight w-full border border-red-700 text-center relative overflow-hidden">
-                            <div class="absolute inset-0 bg-white opacity-10"></div>
+                        <!-- Tag de Promoção de Inauguração -->
+                        <div class="bg-brand-red text-white text-xs font-bold px-4 py-4 rounded-xl mb-5 shadow-md uppercase tracking-wider leading-tight w-full border border-red-700 text-center relative overflow-hidden">
+                            <div class="absolute inset-0 bg-white opacity-10 print:hidden"></div>
                             <div class="relative z-10">
-                                <span class="text-yellow-300 mb-1 print:mb-0 block"><i class="fa-solid fa-bullhorn text-sm print:text-[10px] mr-1 animate-pulse"></i> Promoção Inauguração</span>
-                                <span class="block text-[11px] print:text-[8px] font-medium text-white/90 mb-0.5 normal-case">1ª mensalidade por:</span>
-                                <span class="block text-yellow-300 text-4xl md:text-5xl print:text-xl font-black tracking-tighter drop-shadow-md">R$ 29,90</span>
+                                <span class="text-yellow-300 mb-1 block"><i class="fa-solid fa-bullhorn text-sm mr-1"></i> Promoção de Inauguração</span>
+                                <span class="block text-[11px] font-medium text-white/90 mb-0.5 normal-case">A primeira mensalidade por:</span>
+                                <span class="block text-yellow-300 text-4xl md:text-5xl font-black tracking-tighter drop-shadow-md print:drop-shadow-none">R$ 29,90</span>
                             </div>
                         </div>
 
-                        <div class="text-xs print:text-[9px] text-red-700 font-bold mb-1 print:mb-0"><i class="fa-solid fa-tag mr-1"></i> Desconto R$ 42,00 demais meses</div>
-                        <p class="text-[10px] print:text-[8px] text-gray-500 uppercase tracking-wider font-bold mb-1 print:mb-0">Pagando até o vencimento:</p>
-                        <div class="text-4xl print:text-2xl font-black text-brand-dark mb-6 print:mb-2 tracking-tighter">R$ 126,90<span class="text-base print:text-xs text-gray-500 font-bold ml-1 tracking-normal">/mês</span></div>
+                        <div class="text-xs text-red-700 font-bold mb-1"><i class="fa-solid fa-tag mr-1"></i> Desconto de R$ 42,00 nos demais meses</div>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1">Pagando até o vencimento:</p>
+                        <div class="text-4xl font-black text-brand-dark mb-6 tracking-tighter">R$ 126,90<span class="text-base text-gray-500 font-bold ml-1 tracking-normal">/mês</span></div>
                         
-                        <ul class="text-xs print:text-[9px] text-gray-700 mt-auto space-y-2.5 print:space-y-1 border-t border-red-300 pt-4 print:pt-2">
+                        <ul class="text-xs text-gray-700 mt-auto space-y-2.5 border-t border-red-300 pt-4">
                             <li class="flex items-start"><i class="fa-solid fa-check text-brand-red mt-0.5 mr-2"></i> Imersão total com o melhor custo-benefício</li>
                             <li class="flex items-start"><i class="fa-solid fa-check text-brand-red mt-0.5 mr-2"></i> Acesso total ao ranking do Portal do Aluno</li>
                         </ul>
@@ -202,71 +228,71 @@
             </div>
 
             <!-- BLOCO: COMBOS FAMÍLIA -->
-            <div>
-                <div class="flex items-center gap-3 mb-6 print:mb-2 border-b-2 border-purple-500 pb-3 print:pb-1">
-                    <div class="bg-purple-100 text-purple-600 p-3 print:p-1.5 rounded-lg shadow-sm"><i class="fa-solid fa-people-roof text-3xl print:text-xl"></i></div>
+            <div class="page-break-avoid">
+                <div class="flex items-center gap-3 mb-6 border-b-2 border-purple-500 pb-3">
+                    <div class="bg-purple-100 text-purple-600 p-3 rounded-lg shadow-sm"><i class="fa-solid fa-people-roof text-3xl"></i></div>
                     <div>
-                        <h2 class="font-display text-4xl print:text-xl font-bold text-brand-dark tracking-wide">COMBOS FAMÍLIA</h2>
-                        <p class="text-xs print:text-[9px] text-purple-600 font-bold uppercase tracking-widest mt-1 print:mt-0">Exclusivos para Planos Semestrais</p>
+                        <h2 class="font-display text-4xl font-bold text-brand-dark tracking-wide">COMBOS FAMÍLIA</h2>
+                        <p class="text-xs text-purple-600 font-bold uppercase tracking-widest mt-1">Exclusivos para Planos Semestrais</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-6 print:gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 print:gap-4">
                     <!-- Combo Dupla -->
-                    <div class="bg-purple-50 p-8 print:p-4 rounded-2xl border border-purple-200 flex flex-col h-full shadow-sm hover:shadow-md transition relative">
-                        <div class="flex justify-between items-start mb-2 print:mb-1">
-                            <h3 class="font-bold text-purple-900 uppercase tracking-wider text-xl print:text-sm">COMBO DUPLA</h3>
-                            <span class="text-xs print:text-[8px] text-purple-700 font-bold bg-purple-200 px-3 print:px-1.5 py-1 print:py-0.5 rounded-full uppercase">(1 Adulto + 1 Criança)</span>
+                    <div class="bg-purple-50 p-8 rounded-2xl border border-purple-200 flex flex-col h-full shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-purple-900 uppercase tracking-wider text-xl">COMBO DUPLA</h3>
+                            <span class="text-xs text-purple-700 font-bold bg-purple-200 px-3 py-1 rounded-full uppercase">(1 Adulto + 1 Criança)</span>
                         </div>
                         
                         <!-- Tag de Promoção GIGANTE -->
-                        <div class="bg-brand-red text-white text-xs print:text-[9px] font-bold px-4 print:px-2 py-4 print:py-2 rounded-xl print:rounded-md mb-5 print:mb-2 mt-3 print:mt-1 shadow-lg uppercase tracking-wider leading-tight w-full border border-red-700 text-center relative overflow-hidden">
-                            <div class="absolute inset-0 bg-white opacity-10"></div>
+                        <div class="bg-brand-red text-white text-xs font-bold px-4 py-4 rounded-xl mb-5 mt-3 shadow-md uppercase tracking-wider leading-tight w-full border border-red-700 text-center relative overflow-hidden">
+                            <div class="absolute inset-0 bg-white opacity-10 print:hidden"></div>
                             <div class="relative z-10">
-                                <span class="text-yellow-300 mb-1 print:mb-0 block"><i class="fa-solid fa-bullhorn text-sm print:text-[10px] mr-1 animate-pulse"></i> Promoção Inauguração</span>
-                                <span class="block text-[11px] print:text-[8px] font-medium text-white/90 mb-0.5 normal-case">1ª mensalidade por:</span>
-                                <span class="block text-yellow-300 text-4xl md:text-5xl print:text-xl font-black tracking-tighter drop-shadow-md">R$ 59,90</span>
+                                <span class="text-yellow-300 mb-1 block"><i class="fa-solid fa-bullhorn text-sm mr-1"></i> Promoção de Inauguração</span>
+                                <span class="block text-[11px] font-medium text-white/90 mb-0.5 normal-case">A primeira mensalidade por:</span>
+                                <span class="block text-yellow-300 text-4xl md:text-5xl font-black tracking-tighter drop-shadow-md print:drop-shadow-none">R$ 59,90</span>
                             </div>
                         </div>
 
-                        <div class="text-sm print:text-[10px] text-purple-700 font-bold mb-1 mt-2 print:mt-1"><i class="fa-solid fa-tag mr-1"></i> Desconto de R$ 108,80 <span class="text-[10px] print:text-[8px] font-normal text-gray-500 ml-1 uppercase">(Total base sem desconto: R$ 358,80)</span></div>
-                        <p class="text-[10px] print:text-[8px] text-gray-500 uppercase tracking-wider font-bold mb-2 print:mb-1 border-b border-purple-200 pb-3 print:pb-1">Pagando até o vencimento nos demais meses:</p>
+                        <div class="text-sm text-purple-700 font-bold mb-1 mt-2"><i class="fa-solid fa-tag mr-1"></i> Desconto de R$ 108,80 <span class="text-[10px] font-normal text-gray-500 ml-1 uppercase">(Total base sem desconto: R$ 358,80)</span></div>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-2 border-b border-purple-200 pb-3">Pagando até o vencimento nos demais meses:</p>
                         
-                        <div class="text-5xl print:text-3xl font-black text-brand-dark mt-4 print:mt-2 mb-6 print:mb-2 tracking-tighter">R$ 250,00<span class="text-base print:text-xs text-gray-500 font-bold ml-1 tracking-normal">/mês</span></div>
+                        <div class="text-5xl font-black text-brand-dark mt-4 mb-6 tracking-tighter">R$ 250,00<span class="text-base text-gray-500 font-bold ml-1 tracking-normal">/mês</span></div>
                         
-                        <ul class="text-sm print:text-[9px] text-gray-700 mt-auto space-y-3 print:space-y-1 border-t border-purple-200 pt-5 print:pt-2">
-                            <li class="flex items-start"><i class="fa-solid fa-check text-purple-600 mt-1 print:mt-0.5 mr-3 print:mr-1"></i> O parceiro perfeito: Treine com o seu filho(a)</li>
-                            <li class="flex items-start"><i class="fa-solid fa-check text-purple-600 mt-1 print:mt-0.5 mr-3 print:mr-1"></i> Contas individuais e gestão simplificada num só pagamento</li>
+                        <ul class="text-sm text-gray-700 mt-auto space-y-3 border-t border-purple-200 pt-5">
+                            <li class="flex items-start"><i class="fa-solid fa-check text-purple-600 mt-1 mr-3"></i> O parceiro perfeito: Treine com o seu filho(a)</li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-purple-600 mt-1 mr-3"></i> Contas individuais e gestão simplificada num só pagamento</li>
                         </ul>
                     </div>
 
                     <!-- Combo Família -->
-                    <div class="bg-gradient-to-br from-purple-100 to-purple-50 p-8 print:p-4 rounded-2xl border-2 border-purple-500 shadow-lg relative flex flex-col h-full transform md:-translate-y-2 print:translate-y-0">
-                        <div class="absolute -top-4 print:-top-2 right-4 print:right-2 bg-yellow-400 text-brand-dark text-[11px] print:text-[8px] font-black uppercase tracking-widest px-3 print:px-2 py-1.5 print:py-0.5 rounded-lg shadow-md"><i class="fa-solid fa-medal mr-1"></i> Maior Economia</div>
+                    <div class="bg-gradient-to-br from-purple-100 to-purple-50 p-8 rounded-2xl border-2 border-purple-500 shadow-lg relative flex flex-col h-full transform md:-translate-y-2 print-no-transform">
+                        <div class="absolute -top-4 right-4 bg-yellow-400 text-brand-dark text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-md print:shadow-none"><i class="fa-solid fa-medal mr-1"></i> Maior Economia</div>
                         
-                        <div class="flex justify-between items-start mb-2 print:mb-1 mt-2 print:mt-1">
-                            <h3 class="font-bold text-brand-dark uppercase tracking-wider text-xl print:text-sm">COMBO FAMÍLIA</h3>
-                            <span class="text-xs print:text-[8px] text-purple-800 font-bold bg-purple-200 px-3 print:px-1.5 py-1 print:py-0.5 rounded-full uppercase shadow-inner">(2 Adultos + 1 Criança)</span>
+                        <div class="flex justify-between items-start mb-2 mt-2">
+                            <h3 class="font-bold text-brand-dark uppercase tracking-wider text-xl">COMBO FAMÍLIA</h3>
+                            <span class="text-xs text-purple-800 font-bold bg-purple-200 px-3 py-1 rounded-full uppercase shadow-inner">(2 Adultos + 1 Criança)</span>
                         </div>
 
                         <!-- Tag de Promoção GIGANTE -->
-                        <div class="bg-brand-red text-white text-xs print:text-[9px] font-bold px-4 print:px-2 py-4 print:py-2 rounded-xl print:rounded-md mb-5 print:mb-2 mt-3 print:mt-1 shadow-lg uppercase tracking-wider leading-tight w-full border border-red-700 text-center relative overflow-hidden">
-                            <div class="absolute inset-0 bg-white opacity-10"></div>
+                        <div class="bg-brand-red text-white text-xs font-bold px-4 py-4 rounded-xl mb-5 mt-3 shadow-md uppercase tracking-wider leading-tight w-full border border-red-700 text-center relative overflow-hidden">
+                            <div class="absolute inset-0 bg-white opacity-10 print:hidden"></div>
                             <div class="relative z-10">
-                                <span class="text-yellow-300 mb-1 print:mb-0 block"><i class="fa-solid fa-bullhorn text-sm print:text-[10px] mr-1 animate-pulse"></i> Promoção Inauguração</span>
-                                <span class="block text-[11px] print:text-[8px] font-medium text-white/90 mb-0.5 normal-case">1ª mensalidade por:</span>
-                                <span class="block text-yellow-300 text-4xl md:text-5xl print:text-xl font-black tracking-tighter drop-shadow-md">R$ 89,90</span>
+                                <span class="text-yellow-300 mb-1 block"><i class="fa-solid fa-bullhorn text-sm mr-1"></i> Promoção de Inauguração</span>
+                                <span class="block text-[11px] font-medium text-white/90 mb-0.5 normal-case">A primeira mensalidade por:</span>
+                                <span class="block text-yellow-300 text-4xl md:text-5xl font-black tracking-tighter drop-shadow-md print:drop-shadow-none">R$ 89,90</span>
                             </div>
                         </div>
 
-                        <div class="text-sm print:text-[10px] text-purple-700 font-bold mb-1 mt-2 print:mt-1"><i class="fa-solid fa-tag mr-1"></i> Desconto GIGANTE de R$ 165,68 <span class="text-[10px] print:text-[8px] font-normal text-gray-500 ml-1 uppercase">(Base: R$ 527,70)</span></div>
-                        <p class="text-[10px] print:text-[8px] text-gray-500 uppercase tracking-wider font-bold mb-2 print:mb-1 border-b border-purple-300 pb-3 print:pb-1">Pagando até o vencimento nos demais meses:</p>
+                        <div class="text-sm text-purple-700 font-bold mb-1 mt-2"><i class="fa-solid fa-tag mr-1"></i> Desconto GIGANTE de R$ 165,68 <span class="text-[10px] font-normal text-gray-500 ml-1 uppercase">(Base: R$ 527,70)</span></div>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-2 border-b border-purple-300 pb-3">Pagando até o vencimento nos demais meses:</p>
                         
-                        <div class="text-5xl print:text-3xl font-black text-brand-dark mt-4 print:mt-2 mb-6 print:mb-2 tracking-tighter">R$ 362,02<span class="text-base print:text-xs text-gray-500 font-bold ml-1 tracking-normal">/mês</span></div>
+                        <div class="text-5xl font-black text-brand-dark mt-4 mb-6 tracking-tighter">R$ 362,02<span class="text-base text-gray-500 font-bold ml-1 tracking-normal">/mês</span></div>
                         
-                        <ul class="text-sm print:text-[9px] text-gray-800 mt-auto space-y-3 print:space-y-1 border-t border-purple-300 pt-5 print:pt-2">
-                            <li class="flex items-start"><i class="fa-solid fa-star text-purple-700 mt-1 print:mt-0.5 mr-3 print:mr-1 text-lg print:text-xs"></i> O pacote definitivo: Jiu-Jitsu para toda a família!</li>
-                            <li class="flex items-start"><i class="fa-solid fa-check text-purple-600 mt-1 print:mt-0.5 mr-3 print:mr-1"></i> A opção com o custo mais baixo por pessoa da academia</li>
+                        <ul class="text-sm text-gray-800 mt-auto space-y-3 border-t border-purple-300 pt-5">
+                            <li class="flex items-start"><i class="fa-solid fa-star text-purple-700 mt-1 mr-3 text-lg"></i> O pacote definitivo: Jiu-Jitsu para toda a família!</li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-purple-600 mt-1 mr-3"></i> A opção com o custo mais baixo por pessoa da academia</li>
                         </ul>
                     </div>
                 </div>
