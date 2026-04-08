@@ -1080,7 +1080,7 @@
                             <h4 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase border-b dark:border-gray-700 pb-1 mb-2">Informações Cadastrais</h4>
                             <div class="grid grid-cols-2 gap-y-2 text-sm">
                                 <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">CPF</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-cpf">--</span></div>
-                                <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Idade</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-age">--</span></div>
+                                <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Data de Nasc. / Idade</span><span class="font-medium text-gray-800 dark:text-gray-200"><span id="detail-dob">--</span> (<span id="detail-age">--</span>)</span></div>
                                 <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Altura</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-height">--</span></div>
                                 <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Peso</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-weight">--</span></div>
                                 <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Telefone / WhatsApp</span><span class="font-medium" id="detail-phone">--</span></div>
@@ -2167,20 +2167,7 @@
                     const today = new Date();
                     today.setHours(0,0,0,0);
                     
-                    const isLate = nextDueObj < today;
-                    
-                    // Automatic block logic: if late for more than 15 days, mark as inactive
-                    if (isLate && s.enrollmentStatus !== 'Inativo') {
-                        const daysLate = Math.floor((today - nextDueObj) / (1000 * 60 * 60 * 24));
-                        if (daysLate > 15) {
-                            // Ideally, this should update the database, but for now we just reflect it in the UI
-                            // To actually update the DB, we'd need to call an async function here, which might be tricky in a sync render loop
-                            // So we just return true for late, and the UI will show it as late.
-                            // We can also add a visual indicator in the row if we want.
-                        }
-                    }
-                    
-                    return isLate;
+                    return nextDueObj < today;
                 }
             } catch (e) { return false; }
             return false;
@@ -2280,7 +2267,9 @@
             try {
                 const s = window.students.find(st => st.id === id); if(!s) return;
                 document.getElementById('detail-name').innerText = s.name;
-                const age = getAge(s.dob); document.getElementById('detail-age').innerText = age !== null ? `${age} anos` : '--';
+                const age = getAge(s.dob); 
+                document.getElementById('detail-age').innerText = age !== null ? `${age} anos` : '--';
+                document.getElementById('detail-dob').innerText = s.dob ? formatDate(s.dob) : '--';
                 document.getElementById('detail-belt').innerHTML = '<div class="flex items-center gap-2">' + window.getBeltImageHtml(s.belt) + '<span>' + (s.belt || "Faixa Branca") + '</span></div>';
                 const photoImg = document.getElementById('detail-photo'); const photoIcon = document.getElementById('detail-icon');
                 if(s.photoBase64) { photoImg.src = s.photoBase64; photoImg.classList.remove('hidden'); photoIcon.classList.add('hidden'); } 
@@ -2373,15 +2362,16 @@
 
         const defaultContractTemplate = `1. CONTRATADA: TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA, CNPJ: 65.678.191/0001-90.
 
-2. CONTRATANTE: [NOME_ALUNO], CPF: [CPF_ALUNO], Endereço: [ENDERECO_ALUNO], Tel: [TELEFONE_ALUNO], E-mail: [EMAIL_ALUNO].
+2. CONTRATANTE: [NOME_CONTRATANTE], CPF: [CPF_CONTRATANTE], Endereço: [ENDERECO_CONTRATANTE], Tel: [TELEFONE_CONTRATANTE], E-mail: [EMAIL_CONTRATANTE].
 
-3. ALUNO(A): [NOME_ALUNO], Nasc: [DATA_NASC]. | Graduação Atual: [FAIXA] - [GRAU]
+3. ALUNO(S): 
+[LISTA_ALUNOS]
 
 CLÁUSULA 1ª - DO OBJETO: O presente contrato tem por objeto a prestação de serviços de ensino e treinamento da arte marcial JIU-JITSU pela CONTRATADA ao(s) ALUNO(S) qualificado(s) acima, disponibilizando espaço físico adequado, instrutores capacitados e horários pré-estabelecidos conforme a grade vigente publicada no site da empresa www.tanqueteambjj.com.br.
 
 [CLAUSULA_SEGUNDA]
 
-CLÁUSULA 3ª - DO CANCELAMENTO: O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.
+[CLAUSULA_CANCELAMENTO]
 
 CLÁUSULA 4ª - DA INADIMPLÊNCIA: O atraso superior a 30 dias no pagamento da mensalidade poderá acarretar a suspensão imediata do acesso aos treinos e cobrança dos valores devidos acrescidos de multa de 2% e juros de mora legais. Em caso de inadimplência, a empresa se reserva ao direito de protestar o título em cartório e incluir o nome do CONTRATANTE nos órgãos de proteção ao crédito (Serasa, SPC e outros).
 
@@ -2412,46 +2402,110 @@ Belém-PA, [DATA_ATUAL].`;
             document.getElementById('contract-preview-container').classList.remove('flex');
         };
 
-        window.loadContractPreview = () => {
-            const select = document.getElementById('contract-student-select');
-            if (!select) return;
-            
-            const id = select.value;
-            const container = document.getElementById('contract-preview-container');
-            
-            if (!id) {
-                container.classList.add('hidden');
-                container.classList.remove('flex');
-                return;
-            }
-            
-            const s = window.students.find(st => st.id === id);
-            if (!s) return;
-            
+        window.generateContractText = (s) => {
             let text = defaultContractTemplate;
-            text = text.replace(/\[NOME_ALUNO\]/g, s.name || '_______________________');
-            text = text.replace(/\[CPF_ALUNO\]/g, s.cpf || '_______________________');
-            text = text.replace(/\[RG_ALUNO\]/g, s.rg || '_______________________');
-            text = text.replace(/\[ENDERECO_ALUNO\]/g, s.address || '_______________________');
-            text = text.replace(/\[TELEFONE_ALUNO\]/g, s.phone || '_______________________');
-            text = text.replace(/\[EMAIL_ALUNO\]/g, s.email || '_______________________');
             
-            let dob = '_______________________';
-            if (s.dob) {
-                const parts = s.dob.split('-');
-                if (parts.length === 3) dob = `${parts[2]}/${parts[1]}/${parts[0]}`;
-            }
-            text = text.replace(/\[DATA_NASC\]/g, dob);
+            // Determine CONTRATANTE and ALUNO(S)
+            let contratanteNome = s.name || '_______________________';
+            let contratanteCpf = s.cpf || '_______________________';
+            let contratanteEndereco = s.address || '_______________________';
+            let contratanteTelefone = s.phone || '_______________________';
+            let contratanteEmail = s.email || '_______________________';
             
-            let faixa = 'Branca';
-            let grau = '0º Grau';
-            if (s.belt) {
-                const parts = s.belt.split(' - ');
-                if (parts.length > 0) faixa = parts[0];
-                if (parts.length > 1) grau = parts[1];
+            let listaAlunos = '';
+            
+            const age = getAge(s.dob);
+            const isMinor = age !== null && age < 18;
+            const planType = window.getPlanType(s.plan);
+            
+            if (planType === 'combo-familia' || planType === 'combo-dupla') {
+                // Titular is the CONTRATANTE
+                // If this student is the titular, they are the CONTRATANTE
+                // If this student is a dependent, we should ideally find the titular, but let's assume the contract is generated from the titular's profile for the whole family.
+                // Or if generated from dependent, we still need the titular.
+                let titular = s;
+                if (s.titularId) {
+                    const foundTitular = window.students.find(t => t.id === s.titularId);
+                    if (foundTitular) titular = foundTitular;
+                }
+                
+                contratanteNome = titular.name || '_______________________';
+                contratanteCpf = titular.cpf || '_______________________';
+                contratanteEndereco = titular.address || '_______________________';
+                contratanteTelefone = titular.phone || '_______________________';
+                contratanteEmail = titular.email || '_______________________';
+                
+                // Add titular as student if they train (usually they do, but let's just add them)
+                let dob = '_______________________';
+                if (titular.dob) {
+                    const parts = titular.dob.split('-');
+                    if (parts.length === 3) dob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                let faixa = 'Branca'; let grau = '0º Grau';
+                if (titular.belt) {
+                    const parts = titular.belt.split(' - ');
+                    if (parts.length > 0) faixa = parts[0];
+                    if (parts.length > 1) grau = parts[1];
+                }
+                listaAlunos += `- ${titular.name}, Nasc: ${dob}. | Graduação Atual: ${faixa} - ${grau}\n`;
+                
+                // Add dependents
+                const deps = window.students.filter(d => d.titularId === titular.id && window.getPlanType(d.plan) === 'dependente');
+                deps.forEach(d => {
+                    let dDob = '_______________________';
+                    if (d.dob) {
+                        const parts = d.dob.split('-');
+                        if (parts.length === 3) dDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                    }
+                    let dFaixa = 'Branca'; let dGrau = '0º Grau';
+                    if (d.belt) {
+                        const parts = d.belt.split(' - ');
+                        if (parts.length > 0) dFaixa = parts[0];
+                        if (parts.length > 1) dGrau = parts[1];
+                    }
+                    listaAlunos += `- ${d.name}, Nasc: ${dDob}. | Graduação Atual: ${dFaixa} - ${dGrau}\n`;
+                });
+                
+            } else if (isMinor || (s.guardian && s.guardian.trim() !== '')) {
+                // Minor: Guardian is CONTRATANTE
+                contratanteNome = s.guardian || '_______________________';
+                contratanteCpf = s.guardianCpf || '_______________________';
+                // Use student's address/phone/email for guardian if not specified separately
+                
+                let dob = '_______________________';
+                if (s.dob) {
+                    const parts = s.dob.split('-');
+                    if (parts.length === 3) dob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                let faixa = 'Branca'; let grau = '0º Grau';
+                if (s.belt) {
+                    const parts = s.belt.split(' - ');
+                    if (parts.length > 0) faixa = parts[0];
+                    if (parts.length > 1) grau = parts[1];
+                }
+                listaAlunos += `- ${s.name}, Nasc: ${dob}. | Graduação Atual: ${faixa} - ${grau}\n`;
+            } else {
+                // Adult, individual plan
+                let dob = '_______________________';
+                if (s.dob) {
+                    const parts = s.dob.split('-');
+                    if (parts.length === 3) dob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                let faixa = 'Branca'; let grau = '0º Grau';
+                if (s.belt) {
+                    const parts = s.belt.split(' - ');
+                    if (parts.length > 0) faixa = parts[0];
+                    if (parts.length > 1) grau = parts[1];
+                }
+                listaAlunos += `- ${s.name}, Nasc: ${dob}. | Graduação Atual: ${faixa} - ${grau}\n`;
             }
-            text = text.replace(/\[FAIXA\]/g, faixa);
-            text = text.replace(/\[GRAU\]/g, grau);
+            
+            text = text.replace(/\[NOME_CONTRATANTE\]/g, contratanteNome);
+            text = text.replace(/\[CPF_CONTRATANTE\]/g, contratanteCpf);
+            text = text.replace(/\[ENDERECO_CONTRATANTE\]/g, contratanteEndereco);
+            text = text.replace(/\[TELEFONE_CONTRATANTE\]/g, contratanteTelefone);
+            text = text.replace(/\[EMAIL_CONTRATANTE\]/g, contratanteEmail);
+            text = text.replace(/\[LISTA_ALUNOS\]/g, listaAlunos.trim());
             
             let dueDay = '___';
             if (s.nextDueDate) {
@@ -2467,12 +2521,17 @@ Belém-PA, [DATA_ATUAL].`;
             let planName = s.plan || '_______________________';
             let planValue = '________';
             let clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo [PLANO_ALUNO], comprometendo-se ao pagamento da mensalidade no valor total de R$ [VALOR_PLANO]. As mensalidades deverão ser pagas até o dia ${dueDay} de cada mês. O término do contrato está previsto para ${contractEnd}.`;
+            let clausulaCancelamento = `CLÁUSULA 3ª - DO CANCELAMENTO: O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.`;
             
             const p = window.getPlanInfo(s.plan);
             if (p && p.long !== 'NÃO INFORMADO') {
                 planName = p.long;
                 const basePrice = p.basePrice || p.price || 0;
                 planValue = basePrice.toFixed(2).replace('.', ',');
+                
+                if (p.durationMonths && p.durationMonths > 1) {
+                    clausulaCancelamento = `CLÁUSULA 3ª - DO CANCELAMENTO E FIDELIDADE: O presente contrato possui prazo de fidelidade de ${p.durationMonths} meses. O cancelamento da prestação de serviços antes do término deste prazo deverá ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Em caso de rescisão antecipada, será cobrada uma multa rescisória equivalente a 30% (trinta por cento) do valor correspondente às parcelas vincendas (a vencer) até o término do contrato, conforme amparo legal. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.`;
+                }
                 
                 if (p.price === 0) {
                     clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo ${p.long}, sendo este isento de mensalidades. O término do contrato está previsto para ${contractEnd}.`;
@@ -2497,11 +2556,33 @@ Belém-PA, [DATA_ATUAL].`;
             }
             
             text = text.replace(/\[CLAUSULA_SEGUNDA\]/g, clausulaSegunda);
+            text = text.replace(/\[CLAUSULA_CANCELAMENTO\]/g, clausulaCancelamento);
             text = text.replace(/\[PLANO_ALUNO\]/g, planName);
             text = text.replace(/\[VALOR_PLANO\]/g, planValue);
             
             const today = new Date().toLocaleDateString('pt-BR');
             text = text.replace(/\[DATA_ATUAL\]/g, today);
+            
+            return text;
+        };
+
+        window.loadContractPreview = () => {
+            const select = document.getElementById('contract-student-select');
+            if (!select) return;
+            
+            const id = select.value;
+            const container = document.getElementById('contract-preview-container');
+            
+            if (!id) {
+                container.classList.add('hidden');
+                container.classList.remove('flex');
+                return;
+            }
+            
+            const s = window.students.find(st => st.id === id);
+            if (!s) return;
+            
+            const text = window.generateContractText(s);
             
             document.getElementById('contract-tab-text').value = text;
             container.classList.remove('hidden');
@@ -2532,81 +2613,7 @@ Belém-PA, [DATA_ATUAL].`;
             
             document.getElementById('contract-student-id').value = id;
             
-            // Substituir variáveis no template
-            let text = defaultContractTemplate;
-            text = text.replace(/\[NOME_ALUNO\]/g, s.name || '_______________________');
-            text = text.replace(/\[CPF_ALUNO\]/g, s.cpf || '_______________________');
-            text = text.replace(/\[RG_ALUNO\]/g, s.rg || '_______________________');
-            text = text.replace(/\[ENDERECO_ALUNO\]/g, s.address || '_______________________');
-            text = text.replace(/\[TELEFONE_ALUNO\]/g, s.phone || '_______________________');
-            text = text.replace(/\[EMAIL_ALUNO\]/g, s.email || '_______________________');
-            
-            let dob = '_______________________';
-            if (s.dob) {
-                const parts = s.dob.split('-');
-                if (parts.length === 3) dob = `${parts[2]}/${parts[1]}/${parts[0]}`;
-            }
-            text = text.replace(/\[DATA_NASC\]/g, dob);
-            
-            let faixa = 'Branca';
-            let grau = '0º Grau';
-            if (s.belt) {
-                const parts = s.belt.split(' - ');
-                if (parts.length > 0) faixa = parts[0];
-                if (parts.length > 1) grau = parts[1];
-            }
-            text = text.replace(/\[FAIXA\]/g, faixa);
-            text = text.replace(/\[GRAU\]/g, grau);
-            
-            let dueDay = '___';
-            if (s.nextDueDate) {
-                const parts = s.nextDueDate.split('T')[0].split('-');
-                if (parts.length === 3) dueDay = parts[2];
-            }
-            let contractEnd = '___/___/_____';
-            if (s.contractEndDate) {
-                const parts = s.contractEndDate.split('T')[0].split('-');
-                if (parts.length === 3) contractEnd = `${parts[2]}/${parts[1]}/${parts[0]}`;
-            }
-
-            let planName = s.plan || '_______________________';
-            let planValue = '________';
-            let clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo [PLANO_ALUNO], comprometendo-se ao pagamento da mensalidade no valor total de R$ [VALOR_PLANO]. As mensalidades deverão ser pagas até o dia ${dueDay} de cada mês. O término do contrato está previsto para ${contractEnd}.`;
-            
-            const p = window.getPlanInfo(s.plan);
-            if (p && p.long !== 'NÃO INFORMADO') {
-                planName = p.long;
-                const basePrice = p.basePrice || p.price || 0;
-                planValue = basePrice.toFixed(2).replace('.', ',');
-                
-                if (p.price === 0) {
-                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo ${p.long}, sendo este isento de mensalidades. O término do contrato está previsto para ${contractEnd}.`;
-                } else {
-                    let baseText = `CLÁUSULA 2ª - DO PLANO E VALORES: O CONTRATANTE opta pelo plano esportivo ${p.long}, comprometendo-se ao pagamento da mensalidade no valor total de R$ ${basePrice.toFixed(2).replace('.', ',')}.`;
-                    
-                    if (p.basePrice && p.basePrice > p.price) {
-                        const discount = p.basePrice - p.price;
-                        baseText += ` Fica acordado que, pagando até a data de vencimento (dia ${dueDay} de cada mês), o CONTRATANTE pagará o valor com desconto de R$ ${p.price.toFixed(2).replace('.', ',')} (desconto de "R$ ${discount.toFixed(2).replace('.', ',')}"). Após o vencimento, será cobrado o valor total de R$ ${basePrice.toFixed(2).replace('.', ',')}.`;
-                    } else {
-                        baseText += ` As mensalidades deverão ser pagas até o dia ${dueDay} de cada mês. Após o vencimento, será cobrado o valor total de R$ ${basePrice.toFixed(2).replace('.', ',')}.`;
-                    }
-                    
-                    baseText += ` O término do contrato está previsto para ${contractEnd}.`;
-
-                    if (p.durationMonths === 6 && p.firstMonth && p.firstMonth < p.price) {
-                        baseText += `\n\nOBS: Desconto Promocional Aplicado na 1ª Mensalidade, que terá o valor de R$ ${p.firstMonth.toFixed(2).replace('.', ',')}.`;
-                    }
-                    
-                    clausulaSegunda = baseText;
-                }
-            }
-            
-            text = text.replace(/\[CLAUSULA_SEGUNDA\]/g, clausulaSegunda);
-            text = text.replace(/\[PLANO_ALUNO\]/g, planName);
-            text = text.replace(/\[VALOR_PLANO\]/g, planValue);
-            
-            const today = new Date().toLocaleDateString('pt-BR');
-            text = text.replace(/\[DATA_ATUAL\]/g, today);
+            const text = window.generateContractText(s);
             
             document.getElementById('contract-text').value = text;
             document.getElementById('contract-modal').classList.remove('hidden');
