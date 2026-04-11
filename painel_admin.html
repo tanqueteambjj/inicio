@@ -1281,6 +1281,11 @@
                             <div><label class="block text-xs font-bold text-blue-700 dark:text-blue-300 mb-1">Utilizador (Login)</label><input type="text" id="reg-student-login" class="w-full border border-blue-300 dark:border-blue-700 dark:bg-gray-800 dark:text-white rounded p-2 focus:outline-none focus:border-blue-600" placeholder="Ex: joao.silva"></div>
                             <div><label class="block text-xs font-bold text-blue-700 dark:text-blue-300 mb-1">Senha Padrão</label><input type="text" id="reg-student-pass" class="w-full border border-blue-300 dark:border-blue-700 dark:bg-gray-800 dark:text-white rounded p-2 focus:outline-none focus:border-blue-600" placeholder="Crie uma senha inicial"></div>
                         </div>
+                        <div class="mt-3">
+                             <button type="button" onclick="window.sendWelcomeEmail(this)" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 rounded flex items-center justify-center gap-2 shadow-sm transition">
+                                <i class="fa-solid fa-paper-plane"></i> Enviar E-mail de Boas-Vindas com Acesso
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4815,6 +4820,101 @@ Belém-PA, [DATA_ATUAL].`;
             emailjs.send('service_yq744mr', 'template_few5bna', templateParams)
                 .then(function(response) {
                    alert("E-mail enviado com sucesso!");
+                   btn.innerHTML = '<i class="fa-solid fa-check"></i> Enviado';
+                   setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 3000);
+                }, function(error) {
+                   console.error("Erro ao enviar e-mail:", error);
+                   alert("Erro ao enviar e-mail. Verifique o console.");
+                   btn.innerHTML = originalText;
+                   btn.disabled = false;
+                });
+        };
+
+        window.sendWelcomeEmail = (btn) => {
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const login = document.getElementById('reg-student-login').value;
+            const pass = document.getElementById('reg-student-pass').value;
+            const planSelect = document.getElementById('reg-plan');
+            const planName = planSelect.options[planSelect.selectedIndex]?.text || 'Não selecionado';
+            
+            let dependentsHtml = '';
+            const dep1Name = document.getElementById('admin-dep1-name').value;
+            const dep2Name = document.getElementById('admin-dep2-name').value;
+            if (dep1Name || dep2Name) {
+                dependentsHtml = `<p style="margin: 5px 0;"><strong>Dependentes:</strong> ${[dep1Name, dep2Name].filter(Boolean).join(', ')}</p>`;
+            }
+
+            if (!email) {
+                alert("Por favor, preencha o e-mail do aluno.");
+                return;
+            }
+            if (!login || !pass) {
+                alert("Por favor, preencha o login e a senha.");
+                return;
+            }
+            
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+            btn.disabled = true;
+
+            const bodyHtml = `
+<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+    <div style="background-color: #1B1B1B; padding: 20px; text-align: center;">
+        <img src="https://iili.io/qC543c7.png" alt="Tanque Team Logo" style="height: 60px;">
+    </div>
+    <div style="padding: 30px;">
+        <h2 style="color: #D90429; margin-top: 0;">Olá, ${name}!</h2>
+        <p>Seja muito bem-vindo(a) à família <strong>Tanque Team BJJ</strong>! Estamos muito felizes em ter você com a gente no tatame.</p>
+        
+        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #1B1B1B; font-size: 16px;">Resumo da sua Matrícula:</h3>
+            <p style="margin: 5px 0;"><strong>Plano:</strong> ${planName}</p>
+            ${dependentsHtml}
+        </div>
+
+        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #1B1B1B; font-size: 16px;">Seus Dados de Acesso ao Portal do Aluno:</h3>
+            <p style="margin: 5px 0;"><strong>Login:</strong> ${login}</p>
+            <p style="margin: 5px 0;"><strong>Senha:</strong> ${pass}</p>
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="https://www.tanqueteambjj.com.br/login.html" style="background-color: #D90429; color: #ffffff; padding: 10px 20px; text-decoration: none; font-weight: bold; border-radius: 4px; display: inline-block;">Acessar Portal</a>
+            </div>
+        </div>
+
+        <h3 style="color: #1B1B1B; font-size: 16px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px;">Instruções para a Primeira Aula</h3>
+        <ul style="padding-left: 20px; margin-bottom: 20px;">
+            <li>Chegue com 10 a 15 minutos de antecedência.</li>
+            <li>Traga uma garrafa de água e uma toalha pequena.</li>
+            <li>Use roupas leves (rash guard ou camiseta e bermuda sem zíper/bolsos) caso ainda não tenha kimono.</li>
+            <li>Apresente seu QR Code (disponível no Portal do Aluno) na recepção.</li>
+        </ul>
+
+        <h3 style="color: #1B1B1B; font-size: 16px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px;">Nossos Contatos e Endereço</h3>
+        <p style="margin: 5px 0;"><strong>Telefone / WhatsApp:</strong> (91) 98453-3817</p>
+        <p style="margin: 5px 0;"><strong>E-mail:</strong> tanqueteambjj@gmail.com</p>
+        <p style="margin: 5px 0;"><strong>Endereço:</strong> <a href="https://www.google.com/maps/place/Passagem+Jos%C3%A9+Cust%C3%B3dio+de+Almeida,+9+-+Parque+Verde,+Bel%C3%A9m+-+PA,+67140-702/@-1.3641874,-48.4508119,208m/data=!3m1!1e3!4m6!3m5!1s0x92a461dac11f6833:0x9c31ab08c6ddb279!8m2!3d-1.3645269!4d-48.4501817!16s%2Fg%2F11f_p3gfnd?entry=ttu&g_ep=EgoyMDI2MDQwOC4wIKXMDSoASAFQAw%3D%3D" target="_blank" style="color: #D90429; text-decoration: underline;">Passagem José Custódio de Almeida, 9 - Parque Verde, Belém - PA</a></p>
+        
+        <p style="margin-top: 30px;">Nos vemos no tatame!</p>
+        <p><strong>Oss!</strong><br>Equipe Tanque Team</p>
+    </div>
+    <div style="background-color: #f9fafb; padding: 15px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #e5e7eb;">
+        Este é um e-mail automático. Por favor, não responda.
+    </div>
+</div>`;
+            
+            const templateParams = {
+                to_name: name,
+                to_email: email,
+                message: bodyHtml,
+                login: login,
+                password: pass,
+                subject: "Bem-vindo(a) à Tanque Team BJJ! - Informações Importantes"
+            };
+
+            emailjs.send('service_yq744mr', 'template_few5bna', templateParams)
+                .then(function(response) {
+                   alert("E-mail de boas-vindas enviado com sucesso!");
                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Enviado';
                    setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 3000);
                 }, function(error) {
