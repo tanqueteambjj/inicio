@@ -310,6 +310,8 @@
                             <input type="text" id="filter-exp-name" onkeyup="window.filterExperimentalTable()" placeholder="Buscar por nome..." class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red transition">
                         </div>
                         <span class="font-bold text-gray-500 dark:text-gray-400"><i class="fa-solid fa-filter"></i> Filtros:</span>
+                        <input type="date" id="filter-exp-date" onchange="window.filterExperimentalTable()" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red" title="Filtrar por data">
+                        <input type="time" id="filter-exp-time" onchange="window.filterExperimentalTable()" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red" title="Filtrar por horário">
                         <select id="filter-exp-status" onchange="window.filterExperimentalTable()" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red">
                             <option value="all">Todos os Status</option>
                             <option value="Pendente">Pendente</option>
@@ -322,6 +324,7 @@
                             <option value="Infantil">Infantil</option>
                             <option value="Adulto">Adulto</option>
                         </select>
+                        <button onclick="document.getElementById('filter-exp-date').value=''; document.getElementById('filter-exp-time').value=''; window.filterExperimentalTable()" class="text-gray-500 hover:text-brand-red transition" title="Limpar data/hora"><i class="fa-solid fa-times"></i></button>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
@@ -3390,6 +3393,8 @@ Belém-PA, [DATA_ATUAL].`;
             const nameFilter = document.getElementById('filter-exp-name').value.toLowerCase();
             const statusFilter = document.getElementById('filter-exp-status').value;
             const categoryFilter = document.getElementById('filter-exp-category').value;
+            const dateFilter = document.getElementById('filter-exp-date').value;
+            const timeFilter = document.getElementById('filter-exp-time').value;
             
             const tbody = document.getElementById('experimental-table-body');
             if (!tbody) return;
@@ -3401,11 +3406,15 @@ Belém-PA, [DATA_ATUAL].`;
                 const name = row.querySelector('td:nth-child(1)').innerText.toLowerCase();
                 let category = row.querySelector('td:nth-child(5)').innerText;
                 const status = row.querySelector('td:nth-child(6)').innerText;
+                const rowDate = row.getAttribute('data-date');
+                const rowTime = row.getAttribute('data-time');
                 
                 let show = true;
                 if (nameFilter && !name.includes(nameFilter)) show = false;
                 if (statusFilter !== 'all' && status !== statusFilter) show = false;
                 if (categoryFilter !== 'all' && !category.includes(categoryFilter)) show = false;
+                if (dateFilter && rowDate !== dateFilter) show = false;
+                if (timeFilter && rowTime !== timeFilter) show = false;
                 
                 row.style.display = show ? '' : 'none';
             });
@@ -3446,7 +3455,7 @@ Belém-PA, [DATA_ATUAL].`;
                 }
 
                 tbody.innerHTML += `
-                    <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                    <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition" data-date="${exp.date || ''}" data-time="${exp.time || ''}">
                         <td class="p-3 text-sm font-bold text-gray-800 dark:text-gray-200">
                             ${exp.name}
                             ${guardianHtml}
@@ -4751,10 +4760,34 @@ Belém-PA, [DATA_ATUAL].`;
             const tbody = document.getElementById('print-exp-table-body');
             tbody.innerHTML = '';
             
-            if (window.experimentalList.length === 0) {
+            const nameFilter = document.getElementById('filter-exp-name').value.toLowerCase();
+            const statusFilter = document.getElementById('filter-exp-status').value;
+            const categoryFilter = document.getElementById('filter-exp-category').value;
+            const dateFilter = document.getElementById('filter-exp-date').value;
+            const timeFilter = document.getElementById('filter-exp-time').value;
+
+            const filteredList = window.experimentalList.filter(exp => {
+                let categoryText = exp.category || '--';
+                if (exp.dob) {
+                    const age = getAge(exp.dob);
+                    if (age !== null) {
+                        if (age < 12) categoryText = `Infantil`;
+                        else categoryText = `Adulto`;
+                    }
+                }
+                
+                if (nameFilter && !exp.name.toLowerCase().includes(nameFilter)) return false;
+                if (statusFilter !== 'all' && exp.status !== statusFilter) return false;
+                if (categoryFilter !== 'all' && !categoryText.includes(categoryFilter)) return false;
+                if (dateFilter && exp.date !== dateFilter) return false;
+                if (timeFilter && exp.time !== timeFilter) return false;
+                return true;
+            });
+            
+            if (filteredList.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500 border border-gray-300">Nenhum agendamento encontrado.</td></tr>';
             } else {
-                window.experimentalList.forEach(exp => {
+                filteredList.forEach(exp => {
                     const dateStr = formatDate(exp.date);
                     let categoryHtml = exp.category || '--';
                     let guardianHtml = '';
