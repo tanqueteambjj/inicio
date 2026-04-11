@@ -159,7 +159,7 @@
             </div>
         </header>
         <!-- Content Area -->
-        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 relative">
+        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 pb-24 md:p-6 md:pb-24 relative">
             <!-- VIEW: ALUNOS -->
             <div id="view-students" class="animate-fade-in">
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6 stats-container">
@@ -251,6 +251,11 @@
                                 <tr><td colspan="7" class="px-6 py-4 text-center">A carregar dados...</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                    <!-- Pagination Controls -->
+                    <div id="pagination-controls" class="px-6 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4 no-print hidden">
+                        <span class="text-sm text-gray-600 dark:text-gray-400" id="pagination-info"></span>
+                        <div class="flex gap-1 flex-wrap justify-center" id="pagination-buttons"></div>
                     </div>
                 </div>
             </div>
@@ -3691,6 +3696,14 @@ Belém-PA, [DATA_ATUAL].`;
             `;
         };
 
+        window.currentPage = 1;
+        window.itemsPerPage = 20;
+
+        window.goToPage = (page) => {
+            window.currentPage = page;
+            window.renderTable();
+        };
+
         // TABELA DE ALUNOS
         window.renderTable = () => {
             const tbody = document.getElementById('students-table-body');
@@ -3754,7 +3767,62 @@ Belém-PA, [DATA_ATUAL].`;
             const listCount = document.getElementById('list-count');
             if (listCount) listCount.innerText = filtered.length;
 
-            if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Nenhum aluno encontrado.</td></tr>'; return; }
+            if (filtered.length === 0) { 
+                tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Nenhum aluno encontrado.</td></tr>'; 
+                const paginationControls = document.getElementById('pagination-controls');
+                if (paginationControls) paginationControls.classList.add('hidden');
+                return; 
+            }
+
+            // Pagination logic
+            const totalItems = filtered.length;
+            const totalPages = Math.ceil(totalItems / window.itemsPerPage);
+            if (window.currentPage > totalPages) window.currentPage = totalPages;
+            if (window.currentPage < 1) window.currentPage = 1;
+
+            const startIndex = (window.currentPage - 1) * window.itemsPerPage;
+            const endIndex = Math.min(startIndex + window.itemsPerPage, totalItems);
+            
+            const paginatedFiltered = filtered.slice(startIndex, endIndex);
+
+            // Update pagination UI
+            const paginationControls = document.getElementById('pagination-controls');
+            const paginationInfo = document.getElementById('pagination-info');
+            const paginationButtons = document.getElementById('pagination-buttons');
+
+            if (paginationControls && paginationInfo && paginationButtons) {
+                if (totalPages > 1) {
+                    paginationControls.classList.remove('hidden');
+                    paginationInfo.innerText = `Mostrando ${startIndex + 1} a ${endIndex} de ${totalItems} alunos`;
+                    
+                    let buttonsHtml = '';
+                    
+                    // Prev button
+                    buttonsHtml += `<button onclick="window.goToPage(${window.currentPage - 1})" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed" ${window.currentPage === 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left"></i></button>`;
+                    
+                    // Page numbers
+                    let startPage = Math.max(1, window.currentPage - 2);
+                    let endPage = Math.min(totalPages, startPage + 4);
+                    if (endPage - startPage < 4) {
+                        startPage = Math.max(1, endPage - 4);
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                        if (i === window.currentPage) {
+                            buttonsHtml += `<button class="px-3 py-1 border border-brand-red bg-brand-red text-white rounded font-bold">${i}</button>`;
+                        } else {
+                            buttonsHtml += `<button onclick="window.goToPage(${i})" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">${i}</button>`;
+                        }
+                    }
+
+                    // Next button
+                    buttonsHtml += `<button onclick="window.goToPage(${window.currentPage + 1})" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed" ${window.currentPage === totalPages ? 'disabled' : ''}><i class="fa-solid fa-chevron-right"></i></button>`;
+                    
+                    paginationButtons.innerHTML = buttonsHtml;
+                } else {
+                    paginationControls.classList.add('hidden');
+                }
+            }
 
             let html = '';
             const renderedIds = new Set();
@@ -3783,7 +3851,7 @@ Belém-PA, [DATA_ATUAL].`;
                 }
                 
                 const daysSinceRegistration = Math.floor((new Date() - new Date(s.registrationDate)) / (1000 * 60 * 60 * 24));
-                const isNewStudent = daysSinceRegistration <= 7;
+                const isNewStudent = daysSinceRegistration <= 3;
 
                 let payBadge = `<div class="flex flex-col"><span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-check"></i> Em dia</span><span class="text-[10px] text-gray-500 mt-0.5">Venc: ${nextDueStr}</span></div>`;
                 if(isBlocked) payBadge = `<div class="flex flex-col"><span class="text-red-800 font-bold text-xs"><i class="fa-solid fa-ban"></i> Bloqueado</span><span class="text-[10px] text-red-600 mt-0.5">Venc: ${nextDueStr}</span></div>`;
@@ -3895,7 +3963,7 @@ Belém-PA, [DATA_ATUAL].`;
 
             let lastGroup = null;
 
-            filtered.forEach(s => {
+            paginatedFiltered.forEach(s => {
                 if (renderedIds.has(s.id)) return;
 
                 if (window.currentTab === 'admin') {
@@ -3966,6 +4034,7 @@ Belém-PA, [DATA_ATUAL].`;
 
         window.switchTab = (tab) => {
             window.currentTab = tab;
+            window.currentPage = 1;
             document.querySelectorAll('.stats-container > div').forEach(card => card.classList.remove('card-active'));
             const activeCard = document.getElementById(`card-${tab}`);
             if (activeCard) activeCard.classList.add('card-active');
@@ -3973,6 +4042,7 @@ Belém-PA, [DATA_ATUAL].`;
         };
 
         window.filterTable = () => {
+            window.currentPage = 1;
             window.renderTable();
             window.updateBulkActionsBtn();
         };
