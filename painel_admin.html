@@ -493,6 +493,20 @@
 
     <!-- MODAIS DO SISTEMA -->
 
+    <!-- Modal: Custom Alert/Confirm -->
+    <div id="custom-modal" class="fixed inset-0 z-[100] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-sm flex flex-col animate-fade-in border-t-4 border-brand-red">
+            <div class="p-6">
+                <h3 id="custom-modal-title" class="font-bold text-lg text-gray-800 dark:text-white mb-2">Aviso</h3>
+                <p id="custom-modal-message" class="text-gray-600 dark:text-gray-300"></p>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-end gap-2 rounded-b-lg">
+                <button id="custom-modal-cancel" class="hidden bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded text-sm transition-colors">Cancelar</button>
+                <button id="custom-modal-confirm" class="bg-brand-red hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm transition-colors">OK</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Configurações -->
     <div id="settings-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-gray-500">
@@ -1329,6 +1343,62 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query, where, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        window.customAlert = (message) => {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('custom-modal');
+                document.getElementById('custom-modal-title').innerText = 'Aviso';
+                document.getElementById('custom-modal-message').innerText = message;
+                document.getElementById('custom-modal-cancel').classList.add('hidden');
+                
+                const confirmBtn = document.getElementById('custom-modal-confirm');
+                confirmBtn.innerText = 'OK';
+                
+                confirmBtn.onclick = () => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    confirmBtn.onclick = null;
+                    resolve(true);
+                };
+                
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            });
+        };
+
+        window.customConfirm = (message) => {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('custom-modal');
+                document.getElementById('custom-modal-title').innerText = 'Confirmação';
+                document.getElementById('custom-modal-message').innerText = message;
+                
+                const cancelBtn = document.getElementById('custom-modal-cancel');
+                cancelBtn.classList.remove('hidden');
+                
+                const confirmBtn = document.getElementById('custom-modal-confirm');
+                confirmBtn.innerText = 'Confirmar';
+                
+                const cleanup = () => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    confirmBtn.onclick = null;
+                    cancelBtn.onclick = null;
+                };
+                
+                confirmBtn.onclick = () => {
+                    cleanup();
+                    resolve(true);
+                };
+                
+                cancelBtn.onclick = () => {
+                    cleanup();
+                    resolve(false);
+                };
+                
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            });
+        };
+
         const firebaseConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
             authDomain: "tanqueteambjj.firebaseapp.com",
@@ -1403,13 +1473,17 @@
             const saveBtn = document.getElementById('save-plan-btn');
             
             const name = nameInput.value.trim();
-            const basePrice = parseFloat(basePriceInput.value);
+            let basePrice = parseFloat(basePriceInput.value);
             const price = parseFloat(priceInput.value);
             const duration = parseInt(durationInput.value);
             const editId = idInput.value;
             
-            if (!name || isNaN(price) || isNaN(basePrice)) {
-                alert('Preencha o nome e os valores do plano corretamente.');
+            if (isNaN(basePrice)) {
+                basePrice = price;
+            }
+            
+            if (!name || isNaN(price)) {
+                window.customAlert('Preencha o nome e o valor do plano corretamente.');
                 return;
             }
             
@@ -1443,7 +1517,7 @@
                 window.renderSettingsPlans();
             } catch (e) {
                 console.error("Erro ao salvar plano:", e);
-                alert("Erro ao salvar plano.");
+                window.customAlert("Erro ao salvar plano.");
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Salvar';
@@ -1481,7 +1555,7 @@
         };
 
         window.deletePlan = async (key) => {
-            if (!confirm('Tem certeza que deseja excluir este plano?')) return;
+            if (!await window.customConfirm('Tem certeza que deseja excluir este plano?')) return;
             
             try {
                 // Set as deleted so it overrides defaults
@@ -1494,7 +1568,7 @@
                 window.renderSettingsPlans();
             } catch (e) {
                 console.error("Erro ao excluir plano:", e);
-                alert("Erro ao excluir plano.");
+                window.customAlert("Erro ao excluir plano.");
             }
         };
 
@@ -1661,7 +1735,7 @@
                         basePrice: data.basePrice !== undefined ? data.basePrice : (data.price || defaultPlan.basePrice || 0),
                         short: data.name || defaultPlan.short,
                         long: (data.name || '').toUpperCase() || defaultPlan.long,
-                        durationMonths: data.durationMonths || window.inferPlanDuration(data) || defaultPlan.durationMonths
+                        durationMonths: data.durationMonths || defaultPlan.durationMonths
                     };
                 });
                 
@@ -1798,7 +1872,7 @@
             const editId = document.getElementById('edit-schedule-id').value;
             
             if (!name) {
-                alert("Por favor, preencha o nome da turma/horário.");
+                window.customAlert("Por favor, preencha o nome da turma/horário.");
                 return;
             }
             
@@ -1817,13 +1891,13 @@
                     await setDoc(docRef, { name: name });
                 }
                 
-                alert("Horário salvo com sucesso!");
+                window.customAlert("Horário salvo com sucesso!");
                 window.cancelEditSchedule();
                 await window.loadSchedules();
                 window.renderSettingsSchedules();
             } catch (e) {
                 console.error("Erro ao salvar horário:", e);
-                alert("Erro ao salvar horário.");
+                window.customAlert("Erro ao salvar horário.");
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = '<i class="fa-solid fa-plus mr-1"></i> Salvar';
@@ -1852,7 +1926,7 @@
         };
 
         window.deleteSchedule = async (key) => {
-            if (!confirm('Tem certeza que deseja excluir este horário?')) return;
+            if (!await window.customConfirm('Tem certeza que deseja excluir este horário?')) return;
             
             try {
                 await setDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'schedules', key), { deleted: true }, { merge: true });
@@ -1863,7 +1937,7 @@
                 window.renderSettingsSchedules();
             } catch (e) {
                 console.error("Erro ao excluir horário:", e);
-                alert("Erro ao excluir horário.");
+                window.customAlert("Erro ao excluir horário.");
             }
         };
 
@@ -2387,7 +2461,7 @@
                     } else familyBox.classList.add('hidden');
                 }
                 document.getElementById('details-modal').classList.remove('hidden'); document.getElementById('details-modal').classList.add('flex');
-            } catch(e) { console.error("Erro detalhes:", e); alert("Ocorreu um erro ao carregar. Tente novamente."); }
+            } catch(e) { console.error("Erro detalhes:", e); window.customAlert("Ocorreu um erro ao carregar. Tente novamente."); }
         };
         window.closeDetailsModal = () => { document.getElementById('details-modal').classList.add('hidden'); document.getElementById('details-modal').classList.remove('flex'); };
 
@@ -2818,7 +2892,7 @@ Belém-PA, [DATA_ATUAL].`;
                 
                 window.checkAdminEditAge();
                 document.getElementById('edit-modal').classList.remove('hidden'); document.getElementById('edit-modal').classList.add('flex');
-            } catch(e) { console.error("Erro edição:", e); alert("Erro ao abrir."); }
+            } catch(e) { console.error("Erro edição:", e); window.customAlert("Erro ao abrir."); }
         };
         window.closeEditModal = () => { 
             document.getElementById('edit-modal').classList.add('hidden'); 
@@ -2951,22 +3025,22 @@ Belém-PA, [DATA_ATUAL].`;
             try {
                 await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), updateData);
                 window.loadData();
-                alert("Dados do contrato atualizados com sucesso!");
+                window.customAlert("Dados do contrato atualizados com sucesso!");
             } catch(e) {
                 console.error(e);
-                alert("Erro ao atualizar dados do contrato.");
+                window.customAlert("Erro ao atualizar dados do contrato.");
             }
         };
 
         window.saveAdminNewStudent = async () => {
             const cpf = document.getElementById('reg-cpf').value;
             if (cpf && !window.isValidCPF(cpf)) {
-                alert("CPF inválido. Por favor, verifique o número digitado.");
+                window.customAlert("CPF inválido. Por favor, verifique o número digitado.");
                 return;
             }
             const guardianCpf = document.getElementById('reg-guardian-cpf') ? document.getElementById('reg-guardian-cpf').value : '';
             if (guardianCpf && !window.isValidCPF(guardianCpf)) {
-                alert("CPF do responsável inválido. Por favor, verifique o número digitado.");
+                window.customAlert("CPF do responsável inválido. Por favor, verifique o número digitado.");
                 return;
             }
             const name = String(document.getElementById('reg-name').value).toUpperCase(); const dob = toISODate(document.getElementById('reg-dob').value); const email = document.getElementById('reg-email').value; const phone = document.getElementById('reg-phone').value; 
@@ -2993,8 +3067,8 @@ Belém-PA, [DATA_ATUAL].`;
                 payStatus = 'Isento';
             }
 
-            if(!name || !planName) { alert("Preencha nome e plano."); return; }
-            if(planType === 'dependente' && !titularId) { alert("Selecione o Titular do plano."); return; }
+            if(!name || !planName) { window.customAlert("Preencha nome e plano."); return; }
+            if(planType === 'dependente' && !titularId) { window.customAlert("Selecione o Titular do plano."); return; }
             
             const beltStr = `Faixa ${beltColor} - ${beltDegree}º Grau`; const regDate = new Date(); let endDate = new Date(regDate);
             const durationMonths = window.getPlanDurationMonths(planName);
@@ -3008,7 +3082,7 @@ Belém-PA, [DATA_ATUAL].`;
 
             let initialPaymentHistory = [];
             let nextDue = new Date(regDate);
-            nextDue.setMonth(nextDue.getMonth() + 1);
+            // nextDue.setMonth(nextDue.getMonth() + 1); // Removed to fix the 2 months ahead bug
             
             const nextDueDate = nextDue.toISOString();
 
@@ -3028,19 +3102,19 @@ Belém-PA, [DATA_ATUAL].`;
                     const d2Name = String(document.getElementById('admin-dep2-name').value).toUpperCase();
                     if(d2Name) await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name: d2Name, dob: toISODate(document.getElementById('admin-dep2-dob').value), titularName: name, titularId: titularDocRef.id, guardianKinship: document.getElementById('admin-dep2-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', planValue: 0, category: 'Dependente (Combo)', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
                 }
-                window.closeAdminRegisterModal(); window.loadData(); alert("Aluno cadastrado com sucesso!");
-            } catch(e) { console.error(e); alert("Erro ao cadastrar."); }
+                window.closeAdminRegisterModal(); window.loadData(); window.customAlert("Aluno cadastrado com sucesso!");
+            } catch(e) { console.error(e); window.customAlert("Erro ao cadastrar."); }
         };
 
         window.saveStudentChanges = async () => {
             const cpf = document.getElementById('edit-cpf').value;
             if (cpf && !window.isValidCPF(cpf)) {
-                alert("CPF inválido. Por favor, verifique o número digitado.");
+                window.customAlert("CPF inválido. Por favor, verifique o número digitado.");
                 return;
             }
             let guardianCpf = ''; if(document.getElementById('edit-guardian-cpf')) guardianCpf = document.getElementById('edit-guardian-cpf').value;
             if (guardianCpf && !window.isValidCPF(guardianCpf)) {
-                alert("CPF do responsável inválido. Por favor, verifique o número digitado.");
+                window.customAlert("CPF do responsável inválido. Por favor, verifique o número digitado.");
                 return;
             }
             const id = document.getElementById('edit-id').value; const name = String(document.getElementById('edit-name').value).toUpperCase(); const dobIso = toISODate(document.getElementById('edit-dob').value); 
@@ -3064,7 +3138,7 @@ Belém-PA, [DATA_ATUAL].`;
                 
                 if(photoInput && photoInput.files && photoInput.files[0]) { 
                     const file = photoInput.files[0]; 
-                    if(file.size > 800 * 1024) { alert("A foto é muito grande."); return; } 
+                    if(file.size > 800 * 1024) { window.customAlert("A foto é muito grande."); return; } 
                     photoBase64 = await new Promise((resolve) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result); reader.readAsDataURL(file); }); 
                 }
             }
@@ -3073,8 +3147,8 @@ Belém-PA, [DATA_ATUAL].`;
                 if(photoBase64) updateData.photoBase64 = photoBase64;
                 if (beltStr !== originalBelt) { updateData.lastGraduationDate = new Date().toISOString(); updateData.progressLog = arrayUnion({ type: 'graduation', text: `Graduado para ${beltStr}`, date: new Date().toISOString() }); }
                 await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), updateData);
-                window.closeEditModal(); window.loadData(); alert("Dados atualizados com sucesso!");
-            } catch(e) { console.error(e); alert("Erro ao salvar."); }
+                window.closeEditModal(); window.loadData(); window.customAlert("Dados atualizados com sucesso!");
+            } catch(e) { console.error(e); window.customAlert("Erro ao salvar."); }
         };
 
         // PROGRESSO, FREQUENCIA EMBUTIDA
@@ -3110,12 +3184,12 @@ Belém-PA, [DATA_ATUAL].`;
         window.closeProgressModal = () => { document.getElementById('progress-modal').classList.add('hidden'); document.getElementById('progress-modal').classList.remove('flex'); };
 
         window.saveProgressNote = async () => {
-            const id = document.getElementById('prog-student-id').value; const text = document.getElementById('prog-new-note').value.trim(); if(!text) { alert("Escreva uma anotação."); return; }
-            try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { progressLog: arrayUnion({ type: 'note', text: text, date: new Date().toISOString() }) }); const s = window.students.find(st => st.id === id); if(s) { if(!s.progressLog) s.progressLog = []; s.progressLog.push({ type: 'note', text: text, date: new Date().toISOString() }); } window.openProgressModal(id); } catch(e) { alert("Erro ao salvar anotação."); }
+            const id = document.getElementById('prog-student-id').value; const text = document.getElementById('prog-new-note').value.trim(); if(!text) { window.customAlert("Escreva uma anotação."); return; }
+            try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { progressLog: arrayUnion({ type: 'note', text: text, date: new Date().toISOString() }) }); const s = window.students.find(st => st.id === id); if(s) { if(!s.progressLog) s.progressLog = []; s.progressLog.push({ type: 'note', text: text, date: new Date().toISOString() }); } window.openProgressModal(id); } catch(e) { window.customAlert("Erro ao salvar anotação."); }
         };
 
         window.deleteProgressNote = async (studentId, logDate, logText) => {
-            if(!confirm("Tem certeza que deseja excluir este registro do histórico?")) return;
+            if(!await window.customConfirm("Tem certeza que deseja excluir este registro do histórico?")) return;
             const s = window.students.find(st => st.id === studentId); if(!s) return;
             if(!s.progressLog) return;
             const logToRemove = s.progressLog.find(l => l.date === logDate && l.text === logText);
@@ -3124,7 +3198,7 @@ Belém-PA, [DATA_ATUAL].`;
                 await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), { progressLog: arrayRemove(logToRemove) });
                 s.progressLog = s.progressLog.filter(l => l !== logToRemove);
                 window.openProgressModal(studentId);
-            } catch(e) { console.error(e); alert("Erro ao excluir registro."); }
+            } catch(e) { console.error(e); window.customAlert("Erro ao excluir registro."); }
         };
 
         window.filterProgressAttendance = () => {
@@ -3156,16 +3230,16 @@ Belém-PA, [DATA_ATUAL].`;
         window.addManualAttendanceFromProg = async () => {
             const id = document.getElementById('prog-student-id').value; const dateVal = document.getElementById('prog-add-date').value; const classVal = document.getElementById('prog-add-class').value; if(!dateVal) return;
             try { 
-                const s = window.students.find(x => x.id === id); if (s && s.attendanceLog && s.attendanceLog.some(l => l.date === dateVal && l.time === classVal)) { alert("Já existe presença!"); return; }
+                const s = window.students.find(x => x.id === id); if (s && s.attendanceLog && s.attendanceLog.some(l => l.date === dateVal && l.time === classVal)) { window.customAlert("Já existe presença!"); return; }
                 const newLog = { date: dateVal, time: classVal, timestamp: new Date().toISOString() };
                 await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { attendance: arrayUnion(dateVal), attendanceLog: arrayUnion(newLog) }); 
                 if (s) { if (!s.attendance) s.attendance = []; if(!s.attendance.includes(dateVal)) s.attendance.push(dateVal); if (!s.attendanceLog) s.attendanceLog = []; s.attendanceLog.push(newLog); }
                 window.filterProgressAttendance(); window.loadData(); 
-            } catch(e) { alert("Erro ao adicionar frequência."); }
+            } catch(e) { window.customAlert("Erro ao adicionar frequência."); }
         };
 
         window.removeSpecificAttendance = async (studentId, dateStr, timeStr) => {
-            if(!confirm(`Remover presença da turma ${timeStr} no dia ${dateStr}?`)) return;
+            if(!await window.customConfirm(`Remover presença da turma ${timeStr} no dia ${dateStr}?`)) return;
             const s = window.students.find(st => st.id === studentId); if(!s || !s.attendanceLog) return;
             const logEntry = s.attendanceLog.find(l => l.date === dateStr && l.time === timeStr); if (!logEntry) return;
             try {
@@ -3174,7 +3248,7 @@ Belém-PA, [DATA_ATUAL].`;
                 const stillHasLogsForDate = s.attendanceLog.some(l => l.date === dateStr);
                 if (!stillHasLogsForDate) { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), { attendance: arrayRemove(dateStr) }); if(s.attendance) s.attendance = s.attendance.filter(d => d !== dateStr); }
                 window.filterProgressAttendance(); window.loadData();
-            } catch(e) { alert("Erro ao remover"); }
+            } catch(e) { window.customAlert("Erro ao remover"); }
         };
 
         // LÓGICA DO LEITOR DE QR CODE (Câmera Contínua)
@@ -3324,18 +3398,18 @@ Belém-PA, [DATA_ATUAL].`;
 
         window.saveNotice = async () => {
             const id = document.getElementById('notice-id').value; const title = document.getElementById('notice-title').value; const text = document.getElementById('notice-text').value; const type = document.getElementById('notice-type').value; const expiryDate = document.getElementById('notice-expiry').value;
-            if(!title || !text) { alert("Preencha título e mensagem."); return; }
+            if(!title || !text) { window.customAlert("Preencha título e mensagem."); return; }
             try {
                 const data = { title, text, type, expiryDate, timestamp: new Date().toISOString() };
                 if (id) await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'notices', id), data);
                 else await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'notices'), data);
                 window.closeNoticeModal(); window.loadNotices();
-            } catch(e) { console.error(e); alert("Erro ao salvar aviso."); }
+            } catch(e) { console.error(e); window.customAlert("Erro ao salvar aviso."); }
         };
 
         window.deleteNotice = async (id) => {
-            if(!confirm("Excluir este aviso?")) return;
-            try { await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'notices', id)); window.loadNotices(); } catch(e) { alert("Erro ao excluir."); }
+            if(!await window.customConfirm("Excluir este aviso?")) return;
+            try { await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'notices', id)); window.loadNotices(); } catch(e) { window.customAlert("Erro ao excluir."); }
         };
 
         window.loadNotices = async () => {
@@ -3527,7 +3601,7 @@ Belém-PA, [DATA_ATUAL].`;
             const status = document.getElementById('edit-exp-status').value;
             
             if (!name) {
-                alert("O nome é obrigatório.");
+                window.customAlert("O nome é obrigatório.");
                 return;
             }
 
@@ -3540,13 +3614,13 @@ Belém-PA, [DATA_ATUAL].`;
                 window.closeEditExperimentalModal(); 
                 window.loadExperimentalData(); 
             } catch(e) { 
-                alert("Erro ao salvar."); 
+                window.customAlert("Erro ao salvar."); 
             }
         };
 
         window.deleteExperimental = async (id) => {
-            if(!confirm("Excluir este agendamento?")) return;
-            try { await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id)); window.loadExperimentalData(); } catch(e) { alert("Erro ao excluir."); }
+            if(!await window.customConfirm("Excluir este agendamento?")) return;
+            try { await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id)); window.loadExperimentalData(); } catch(e) { window.customAlert("Erro ao excluir."); }
         };
 
         window.enrollExperimentalStudent = (id) => {
@@ -4138,11 +4212,11 @@ Belém-PA, [DATA_ATUAL].`;
                         });
                     }
                 }
-                alert("Presenças registradas com sucesso!");
+                window.customAlert("Presenças registradas com sucesso!");
                 window.loadData();
             } catch (e) {
                 console.error(e);
-                alert("Erro ao registrar presenças.");
+                window.customAlert("Erro ao registrar presenças.");
             }
         };
 
@@ -4150,7 +4224,7 @@ Belém-PA, [DATA_ATUAL].`;
             const checkboxes = document.querySelectorAll('.student-checkbox:checked');
             if (checkboxes.length === 0) return;
 
-            if (!confirm(`Deseja realmente arquivar os ${checkboxes.length} alunos selecionados?`)) return;
+            if (!await window.customConfirm(`Deseja realmente arquivar os ${checkboxes.length} alunos selecionados?`)) return;
 
             document.getElementById('bulk-actions-menu').classList.add('hidden');
 
@@ -4162,11 +4236,11 @@ Belém-PA, [DATA_ATUAL].`;
                         await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { archived: true });
                     }
                 }
-                alert("Alunos arquivados com sucesso!");
+                window.customAlert("Alunos arquivados com sucesso!");
                 window.loadData();
             } catch (e) {
                 console.error(e);
-                alert("Erro ao arquivar alunos.");
+                window.customAlert("Erro ao arquivar alunos.");
             }
         };
 
@@ -4174,7 +4248,7 @@ Belém-PA, [DATA_ATUAL].`;
             const checkboxes = document.querySelectorAll('.student-checkbox:checked');
             if (checkboxes.length === 0) return;
 
-            if (!confirm(`Deseja realmente desarquivar os ${checkboxes.length} alunos selecionados?`)) return;
+            if (!await window.customConfirm(`Deseja realmente desarquivar os ${checkboxes.length} alunos selecionados?`)) return;
 
             document.getElementById('bulk-actions-menu').classList.add('hidden');
 
@@ -4186,11 +4260,11 @@ Belém-PA, [DATA_ATUAL].`;
                         await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { archived: false });
                     }
                 }
-                alert("Alunos desarquivados com sucesso!");
+                window.customAlert("Alunos desarquivados com sucesso!");
                 window.loadData();
             } catch (e) {
                 console.error(e);
-                alert("Erro ao desarquivar alunos.");
+                window.customAlert("Erro ao desarquivar alunos.");
             }
         };
 
@@ -4198,7 +4272,7 @@ Belém-PA, [DATA_ATUAL].`;
             const checkboxes = document.querySelectorAll('.student-checkbox:checked');
             if (checkboxes.length === 0) return;
 
-            if (!confirm(`ATENÇÃO: Deseja realmente APAGAR DEFINITIVAMENTE os ${checkboxes.length} alunos selecionados? Esta ação não pode ser desfeita.`)) return;
+            if (!await window.customConfirm(`ATENÇÃO: Deseja realmente APAGAR DEFINITIVAMENTE os ${checkboxes.length} alunos selecionados? Esta ação não pode ser desfeita.`)) return;
 
             document.getElementById('bulk-actions-menu').classList.add('hidden');
 
@@ -4207,11 +4281,11 @@ Belém-PA, [DATA_ATUAL].`;
                     const id = cb.value;
                     await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id));
                 }
-                alert("Alunos apagados com sucesso!");
+                window.customAlert("Alunos apagados com sucesso!");
                 window.loadData();
             } catch (e) {
                 console.error(e);
-                alert("Erro ao apagar alunos.");
+                window.customAlert("Erro ao apagar alunos.");
             }
         };
 
@@ -4223,7 +4297,7 @@ Belém-PA, [DATA_ATUAL].`;
         window.sendWhatsAppReminder = (id) => {
             const s = window.students.find(st => st.id === id);
             if (!s || !s.phone) {
-                alert('Aluno não encontrado ou sem telefone cadastrado.');
+                window.customAlert('Aluno não encontrado ou sem telefone cadastrado.');
                 return;
             }
             
@@ -4514,7 +4588,7 @@ Belém-PA, [DATA_ATUAL].`;
             const nextDue = document.getElementById('pay-next-due').value;
             
             if (!refMonth || !amount || !method) {
-                alert("Por favor, preencha o mês de referência, valor e meio de pagamento.");
+                window.customAlert("Por favor, preencha o mês de referência, valor e meio de pagamento.");
                 return;
             }
             
@@ -4554,18 +4628,18 @@ Belém-PA, [DATA_ATUAL].`;
                     paymentHistory: arrayUnion(newPayment)
                 };
                 if (nextDue) {
-                    updateData.nextDueDate = nextDue;
+                    updateData.nextDueDate = toISODate(nextDue);
                 }
                 
                 await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), updateData);
                 
-                alert("Pagamento registrado com sucesso!");
+                window.customAlert("Pagamento registrado com sucesso!");
                 window.closePaymentModal();
                 window.loadData();
                 setTimeout(() => window.informPayment(id), 500); // Reload modal
             } catch(e) {
                 console.error(e);
-                alert("Erro ao registrar pagamento.");
+                window.customAlert("Erro ao registrar pagamento.");
             }
         };
 
@@ -4604,7 +4678,7 @@ Belém-PA, [DATA_ATUAL].`;
             const method = document.getElementById('edit-pay-method').value;
 
             if (!newDateStr || !refMonth || !amount || !method) {
-                alert("Preencha todos os campos.");
+                window.customAlert("Preencha todos os campos.");
                 return;
             }
 
@@ -4641,18 +4715,18 @@ Belém-PA, [DATA_ATUAL].`;
                     paymentHistory: arrayUnion(updatedPayment)
                 });
 
-                alert("Pagamento atualizado com sucesso!");
+                window.customAlert("Pagamento atualizado com sucesso!");
                 window.closeEditPaymentModal();
                 window.loadData();
                 setTimeout(() => window.informPayment(studentId), 500); // Reload modal
             } catch (e) {
                 console.error(e);
-                alert("Erro ao atualizar pagamento.");
+                window.customAlert("Erro ao atualizar pagamento.");
             }
         };
 
         window.deletePayment = async (studentId, paymentDateEncoded) => {
-            if (!confirm("Tem certeza que deseja excluir este pagamento?")) return;
+            if (!await window.customConfirm("Tem certeza que deseja excluir este pagamento?")) return;
             
             const s = window.students.find(st => st.id === studentId);
             if (!s) return;
@@ -4664,32 +4738,32 @@ Belém-PA, [DATA_ATUAL].`;
                 await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), {
                     paymentHistory: arrayRemove(payment)
                 });
-                alert("Pagamento excluído com sucesso!");
+                window.customAlert("Pagamento excluído com sucesso!");
                 window.loadData();
                 setTimeout(() => window.informPayment(studentId), 500); // Reload modal
             } catch (e) {
                 console.error(e);
-                alert("Erro ao excluir pagamento.");
+                window.customAlert("Erro ao excluir pagamento.");
             }
         };
 
         window.toggleArchive = async (id) => {
             const s = window.students.find(st => st.id === id); if(!s) return;
             const action = s.archived ? 'desarquivar' : 'arquivar';
-            if(!confirm(`Deseja realmente ${action} o aluno ${s.name}?`)) return;
-            try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { archived: !s.archived }); window.loadData(); } catch(e) { alert("Erro ao alterar status."); }
+            if(!await window.customConfirm(`Deseja realmente ${action} o aluno ${s.name}?`)) return;
+            try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { archived: !s.archived }); window.loadData(); } catch(e) { window.customAlert("Erro ao alterar status."); }
         };
 
         window.deleteStudentPermanently = async (id) => {
             const s = window.students.find(st => st.id === id); if(!s) return;
-            if(!confirm(`ATENÇÃO: Deseja excluir DEFINITIVAMENTE o aluno ${s.name} do banco de dados? Esta ação não pode ser desfeita.`)) return;
+            if(!await window.customConfirm(`ATENÇÃO: Deseja excluir DEFINITIVAMENTE o aluno ${s.name} do banco de dados? Esta ação não pode ser desfeita.`)) return;
             try { 
                 await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id)); 
                 window.loadData(); 
-                alert("Aluno excluído com sucesso.");
+                window.customAlert("Aluno excluído com sucesso.");
             } catch(e) { 
                 console.error(e);
-                alert("Erro ao excluir aluno."); 
+                window.customAlert("Erro ao excluir aluno."); 
             }
         };
 
@@ -4765,11 +4839,11 @@ Belém-PA, [DATA_ATUAL].`;
 
         window.sendCredsEmail = (name, email, login, pass, btn) => {
             if (!email) {
-                alert("O aluno não possui um e-mail cadastrado.");
+                window.customAlert("O aluno não possui um e-mail cadastrado.");
                 return;
             }
             if (!login || !pass) {
-                alert("O aluno não possui login e senha configurados.");
+                window.customAlert("O aluno não possui login e senha configurados.");
                 return;
             }
             
@@ -4819,12 +4893,12 @@ Belém-PA, [DATA_ATUAL].`;
 
             emailjs.send('service_yq744mr', 'template_few5bna', templateParams)
                 .then(function(response) {
-                   alert("E-mail enviado com sucesso!");
+                   window.customAlert("E-mail enviado com sucesso!");
                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Enviado';
                    setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 3000);
                 }, function(error) {
                    console.error("Erro ao enviar e-mail:", error);
-                   alert("Erro ao enviar e-mail. Verifique o console.");
+                   window.customAlert("Erro ao enviar e-mail. Verifique o console.");
                    btn.innerHTML = originalText;
                    btn.disabled = false;
                 });
@@ -4846,11 +4920,11 @@ Belém-PA, [DATA_ATUAL].`;
             }
 
             if (!email) {
-                alert("Por favor, preencha o e-mail do aluno.");
+                window.customAlert("Por favor, preencha o e-mail do aluno.");
                 return;
             }
             if (!login || !pass) {
-                alert("Por favor, preencha o login e a senha.");
+                window.customAlert("Por favor, preencha o login e a senha.");
                 return;
             }
             
@@ -4914,12 +4988,12 @@ Belém-PA, [DATA_ATUAL].`;
 
             emailjs.send('service_yq744mr', 'template_few5bna', templateParams)
                 .then(function(response) {
-                   alert("E-mail de boas-vindas enviado com sucesso!");
+                   window.customAlert("E-mail de boas-vindas enviado com sucesso!");
                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Enviado';
                    setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 3000);
                 }, function(error) {
                    console.error("Erro ao enviar e-mail:", error);
-                   alert("Erro ao enviar e-mail. Verifique o console.");
+                   window.customAlert("Erro ao enviar e-mail. Verifique o console.");
                    btn.innerHTML = originalText;
                    btn.disabled = false;
                 });
@@ -5073,10 +5147,10 @@ Belém-PA, [DATA_ATUAL].`;
                 const data = { title, text, type, expiryDate: expiryDateStr, timestamp: new Date().toISOString() };
                 await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'notices'), data);
                 window.loadNotices();
-                alert(`Mensagem de aniversário para ${name} publicada no mural com sucesso!`);
+                window.customAlert(`Mensagem de aniversário para ${name} publicada no mural com sucesso!`);
             } catch(e) { 
                 console.error(e); 
-                alert("Erro ao publicar aviso de aniversário."); 
+                window.customAlert("Erro ao publicar aviso de aniversário."); 
             }
         };
 
