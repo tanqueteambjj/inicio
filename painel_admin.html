@@ -74,10 +74,10 @@
             }
             body.printing-progress #printable-progress *, body.printing-experimental #printable-experimental *, body.printing-qr #print-only-qr * { visibility: visible !important; color: #000 !important; }
             
-            body.printing-report #report-container { 
+            body.printing-report #report-container, body.printing-payment-report #printable-report { 
                 display: block !important; position: static !important; width: 100% !important; height: auto !important; visibility: visible !important; background: #fff !important; color: #000 !important; margin: 0 !important; padding: 0 !important;
             }
-            body.printing-report #report-container * { visibility: visible !important; color: #000 !important; }
+            body.printing-report #report-container *, body.printing-payment-report #printable-report * { visibility: visible !important; color: #000 !important; }
             
             body.printing-qr #print-only-qr { display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: flex-start !important; padding: 2cm 0 !important; }
             
@@ -397,41 +397,53 @@
                         </div>
                     </div>
                     <div class="p-6">
-                        <div class="flex flex-col md:flex-row gap-4 items-end mb-6">
+                        <div class="flex flex-col md:flex-row gap-4 items-end mb-8 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-200 dark:border-gray-600">
                             <div class="flex-1 w-full">
-                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Mês de Referência</label>
-                                <input type="month" id="report-month" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none">
+                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"><i class="fa-regular fa-calendar mr-1"></i> Mês de Referência</label>
+                                <input type="month" id="report-month" class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg p-2.5 focus:border-brand-red focus:ring-1 focus:ring-brand-red focus:outline-none transition-all shadow-sm">
                             </div>
-                            <div class="flex gap-2 w-full md:w-auto">
-                                <button onclick="window.generatePaymentReport()" class="flex-1 md:flex-none bg-brand-red text-white px-6 py-2 rounded font-bold hover:bg-red-700 transition shadow-sm h-[42px]"><i class="fa-solid fa-search mr-2"></i> Gerar Relatório</button>
-                                <button onclick="window.printPaymentReport()" class="flex-1 md:flex-none bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-white px-6 py-2 rounded font-bold hover:bg-gray-300 dark:hover:bg-gray-500 transition shadow-sm h-[42px] hidden" id="btn-print-report"><i class="fa-solid fa-print mr-2"></i> Imprimir</button>
+                            <div class="flex gap-3 w-full md:w-auto">
+                                <button onclick="window.generatePaymentReport()" class="flex-1 md:flex-none bg-brand-red text-white px-6 py-2.5 rounded-lg font-bold hover:bg-red-700 transition-all shadow-md active:scale-95 flex items-center justify-center"><i class="fa-solid fa-search mr-2"></i> Gerar Relatório</button>
+                                <button onclick="window.printPaymentReport()" class="flex-1 md:flex-none bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-indigo-700 transition-all shadow-md active:scale-95 hidden items-center justify-center" id="btn-print-report"><i class="fa-solid fa-print mr-2"></i> Imprimir</button>
                             </div>
                         </div>
                         
-                        <div id="report-results" class="hidden">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4 rounded-lg">
-                                    <p class="text-xs text-green-600 dark:text-green-400 font-bold uppercase">Total Recebido</p>
-                                    <p class="text-2xl font-bold text-green-700 dark:text-green-300" id="report-total-amount">R$ 0,00</p>
+                        <div id="report-empty-state" class="text-center py-16 px-4">
+                            <div class="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400 dark:text-gray-500 text-3xl">
+                                <i class="fa-solid fa-file-invoice-dollar"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-gray-700 dark:text-gray-300 mb-1">Nenhum relatório gerado</h4>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Selecione um mês acima e clique em "Gerar Relatório" para visualizar os dados.</p>
+                        </div>
+
+                        <div id="report-results" class="hidden animate-fade-in">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <div class="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/40 dark:to-emerald-900/20 border border-green-200 dark:border-green-800/50 p-6 rounded-2xl shadow-sm relative overflow-hidden">
+                                    <div class="absolute right-0 top-0 opacity-10 text-6xl mt-4 mr-2 text-green-600 pointer-events-none"><i class="fa-solid fa-money-bill-wave"></i></div>
+                                    <p class="text-xs text-green-700 dark:text-green-400 font-bold uppercase tracking-wider mb-1">Total Recebido</p>
+                                    <p class="text-4xl font-black text-green-800 dark:text-green-300" id="report-total-amount">R$ 0,00</p>
                                 </div>
-                                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
-                                    <p class="text-xs text-blue-600 dark:text-blue-400 font-bold uppercase">Qtd. Pagamentos</p>
-                                    <p class="text-2xl font-bold text-blue-700 dark:text-blue-300" id="report-total-count">0</p>
+                                <div class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/40 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800/50 p-6 rounded-2xl shadow-sm relative overflow-hidden">
+                                    <div class="absolute right-0 top-0 opacity-10 text-6xl mt-4 mr-2 text-blue-600 pointer-events-none"><i class="fa-solid fa-receipt"></i></div>
+                                    <p class="text-xs text-blue-700 dark:text-blue-400 font-bold uppercase tracking-wider mb-1">Qtd. Pagamentos</p>
+                                    <p class="text-4xl font-black text-blue-800 dark:text-blue-300" id="report-total-count">0</p>
                                 </div>
                             </div>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-sm text-left">
-                                    <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                                        <tr>
-                                            <th class="px-4 py-3">Data</th>
-                                            <th class="px-4 py-3">Aluno</th>
-                                            <th class="px-4 py-3">Método</th>
-                                            <th class="px-4 py-3 text-right">Valor</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="report-table-body" class="divide-y divide-gray-200 dark:divide-gray-700">
-                                    </tbody>
-                                </table>
+                            <div class="overflow-hidden border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-sm text-left">
+                                        <thead class="text-xs text-gray-600 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
+                                            <tr>
+                                                <th class="px-6 py-4 font-bold">Data</th>
+                                                <th class="px-6 py-4 font-bold">Aluno</th>
+                                                <th class="px-6 py-4 font-bold">Método</th>
+                                                <th class="px-6 py-4 font-bold text-right">Valor</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="report-table-body" class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -5087,6 +5099,7 @@ Belém-PA, [DATA_ATUAL].`;
             const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             document.getElementById('report-month').value = currentMonth;
             document.getElementById('report-results').classList.add('hidden');
+            document.getElementById('report-empty-state').classList.remove('hidden');
             document.getElementById('btn-print-report').classList.add('hidden');
         };
 
@@ -5129,16 +5142,16 @@ Belém-PA, [DATA_ATUAL].`;
             tbody.innerHTML = '';
 
             if (reportData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">Nenhum pagamento encontrado para este mês.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Nenhum pagamento encontrado para este mês.</td></tr>`;
             } else {
                 reportData.forEach(item => {
                     const tr = document.createElement('tr');
-                    tr.className = "hover:bg-gray-50 dark:hover:bg-gray-800/50";
+                    tr.className = "hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors";
                     tr.innerHTML = `
-                        <td class="px-4 py-3 whitespace-nowrap text-gray-900 dark:text-gray-300">${window.formatDate(item.date)}</td>
-                        <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">${item.studentName}</td>
-                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400">${item.method}</td>
-                        <td class="px-4 py-3 text-right font-bold text-green-600 dark:text-green-400">R$ ${item.amount.toFixed(2).replace('.', ',')}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-gray-300 font-medium">${window.formatDate(item.date)}</td>
+                        <td class="px-6 py-4 font-bold text-gray-900 dark:text-white">${item.studentName}</td>
+                        <td class="px-6 py-4 text-gray-500 dark:text-gray-400"><span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-xs font-medium">${item.method}</span></td>
+                        <td class="px-6 py-4 text-right font-black text-green-600 dark:text-green-400">R$ ${item.amount.toFixed(2).replace('.', ',')}</td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -5147,11 +5160,14 @@ Belém-PA, [DATA_ATUAL].`;
             document.getElementById('report-total-amount').innerText = `R$ ${totalAmount.toFixed(2).replace('.', ',')}`;
             document.getElementById('report-total-count').innerText = reportData.length;
 
+            document.getElementById('report-empty-state').classList.add('hidden');
             document.getElementById('report-results').classList.remove('hidden');
             if (reportData.length > 0) {
                 document.getElementById('btn-print-report').classList.remove('hidden');
+                document.getElementById('btn-print-report').classList.add('flex');
             } else {
                 document.getElementById('btn-print-report').classList.add('hidden');
+                document.getElementById('btn-print-report').classList.remove('flex');
             }
 
             window.currentReportData = reportData;
@@ -5184,10 +5200,12 @@ Belém-PA, [DATA_ATUAL].`;
 
             document.querySelectorAll('.print-only-element').forEach(el => el.classList.add('hidden'));
             document.getElementById('printable-report').classList.remove('hidden');
+            document.body.classList.add('printing-payment-report');
             
             window.print();
             
             setTimeout(() => {
+                document.body.classList.remove('printing-payment-report');
                 document.getElementById('printable-report').classList.add('hidden');
             }, 500);
         };
