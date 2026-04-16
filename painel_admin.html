@@ -18,6 +18,9 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- SortableJS for drag and drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     
@@ -115,11 +118,11 @@
             <a href="#" onclick="window.switchMainView('students')" id="nav-students" class="flex items-center px-4 py-3 bg-brand-red text-white rounded-lg shadow-md transition-all font-bold">
                 <i class="fa-solid fa-users w-6"></i> <span class="ml-2">Alunos</span>
             </a>
+            <a href="#" onclick="window.switchMainView('attendance')" id="nav-attendance" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
+                <i class="fa-solid fa-calendar-check w-6"></i> <span class="ml-2">Frequência</span>
+            </a>
             <a href="#" onclick="window.switchMainView('experimental')" id="nav-experimental" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
                 <i class="fa-solid fa-fire w-6"></i> <span class="ml-2">Aulas Exp.</span>
-            </a>
-            <a href="#" onclick="window.switchMainView('contracts')" id="nav-contracts" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
-                <i class="fa-solid fa-file-contract w-6"></i> <span class="ml-2">Contratos</span>
             </a>
             <a href="#" onclick="window.switchMainView('notices')" id="nav-notices" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
                 <i class="fa-solid fa-bullhorn w-6"></i> <span class="ml-2">Mural de Avisos</span>
@@ -219,7 +222,7 @@
                             </div>
                         </div>
                         <select id="sort-order" onchange="window.filterTable()" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-1.5 text-gray-700 dark:text-gray-300 focus:outline-none focus:border-brand-red bg-gray-50 dark:bg-gray-700 font-medium">
-                            <option value="recent">⏱️ Mais Recentes</option><option value="az">🔤 Ordem Alfabética (A-Z)</option><option value="za">🔤 Ordem Alfabética (Z-A)</option>
+                            <option value="recent">⏱️ Mais Recentes</option><option value="az">🔤 Ordem Alfabética (A-Z)</option><option value="za">🔤 Ordem Alfabética (Z-A)</option><option value="manual">✋ Ordem Manual</option>
                         </select>
                         <select id="filter-belt" onchange="window.filterTable()" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-1.5 text-gray-700 dark:text-gray-300 focus:outline-none focus:border-brand-red bg-gray-50 dark:bg-gray-700 font-medium">
                             <option value="">🥋 Todas as Faixas</option><option value="branca">Branca</option><option value="cinza">Cinza</option><option value="amarela">Amarela</option><option value="laranja">Laranja</option><option value="verde">Verde</option><option value="azul">Azul</option><option value="roxa">Roxa</option><option value="marrom">Marrom</option><option value="preta">Preta</option>
@@ -259,41 +262,6 @@
                     <div id="pagination-controls" class="px-6 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4 no-print hidden">
                         <span class="text-sm text-gray-600 dark:text-gray-400" id="pagination-info"></span>
                         <div class="flex gap-1 flex-wrap justify-center" id="pagination-buttons"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- VIEW: CONTRATOS -->
-            <div id="view-contracts" class="hidden animate-fade-in">
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex justify-between items-center no-print">
-                        <div>
-                            <h3 class="font-bold text-gray-800 dark:text-white uppercase text-lg"><i class="fa-solid fa-file-contract text-purple-500 mr-2"></i> Emissão de Contratos</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Selecione um aluno para gerar e imprimir o contrato</p>
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <div class="mb-6">
-                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Selecione o Aluno</label>
-                            <select id="contract-student-select" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-3 text-sm focus:border-purple-500 focus:outline-none" onchange="window.loadContractPreview()">
-                                <option value="">-- Selecione um aluno --</option>
-                                <!-- Preenchido via JS -->
-                            </select>
-                        </div>
-                        
-                        <div id="contract-preview-container" class="hidden flex-col gap-4">
-                            <div class="flex justify-between items-center mb-2">
-                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300">Texto do Contrato (Editável)</label>
-                                <button onclick="window.loadContractPreview()" class="text-xs text-blue-500 hover:underline"><i class="fa-solid fa-rotate-left"></i> Restaurar Padrão</button>
-                            </div>
-                            <textarea id="contract-tab-text" class="w-full h-96 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-4 text-sm focus:border-purple-500 focus:outline-none font-serif leading-relaxed resize-none"></textarea>
-                            <div class="text-xs text-gray-500 dark:text-gray-400">
-                                <strong>Variáveis disponíveis:</strong> [NOME_ALUNO], [CPF_ALUNO], [RG_ALUNO], [ENDERECO_ALUNO], [TELEFONE_ALUNO], [EMAIL_ALUNO], [DATA_NASC], [FAIXA], [GRAU], [PLANO_ALUNO], [VALOR_PLANO], [DATA_ATUAL]
-                            </div>
-                            <div class="flex justify-end mt-4">
-                                <button onclick="window.printTabContract()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded font-bold text-sm shadow-md transition transform active:scale-95"><i class="fa-solid fa-print mr-2"></i> Imprimir Contrato</button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -349,6 +317,43 @@
                             </thead>
                             <tbody id="experimental-table-body" class="text-sm text-gray-700 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
                                 <tr><td colspan="5" class="px-6 py-4 text-center">A carregar dados...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: FREQUENCIA -->
+            <div id="view-attendance" class="hidden animate-fade-in">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex justify-between items-center no-print">
+                        <div>
+                            <h3 class="font-bold text-gray-800 dark:text-white uppercase text-lg"><i class="fa-solid fa-calendar-check text-blue-500 mr-2"></i> Relatório de Frequência</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Verifique os alunos que fizeram check-in na data selecionada</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="window.printAttendanceReport()" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 text-sm bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 px-3 py-1.5 rounded shadow-sm font-bold"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-wrap gap-4 items-center text-sm no-print">
+                        <label class="font-bold text-gray-700 dark:text-gray-300">Selecione a Data:</label>
+                        <input type="date" id="attendance-date-filter" onchange="window.renderAttendanceTable()" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red">
+                        <div class="ml-auto text-gray-500 dark:text-gray-400 text-sm">
+                            Total de presenças: <span id="attendance-total-count" class="font-bold text-gray-800 dark:text-white">0</span>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider">
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Horário</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Aluno</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Modalidade/Plano</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Aula</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendance-table-body" class="text-sm text-gray-700 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
+                                <!-- Preenchido via JS -->
                             </tbody>
                         </table>
                     </div>
@@ -709,31 +714,6 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Imprimir Contrato -->
-    <div id="contract-modal" class="fixed inset-0 z-[90] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl animate-fade-in border-t-4 border-purple-500 flex flex-col max-h-[90vh]">
-            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
-                <h3 class="font-bold text-lg text-gray-800 dark:text-white"><i class="fa-solid fa-file-contract text-purple-500 mr-2"></i> Imprimir Contrato</h3>
-                <button onclick="window.closeContractModal()"><i class="fa-solid fa-times text-gray-400 hover:text-gray-800 dark:hover:text-white"></i></button>
-            </div>
-            <div class="p-6 overflow-y-auto flex-1 flex flex-col gap-4">
-                <div class="flex justify-between items-center mb-2">
-                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300">Texto do Contrato (Editável)</label>
-                    <button onclick="window.resetContractText()" class="text-xs text-blue-500 hover:underline"><i class="fa-solid fa-rotate-left"></i> Restaurar Padrão</button>
-                </div>
-                <input type="hidden" id="contract-student-id">
-                <textarea id="contract-text" class="w-full h-96 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-4 text-sm focus:border-purple-500 focus:outline-none font-serif leading-relaxed resize-none"></textarea>
-                <div class="text-xs text-gray-500 dark:text-gray-400">
-                    <strong>Variáveis disponíveis:</strong> [NOME_ALUNO], [CPF_ALUNO], [RG_ALUNO], [ENDERECO_ALUNO], [PLANO_ALUNO], [VALOR_PLANO], [DATA_ATUAL]
-                </div>
-            </div>
-            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-end gap-2 border-t border-gray-200 dark:border-gray-600 rounded-b-lg shrink-0">
-                <button onclick="window.closeContractModal()" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded font-bold text-sm transition">Cancelar</button>
-                <button onclick="window.printContract()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded font-bold text-sm shadow-md transition transform active:scale-95"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
             </div>
         </div>
     </div>
@@ -2621,263 +2601,6 @@ E, por estarem assim justos e contratados, as partes assinam o presente instrume
 
 Belém-PA, [DATA_ATUAL].`;
 
-        window.populateContractStudents = () => {
-            const select = document.getElementById('contract-student-select');
-            if (!select) return;
-            
-            select.innerHTML = '<option value="">-- Selecione um aluno --</option>';
-            
-            const activeStudents = window.students.filter(s => !s.archived).sort((a, b) => a.name.localeCompare(b.name));
-            
-            activeStudents.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.id;
-                opt.textContent = `${s.name} (${s.cpf || 'Sem CPF'})`;
-                select.appendChild(opt);
-            });
-            
-            document.getElementById('contract-preview-container').classList.add('hidden');
-            document.getElementById('contract-preview-container').classList.remove('flex');
-        };
-
-        window.getContratanteName = (s) => {
-            if (!s) return 'CONTRATANTE';
-            const age = getAge(s.dob);
-            const isMinor = age !== null && age < 18;
-            const planType = window.getPlanType(s.plan);
-            
-            if (s.guardianCpf && s.guardianCpf.trim() !== '') {
-                return s.guardian || 'CONTRATANTE';
-            } else if (planType === 'combo-familia' || planType === 'combo-dupla' || s.titularId) {
-                let titular = s;
-                if (s.titularId) {
-                    const foundTitular = window.students.find(t => t.id === s.titularId);
-                    if (foundTitular) titular = foundTitular;
-                }
-                return titular.name || 'CONTRATANTE';
-            } else if (isMinor || (s.guardian && s.guardian.trim() !== '')) {
-                return s.guardian || 'CONTRATANTE';
-            } else {
-                return s.name || 'CONTRATANTE';
-            }
-        };
-
-        window.generateContractText = (s) => {
-            let text = defaultContractTemplate;
-            
-            // Determine CONTRATANTE and ALUNO(S)
-            let contratanteNome = s.name || '_______________________';
-            let contratanteCpf = s.cpf || '_______________________';
-            let contratanteEndereco = s.address || '_______________________';
-            let contratanteTelefone = s.phone || '_______________________';
-            let contratanteEmail = s.email || '_______________________';
-            
-            let listaAlunos = '';
-            
-            const age = getAge(s.dob);
-            const isMinor = age !== null && age < 18;
-            const planType = window.getPlanType(s.plan);
-            
-            let groupStudents = [s];
-            if (s.guardianCpf && s.guardianCpf.trim() !== '') {
-                // Group by guardian
-                groupStudents = window.students.filter(st => st.guardianCpf === s.guardianCpf);
-                contratanteNome = s.guardian || '_______________________';
-                contratanteCpf = s.guardianCpf || '_______________________';
-            } else if (planType === 'combo-familia' || planType === 'combo-dupla' || s.titularId) {
-                // Group by titular
-                let titular = s;
-                if (s.titularId) {
-                    const foundTitular = window.students.find(t => t.id === s.titularId);
-                    if (foundTitular) titular = foundTitular;
-                }
-                
-                contratanteNome = titular.name || '_______________________';
-                contratanteCpf = titular.cpf || '_______________________';
-                contratanteEndereco = titular.address || '_______________________';
-                contratanteTelefone = titular.phone || '_______________________';
-                contratanteEmail = titular.email || '_______________________';
-                
-                const deps = window.students.filter(d => d.titularId === titular.id);
-                groupStudents = [titular, ...deps];
-            } else if (isMinor || (s.guardian && s.guardian.trim() !== '')) {
-                // Minor without guardianCpf but with guardian name
-                contratanteNome = s.guardian || '_______________________';
-                contratanteCpf = s.guardianCpf || '_______________________';
-            }
-
-            // Build student list
-            groupStudents.forEach(d => {
-                let dDob = '_______________________';
-                if (d.dob) {
-                    const parts = d.dob.split('-');
-                    if (parts.length === 3) dDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
-                }
-                let dFaixa = 'Branca'; let dGrau = '0º Grau';
-                if (d.belt) {
-                    const parts = d.belt.split(' - ');
-                    if (parts.length > 0) dFaixa = parts[0];
-                    if (parts.length > 1) dGrau = parts[1];
-                }
-                listaAlunos += `- ${d.name}, Nasc: ${dDob}. | Graduação Atual: ${dFaixa} - ${dGrau}\n`;
-            });
-            
-            text = text.replace(/\[NOME_CONTRATANTE\]/g, contratanteNome);
-            text = text.replace(/\[CPF_CONTRATANTE\]/g, contratanteCpf);
-            text = text.replace(/\[ENDERECO_CONTRATANTE\]/g, contratanteEndereco);
-            text = text.replace(/\[TELEFONE_CONTRATANTE\]/g, contratanteTelefone);
-            text = text.replace(/\[EMAIL_CONTRATANTE\]/g, contratanteEmail);
-            text = text.replace(/\[LISTA_ALUNOS\]/g, listaAlunos.trim());
-            
-            let dueDay = '___';
-            if (s.nextDueDate) {
-                const parts = s.nextDueDate.split('T')[0].split('-');
-                if (parts.length === 3) dueDay = parts[2];
-            }
-            let contractEnd = '___/___/_____';
-            if (s.contractEndDate) {
-                const parts = s.contractEndDate.split('T')[0].split('-');
-                if (parts.length === 3) contractEnd = `${parts[2]}/${parts[1]}/${parts[0]}`;
-            }
-            let contractStart = '___/___/_____';
-            if (s.registrationDate) {
-                const parts = s.registrationDate.split('T')[0].split('-');
-                if (parts.length === 3) contractStart = `${parts[2]}/${parts[1]}/${parts[0]}`;
-            }
-
-            let planName = s.plan || '_______________________';
-            let planValue = '________';
-            let clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES\n\n2.1. O CONTRATANTE opta pelo plano esportivo [PLANO_ALUNO], comprometendo-se ao pagamento da mensalidade no valor total de R$ [VALOR_PLANO].\n\n2.2. As mensalidades deverão ser pagas até o dia ${dueDay} de cada mês.\n\n2.3. Reajuste de Valores: Os valores das mensalidades previstos neste contrato poderão ser reajustados anualmente, a cada 12 (doze) meses a contar da data de início da vigência, com base na variação do Índice Geral de Preços do Mercado (IGP-M) ou outro índice que venha a substituí-lo, ou, na sua ausência, por acordo entre as partes.`;
-            let clausulaCancelamento = `CLÁUSULA 3ª - DO CANCELAMENTO\n\n3.1. O cancelamento da prestação de serviços deve ser solicitado com 30 (trinta) dias de antecedência, por escrito, à secretaria da escola. Não haverá reembolso de valores pagos retroativos caso o aluno deixe de frequentar as aulas sem aviso prévio formalizado.\n\n3.2. Procedimento de Cancelamento: A solicitação de cancelamento deverá ser formalizada por escrito pelo CONTRATANTE, com antecedência mínima de 30 (trinta) dias, e enviada para o e-mail tanqueteambjj@gmail.com ou entregue pessoalmente na secretaria da CONTRATADA. A data de recebimento da solicitação será considerada para o cálculo do aviso prévio.\n\n3.3. Rescisão por Justa Causa pelo Contratante: O CONTRATANTE poderá rescindir o presente contrato por justa causa nas seguintes hipóteses:\na) Descumprimento grave das obrigações contratuais pela CONTRATADA, que inviabilize a continuidade da prestação dos serviços;\nb) Alteração substancial da grade de horários ou do corpo docente que inviabilize a participação do ALUNO, desde que não haja alternativa razoável oferecida pela CONTRATADA.`;
-            
-            const p = window.getPlanInfo(s.plan);
-            if (p && p.long !== 'NÃO INFORMADO') {
-                planName = p.long;
-                const basePrice = p.basePrice || p.price || 0;
-                planValue = basePrice.toFixed(2).replace('.', ',');
-                
-                if (p.durationMonths && p.durationMonths > 1) {
-                    clausulaCancelamento = `CLÁUSULA 3ª - DO CANCELAMENTO E FIDELIDADE\n\n3.1. O CONTRATANTE declara estar ciente de que a contratação do plano de mensalidade da escola de jiu-jitsu é realizada com prazo mínimo de fidelidade de ${p.durationMonths} meses, contados a partir da data de assinatura do presente instrumento.\n\n3.2. Em caso de solicitação de cancelamento antes do término do período de fidelidade, o CONTRATANTE ficará sujeito ao pagamento de multa compensatória equivalente a 30% (trinta por cento) sobre o valor total das mensalidades vincendas até o término do prazo contratado.\n\n3.3. O pagamento da multa deverá ser efetuado à vista no ato da formalização do cancelamento, sob pena de adoção das medidas administrativas e judiciais cabíveis para a cobrança do débito.\n\n3.4. Procedimento de Cancelamento: A solicitação de cancelamento deverá ser formalizada por escrito pelo CONTRATANTE, com antecedência mínima de 30 (trinta) dias, e enviada para o e-mail tanqueteambjj@gmail.com ou entregue pessoalmente na secretaria da CONTRATADA. A data de recebimento da solicitação será considerada para o cálculo do aviso prévio.\n\n3.5. Rescisão por Justa Causa pelo Contratante: O CONTRATANTE poderá rescindir o presente contrato por justa causa, sem a incidência da multa prevista na Cláusula 3.2, nas seguintes hipóteses:\na) Descumprimento grave das obrigações contratuais pela CONTRATADA, que inviabilize a continuidade da prestação dos serviços;\nb) Alteração substancial da grade de horários ou do corpo docente que inviabilize a participação do ALUNO, desde que não haja alternativa razoável oferecida pela CONTRATADA.`;
-                }
-                
-                if (p.price === 0) {
-                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E VALORES\n\n2.1. O CONTRATANTE opta pelo plano esportivo ${p.long}, sendo este isento de mensalidades.`;
-                } else {
-                    let baseText = `CLÁUSULA 2ª - DO PLANO E VALORES\n\n2.1. O CONTRATANTE opta pelo plano esportivo ${p.long}, comprometendo-se ao pagamento da mensalidade no valor total de R$ ${basePrice.toFixed(2).replace('.', ',')}.`;
-                    
-                    if (p.basePrice && p.basePrice > p.price) {
-                        const discount = p.basePrice - p.price;
-                        baseText += `\n\n2.2. Fica acordado que, pagando até a data de vencimento (dia ${dueDay} de cada mês), o CONTRATANTE pagará o valor com desconto de R$ ${p.price.toFixed(2).replace('.', ',')}, correspondente a um desconto de R$ ${discount.toFixed(2).replace('.', ',')}. Após o vencimento, será cobrado o valor total de R$ ${basePrice.toFixed(2).replace('.', ',')}.`;
-                    } else {
-                        baseText += `\n\n2.2. As mensalidades deverão ser pagas até o dia ${dueDay} de cada mês. Após o vencimento, será cobrado o valor total de R$ ${basePrice.toFixed(2).replace('.', ',')}.`;
-                    }
-                    
-                    let nextClauseNum = 3;
-                    if (p.durationMonths === 6 && p.firstMonth && p.firstMonth < p.price) {
-                        baseText += `\n\n2.${nextClauseNum}. OBS: Desconto Promocional Aplicado na 1ª Mensalidade, que terá o valor de R$ ${p.firstMonth.toFixed(2).replace('.', ',')}.`;
-                        nextClauseNum++;
-                    }
-                    
-                    baseText += `\n\n2.${nextClauseNum}. Reajuste de Valores: Os valores das mensalidades previstos neste contrato poderão ser reajustados anualmente, a cada 12 (doze) meses a contar da data de início da vigência, com base na variação do Índice Geral de Preços do Mercado (IGP-M) ou outro índice que venha a substituí-lo, ou, na sua ausência, por acordo entre as partes.`;
-                    
-                    clausulaSegunda = baseText;
-                }
-            }
-            
-            text = text.replace(/\[CLAUSULA_SEGUNDA\]/g, clausulaSegunda);
-            text = text.replace(/\[CLAUSULA_CANCELAMENTO\]/g, clausulaCancelamento);
-            text = text.replace(/\[PLANO_ALUNO\]/g, planName);
-            text = text.replace(/\[VALOR_PLANO\]/g, planValue);
-            text = text.replace(/\[DATA_INICIO\]/g, contractStart);
-            text = text.replace(/\[DATA_FIM\]/g, contractEnd);
-            
-            const today = new Date().toLocaleDateString('pt-BR');
-            text = text.replace(/\[DATA_ATUAL\]/g, today);
-            
-            return text;
-        };
-
-        window.loadContractPreview = () => {
-            const select = document.getElementById('contract-student-select');
-            if (!select) return;
-            
-            const id = select.value;
-            const container = document.getElementById('contract-preview-container');
-            
-            if (!id) {
-                container.classList.add('hidden');
-                container.classList.remove('flex');
-                return;
-            }
-            
-            const s = window.students.find(st => st.id === id);
-            if (!s) return;
-            
-            const text = window.generateContractText(s);
-            
-            document.getElementById('contract-tab-text').value = text;
-            container.classList.remove('hidden');
-            container.classList.add('flex');
-        };
-
-        window.printTabContract = () => {
-            const text = document.getElementById('contract-tab-text').value;
-            const select = document.getElementById('contract-student-select');
-            const sId = select ? select.value : null;
-            const s = window.students.find(st => st.id === sId);
-            
-            document.getElementById('report-title').innerText = 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS';
-            document.getElementById('report-date').innerText = new Date().toLocaleString('pt-BR');
-            document.getElementById('report-content').innerText = text;
-            document.getElementById('report-student-name').innerText = window.getContratanteName(s);
-            
-            document.body.classList.add('printing-report');
-            window.print();
-            setTimeout(() => {
-                document.body.classList.remove('printing-report');
-            }, 500);
-        };
-
-        window.openContractModal = (id) => {
-            const s = window.students.find(st => st.id === id);
-            if (!s) return;
-            
-            document.getElementById('contract-student-id').value = id;
-            
-            const text = window.generateContractText(s);
-            
-            document.getElementById('contract-text').value = text;
-            document.getElementById('contract-modal').classList.remove('hidden');
-            document.getElementById('contract-modal').classList.add('flex');
-        };
-
-        window.closeContractModal = () => {
-            document.getElementById('contract-modal').classList.add('hidden');
-            document.getElementById('contract-modal').classList.remove('flex');
-        };
-
-        window.resetContractText = () => {
-            const id = document.getElementById('contract-student-id').value;
-            if (id) window.openContractModal(id);
-        };
-
-        window.printContract = () => {
-            const text = document.getElementById('contract-text').value;
-            const sId = document.getElementById('contract-student-id').value;
-            const s = window.students.find(st => st.id === sId);
-            
-            document.getElementById('report-title').innerText = 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESPORTIVOS';
-            document.getElementById('report-date').innerText = new Date().toLocaleString('pt-BR');
-            document.getElementById('report-content').innerText = text;
-            document.getElementById('report-student-name').innerText = window.getContratanteName(s);
-            
-            document.body.classList.add('printing-report');
-            window.print();
-            setTimeout(() => {
-                document.body.classList.remove('printing-report');
-            }, 500);
-        };
-
         window.openEditModal = async (id) => {
             try {
                 await window.loadPlans();
@@ -3919,12 +3642,15 @@ Belém-PA, [DATA_ATUAL].`;
                     const aKid = isStudentKid(a);
                     const bKid = isStudentKid(b);
                     if (aKid !== bKid) return aKid ? -1 : 1;
+                    if (sortOrder === 'manual') return (a.orderIndex || 0) - (b.orderIndex || 0);
                     if (sortOrder === 'az') return (a.name || '').localeCompare(b.name || '');
                     if (sortOrder === 'za') return (b.name || '').localeCompare(a.name || '');
                     return new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0);
                 });
             } else {
-                if (sortOrder === 'az') {
+                if (sortOrder === 'manual') {
+                    filtered.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+                } else if (sortOrder === 'az') {
                     filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                 } else if (sortOrder === 'za') {
                     filtered.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
@@ -4081,7 +3807,6 @@ Belém-PA, [DATA_ATUAL].`;
                     <button onclick="window.sendWhatsAppReminder('${s.id}')" class="text-green-600 hover:text-green-800 mx-1" title="Lembrete WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
                     <button onclick="window.informPayment('${s.id}')" class="text-green-500 hover:text-green-700 mx-1" title="Informar Pagamento"><i class="fa-solid fa-hand-holding-dollar"></i></button>
                     <button onclick="window.openProgressModal('${s.id}')" class="text-blue-500 hover:text-blue-700 mx-1" title="Progresso"><i class="fa-solid fa-chart-line"></i></button>
-                    <button onclick="window.openContractModal('${s.id}')" class="text-purple-500 hover:text-purple-700 mx-1" title="Imprimir Contrato"><i class="fa-solid fa-file-contract"></i></button>
                     <button onclick="window.openEditModal('${s.id}')" class="text-orange-500 hover:text-orange-700 mx-1" title="Editar"><i class="fa-solid fa-pen"></i></button>
                     <button onclick="window.toggleArchive('${s.id}')" class="text-red-500 hover:text-red-700 mx-1" title="${s.archived ? 'Desarquivar' : 'Arquivar'}"><i class="fa-solid ${s.archived ? 'fa-box-open' : 'fa-box-archive'}"></i></button>
                     ${s.archived ? `<button onclick="window.deleteStudentPermanently('${s.id}')" class="text-red-700 hover:text-red-900 mx-1" title="Excluir Definitivamente"><i class="fa-solid fa-trash"></i></button>` : ''}
@@ -4092,19 +3817,19 @@ Belém-PA, [DATA_ATUAL].`;
                     rowClass += " border-l-2 border-l-brand-red bg-red-50/10 dark:bg-red-900/10";
                 }
                 if (isDependent) {
-                    rowClass += ` bg-gray-50/50 dark:bg-gray-800/50 hidden dependent-of-${titularId}`;
-                }
-
-                let expandBtn = '';
-                if (hasDependents) {
-                    expandBtn = `<button onclick="window.toggleDependents('${s.id}')" class="ml-2 text-xs text-brand-red hover:text-red-700 transition-colors" title="Ver dependentes"><i class="fa-solid fa-chevron-down" id="icon-dep-${s.id}"></i></button>`;
+                    rowClass += ` bg-gray-50/50 dark:bg-gray-800/50 dependent-of-${titularId}`;
                 }
 
                 let paddingLeft = isDependent ? 'pl-8' : 'p-3';
 
+                const dragHandle = document.getElementById('sort-order') && document.getElementById('sort-order').value === 'manual' 
+                    ? `<i class="fa-solid fa-grip-vertical text-gray-400 hover:text-gray-600 cursor-move mr-2 drag-handle"></i>` 
+                    : '';
+
                 return `
-                    <tr class="${rowClass}">
+                    <tr class="${rowClass}" data-id="${s.id}">
                         <td class="px-3 py-3 text-center">
+                            ${dragHandle}
                             <input type="checkbox" class="student-checkbox rounded border-gray-300 text-brand-red focus:ring-brand-red" value="${s.id}" onchange="window.updateBulkActionsBtn()">
                         </td>
                         <td class="${paddingLeft} py-3 pr-3">
@@ -4114,7 +3839,6 @@ Belém-PA, [DATA_ATUAL].`;
                                 <div class="flex flex-col">
                                     <div class="flex items-center">
                                         <span class="font-bold text-sm text-gray-800 dark:text-gray-200 cursor-pointer hover:underline hover:text-brand-red transition-colors uppercase" onclick="window.viewStudentDetails('${s.id}')">${s.name}</span>
-                                        ${expandBtn}
                                     </div>
                                     ${subNameHtml}
                                 </div>
@@ -4176,29 +3900,8 @@ Belém-PA, [DATA_ATUAL].`;
             const selectAllCb = document.getElementById('select-all-students');
             if (selectAllCb) selectAllCb.checked = false;
             if (window.updateBulkActionsBtn) window.updateBulkActionsBtn();
-        };
-
-        window.toggleDependents = (titularId) => {
-            const rows = document.querySelectorAll(`.dependent-of-${titularId}`);
-            const icon = document.getElementById(`icon-dep-${titularId}`);
-            let isHidden = false;
-            rows.forEach(row => {
-                if (row.classList.contains('hidden')) {
-                    row.classList.remove('hidden');
-                    isHidden = true;
-                } else {
-                    row.classList.add('hidden');
-                }
-            });
-            if (icon) {
-                if (isHidden) {
-                    icon.classList.remove('fa-chevron-down');
-                    icon.classList.add('fa-chevron-up');
-                } else {
-                    icon.classList.remove('fa-chevron-up');
-                    icon.classList.add('fa-chevron-down');
-                }
-            }
+            // Implement drag and drop functionality after render
+            if (window.initDragAndDrop) window.initDragAndDrop();
         };
 
         window.switchTab = (tab) => {
@@ -4224,6 +3927,178 @@ Belém-PA, [DATA_ATUAL].`;
                 }
             });
             window.updateBulkActionsBtn();
+        };
+
+        window.initDragAndDrop = () => {
+            const sortOrder = document.getElementById('sort-order');
+            const tbody = document.getElementById('students-table-body');
+            
+            if (!sortOrder || sortOrder.value !== 'manual' || !tbody) {
+                if (window.studentSortable) {
+                    window.studentSortable.destroy();
+                    window.studentSortable = null;
+                }
+                return;
+            }
+
+            if (window.studentSortable) {
+                window.studentSortable.destroy();
+            }
+
+            window.studentSortable = new Sortable(tbody, {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'bg-gray-100',
+                onEnd: async function (evt) {
+                    const rows = Array.from(tbody.querySelectorAll('tr[data-id]'));
+                    // Update the orderIndex for the visible items
+                    const updates = [];
+                    // To handle pagination properly, we need to know the start index
+                    const startIndex = (window.currentPage - 1) * window.itemsPerPage;
+                    let currentIndex = startIndex;
+                    
+                    rows.forEach((row) => {
+                        const id = row.getAttribute('data-id');
+                        if (id) {
+                            const student = window.students.find(s => s.id === id);
+                            if (student && student.orderIndex !== currentIndex) {
+                                student.orderIndex = currentIndex;
+                                updates.push(updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { orderIndex: currentIndex }));
+                            }
+                            currentIndex++;
+                        }
+                    });
+                    
+                    if (updates.length > 0) {
+                        try {
+                            await Promise.all(updates);
+                        } catch (error) {
+                            console.error("Error updating order:", error);
+                        }
+                    }
+                }
+            });
+        };
+
+        // FREQUENCIA
+        window.renderAttendanceTable = () => {
+            const dateInput = document.getElementById('attendance-date-filter').value;
+            const tbody = document.getElementById('attendance-table-body');
+            const countDisplay = document.getElementById('attendance-total-count');
+            
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            if (!dateInput) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">Selecione uma data para ver a frequência.</td></tr>';
+                countDisplay.innerText = '0';
+                return;
+            }
+
+            let attendanceRecords = [];
+            
+            window.students.forEach(student => {
+                if (student.attendanceLog) {
+                    student.attendanceLog.forEach(log => {
+                        if (log.date === dateInput) {
+                            attendanceRecords.push({
+                                studentId: student.id,
+                                studentName: student.name,
+                                studentPlan: window.getPlanInfo(student.plan).short || 'N/A',
+                                time: log.time || 'N/A',
+                                timestamp: log.timestamp || '',
+                                timeDate: log.timestamp ? new Date(log.timestamp) : new Date()
+                            });
+                        }
+                    });
+                }
+            });
+
+            // Sort by check-in timestamp (latest first)
+            attendanceRecords.sort((a, b) => b.timeDate - a.timeDate);
+
+            countDisplay.innerText = attendanceRecords.length;
+
+            if (attendanceRecords.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Nenhum check-in registrado para esta data.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            attendanceRecords.forEach(record => {
+                let checkinTime = 'N/A';
+                if (record.timestamp) {
+                    const d = new Date(record.timestamp);
+                    checkinTime = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                }
+                
+                html += `
+                    <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                        <td class="px-6 py-3 font-mono text-gray-600 dark:text-gray-400 font-bold">${checkinTime}</td>
+                        <td class="px-6 py-3"><span class="font-bold text-gray-800 dark:text-gray-200 capitalize">${record.studentName}</span></td>
+                        <td class="px-6 py-3 text-gray-600 dark:text-gray-400">${record.studentPlan}</td>
+                        <td class="px-6 py-3 text-blue-600 dark:text-blue-400 font-medium">${record.time}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        };
+
+        window.printAttendanceReport = () => {
+            const dateInput = document.getElementById('attendance-date-filter').value;
+            if(!dateInput) {
+                window.customAlert('Por favor, selecione uma data primeiro.');
+                return;
+            }
+            
+            const tbodyHTML = document.getElementById('attendance-table-body').innerHTML;
+            if(tbodyHTML.includes('Nenhum check-in')) return;
+            
+            // Format date for title
+            const dParts = dateInput.split('-');
+            const formattedDate = `${dParts[2]}/${dParts[1]}/${dParts[0]}`;
+            
+            let printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Relatório de Frequência - ${formattedDate}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h1 { color: #333; text-align: center; }
+                        h2 { color: #666; text-align: center; margin-bottom: 30px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+                        th { background-color: #f4f4f4; border-bottom: 2px solid #ccc; }
+                        .timestamp { font-family: monospace; color: #555; }
+                        .total { margin-top: 20px; text-align: right; font-weight: bold; font-size: 1.1em; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Relatório de Frequência</h1>
+                    <h2>Data: ${formattedDate}</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Horário de Check-in</th>
+                                <th>Aluno</th>
+                                <th>Plano/Modalidade</th>
+                                <th>Turma Informada</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tbodyHTML}
+                        </tbody>
+                    </table>
+                    <div class="total">Total de Presenças: ${document.getElementById('attendance-total-count').innerText}</div>
+                    <script>
+                        window.onload = function() { window.print(); window.close(); }
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
         };
 
         window.updateBulkActionsBtn = () => {
@@ -4863,7 +4738,9 @@ Belém-PA, [DATA_ATUAL].`;
             document.getElementById('view-students').classList.add('hidden'); 
             document.getElementById('view-experimental').classList.add('hidden'); 
             document.getElementById('view-notices').classList.add('hidden');
-            document.getElementById('view-contracts').classList.add('hidden');
+            const attView = document.getElementById('view-attendance');
+            if (attView) attView.classList.add('hidden');
+            
             const viewEl = document.getElementById(`view-${viewId}`);
             if (viewEl) viewEl.classList.remove('hidden');
             
@@ -4879,7 +4756,17 @@ Belém-PA, [DATA_ATUAL].`;
             
             if(viewId === 'students') window.renderTable();
             if(viewId === 'experimental') window.renderExperimentalTable();
-            if(viewId === 'contracts') window.populateContractStudents();
+            if(viewId === 'attendance') {
+                if (!document.getElementById('attendance-date-filter').value) {
+                    const today = new Date();
+                    // format YYYY-MM-DD
+                    const yyyy = today.getFullYear();
+                    const mm = String(today.getMonth() + 1).padStart(2, '0');
+                    const dd = String(today.getDate()).padStart(2, '0');
+                    document.getElementById('attendance-date-filter').value = `${yyyy}-${mm}-${dd}`;
+                }
+                window.renderAttendanceTable();
+            }
             if(window.innerWidth < 1024) window.toggleMobileMenu();
         };
 
