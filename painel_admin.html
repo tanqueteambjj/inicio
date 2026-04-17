@@ -2752,8 +2752,12 @@ Belém-PA, [DATA_ATUAL].
                 let contractText = s.contractText;
                 if (!contractText || contractText.includes("Os valores serão acordados no ato da matrícula conforme o plano escolhido.") || contractText.includes("CLÁUSULA 3ª - DO CANCELAMENTO E RESCISÃO") || contractText.includes("\\n")) {
                     contractText = defaultContractTemplate;
-                    const guardianOrName = s.guardian || s.name || '';
-                    contractText = contractText.replace(/\[NOME_CONTRATANTE\]/g, guardianOrName);
+                    let contratanteName = s.guardian || s.name || '';
+                    if (s.titularId) {
+                        const titular = window.students.find(t => t.id === s.titularId);
+                        if (titular) contratanteName = titular.name;
+                    }
+                    contractText = contractText.replace(/\[NOME_CONTRATANTE\]/g, contratanteName);
                     contractText = contractText.replace(/\[CPF_CONTRATANTE\]/g, s.guardianCpf || s.cpf || '');
                     
                     let addressBase = s.address || '';
@@ -2933,11 +2937,17 @@ Belém-PA, [DATA_ATUAL].
         window.printStudentContractFromModal = async () => {
             if (await window.saveContractText()) {
                 const text = document.getElementById('contract-text-editor').value;
-                const name = document.getElementById('contract-student-name').innerText;
+                const id = document.getElementById('contract-student-id').value;
+                const s = window.students.find(st => st.id === id);
+                let contratante = s ? (s.guardian || s.name) : "CONTRATANTE";
+                if (s && s.titularId) {
+                    const titular = window.students.find(t => t.id === s.titularId);
+                    if (titular) contratante = titular.name;
+                }
                 document.getElementById('report-title').innerText = "CONTRATO DE PRESTAÇÃO DE SERVIÇOS";
                 document.getElementById('report-date-container').classList.add('hidden');
                 document.getElementById('report-content').innerText = text;
-                document.getElementById('report-student-name').innerText = name;
+                document.getElementById('report-student-name').innerText = contratante;
                 
                 document.body.classList.add('printing-report');
                 setTimeout(() => {
