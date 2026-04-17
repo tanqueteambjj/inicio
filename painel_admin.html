@@ -619,6 +619,27 @@
         </div>
     </div>
 
+    <!-- Modal: Editar Contrato -->
+    <div id="contract-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-indigo-500">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white"><i class="fa-solid fa-file-contract text-indigo-500 mr-2"></i> Documento / Contrato</h3>
+                <button onclick="window.closeContractModal()"><i class="fa-solid fa-times text-gray-400 hover:text-gray-800 dark:hover:text-white"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 bg-white dark:bg-gray-800 flex flex-col">
+                <input type="hidden" id="contract-student-id">
+                <h4 class="font-bold text-xl text-gray-900 dark:text-white mb-4" id="contract-student-name">--</h4>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Você pode editar os termos do contrato abaixo antes de salvar e imprimir.</p>
+                <textarea id="contract-text-editor" class="w-full flex-1 min-h-[400px] border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-4 text-sm font-serif leading-relaxed focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"></textarea>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-t border-gray-200 dark:border-gray-600 flex justify-end gap-3 shrink-0">
+                <button onclick="window.closeContractModal()" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition">Cancelar</button>
+                <button onclick="window.saveContractText()" class="px-4 py-2 bg-indigo-600 text-white rounded text-sm font-bold hover:bg-indigo-700 transition shadow-sm"><i class="fa-solid fa-save mr-1"></i> Salvar</button>
+                <button onclick="window.printStudentContractFromModal()" class="px-4 py-2 bg-gray-800 text-white rounded text-sm font-bold hover:bg-black transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Salvar e Imprimir</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Informar Pagamento -->
     <div id="payment-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-green-500">
@@ -2602,7 +2623,8 @@ Fica eleito o foro da Comarca de Belém, Estado do Pará, para dirimir quaisquer
 
 E, por estarem assim justos e contratados, as partes assinam o presente instrumento em 2 (duas) vias de igual teor e forma, na presença das 2 (duas) testemunhas abaixo, para que produza seus jurídicos e legais efeitos.
 
-Belém-PA, [DATA_ATUAL].`;
+Belém-PA, [DATA_ATUAL].
+`;
 
         window.openEditModal = async (id) => {
             try {
@@ -2718,6 +2740,171 @@ Belém-PA, [DATA_ATUAL].`;
             window.currentCroppedPhoto = base64;
             
             window.closeCropperModal();
+        };
+
+        window.openContractModal = (id) => {
+            try {
+                const s = window.students.find(st => st.id === id);
+                if (!s) return;
+                document.getElementById('contract-student-id').value = id;
+                document.getElementById('contract-student-name').innerText = s.name;
+                
+                let contractText = s.contractText;
+                if (!contractText || contractText.includes("Os valores serão acordados no ato da matrícula conforme o plano escolhido.") || contractText.includes("CLÁUSULA 3ª - DO CANCELAMENTO E RESCISÃO") || contractText.includes("\\n")) {
+                    contractText = defaultContractTemplate;
+                    const guardianOrName = s.guardian || s.name || '';
+                    contractText = contractText.replace(/\[NOME_CONTRATANTE\]/g, guardianOrName);
+                    contractText = contractText.replace(/\[CPF_CONTRATANTE\]/g, s.guardianCpf || s.cpf || '');
+                    
+                    let addressBase = s.address || '';
+                    if (s.addressNumber) addressBase += ', ' + s.addressNumber;
+                    contractText = contractText.replace(/\[ENDERECO_CONTRATANTE\]/g, addressBase);
+                    contractText = contractText.replace(/\[TELEFONE_CONTRATANTE\]/g, s.phone || '');
+                    contractText = contractText.replace(/\[EMAIL_CONTRATANTE\]/g, s.email || '');
+                    
+                    let formattedDob = "";
+                    if (s.dob) {
+                        try {
+                            const d = new Date(s.dob);
+                            d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+                            formattedDob = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) + "/" + d.getFullYear();
+                        } catch(e){}
+                    }
+                    if(!formattedDob && s.dob && s.dob.includes("-")){
+                         const parts = s.dob.split("-");
+                         if(parts.length===3) formattedDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                    }
+
+                    let listaAlunos = `- ${s.name.toUpperCase()}, Nasc: ${formattedDob || '--/--/----'}. | Graduação Atual: ${s.belt || 'Faixa Branca - 0º Grau'}`;
+                    if (s.plan && window.getPlanType(s.plan).includes('combo')) {
+                        const dependents = window.students.filter(d => d.titularId === s.id);
+                        if (dependents.length > 0) {
+                            listaAlunos += "\n" + dependents.map(d => {
+                                let dDob = "";
+                                if(d.dob && d.dob.includes("-")) {
+                                    const p = d.dob.split("-");
+                                    dDob = `${p[2]}/${p[1]}/${p[0]}`;
+                                }
+                                return `- ${d.name.toUpperCase()}, Nasc: ${dDob || '--/--/----'}. | Graduação Atual: ${d.belt || 'Faixa Branca - 0º Grau'}`;
+                            }).join("\n");
+                        }
+                    }
+                    contractText = contractText.replace(/\[LISTA_ALUNOS\]/g, listaAlunos);
+                    
+                    const startDate = s.registrationDate ? new Date(s.registrationDate) : new Date();
+                    startDate.setMinutes(startDate.getMinutes() + startDate.getTimezoneOffset());
+                    const startStr = ("0" + startDate.getDate()).slice(-2) + "/" + ("0" + (startDate.getMonth() + 1)).slice(-2) + "/" + startDate.getFullYear();
+                    contractText = contractText.replace(/\[DATA_INICIO\]/g, startStr);
+                    
+                    let endStr = "--/--/----";
+                    if (s.contractEndDate) {
+                        const endDate = new Date(s.contractEndDate);
+                        endDate.setMinutes(endDate.getMinutes() + endDate.getTimezoneOffset());
+                        endStr = ("0" + endDate.getDate()).slice(-2) + "/" + ("0" + (endDate.getMonth() + 1)).slice(-2) + "/" + endDate.getFullYear();
+                    }
+                    contractText = contractText.replace(/\[DATA_FIM\]/g, endStr);
+                    
+                    const todayDate = new Date();
+                    const todayStr = ("0" + todayDate.getDate()).slice(-2) + "/" + ("0" + (todayDate.getMonth() + 1)).slice(-2) + "/" + todayDate.getFullYear();
+                    contractText = contractText.replace(/\[DATA_ATUAL\]/g, todayStr);
+                    
+                    const planInfo = window.getPlanInfo(s.plan);
+                    const planName = planInfo.long || "Plano Indefinido";
+                    
+                    const basePriceObj = planInfo.basePrice || planInfo.price || 0;
+                    const discountPriceObj = planInfo.price || 0;
+                    const diffAmount = (basePriceObj - discountPriceObj);
+                    
+                    const basePriceStr = Number(basePriceObj).toFixed(2).replace('.', ',');
+                    const discountPriceStr = Number(discountPriceObj).toFixed(2).replace('.', ',');
+                    const diffAmountStr = Number(diffAmount).toFixed(2).replace('.', ',');
+                    
+                    const planDuration = window.getPlanDurationMonths(s.plan);
+                    const isFidelidade = planDuration > 1;
+                    
+                    let vencimentoDia = "05";
+                    if (s.nextDueDate) {
+                        const dueDate = new Date(s.nextDueDate);
+                        dueDate.setMinutes(dueDate.getMinutes() + dueDate.getTimezoneOffset());
+                        vencimentoDia = ("0" + dueDate.getDate()).slice(-2);
+                    }
+                    
+                    let clausulaSegunda = "CLÁUSULA 2ª - DO PLANO E VALORES\n\n";
+                    clausulaSegunda += `2.1. O CONTRATANTE opta pelo plano esportivo ${planName.toUpperCase()}, comprometendo-se ao pagamento da mensalidade no valor total de R$ ${basePriceStr}.\n\n`;
+                    
+                    if (diffAmount > 0) {
+                        clausulaSegunda += `2.2. Fica acordado que, pagando até a data de vencimento (dia ${vencimentoDia} de cada mês), o CONTRATANTE pagará o valor com desconto de R$ ${discountPriceStr}, correspondente a um desconto de R$ ${diffAmountStr}. Após o vencimento, será cobrado o valor total de R$ ${basePriceStr}.\n\n`;
+                    } else {
+                        clausulaSegunda += `2.2. O pagamento das mensalidades deverá ser realizado até a data de vencimento (dia ${vencimentoDia} de cada mês) no valor de R$ ${basePriceStr}.\n\n`;
+                    }
+                    
+                    // Add standard observation item assuming some users might type it, we leave placeholder space or omit.
+                    // For now, mapping directly to 2.3 for the Reajuste.
+                    clausulaSegunda += `2.3. Reajuste de Valores: Os valores das mensalidades previstos neste contrato poderão ser reajustados anualmente, a cada 12 (doze) meses a contar da data de início da vigência, com base na variação do Índice Geral de Preços do Mercado (IGP-M) ou outro índice que venha a substituí-lo, ou, na sua ausência, por acordo entre as partes.`;
+                    
+                    contractText = contractText.replace(/\[CLAUSULA_SEGUNDA\]/g, clausulaSegunda);
+                    
+                    let clausulaCancelamento = "CLÁUSULA 3ª - DO CANCELAMENTO E FIDELIDADE\n\n";
+                    if (isFidelidade) {
+                        clausulaCancelamento += `3.1. O CONTRATANTE declara estar ciente de que a contratação do plano de mensalidade da escola de jiu-jitsu é realizada com prazo mínimo de fidelidade de ${planDuration} meses, contados a partir da data de assinatura do presente instrumento.\n\n`;
+                        clausulaCancelamento += `3.2. Em caso de solicitação de cancelamento antes do término do período de fidelidade, o CONTRATANTE ficará sujeito ao pagamento de multa compensatória equivalente a 30% (trinta por cento) sobre o valor total das mensalidades vincendas até o término do prazo contratado.\n\n`;
+                        clausulaCancelamento += `3.3. O pagamento da multa deverá ser efetuado à vista no ato da formalização do cancelamento, sob pena de adoção das medidas administrativas e judiciais cabíveis para a cobrança do débito.\n\n`;
+                    } else {
+                        clausulaCancelamento += `3.1. Tratando-se de plano de renovação mensal (sem fidelidade estendida), o presente contrato poderá ser rescindido a qualquer momento mediante aviso prévio estipulado no item subsequente.\n\n`;
+                        clausulaCancelamento += `3.2. A rescisão não ensejará multa, contudo não haverá estorno de valores proporcionais às mensalidades já pagas relativas aos dias já decorridos.\n\n`;
+                        clausulaCancelamento += `3.3. O CONTRATANTE declara ciência que planos mensais não possuem fidelidade, mas requerem aviso para encerramento de cobranças.\n\n`;
+                    }
+                    clausulaCancelamento += `3.4. Procedimento de Cancelamento: A solicitação de cancelamento deverá ser formalizada por escrito pelo CONTRATANTE, com antecedência mínima de 30 (trinta) dias, e enviada para o e-mail tanqueteambjj@gmail.com ou entregue pessoalmente na secretaria da CONTRATADA. A data de recebimento da solicitação será considerada para o cálculo do aviso prévio.\n\n`;
+                    clausulaCancelamento += `3.5. Rescisão por Justa Causa pelo Contratante: O CONTRATANTE poderá rescindir o presente contrato por justa causa, sem a incidência da multa prevista na Cláusula 3.2, nas seguintes hipóteses:\na) Descumprimento grave das obrigações contratuais pela CONTRATADA, que inviabilize a continuidade da prestação dos serviços;\nb) Alteração substancial da grade de horários ou do corpo docente que inviabilize a participação do ALUNO, desde que não haja alternativa razoável oferecida pela CONTRATADA.`;
+                    
+                    contractText = contractText.replace(/\[CLAUSULA_CANCELAMENTO\]/g, clausulaCancelamento);
+                }
+                
+                document.getElementById('contract-text-editor').value = contractText;
+                document.getElementById('contract-modal').classList.remove('hidden');
+                document.getElementById('contract-modal').classList.add('flex');
+            } catch(e) {
+                console.error("Error opening contract modal", e);
+            }
+        };
+
+        window.closeContractModal = () => {
+            document.getElementById('contract-modal').classList.add('hidden');
+            document.getElementById('contract-modal').classList.remove('flex');
+        };
+
+        window.saveContractText = async () => {
+            const id = document.getElementById('contract-student-id').value;
+            const text = document.getElementById('contract-text-editor').value;
+            try {
+                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { contractText: text });
+                const sIndex = window.students.findIndex(s => s.id === id);
+                if (sIndex > -1) window.students[sIndex].contractText = text;
+                window.customAlert("Contrato atualizado com sucesso!");
+                return true;
+            } catch(e) {
+                console.error(e);
+                window.customAlert("Erro ao salvar contrato.");
+                return false;
+            }
+        };
+
+        window.printStudentContractFromModal = async () => {
+            if (await window.saveContractText()) {
+                const text = document.getElementById('contract-text-editor').value;
+                const name = document.getElementById('contract-student-name').innerText;
+                document.getElementById('report-title').innerText = "CONTRATO DE PRESTAÇÃO DE SERVIÇOS";
+                document.getElementById('report-date-container').classList.add('hidden');
+                document.getElementById('report-content').innerText = text;
+                document.getElementById('report-student-name').innerText = name;
+                
+                document.body.classList.add('printing-report');
+                setTimeout(() => {
+                    window.print();
+                    document.body.classList.remove('printing-report');
+                    window.closeContractModal();
+                }, 300);
+            }
         };
 
         window.handlePayPlanChange = () => { 
@@ -3810,6 +3997,7 @@ Belém-PA, [DATA_ATUAL].`;
                     <button onclick="window.sendWhatsAppReminder('${s.id}')" class="text-green-600 hover:text-green-800 mx-1" title="Lembrete WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
                     <button onclick="window.informPayment('${s.id}')" class="text-green-500 hover:text-green-700 mx-1" title="Informar Pagamento"><i class="fa-solid fa-hand-holding-dollar"></i></button>
                     <button onclick="window.openProgressModal('${s.id}')" class="text-blue-500 hover:text-blue-700 mx-1" title="Progresso"><i class="fa-solid fa-chart-line"></i></button>
+                    <button onclick="window.openContractModal('${s.id}')" class="text-indigo-500 hover:text-indigo-700 mx-1" title="Contrato"><i class="fa-solid fa-file-contract"></i></button>
                     <button onclick="window.openEditModal('${s.id}')" class="text-orange-500 hover:text-orange-700 mx-1" title="Editar"><i class="fa-solid fa-pen"></i></button>
                     <button onclick="window.toggleArchive('${s.id}')" class="text-red-500 hover:text-red-700 mx-1" title="${s.archived ? 'Desarquivar' : 'Arquivar'}"><i class="fa-solid ${s.archived ? 'fa-box-open' : 'fa-box-archive'}"></i></button>
                     ${s.archived ? `<button onclick="window.deleteStudentPermanently('${s.id}')" class="text-red-700 hover:text-red-900 mx-1" title="Excluir Definitivamente"><i class="fa-solid fa-trash"></i></button>` : ''}
