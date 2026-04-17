@@ -2829,13 +2829,54 @@ Belém-PA, [DATA_ATUAL].
                         vencimentoDia = ("0" + dueDate.getDate()).slice(-2);
                     }
                     
+                    const numberToWords = (num) => {
+                        const units = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"];
+                        const teens = ["dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"];
+                        const tens = ["", "", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
+                        const hundreds = ["", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"];
+                        
+                        if (num === 0) return "zero";
+                        if (num === 100) return "cem";
+                        
+                        let words = "";
+                        const h = Math.floor(num / 100);
+                        const remainder = num % 100;
+                        const t = Math.floor(remainder / 10);
+                        const u = remainder % 10;
+                        
+                        if (h > 0) words += hundreds[h];
+                        if (remainder > 0 && h > 0) words += " e ";
+                        if (t === 1) words += teens[u];
+                        else {
+                            if (t > 1) words += tens[t];
+                            if (u > 0 && t > 1) words += " e ";
+                            if (u > 0 && t !== 1) words += units[u];
+                        }
+                        return words;
+                    };
+
+                    const formatCurrencyWords = (amount) => {
+                        const reais = Math.floor(amount);
+                        const centavos = Math.round((amount - reais) * 100);
+                        
+                        let txt = reais === 1 ? "um real" : numberToWords(reais) + " reais";
+                        if (centavos > 0) {
+                            txt += " e " + (centavos === 1 ? "um centavo" : numberToWords(centavos) + " centavos");
+                        }
+                        return txt;
+                    };
+
+                    const basePriceWords = formatCurrencyWords(basePriceObj);
+                    const discountPriceWords = formatCurrencyWords(discountPriceObj);
+                    const diffAmountWords = diffAmount > 0 ? formatCurrencyWords(diffAmount) : "";
+                    
                     let clausulaSegunda = "CLÁUSULA 2ª - DO PLANO E VALORES\n\n";
-                    clausulaSegunda += `2.1. O CONTRATANTE opta pelo plano esportivo ${planName.toUpperCase()}, comprometendo-se ao pagamento da mensalidade no valor total de R$ ${basePriceStr}.\n\n`;
+                    clausulaSegunda += `2.1. O CONTRATANTE opta pelo plano esportivo ${planName.toUpperCase()}, comprometendo-se ao pagamento da mensalidade no valor total de R$ ${basePriceStr} (${basePriceWords}).\n\n`;
                     
                     if (diffAmount > 0) {
-                        clausulaSegunda += `2.2. Fica acordado que, pagando até a data de vencimento (dia ${vencimentoDia} de cada mês), o CONTRATANTE pagará o valor com desconto de R$ ${discountPriceStr}, correspondente a um desconto de R$ ${diffAmountStr}. Após o vencimento, será cobrado o valor total de R$ ${basePriceStr}.\n\n`;
+                        clausulaSegunda += `2.2. Fica acordado que, pagando até a data de vencimento (dia ${vencimentoDia} de cada mês), o CONTRATANTE pagará o valor com desconto de R$ ${discountPriceStr} (${discountPriceWords}), correspondente a um desconto de R$ ${diffAmountStr} (${diffAmountWords}). Após o vencimento, será cobrado o valor total de R$ ${basePriceStr} (${basePriceWords}).\n\n`;
                     } else {
-                        clausulaSegunda += `2.2. O pagamento das mensalidades deverá ser realizado até a data de vencimento (dia ${vencimentoDia} de cada mês) no valor de R$ ${basePriceStr}.\n\n`;
+                        clausulaSegunda += `2.2. O pagamento das mensalidades deverá ser realizado até a data de vencimento (dia ${vencimentoDia} de cada mês) no valor de R$ ${basePriceStr} (${basePriceWords}).\n\n`;
                     }
                     
                     // Add standard observation item assuming some users might type it, we leave placeholder space or omit.
