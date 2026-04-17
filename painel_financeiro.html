@@ -7,6 +7,7 @@
     <link rel="icon" href="https://iili.io/qC543c7.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/finance.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -122,7 +123,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-blue-500 relative overflow-hidden transition-transform transform hover:-translate-y-1">
                         <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-blue-500 pointer-events-none"><i class="fas fa-users"></i></div>
                         <p class="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Total de Alunos</p>
@@ -139,6 +140,12 @@
                         <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-yellow-500 pointer-events-none"><i class="fas fa-chart-line"></i></div>
                         <p class="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-wider mb-1" title="Soma do valor base de todos os contratos ativos">Previsão de Receita (Mês)</p>
                         <p id="stat-revenue" class="text-3xl font-bold text-gray-800 dark:text-white">R$ 0,00</p>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-green-500 relative overflow-hidden transition-transform transform hover:-translate-y-1">
+                        <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-green-500 pointer-events-none"><i class="fas fa-money-bill-wave"></i></div>
+                        <p class="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-wider mb-1" title="Soma dos pagamentos realizados no mês atual">Receita Realizada (Mês)</p>
+                        <p id="stat-actual-revenue" class="text-3xl font-bold text-gray-800 dark:text-white">R$ 0,00</p>
                     </div>
                 </div>
 
@@ -203,14 +210,11 @@
                 <div class="mb-6 flex flex-col md:flex-row md:justify-between md:items-end gap-4">
                     <div>
                         <h2 class="font-display text-2xl font-bold text-gray-800 dark:text-white">Planos da Academia</h2>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Gerencie os planos oferecidos.</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Visualização de planos vigentes.</p>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="window.cleanInvalidPlans()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition flex items-center gap-2" title="Remove planos de alunos que não existem mais no sistema">
-                            <i class="fas fa-broom"></i> Limpar Planos Inválidos
-                        </button>
-                        <button onclick="window.openModal('modal-plan')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-bold shadow-sm transition flex items-center gap-2">
-                            <i class="fas fa-plus"></i> Novo Plano
+                        <button onclick="window.refreshData(this)" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-bold shadow-sm transition flex items-center gap-2" title="Atualizar Dados">
+                            <i class="fas fa-sync-alt transition-transform duration-500"></i> Atualizar
                         </button>
                     </div>
                 </div>
@@ -260,56 +264,6 @@
     </div>
 
     <!-- Modals -->
-
-    <!-- Modal Create Plan -->
-    <div id="modal-plan" class="modal fixed inset-0 bg-black/50 items-center justify-center z-50 backdrop-blur-sm">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-gray-700">
-            <div class="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Criar Novo Plano</h3>
-                <button onclick="window.closeModal('modal-plan')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <form id="form-plan" onsubmit="window.handleCreatePlan(event)" class="p-6 space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome do Plano</label>
-                    <input type="text" id="plan-name" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Preço Mensal (R$)</label>
-                    <input type="number" id="plan-price" step="0.01" min="0" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none">
-                </div>
-                <div class="pt-4 flex justify-end gap-3">
-                    <button type="button" onclick="window.closeModal('modal-plan')" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-bold shadow-sm">Salvar Plano</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal Change Plan -->
-    <div id="modal-change-plan" class="modal fixed inset-0 bg-black/50 items-center justify-center z-50 backdrop-blur-sm">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-gray-700">
-            <div class="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Alterar Plano</h3>
-                <button onclick="window.closeModal('modal-change-plan')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <form id="form-change-plan" onsubmit="window.handleChangePlan(event)" class="p-6 space-y-4">
-                <input type="hidden" id="change-student-id">
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Aluno: <span id="change-student-name" class="font-bold text-gray-900 dark:text-white"></span></p>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Plano Atual: <span id="change-student-current-plan" class="font-bold text-gray-900 dark:text-white"></span></p>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Novo Plano</label>
-                    <select id="change-plan-select" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none">
-                        <option value="">Nenhum plano (Remover)</option>
-                        <!-- Options generated by JS -->
-                    </select>
-                </div>
-                <div class="pt-4 flex justify-end gap-3">
-                    <button type="button" onclick="window.closeModal('modal-change-plan')" class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-bold shadow-sm">Confirmar Alteração</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <!-- Modal Edit Payment -->
     <div id="modal-edit-payment" class="modal fixed inset-0 bg-black/50 items-center justify-center z-50 backdrop-blur-sm">
@@ -403,14 +357,21 @@
                 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Plano</label>
-                        <select id="payment-plan" onchange="window.updatePaymentAmount()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none">
-                            <option value="">Selecione um plano</option>
-                        </select>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data do Pagamento</label>
+                        <input type="date" id="payment-date" required onchange="window.updatePaymentAmount()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mês de Referência</label>
                         <input type="month" id="payment-reference" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Plano</label>
+                        <select id="payment-plan" onchange="window.updatePaymentAmount()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none">
+                            <option value="">Selecione um plano</option>
+                        </select>
                     </div>
                 </div>
                 
@@ -556,6 +517,22 @@
         window.payments = [];
         let plansChartInstance = null;
 
+        window.refreshData = async function(btn) {
+            const icon = btn.querySelector('i');
+            icon.classList.add('animate-spin');
+            btn.disabled = true;
+            
+            try {
+                await Promise.all([loadPlans(), loadStudents(), loadPayments()]);
+                window.renderAll();
+            } catch (error) {
+                console.error("Erro ao atualizar dados:", error);
+            } finally {
+                icon.classList.remove('animate-spin');
+                btn.disabled = false;
+            }
+        };
+
         // Initialization
         document.addEventListener('DOMContentLoaded', async () => {
             await Promise.all([loadPlans(), loadStudents(), loadPayments()]);
@@ -669,6 +646,19 @@
             
             document.getElementById('stat-revenue').innerText = window.formatCurrency(revenue);
 
+            const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+            const actualRevenue = window.payments.reduce((total, payment) => {
+                if (payment.date && payment.date.startsWith(currentMonth)) {
+                    return total + (payment.amount || 0);
+                }
+                return total;
+            }, 0);
+            
+            const actualRevenueEl = document.getElementById('stat-actual-revenue');
+            if (actualRevenueEl) {
+                actualRevenueEl.innerText = window.formatCurrency(actualRevenue);
+            }
+
             // Render Pie Chart
             const ctx = document.getElementById('plansChart');
             if (ctx) {
@@ -716,29 +706,8 @@
 
         // Helper to determine student payment status
         window.getStudentStatusInfo = function(student) {
-            const plan = window.plans.find(p => p.name === student.planName);
-            if (plan && plan.price === 0) {
-                return { status: 'isento', diffDays: null };
-            }
-
-            const nextDueDate = student.nextDueDate;
-            if (!nextDueDate) {
-                return { status: 'pendente', diffDays: null };
-            }
-            
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            const dueDate = new Date(nextDueDate);
-            dueDate.setMinutes(dueDate.getMinutes() + dueDate.getTimezoneOffset());
-            dueDate.setHours(0, 0, 0, 0);
-            
-            const diffTime = dueDate.getTime() - today.getTime();
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            
-            if (diffDays < 0) return { status: 'atrasado', diffDays };
-            if (diffDays <= 7) return { status: 'proximo', diffDays };
-            return { status: 'em-dia', diffDays };
+            const todayStr = new Date().toISOString().split('T')[0];
+            return financeLib.getStudentStatusInfo(student, window.plans, todayStr);
         };
 
         window.getPaymentStatusBadge = function(student) {
@@ -802,15 +771,6 @@
                             <button onclick="window.openPaymentModal('${student.id}')" class="text-green-500 hover:text-white dark:text-green-400 dark:hover:text-white mx-1 bg-green-50 hover:bg-green-600 dark:bg-green-900/30 dark:hover:bg-green-600 w-8 h-8 rounded-full transition shadow-sm inline-flex items-center justify-center" title="Informar Pagamento">
                                 <i class="fas fa-dollar-sign"></i>
                             </button>
-                            <button onclick="window.openWhatsAppModal('${student.id}')" class="text-emerald-500 hover:text-white dark:text-emerald-400 dark:hover:text-white mx-1 bg-emerald-50 hover:bg-emerald-600 dark:bg-emerald-900/30 dark:hover:bg-emerald-600 w-8 h-8 rounded-full transition shadow-sm inline-flex items-center justify-center" title="Cobrar via WhatsApp">
-                                <i class="fab fa-whatsapp"></i>
-                            </button>
-                            <button onclick="window.openChangePlan('${student.id}')" class="text-blue-500 hover:text-white dark:text-blue-400 dark:hover:text-white mx-1 bg-blue-50 hover:bg-blue-600 dark:bg-blue-900/30 dark:hover:bg-blue-600 w-8 h-8 rounded-full transition shadow-sm inline-flex items-center justify-center" title="Alterar Plano">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="window.deleteStudent('${student.id}')" class="text-red-500 hover:text-white dark:text-red-400 dark:hover:text-white mx-1 bg-red-50 hover:bg-red-600 dark:bg-red-900/30 dark:hover:bg-red-600 w-8 h-8 rounded-full transition shadow-sm inline-flex items-center justify-center" title="Excluir">
-                                <i class="fas fa-trash"></i>
-                            </button>
                         </td>
                     </tr>
                 `;
@@ -827,16 +787,15 @@
 
             grid.innerHTML = window.plans.map(plan => {
                 const count = window.students.filter(s => s.planName === plan.name).length;
+                const discountPriceStr = plan.discountPrice ? `<div class="text-sm text-green-600 dark:text-green-400 font-medium mb-1">Até o vencimento: ${window.formatCurrency(plan.discountPrice)}</div>` : '';
                 return `
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col transition-transform transform hover:-translate-y-1">
                         <div class="flex justify-between items-start mb-4">
                             <h3 class="text-xl font-bold text-gray-900 dark:text-white">${plan.name}</h3>
-                            <button onclick="window.deletePlan('${plan.id}')" class="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
-                                <i class="fas fa-trash"></i>
-                            </button>
                         </div>
                         <div class="mb-6">
-                            <span class="text-3xl font-bold text-green-600 dark:text-green-400">${window.formatCurrency(plan.price)}</span>
+                            ${discountPriceStr}
+                            <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">Após o vencimento: <span class="text-xl font-bold text-gray-800 dark:text-gray-200">${window.formatCurrency(plan.price)}</span></div>
                         </div>
                         <div class="mt-auto pt-4 border-t border-gray-100 dark:border-gray-700">
                             <p class="text-sm text-gray-500 dark:text-gray-400 font-medium"><i class="fas fa-users mr-1"></i> ${count} aluno(s) inscrito(s)</p>
@@ -898,130 +857,6 @@
         }
 
         // Actions
-        window.handleCreatePlan = async function(e) {
-            e.preventDefault();
-            const name = document.getElementById('plan-name').value;
-            const price = parseFloat(document.getElementById('plan-price').value);
-            
-            try {
-                const docRef = await addDoc(collection(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'plans'), {
-                    name,
-                    price
-                });
-                
-                window.plans.push({
-                    id: docRef.id,
-                    name,
-                    price
-                });
-                
-                window.closeModal('modal-plan');
-                window.renderAll();
-            } catch (error) {
-                console.error("Erro ao adicionar plano.", error);
-            }
-        }
-
-        window.deletePlan = async function(id) {
-            if(confirm('Tem certeza que deseja excluir este plano? Alunos associados ficarão sem plano.')) {
-                try {
-                    const planToDelete = window.plans.find(p => p.id === id);
-                    await deleteDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'plans', id));
-                    window.plans = window.plans.filter(p => p.id !== id);
-                    
-                    // Update students that had this plan
-                    if (planToDelete) {
-                        for (const student of window.students) {
-                            if (student.planName === planToDelete.name) {
-                                await updateDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students', student.id), {
-                                    plan: null
-                                });
-                                student.planName = null;
-                            }
-                        }
-                    }
-                    
-                    window.renderAll();
-                } catch (error) {
-                    console.error("Erro ao excluir plano.", error);
-                }
-            }
-        }
-
-        window.cleanInvalidPlans = async function() {
-            if (!confirm('Tem certeza que deseja limpar os planos inválidos dos alunos? Isso removerá o plano de qualquer aluno cujo plano não esteja cadastrado na aba Planos.')) return;
-            
-            try {
-                let updatedCount = 0;
-                for (const student of window.students) {
-                    if (student.planName || student.planId) {
-                        const planExists = window.plans.some(p => p.name === student.planName || p.id === student.planId);
-                        if (!planExists) {
-                            await updateDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students', student.id), {
-                                plan: null,
-                                planName: null
-                            });
-                            student.planId = null;
-                            student.planName = null;
-                            updatedCount++;
-                        }
-                    }
-                }
-                if (updatedCount > 0) {
-                    console.log(`Sucesso! ${updatedCount} alunos tiveram seus planos limpos.`);
-                    window.renderAll();
-                } else {
-                    console.log('Nenhum aluno com plano inválido encontrado.');
-                }
-            } catch (error) {
-                console.error('Erro ao limpar planos. Verifique o console.', error);
-            }
-        };
-
-        window.deleteStudent = async function(id) {
-            if(confirm('Tem certeza que deseja excluir este aluno?')) {
-                try {
-                    await deleteDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students', id));
-                    window.students = window.students.filter(s => s.id !== id);
-                    window.renderAll();
-                } catch (error) {
-                    console.error("Erro ao excluir aluno.", error);
-                }
-            }
-        }
-
-        window.openChangePlan = function(studentId) {
-            const student = window.students.find(s => s.id === studentId);
-            if(student) {
-                document.getElementById('change-student-id').value = student.id;
-                document.getElementById('change-student-name').innerText = student.name;
-                document.getElementById('change-student-current-plan').innerText = student.planName || 'Sem plano';
-                document.getElementById('change-plan-select').value = student.planName || '';
-                window.openModal('modal-change-plan');
-            }
-        }
-
-        window.handleChangePlan = async function(e) {
-            e.preventDefault();
-            const studentId = document.getElementById('change-student-id').value;
-            const newPlanName = document.getElementById('change-plan-select').value;
-            
-            try {
-                await updateDoc(doc(db, 'artifacts', 'tanqueteam-bjj', 'public', 'data', 'students', studentId), {
-                    plan: newPlanName || null
-                });
-                
-                window.students = window.students.map(s => 
-                    s.id === studentId ? { ...s, planName: newPlanName || null } : s
-                );
-                
-                window.closeModal('modal-change-plan');
-                window.renderAll();
-            } catch (error) {
-                console.error("Erro ao atualizar plano.", error);
-            }
-        }
-
         window.openPaymentHistory = function(studentId) {
             const student = window.students.find(s => s.id === studentId);
             if (!student) return;
@@ -1076,13 +911,11 @@
                 const today = new Date();
                 const currentMonth = today.toISOString().slice(0, 7);
                 document.getElementById('payment-reference').value = currentMonth;
+                document.getElementById('payment-date').value = today.toISOString().split('T')[0];
                 
                 const nextMonth = new Date(today);
                 nextMonth.setMonth(nextMonth.getMonth() + 1);
                 document.getElementById('payment-next-due').value = nextMonth.toISOString().split('T')[0];
-                
-                const plan = window.plans.find(p => p.name === student.planName);
-                document.getElementById('payment-amount').value = plan ? plan.price.toFixed(2) : '';
                 
                 const planSelect = document.getElementById('payment-plan');
                 if (student.planName) {
@@ -1096,16 +929,43 @@
                     planSelect.value = "";
                 }
                 
+                window.updatePaymentAmount();
+                
                 window.openModal('modal-payment');
             }
         }
 
         window.updatePaymentAmount = function() {
             const planName = document.getElementById('payment-plan').value;
+            const paymentDateStr = document.getElementById('payment-date').value;
+            const studentId = document.getElementById('payment-student-id').value;
+            
             if (planName) {
                 const plan = window.plans.find(p => p.name === planName);
                 if (plan) {
-                    document.getElementById('payment-amount').value = plan.price.toFixed(2);
+                    let amountToPay = plan.price;
+                    
+                    if (plan.discountPrice) {
+                        const student = window.students.find(s => s.id === studentId);
+                        if (student && student.nextDueDate && paymentDateStr) {
+                            const paymentDate = new Date(paymentDateStr);
+                            paymentDate.setMinutes(paymentDate.getMinutes() + paymentDate.getTimezoneOffset());
+                            paymentDate.setHours(0, 0, 0, 0);
+                            
+                            const dueDate = new Date(student.nextDueDate);
+                            dueDate.setMinutes(dueDate.getMinutes() + dueDate.getTimezoneOffset());
+                            dueDate.setHours(0, 0, 0, 0);
+                            
+                            if (paymentDate <= dueDate) {
+                                amountToPay = plan.discountPrice;
+                            }
+                        } else if (!student || !student.nextDueDate) {
+                           // If no due date, assume it's the first payment and give discount
+                           amountToPay = plan.discountPrice;
+                        }
+                    }
+                    
+                    document.getElementById('payment-amount').value = amountToPay.toFixed(2);
                 }
             } else {
                 document.getElementById('payment-amount').value = '';
@@ -1120,7 +980,17 @@
             const method = document.getElementById('payment-method').value;
             const nextDueDate = document.getElementById('payment-next-due').value;
             const planName = document.getElementById('payment-plan').value;
-            const date = new Date().toISOString().split('T')[0];
+            const date = document.getElementById('payment-date').value;
+            
+            const validation = financeLib.validatePayment({
+                studentId, reference, amount, method, nextDueDate, date
+            });
+            
+            if (!validation.isValid) {
+                console.error("Validação falhou:", validation.errors);
+                alert("Erro de validação: \n" + validation.errors.join('\n'));
+                return;
+            }
             
             try {
                 // 1. Create the payment record in the 'payments' collection
@@ -1186,10 +1056,9 @@
                 
                 window.closeModal('modal-payment');
                 window.renderAll();
-                alert('Pagamento registrado com sucesso!');
+                console.log('Pagamento registrado com sucesso!');
             } catch (error) {
                 console.error("Erro ao registrar pagamento:", error);
-                alert("Erro ao registrar pagamento.");
             }
         }
 
@@ -1253,6 +1122,16 @@
             const amount = parseFloat(document.getElementById('edit-payment-amount').value);
             const method = document.getElementById('edit-payment-method').value;
             const nextDueDate = document.getElementById('edit-payment-next-due').value;
+            
+            const validation = financeLib.validatePayment({
+                studentId, reference, amount, method, nextDueDate, date
+            });
+            
+            if (!validation.isValid) {
+                console.error("Validação falhou:", validation.errors);
+                alert("Erro de validação: \n" + validation.errors.join('\n'));
+                return;
+            }
             
             try {
                 // 1. Update the payment document
@@ -1323,10 +1202,9 @@
                     window.openPaymentHistory(studentId);
                 }
                 
-                alert('Pagamento atualizado com sucesso!');
+                console.log('Pagamento atualizado com sucesso!');
             } catch (error) {
                 console.error("Erro ao atualizar pagamento:", error);
-                alert("Erro ao atualizar pagamento.");
             }
         }
 
