@@ -753,8 +753,8 @@
             </div>
             <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-t border-gray-200 dark:border-gray-600 flex justify-end gap-3 shrink-0">
                 <button onclick="window.closeContractModal()" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition">Cancelar</button>
-                <button onclick="window.saveContractText()" class="px-4 py-2 bg-indigo-600 text-white rounded text-sm font-bold hover:bg-indigo-700 transition shadow-sm"><i class="fa-solid fa-save mr-1"></i> Salvar</button>
-                <button onclick="window.printStudentContractFromModal()" class="px-4 py-2 bg-gray-800 text-white rounded text-sm font-bold hover:bg-black transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Salvar e Imprimir</button>
+                <button onclick="window.saveContractText()" class="px-4 py-2 bg-indigo-600 text-white rounded text-sm font-bold hover:bg-indigo-700 transition shadow-sm"><i class="fa-solid fa-save mr-1"></i> Salvar Alterações</button>
+                <button onclick="window.printStudentContractFromModal()" class="px-4 py-2 bg-gray-800 text-white rounded text-sm font-bold hover:bg-black transition shadow-sm"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
             </div>
         </div>
     </div>
@@ -3113,28 +3113,26 @@ Belém-PA, [DATA_ATUAL].
             }
         };
 
-        window.printStudentContractFromModal = async () => {
-            if (await window.saveContractText()) {
-                const text = document.getElementById('contract-text-editor').value;
-                const id = document.getElementById('contract-student-id').value;
-                const s = window.students.find(st => st.id === id);
-                let contratante = s ? (s.guardian || s.name) : "CONTRATANTE";
-                if (s && s.titularId) {
-                    const titular = window.students.find(t => t.id === s.titularId);
-                    if (titular) contratante = titular.name;
-                }
-                document.getElementById('report-title').innerText = "CONTRATO DE PRESTAÇÃO DE SERVIÇOS";
-                document.getElementById('report-date-container').classList.add('hidden');
-                document.getElementById('report-content').innerText = text;
-                document.getElementById('report-student-name').innerText = contratante;
-                
-                document.body.classList.add('printing-report');
-                setTimeout(() => {
-                    window.print();
-                    document.body.classList.remove('printing-report');
-                    window.closeContractModal();
-                }, 300);
+        window.printStudentContractFromModal = () => {
+            const text = document.getElementById('contract-text-editor').value;
+            const id = document.getElementById('contract-student-id').value;
+            const s = window.students.find(st => st.id === id);
+            let contratante = s ? (s.guardian || s.name) : "CONTRATANTE";
+            if (s && s.titularId) {
+                const titular = window.students.find(t => t.id === s.titularId);
+                if (titular) contratante = titular.name;
             }
+            document.getElementById('report-title').innerText = "CONTRATO DE PRESTAÇÃO DE SERVIÇOS";
+            document.getElementById('report-date-container').classList.add('hidden');
+            document.getElementById('report-content').innerText = text;
+            document.getElementById('report-student-name').innerText = contratante;
+            
+            document.body.classList.add('printing-report');
+            setTimeout(() => {
+                window.print();
+                document.body.classList.remove('printing-report');
+                window.closeContractModal();
+            }, 300);
         };
 
         window.handlePayPlanChange = () => { 
