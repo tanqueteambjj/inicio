@@ -127,6 +127,9 @@
             <a href="#" onclick="window.switchMainView('notices')" id="nav-notices" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
                 <i class="fa-solid fa-bullhorn w-6"></i> <span class="ml-2">Mural de Avisos</span>
             </a>
+            <a href="#" onclick="window.switchMainView('finance')" id="nav-finance" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
+                <i class="fa-solid fa-file-invoice-dollar w-6"></i> <span class="ml-2">Relatório de Receita</span>
+            </a>
             <a href="#" onclick="window.openSettingsModal()" id="nav-settings" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
                 <i class="fa-solid fa-gear w-6"></i> <span class="ml-2">Configurações</span>
             </a>
@@ -360,6 +363,75 @@
                 </div>
             </div>
 
+            <!-- VIEW: FLUXO DE CAIXA / RELATÓRIO FINANCEIRO -->
+            <div id="view-finance" class="hidden animate-fade-in">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-t-4 border-green-500 max-w-6xl mx-auto border border-gray-200 dark:border-gray-700">
+                    <div class="flex border-b dark:border-gray-700 mb-6 no-print">
+                        <button onclick="window.switchFinanceTab('history')" id="finance-tab-history" class="px-6 py-2 border-b-2 border-green-500 text-green-600 dark:text-green-400 font-bold text-sm transition-all focus:outline-none">HISTÓRICO REAL</button>
+                        <button onclick="window.switchFinanceTab('projection')" id="finance-tab-projection" class="px-6 py-2 border-b-2 border-transparent text-gray-500 hover:text-green-500 font-bold text-sm transition-all focus:outline-none">PROJEÇÃO FUTURA</button>
+                    </div>
+
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 id="finance-title-text" class="font-display text-xl font-bold text-gray-800 dark:text-white uppercase"><i class="fa-solid fa-money-bill-trend-up mr-2 text-green-500"></i> Relatório de Receita Detalhado</h3>
+                            <p id="finance-desc-text" class="text-sm text-gray-500 dark:text-gray-400">Acompanhe todos os pagamentos recebidos no período selecionado.</p>
+                        </div>
+                        <div class="flex items-center gap-3 no-print">
+                            <div class="flex items-center gap-2">
+                                <label class="text-xs font-bold text-gray-500 uppercase">Período:</label>
+                                <input type="month" id="finance-month-filter" onchange="window.renderFinanceReport()" class="border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-1.5 text-sm focus:outline-none focus:border-green-500 font-bold">
+                            </div>
+                            <button onclick="window.printFinanceReport()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-bold shadow-sm transition flex items-center gap-2"><i class="fa-solid fa-print"></i> Imprimir</button>
+                        </div>
+                    </div>
+
+                    <!-- RESUMO FINANCEIRO -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-green-50 dark:bg-green-900/20 p-5 rounded-2xl border border-green-100 dark:border-green-800/50 shadow-sm">
+                            <p id="label-stat-1" class="text-green-800 dark:text-green-300 text-xs font-bold uppercase mb-1">Receita Bruta</p>
+                            <h4 class="text-2xl font-black text-green-900 dark:text-green-200" id="finance-stat-gross">R$ 0,00</h4>
+                            <p id="desc-stat-1" class="text-[10px] text-green-600 dark:text-green-400 mt-1">Soma de todos os valores antes dos descontos</p>
+                        </div>
+                        <div class="bg-red-50 dark:bg-red-900/20 p-5 rounded-2xl border border-red-100 dark:border-red-800/50 shadow-sm">
+                            <p id="label-stat-2" class="text-red-800 dark:text-red-300 text-xs font-bold uppercase mb-1">Total em Descontos</p>
+                            <h4 class="text-2xl font-black text-red-900 dark:text-red-200" id="finance-stat-discounts">R$ 0,00</h4>
+                            <p id="desc-stat-2" class="text-[10px] text-red-600 dark:text-red-400 mt-1">Diferença entre o valor base e o pago</p>
+                        </div>
+                        <div class="bg-indigo-50 dark:bg-indigo-900/20 p-5 rounded-2xl border border-indigo-100 dark:border-indigo-800/50 shadow-sm relative overflow-hidden">
+                            <div class="absolute -right-4 -bottom-4 opacity-10 text-6xl text-indigo-500 rotate-12"><i class="fa-solid fa-sack-dollar"></i></div>
+                            <p id="label-stat-3" class="text-indigo-800 dark:text-indigo-300 text-xs font-bold uppercase mb-1">Receita Líquida (Total Pago)</p>
+                            <h4 class="text-2xl font-black text-indigo-900 dark:text-indigo-200" id="finance-stat-net">R$ 0,00</h4>
+                            <p id="desc-stat-3" class="text-[10px] text-indigo-600 dark:text-indigo-400 mt-1">Valor efetivamente recebido em caixa</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr id="finance-table-header" class="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase text-[10px] font-black tracking-widest border-b dark:border-gray-600">
+                                        <th class="px-4 py-3">Data</th>
+                                        <th class="px-4 py-3">Aluno</th>
+                                        <th class="px-4 py-3">Plano</th>
+                                        <th class="px-4 py-3">Referência</th>
+                                        <th class="px-4 py-3">Método</th>
+                                        <th class="px-4 py-3 text-right">Bruto (Base)</th>
+                                        <th class="px-4 py-3 text-right">Desconto</th>
+                                        <th class="px-4 py-3 text-right">Valor Pago</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="finance-report-body" class="divide-y divide-gray-100 dark:divide-gray-700 text-gray-700 dark:text-gray-300 font-medium">
+                                    <!-- Preenchido via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="finance-no-data" class="p-10 text-center text-gray-400 dark:text-gray-500 italic hidden">
+                            Nenhum registro encontrado para este período.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- VIEW: MURAL DE AVISOS -->
             <div id="view-notices" class="hidden animate-fade-in">
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-t-4 border-yellow-500 max-w-5xl mx-auto border border-gray-200 dark:border-gray-700">
@@ -396,6 +468,47 @@
     </div>
 
 
+
+    <!-- RELATÓRIO FINANCEIRO IMPRESSO -->
+    <div id="printable-finance" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen hidden">
+        <div class="text-center mb-6 border-b-2 border-black pb-4">
+            <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">Tanque Team BJJ</h1>
+            <h2 class="text-lg font-bold mt-2 uppercase">Relatório de Receita Detalhado</h2>
+            <p class="text-sm font-bold text-gray-600 mt-1 uppercase">Período: <span id="print-finance-period"></span></p>
+            <p class="text-xs text-gray-500">Gerado em: <span id="print-finance-timestamp"></span></p>
+        </div>
+        
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="border border-black p-3 rounded">
+                <p class="text-[10px] font-bold uppercase mb-1">Receita Bruta</p>
+                <p class="text-lg font-black" id="print-finance-gross">R$ 0,00</p>
+            </div>
+            <div class="border border-black p-3 rounded">
+                <p class="text-[10px] font-bold uppercase mb-1">Total Descontos</p>
+                <p class="text-lg font-black" id="print-finance-discounts">R$ 0,00</p>
+            </div>
+            <div class="border border-black p-3 rounded">
+                <p class="text-[10px] font-bold uppercase mb-1">Receita Líquida</p>
+                <p class="text-lg font-black" id="print-finance-net">R$ 0,00</p>
+            </div>
+        </div>
+
+        <table class="w-full text-[10px] text-left border-collapse border border-black">
+            <thead>
+                <tr class="bg-gray-100 border-b border-black">
+                    <th class="p-2 border-r border-black">Data</th>
+                    <th class="p-2 border-r border-black">Aluno</th>
+                    <th class="p-2 border-r border-black">Plano</th>
+                    <th class="p-2 border-r border-black">Ref.</th>
+                    <th class="p-2 border-r border-black">Método</th>
+                    <th class="p-2 border-r border-black text-right">Bruto</th>
+                    <th class="p-2 border-r border-black text-right">Desc.</th>
+                    <th class="p-2 text-right font-bold">Líquido</th>
+                </tr>
+            </thead>
+            <tbody id="print-finance-table-body"></tbody>
+        </table>
+    </div>
 
     <!-- RELATÓRIO DE AULAS EXPERIMENTAIS -->
     <div id="printable-experimental" class="print-only-element bg-white text-black p-10 font-sans absolute inset-0 z-[100] min-h-screen hidden">
@@ -1426,6 +1539,7 @@
         window.students = []; 
         window.currentTab = 'all'; 
         window.currentView = 'students'; 
+        window.financeTab = 'history';
         window.noticesList = [];
         window.experimentalList = []; 
         window.isScanningPaused = false; 
@@ -4982,6 +5096,8 @@ Belém-PA, [DATA_ATUAL].
             document.getElementById('view-notices').classList.add('hidden');
             const attView = document.getElementById('view-attendance');
             if (attView) attView.classList.add('hidden');
+            const finView = document.getElementById('view-finance');
+            if (finView) finView.classList.add('hidden');
             
             const viewEl = document.getElementById(`view-${viewId}`);
             if (viewEl) viewEl.classList.remove('hidden');
@@ -4998,6 +5114,15 @@ Belém-PA, [DATA_ATUAL].
             
             if(viewId === 'students') window.renderTable();
             if(viewId === 'experimental') window.renderExperimentalTable();
+            if(viewId === 'finance') {
+                if (!document.getElementById('finance-month-filter').value) {
+                    const today = new Date();
+                    const yyyy = today.getFullYear();
+                    const mm = String(today.getMonth() + 1).padStart(2, '0');
+                    document.getElementById('finance-month-filter').value = `${yyyy}-${mm}`;
+                }
+                window.renderFinanceReport();
+            }
             if(viewId === 'attendance') {
                 if (!document.getElementById('attendance-date-filter').value) {
                     const today = new Date();
@@ -5010,6 +5135,238 @@ Belém-PA, [DATA_ATUAL].
                 window.renderAttendanceTable();
             }
             if(window.innerWidth < 1024) window.toggleMobileMenu();
+        };
+
+        // FINANCEIRO
+        window.switchFinanceTab = (tab) => {
+            window.financeTab = tab;
+            const historyBtn = document.getElementById('finance-tab-history');
+            const projectionBtn = document.getElementById('finance-tab-projection');
+            const tableHeader = document.getElementById('finance-table-header');
+            
+            if (tab === 'history') {
+                historyBtn.classList.add('border-green-500', 'text-green-600', 'dark:text-green-400');
+                historyBtn.classList.remove('border-transparent', 'text-gray-500');
+                projectionBtn.classList.remove('border-green-500', 'text-green-600', 'dark:text-green-400');
+                projectionBtn.classList.add('border-transparent', 'text-gray-500');
+                
+                document.getElementById('finance-title-text').innerHTML = '<i class="fa-solid fa-money-bill-trend-up mr-2 text-green-500"></i> Relatório de Receita Detalhado';
+                document.getElementById('finance-desc-text').innerText = 'Acompanhe todos os pagamentos recebidos no período selecionado.';
+                
+                document.getElementById('label-stat-1').innerText = 'Receita Bruta';
+                document.getElementById('desc-stat-1').innerText = 'Soma de todos os valores antes dos descontos';
+                document.getElementById('label-stat-2').innerText = 'Total em Descontos';
+                document.getElementById('desc-stat-2').innerText = 'Diferença entre o valor base e o pago';
+                document.getElementById('label-stat-3').innerText = 'Receita Líquida (Total Pago)';
+                document.getElementById('desc-stat-3').innerText = 'Valor efetivamente recebido em caixa';
+
+                tableHeader.innerHTML = `
+                    <th class="px-4 py-3">Data</th>
+                    <th class="px-4 py-3">Aluno</th>
+                    <th class="px-4 py-3">Plano</th>
+                    <th class="px-4 py-3">Referência</th>
+                    <th class="px-4 py-3">Método</th>
+                    <th class="px-4 py-3 text-right">Bruto (Base)</th>
+                    <th class="px-4 py-3 text-right">Desconto</th>
+                    <th class="px-4 py-3 text-right">Valor Pago</th>
+                `;
+            } else {
+                projectionBtn.classList.add('border-green-500', 'text-green-600', 'dark:text-green-400');
+                projectionBtn.classList.remove('border-transparent', 'text-gray-500');
+                historyBtn.classList.remove('border-green-500', 'text-green-600', 'dark:text-green-400');
+                historyBtn.classList.add('border-transparent', 'text-gray-500');
+
+                document.getElementById('finance-title-text').innerHTML = '<i class="fa-solid fa-chart-line mr-2 text-green-500"></i> Projeção Financeira Realista';
+                document.getElementById('finance-desc-text').innerText = 'Estimativa de recebimentos baseada nos planos ativos e datas de vencimento.';
+                
+                document.getElementById('label-stat-1').innerText = 'Expectativa de Receita';
+                document.getElementById('desc-stat-1').innerText = 'Valor total esperado para este período';
+                document.getElementById('label-stat-2').innerText = 'Alunos Pagantes';
+                document.getElementById('desc-stat-2').innerText = 'Quantidade de alunos com vencimento no mês';
+                document.getElementById('label-stat-3').innerText = 'Ticket Médio Projetado';
+                document.getElementById('desc-stat-3').innerText = 'Média de valor por aluno ativo';
+
+                tableHeader.innerHTML = `
+                    <th class="px-4 py-3">Vencimento</th>
+                    <th class="px-4 py-3">Aluno</th>
+                    <th class="px-4 py-3">Plano Atual</th>
+                    <th class="px-4 py-3">Status</th>
+                    <th class="px-4 py-3">Último Pagamento</th>
+                    <th class="px-4 py-3 text-right">Valor Plano</th>
+                    <th class="px-4 py-3 text-right">Projeção</th>
+                `;
+            }
+            window.renderFinanceReport();
+        };
+
+        window.renderFinanceReport = () => {
+            const period = document.getElementById('finance-month-filter').value;
+            const tbody = document.getElementById('finance-report-body');
+            const noData = document.getElementById('finance-no-data');
+            const isProjection = window.financeTab === 'projection';
+            
+            if (!tbody || !period) return;
+            tbody.innerHTML = '';
+            
+            let stat1 = 0; // Gross or Total Projection
+            let stat2 = 0; // Discount or Count students
+            let stat3 = 0; // Net or Ticket Medio
+            let list = [];
+
+            if (!isProjection) {
+                window.students.forEach(student => {
+                    if (student.paymentHistory) {
+                        student.paymentHistory.forEach(payment => {
+                            const payDate = new Date(payment.date);
+                            const payPeriod = `${payDate.getFullYear()}-${String(payDate.getMonth() + 1).padStart(2, '0')}`;
+                            if (payPeriod === period) {
+                                const planInfo = window.getPlanInfo(student.plan);
+                                const amount = payment.amount || 0;
+                                const discount = payment.discount || 0;
+                                const gross = amount + discount;
+                                list.push({ date: payment.date, studentName: student.name, planName: planInfo.short, refMonth: payment.refMonth || '--', method: payment.method || 'Não inf.', gross, discount, amount });
+                                stat1 += gross; stat2 += discount; stat3 += amount;
+                            }
+                        });
+                    }
+                });
+                list.sort((a, b) => new Date(b.date) - new Date(a.date));
+            } else {
+                window.students.forEach(student => {
+                    if (student.archived || student.enrollmentStatus === 'Inativo') return;
+                    
+                    const nextDue = student.nextDueDate;
+                    if (!nextDue) return;
+                    
+                    const dueDate = new Date(nextDue.includes('T') ? nextDue : nextDue + 'T12:00:00');
+                    const duePeriod = `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, '0')}`;
+                    
+                    if (duePeriod === period) {
+                        const planInfo = window.getPlanInfo(student.plan);
+                        const expectedAmount = student.planValue !== undefined ? student.planValue : (planInfo.price || 0);
+                        
+                        let lastPay = '--';
+                        if (student.paymentHistory && student.paymentHistory.length > 0) {
+                            const sorted = [...student.paymentHistory].sort((a,b) => new Date(b.date) - new Date(a.date));
+                            lastPay = formatDate(sorted[0].date);
+                        }
+
+                        list.push({ date: nextDue, studentName: student.name, planName: planInfo.short, status: student.paymentStatus || 'Pendente', lastPay, planValue: expectedAmount, projected: expectedAmount });
+                        stat1 += expectedAmount;
+                        stat2++;
+                    }
+                });
+                stat3 = stat2 > 0 ? stat1 / stat2 : 0;
+                list.sort((a, b) => new Date(a.date) - new Date(b.date));
+            }
+
+            if (!isProjection) {
+                document.getElementById('finance-stat-gross').innerText = `R$ ${stat1.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                document.getElementById('finance-stat-discounts').innerText = `R$ ${stat2.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                document.getElementById('finance-stat-net').innerText = `R$ ${stat3.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+            } else {
+                document.getElementById('finance-stat-gross').innerText = `R$ ${stat1.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                document.getElementById('finance-stat-discounts').innerText = `${stat2} Alunos`;
+                document.getElementById('finance-stat-net').innerText = `R$ ${stat3.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+            }
+
+            if (list.length === 0) { noData.classList.remove('hidden'); return; }
+            noData.classList.add('hidden');
+
+            let html = '';
+            list.forEach(item => {
+                if (!isProjection) {
+                    html += `
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <td class="px-4 py-3">${formatDate(item.date)}</td>
+                            <td class="px-4 py-3"><span class="capitalize font-bold">${item.studentName}</span></td>
+                            <td class="px-4 py-3 text-xs text-gray-500">${item.planName}</td>
+                            <td class="px-4 py-3">${item.refMonth}</td>
+                            <td class="px-4 py-3"><span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-[10px] font-bold">${item.method}</span></td>
+                            <td class="px-4 py-3 text-right text-gray-400">R$ ${item.gross.toFixed(2)}</td>
+                            <td class="px-4 py-3 text-right text-red-500 font-bold">R$ ${item.discount.toFixed(2)}</td>
+                            <td class="px-4 py-3 text-right font-black text-indigo-600 dark:text-indigo-400">R$ ${item.amount.toFixed(2)}</td>
+                        </tr>
+                    `;
+                } else {
+                    const statusClass = item.status === 'Em dia' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100';
+                    html += `
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <td class="px-4 py-3 font-bold">${formatDate(item.date)}</td>
+                            <td class="px-4 py-3"><span class="capitalize font-bold">${item.studentName}</span></td>
+                            <td class="px-4 py-3 text-xs text-gray-500">${item.planName}</td>
+                            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${statusClass}">${item.status}</span></td>
+                            <td class="px-4 py-3 text-xs text-gray-400">${item.lastPay}</td>
+                            <td class="px-4 py-3 text-right text-gray-400">R$ ${item.planValue.toFixed(2)}</td>
+                            <td class="px-4 py-3 text-right font-black text-green-600 dark:text-green-400">R$ ${item.projected.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+            });
+            tbody.innerHTML = html;
+        };
+
+        window.printFinanceReport = () => {
+            const period = document.getElementById('finance-month-filter').value;
+            const isProjection = window.financeTab === 'projection';
+            if (!period) return;
+            
+            const [year, month] = period.split('-');
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            const periodStr = `${monthNames[parseInt(month) - 1]} / ${year}`;
+            
+            const title = isProjection ? "Projeção Financeira Realista" : "Relatório de Receita Detalhado";
+            document.querySelector('#printable-finance h2').innerText = title;
+            document.getElementById('print-finance-period').innerText = periodStr;
+            document.getElementById('print-finance-timestamp').innerText = new Date().toLocaleString('pt-BR');
+            
+            const label1 = isProjection ? "Expectativa de Receita" : "Receita Bruta";
+            const label2 = isProjection ? "Alunos Pagantes" : "Total Descontos";
+            const label3 = isProjection ? "Ticket Médio" : "Receita Líquida";
+            
+            const statBlocks = document.querySelectorAll('#printable-finance .grid > div');
+            if (statBlocks.length >= 3) {
+                statBlocks[0].querySelector('p').innerText = label1;
+                statBlocks[1].querySelector('p').innerText = label2;
+                statBlocks[2].querySelector('p').innerText = label3;
+            }
+
+            document.getElementById('print-finance-gross').innerText = document.getElementById('finance-stat-gross').innerText;
+            document.getElementById('print-finance-discounts').innerText = document.getElementById('finance-stat-discounts').innerText;
+            document.getElementById('print-finance-net').innerText = document.getElementById('finance-stat-net').innerText;
+            
+            const printHeader = document.querySelector('#printable-finance thead tr');
+            if (isProjection) {
+                printHeader.innerHTML = `
+                    <th class="p-2 border-r border-black">Vencimento</th>
+                    <th class="p-2 border-r border-black">Aluno</th>
+                    <th class="p-2 border-r border-black">Plano</th>
+                    <th class="p-2 border-r border-black">Status</th>
+                    <th class="p-2 border-r border-black">Últ. Pagto.</th>
+                    <th class="p-2 border-r border-black text-right">Valor Plano</th>
+                    <th class="p-2 text-right font-bold">Projeção</th>
+                `;
+            } else {
+                printHeader.innerHTML = `
+                    <th class="p-2 border-r border-black">Data</th>
+                    <th class="p-2 border-r border-black">Aluno</th>
+                    <th class="p-2 border-r border-black">Plano</th>
+                    <th class="p-2 border-r border-black">Ref.</th>
+                    <th class="p-2 border-r border-black">Método</th>
+                    <th class="p-2 border-r border-black text-right">Bruto</th>
+                    <th class="p-2 border-r border-black text-right">Desc.</th>
+                    <th class="p-2 text-right font-bold">Líquido</th>
+                `;
+            }
+
+            const listHTML = document.getElementById('finance-report-body').innerHTML;
+            document.getElementById('print-finance-table-body').innerHTML = listHTML || '<tr><td colspan="10" class="p-4 text-center">Nenhum dado no período.</td></tr>';
+            
+            document.body.classList.add('printing-payment-report');
+            setTimeout(() => {
+                window.print();
+                document.body.classList.remove('printing-payment-report');
+            }, 500);
         };
 
         window.openSettingsModal = () => {
