@@ -2407,6 +2407,33 @@
                 return isNaN(d) ? '--' : d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }); 
             } catch (e) { return '--'; } 
         }
+        window.getMethodBadge = (method) => {
+            if (!method) return '--';
+            let icon = 'fa-solid fa-money-bill';
+            let colorClass = 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600';
+            
+            const m = method.toLowerCase();
+            if (m.includes('pix')) {
+                icon = 'fa-solid fa-qrcode';
+                colorClass = 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800';
+            } else if (m.includes('dinheiro')) {
+                icon = 'fa-solid fa-hand-holding-dollar';
+                colorClass = 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800';
+            } else if (m.includes('cartão') || m.includes('crédito') || m.includes('débito')) {
+                icon = 'fa-solid fa-credit-card';
+                colorClass = 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800';
+            } else if (m.includes('boleto')) {
+                icon = 'fa-solid fa-barcode';
+                colorClass = 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800';
+            } else if (m.includes('transferência')) {
+                icon = 'fa-solid fa-arrow-right-arrow-left';
+                colorClass = 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800';
+            }
+
+            return `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border ${colorClass} text-[10px] font-bold uppercase tracking-tight whitespace-nowrap print:border-black print:text-black">
+                <i class="${icon} text-[9px] print:text-black"></i> ${method}
+            </span>`;
+        };
         function getAdjustedNextDueDate(s) {
             if (!s || !s.nextDueDate) return null;
             let nextDueObj;
@@ -5391,20 +5418,26 @@ Belém-PA, [DATA_ATUAL].
                             <td class="px-4 py-3"><span class="capitalize font-bold">${item.studentName}</span></td>
                             <td class="px-4 py-3 text-xs text-gray-500">${item.planName}</td>
                             <td class="px-4 py-3">${item.refMonth}</td>
-                            <td class="px-4 py-3"><span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-[10px] font-bold">${item.method}</span></td>
+                            <td class="px-4 py-3">${window.getMethodBadge(item.method)}</td>
                             <td class="px-4 py-3 text-right text-gray-400">R$ ${item.gross.toFixed(2)}</td>
                             <td class="px-4 py-3 text-right text-red-500 font-bold">R$ ${item.discount.toFixed(2)}</td>
                             <td class="px-4 py-3 text-right font-black text-indigo-600 dark:text-indigo-400">R$ ${item.amount.toFixed(2)}</td>
                         </tr>
                     `;
                 } else {
-                    const statusClass = item.status === 'Em dia' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100';
+                    const statusClass = item.status === 'Em dia' 
+                        ? 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/30' 
+                        : 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/30';
                     html += `
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                             <td class="px-4 py-3 font-bold">${formatDate(item.date)}</td>
                             <td class="px-4 py-3"><span class="capitalize font-bold">${item.studentName}</span></td>
                             <td class="px-4 py-3 text-xs text-gray-500">${item.planName}</td>
-                            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${statusClass}">${item.status}</span></td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-tight whitespace-nowrap print:border-black print:text-black ${statusClass} ${item.status === 'Em dia' ? 'border-green-200 dark:border-green-800' : 'border-red-200 dark:border-red-800'}">
+                                    <i class="${item.status === 'Em dia' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-exclamation'} text-[9px] print:text-black"></i> ${item.status}
+                                </span>
+                            </td>
                             <td class="px-4 py-3 text-xs text-gray-400">${item.lastPay}</td>
                             <td class="px-4 py-3 text-right text-gray-400">R$ ${item.planValue.toFixed(2)}</td>
                             <td class="px-4 py-3 text-right font-black text-green-600 dark:text-green-400">R$ ${item.projected.toFixed(2)}</td>
