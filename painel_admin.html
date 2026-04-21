@@ -184,10 +184,15 @@
                         <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Adulto</p>
                         <p class="text-3xl font-bold text-gray-800 dark:text-white" id="stat-adulto">0</p>
                     </div>
-                    <div id="card-archived" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-gray-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-all" onclick="window.switchTab('archived')">
+                    <div id="card-archived" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-gray-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-all font-medium" onclick="window.switchTab('archived')">
                         <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-gray-500 pointer-events-none"><i class="fa-solid fa-box-archive"></i></div>
                         <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Arquivo</p>
                         <p class="text-3xl font-bold text-gray-800 dark:text-white" id="stat-archived">0</p>
+                    </div>
+                    <div id="card-exempt" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-yellow-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-yellow-50 dark:hover:bg-gray-700 transition-all font-medium" onclick="window.switchTab('exempt')">
+                        <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-yellow-500 pointer-events-none"><i class="fa-solid fa-handshake-angle"></i></div>
+                        <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Isentos</p>
+                        <p class="text-3xl font-bold text-gray-800 dark:text-white" id="stat-exempt">0</p>
                     </div>
                 </div>
 
@@ -204,6 +209,7 @@
                             </h3>
                         </div>
                         <div class="flex gap-2">
+                             <button onclick="window.printGeneralStudentReport()" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 text-sm bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 px-3 py-1.5 rounded shadow-sm font-bold no-print"><i class="fa-solid fa-print mr-1"></i> RELATÓRIO GERAL</button>
                              <button onclick="window.openAdminRegisterModal()" class="bg-brand-red text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-red-700 shadow-sm transition transform active:scale-95"><i class="fa-solid fa-plus mr-1"></i> NOVO ALUNO</button>
                              <button onclick="window.loadData()" class="text-gray-500 dark:text-gray-300 hover:text-black dark:hover:text-white text-sm flex items-center gap-1 bg-white dark:bg-gray-600 border dark:border-gray-500 px-3 py-1.5 rounded shadow-sm"><i class="fa-solid fa-rotate" id="icon-refresh"></i> Atualizar</button>
                         </div>
@@ -1097,6 +1103,12 @@
                                     <option value="Ativo" class="text-green-600 dark:text-green-400">Ativo</option><option value="Inativo" class="text-red-600 dark:text-red-400">Inativo</option>
                                 </select>
                             </div>
+                            <div class="flex items-center gap-3 bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-100 dark:border-blue-800">
+                                <input type="checkbox" id="edit-contract-signed" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                <div>
+                                    <label for="edit-contract-signed" class="block text-sm font-bold text-blue-800 dark:text-blue-400 cursor-pointer">Contrato Assinado</label>
+                                </div>
+                            </div>
                             
                             <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div>
@@ -1253,6 +1265,10 @@
                             <div class="md:col-span-2"><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Plano Registrado</span><span class="font-medium font-bold text-brand-dark dark:text-white uppercase" id="detail-plan">--</span></div>
                             <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Vencimento Mensal</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-next-due">--</span></div>
                             <div><span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Fim do Contrato</span><span class="font-medium text-gray-800 dark:text-gray-200" id="detail-contract-end">--</span></div>
+                            <div class="md:col-span-2">
+                                <span class="text-gray-500 dark:text-gray-400 block text-xs font-bold">Status do Contrato</span>
+                                <div id="detail-contract-status" class="mt-1"></div>
+                            </div>
                         </div>
                         <div id="detail-titular-box" class="hidden mt-3 p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded border border-purple-200 dark:border-purple-800 text-xs">
                             <span class="font-bold">Titular do Plano Família:</span> <span id="detail-titular-name">--</span>
@@ -1329,6 +1345,13 @@
                                 <select id="reg-origin" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 focus:border-brand-red focus:outline-none">
                                     <option value="" disabled selected>Selecione uma opção...</option><option value="Instagram">Instagram</option><option value="Facebook">Facebook</option><option value="Google">Pesquisa no Google</option><option value="Indicação de Aluno/Amigo">Indicação de um Aluno/Amigo</option><option value="Passou em frente">Passei em frente à Escola</option><option value="Outros">Outros</option>
                                 </select>
+                            </div>
+                            <div class="md:col-span-2 bg-blue-50 dark:bg-blue-900/20 p-3 rounded border border-blue-100 dark:border-blue-800 flex items-center gap-3">
+                                <input type="checkbox" id="reg-contract-signed" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                <div>
+                                    <label for="reg-contract-signed" class="block text-sm font-bold text-blue-800 dark:text-blue-300 cursor-pointer">Contrato Assinado</label>
+                                    <p class="text-[10px] text-blue-600 dark:text-blue-400 uppercase">Marque se o aluno já assinou o contrato físico ou digital.</p>
+                                </div>
                             </div>
                             <!-- PAINEL RESPONSÁVEL LEGAL (Apenas para < 18) -->
                             <div id="admin-reg-guardian-container" class="md:col-span-2 bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded border border-yellow-200 dark:border-yellow-800 hidden">
@@ -2569,9 +2592,10 @@
 
         function updateStats() {
             const total = window.students.filter(s => !s.archived).length;
-            let kidsCount = 0, adultsCount = 0, adminCount = 0, adminKidsCount = 0, adminAdultsCount = 0, archivedCount = 0;
+            let kidsCount = 0, adultsCount = 0, adminCount = 0, adminKidsCount = 0, adminAdultsCount = 0, archivedCount = 0, exemptCount = 0;
             window.students.forEach(s => {
                 if (s.archived) { archivedCount++; return; }
+                if (s.paymentStatus === 'Isento') exemptCount++;
                 if (isStudentAdmin(s)) {
                     adminCount++;
                     if (isStudentKid(s)) adminKidsCount++; else adminAdultsCount++;
@@ -2580,7 +2604,7 @@
                 }
             });
             const setText = (id, txt) => { const e = document.getElementById(id); if(e) e.innerText = txt; }
-            setText('stat-total', total); setText('stat-infantil', kidsCount); setText('stat-adulto', adultsCount); setText('stat-archived', archivedCount);
+            setText('stat-total', total); setText('stat-infantil', kidsCount); setText('stat-adulto', adultsCount); setText('stat-archived', archivedCount); setText('stat-exempt', exemptCount);
         }
 
         // DETALHES, PROGRESSO E EDIÇÃO
@@ -2626,6 +2650,15 @@
                     contractEndText = formatDate(s.contractEndDate);
                 }
                 document.getElementById('detail-contract-end').innerText = contractEndText;
+                
+                const contractStatusEl = document.getElementById('detail-contract-status');
+                if (contractStatusEl) {
+                    if (s.contractSigned) {
+                        contractStatusEl.innerHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 text-[10px] font-bold uppercase"><i class="fa-solid fa-file-circle-check"></i> ASSINADO</span>`;
+                    } else {
+                        contractStatusEl.innerHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 text-[10px] font-bold uppercase"><i class="fa-solid fa-file-circle-xmark"></i> PENDENTE</span>`;
+                    }
+                }
                 
                 document.getElementById('detail-qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${id}`; document.getElementById('detail-qr-id').value = id; document.getElementById('detail-student-id').value = id;
                 const familyBox = document.getElementById('detail-family-box'); familyBox.innerHTML = '';
@@ -2810,6 +2843,7 @@ Belém-PA, [DATA_ATUAL].
                 if (document.getElementById('edit-belt-degree')) document.getElementById('edit-belt-degree').value = degree;
                 document.getElementById('edit-login').value = s.studentLogin || ''; document.getElementById('edit-password').value = s.studentPassword || '';
                 if (document.getElementById('edit-enrollment-status')) document.getElementById('edit-enrollment-status').value = s.enrollmentStatus || 'Ativo';
+                if (document.getElementById('edit-contract-signed')) document.getElementById('edit-contract-signed').checked = !!s.contractSigned;
                 
                 window.checkAdminEditAge();
                 document.getElementById('edit-modal').classList.remove('hidden'); document.getElementById('edit-modal').classList.add('flex');
@@ -3247,7 +3281,7 @@ Belém-PA, [DATA_ATUAL].
 
             try {
                 const planDisplayString = planInfo.short + ' - R$ ' + Number(planValue).toFixed(2).replace('.', ',');
-                const studentData = { name, dob, cpf, cep, email, phone, address, guardian, guardianCpf, guardianKinship, plan: planDisplayString, planValue: planValue, titularName: titularName, titularId: titularId, titularRelation: titularRelation, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), nextDueDate: nextDueDate, studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] };
+                const studentData = { name, dob, cpf, cep, email, phone, address, guardian, guardianCpf, guardianKinship, plan: planDisplayString, planValue: planValue, titularName: titularName, titularId: titularId, titularRelation: titularRelation, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), nextDueDate: nextDueDate, studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, contractSigned: document.getElementById('reg-contract-signed').checked, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] };
                 if (photoBase64) studentData.photoBase64 = photoBase64;
                 const titularDocRef = await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), studentData);
                 
@@ -3336,7 +3370,7 @@ Belém-PA, [DATA_ATUAL].
                 }
             }
             try {
-                const updateData = { name: name, dob: dobIso, cpf: cpf, cep: cep, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf, enrollmentStatus: status, belt: beltStr, studentLogin: login, studentPassword: pass, email: email, phone: phone };
+                const updateData = { name: name, dob: dobIso, cpf: cpf, cep: cep, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf, enrollmentStatus: status, belt: beltStr, studentLogin: login, studentPassword: pass, email: email, phone: phone, contractSigned: document.getElementById('edit-contract-signed').checked };
                 if(photoBase64) updateData.photoBase64 = photoBase64;
                 if (beltStr !== originalBelt) { updateData.lastGraduationDate = new Date().toISOString(); updateData.progressLog = arrayUnion({ type: 'graduation', text: `Graduado para ${beltStr}`, date: new Date().toISOString() }); }
                 await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), updateData);
@@ -4005,6 +4039,7 @@ Belém-PA, [DATA_ATUAL].
             let filtered = window.students;
             
             if (window.currentTab === 'archived') filtered = filtered.filter(s => s.archived);
+            else if (window.currentTab === 'exempt') filtered = filtered.filter(s => !s.archived && s.paymentStatus === 'Isento');
             else {
                 filtered = filtered.filter(s => !s.archived);
                 if (window.currentTab === 'kids') filtered = filtered.filter(s => isStudentKid(s) && !isStudentAdmin(s));
@@ -4244,8 +4279,9 @@ Belém-PA, [DATA_ATUAL].
                                 ${isDependent ? '<i class="fa-solid fa-turn-up rotate-90 text-gray-300 dark:text-gray-600"></i>' : ''}
                                 ${photoHtml} 
                                 <div class="flex flex-col">
-                                    <div class="flex items-center">
+                                    <div class="flex items-center gap-1.5">
                                         <span class="font-bold text-sm text-gray-800 dark:text-gray-200 cursor-pointer hover:underline hover:text-brand-red transition-colors uppercase" onclick="window.viewStudentDetails('${s.id}')">${s.name}</span>
+                                        ${s.contractSigned ? `<i class="fa-solid fa-file-circle-check text-blue-500 text-[10px]" title="Contrato Assinado"></i>` : ''}
                                     </div>
                                     ${subNameHtml}
                                 </div>
@@ -5851,6 +5887,76 @@ Belém-PA, [DATA_ATUAL].
             document.body.classList.add('printing-progress');
             window.print();
             document.body.classList.remove('printing-progress');
+        };
+
+        window.printGeneralStudentReport = () => {
+            if (!window.students || window.students.length === 0) {
+                window.customAlert("Nenhum dado de aluno disponível para o relatório.");
+                return;
+            }
+
+            // FILTER: Show only active (not archived) students
+            const activeStudents = window.students.filter(s => !s.archived).sort((a, b) => a.name.localeCompare(b.name));
+
+            let htmlContent = `
+                <div style="font-family: sans-serif; padding: 20px;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 25px; border-bottom: 2px solid #ed1c24; padding-bottom: 15px;">
+                        <img src="https://iili.io/qC543c7.png" style="height: 60px;">
+                        <div style="text-align: center;">
+                            <h1 style="margin: 0; font-size: 24px; color: #1B1B1B; text-transform: uppercase; letter-spacing: 2px;">Tanque Team BJJ</h1>
+                            <p style="margin: 5px 0 0 0; font-size: 14px; color: #666; font-weight: bold; text-transform: uppercase;">Relatório Geral de Alunos</p>
+                        </div>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px;">
+                        <thead>
+                            <tr style="background-color: #f3f4f6; text-align: left; border-bottom: 2px solid #d1d5db;">
+                                <th style="padding: 12px 8px; border: 1px solid #e5e7eb;">ALUNO</th>
+                                <th style="padding: 12px 8px; border: 1px solid #e5e7eb;">DEPENDENTE(S) / VÍNCULO</th>
+                                <th style="padding: 12px 8px; border: 1px solid #e5e7eb;">PLANO</th>
+                                <th style="padding: 12px 8px; border: 1px solid #e5e7eb;">DATA MATRÍCULA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            activeStudents.forEach(s => {
+                const planInfo = window.getPlanInfo(s.plan);
+                const regDateFormatted = s.registrationDate ? formatDate(s.registrationDate) : '--';
+                
+                let vinculationText = '--';
+                const planType = window.getPlanType(s.plan);
+                
+                if (planType === 'dependente' && s.titularName) {
+                    vinculationText = `<span style="color: #6d28d9; font-weight: bold;">[DIR]</span> Dependente de: ${s.titularName}`;
+                } else {
+                    const dependents = window.students.filter(ds => ds.titularId === s.id && !ds.archived);
+                    if (dependents.length > 0) {
+                        vinculationText = `<span style="color: #059669; font-weight: bold;">[TIT]</span> ${dependents.map(d => d.name).join(', ')}`;
+                    }
+                }
+
+                htmlContent += `
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 10px 8px; border: 1px solid #e5e7eb; font-weight: bold; text-transform: uppercase;">${s.name}</td>
+                        <td style="padding: 10px 8px; border: 1px solid #e5e7eb;">${vinculationText}</td>
+                        <td style="padding: 10px 8px; border: 1px solid #e5e7eb;">${planInfo.short}</td>
+                        <td style="padding: 10px 8px; border: 1px solid #e5e7eb;">${regDateFormatted}</td>
+                    </tr>
+                `;
+            });
+
+            htmlContent += `
+                        </tbody>
+                    </table>
+                    
+                    <div style="margin-top: 30px; text-align: right; font-size: 10px; color: #9ca3af;">
+                        Documento gerado em: ${new Date().toLocaleString('pt-BR')} • Total de alunos: ${activeStudents.length}
+                    </div>
+                </div>
+            `;
+
+            window.printHtmlContent(htmlContent, "Relatorio_Geral_Alunos");
         };
 
         window.shareBirthdayNotice = async (id) => {
