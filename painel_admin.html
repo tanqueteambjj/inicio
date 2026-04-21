@@ -77,10 +77,10 @@
             }
             body.printing-progress #printable-progress *, body.printing-experimental #printable-experimental *, body.printing-qr #print-only-qr * { visibility: visible !important; color: #000 !important; }
             
-            body.printing-report #report-container, body.printing-payment-report #printable-report { 
+            body.printing-report #report-container, body.printing-payment-report #printable-finance { 
                 display: block !important; position: static !important; width: 100% !important; height: auto !important; visibility: visible !important; background: #fff !important; color: #000 !important; margin: 0 !important; padding: 0 !important;
             }
-            body.printing-report #report-container *, body.printing-payment-report #printable-report * { visibility: visible !important; color: #000 !important; }
+            body.printing-report #report-container *, body.printing-payment-report #printable-finance * { visibility: visible !important; color: #000 !important; }
             
             body.printing-qr #print-only-qr { display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: flex-start !important; padding: 2cm 0 !important; }
             
@@ -810,6 +810,10 @@
                         <div>
                             <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Mês de Referência</label>
                             <input type="month" id="pay-ref-month" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Qtd. Meses Pagos</label>
+                            <input type="number" id="pay-quantity" value="1" min="1" step="1" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none" onchange="window.handlePayQuantityChange()">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Valor Pago (R$)</label>
@@ -3078,6 +3082,26 @@ Belém-PA, [DATA_ATUAL].
             const titularContainer = document.getElementById('pay-titular-container'); 
             if (planType === 'dependente') titularContainer.classList.remove('hidden'); 
             else titularContainer.classList.add('hidden'); 
+
+            // Update base amount when plan changes
+            const planInfo = window.getPlanInfo(planId);
+            if (planInfo) {
+                // Check if late to apply basePrice
+                const now = new Date();
+                const nextDueInput = document.getElementById('pay-contract-next-due');
+                let isLate = false;
+                if (nextDueInput.value) {
+                    const dueStr = nextDueInput.value;
+                    const todayStr = getLocalISODate(now);
+                    if (todayStr > dueStr) isLate = true;
+                }
+                
+                const baseOneMonth = isLate ? (planInfo.basePrice || planInfo.price || 0) : (planInfo.price || 0);
+                window.lastPayBaseAmount = baseOneMonth;
+                
+                // Refresh quantity calculations
+                if (window.handlePayQuantityChange) window.handlePayQuantityChange();
+            }
         };
 
         window.saveContractData = async () => {
@@ -4661,6 +4685,7 @@ Belém-PA, [DATA_ATUAL].
             document.getElementById('pay-student-id').value = id;
             document.getElementById('pay-student-name').innerText = s.name;
             document.getElementById('pay-start-date').innerText = formatDate(s.registrationDate);
+            document.getElementById('pay-quantity').value = 1;
             
             // Populate plans
             let optionsHtml = '<option value="">-- Selecione o Plano --</option>';
@@ -4794,6 +4819,45 @@ Belém-PA, [DATA_ATUAL].
             nextDue.setMonth(nextDue.getMonth() + 1);
             document.getElementById('pay-next-due').value = getLocalISODate(nextDue);
             
+            // Store base values for quantity changes
+            window.lastPayBaseAmount = amountToPay;
+            window.lastPayBaseNextDue = new Date(getLocalISODate(nextDue) + 'T12:00:00'); 
+            // Correct logic: nextDue above was already nextDue + 1 month. 
+            // Let's reset window.lastPayBaseNextDue to what it should be if quantity is 1.
+            let resetNextDue = new Date();
+            if (s.nextDueDate) {
+                const adjDate = getAdjustedNextDueDate(s);
+                if (adjDate && !isNaN(adjDate)) {
+                    resetNextDue = new Date(adjDate);
+                } else {
+                    if (s.nextDueDate.toDate && typeof s.nextDueDate.toDate === 'function') {
+                        resetNextDue = s.nextDueDate.toDate();
+                    } else if (s.nextDueDate instanceof Date) {
+                        resetNextDue = new Date(s.nextDueDate);
+                    } else if (typeof s.nextDueDate === 'string') {
+                        const parts = s.nextDueDate.split('T')[0].split('-');
+                        if (parts.length === 3) {
+                            resetNextDue = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                        }
+                    }
+                }
+            }
+            window.lastPayBaseNextDue = new Date(resetNextDue);
+
+            window.handlePayQuantityChange = () => {
+                const qty = parseInt(document.getElementById('pay-quantity').value) || 1;
+                const baseAmount = window.lastPayBaseAmount || 0;
+                const nextDueInput = document.getElementById('pay-next-due');
+                
+                document.getElementById('pay-amount').value = (baseAmount * qty).toFixed(2);
+                
+                if (window.lastPayBaseNextDue) {
+                    let d = new Date(window.lastPayBaseNextDue);
+                    d.setMonth(d.getMonth() + qty);
+                    nextDueInput.value = getLocalISODate(d);
+                }
+            };
+            
             // Render history
             const historyList = document.getElementById('pay-history-list');
             historyList.innerHTML = '';
@@ -4907,6 +4971,7 @@ Belém-PA, [DATA_ATUAL].
             const amount = document.getElementById('pay-amount').value;
             const method = document.getElementById('pay-method').value;
             const nextDue = document.getElementById('pay-next-due').value;
+            const quantity = parseInt(document.getElementById('pay-quantity').value) || 1;
             
             if (!refMonth || !amount || !method) {
                 window.customAlert("Por favor, preencha o mês de referência, valor e meio de pagamento.");
@@ -4920,24 +4985,26 @@ Belém-PA, [DATA_ATUAL].
                 const parts = payDateStr.split('-');
                 if (parts.length === 3) {
                     const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                    d.setHours(12, 0, 0); // Set to noon to avoid timezone issues
+                    d.setHours(12, 0, 0); 
                     paymentDateIso = d.toISOString();
                 }
             }
             
             const planInfo = window.getPlanInfo(s.plan);
-            const basePrice = planInfo.basePrice || planInfo.price || 0;
+            const basePriceOneMonth = planInfo.basePrice || planInfo.price || 0;
+            const basePriceTotal = basePriceOneMonth * quantity;
             const paidAmount = parseFloat(amount);
             let calculatedDiscount = 0;
-            if (basePrice > paidAmount) {
-                calculatedDiscount = basePrice - paidAmount;
+            if (basePriceTotal > paidAmount) {
+                calculatedDiscount = basePriceTotal - paidAmount;
             }
             
             const newPayment = {
                 date: paymentDateIso,
-                refMonth: refMonth,
+                refMonth: quantity > 1 ? `${refMonth} (+${quantity-1} meses)` : refMonth,
                 amount: paidAmount,
-                method: method
+                method: method,
+                monthsPaid: quantity
             };
             if (calculatedDiscount > 0) {
                 newPayment.discount = calculatedDiscount;
@@ -4950,6 +5017,13 @@ Belém-PA, [DATA_ATUAL].
                 };
                 if (nextDue) {
                     updateData.nextDueDate = toISODate(nextDue);
+                }
+                
+                // If paying multiple months, we should also advance the contract next due if it was set
+                if (s.contractNextDue && quantity > 1) {
+                    const cNextDue = s.contractNextDue.toDate ? s.contractNextDue.toDate() : new Date(s.contractNextDue);
+                    cNextDue.setMonth(cNextDue.getMonth() + quantity);
+                    updateData.contractNextDue = toISODate(getLocalISODate(cNextDue));
                 }
                 
                 await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), updateData);
@@ -5235,23 +5309,58 @@ Belém-PA, [DATA_ATUAL].
                 window.students.forEach(student => {
                     if (student.archived || student.enrollmentStatus === 'Inativo') return;
                     
-                    const nextDue = student.nextDueDate;
-                    if (!nextDue) return;
+                    const nextDueStr = student.nextDueDate;
+                    if (!nextDueStr) return;
                     
-                    const dueDate = new Date(nextDue.includes('T') ? nextDue : nextDue + 'T12:00:00');
-                    const duePeriod = `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, '0')}`;
+                    const planInfo = window.getPlanInfo(student.plan);
+                    const expectedAmount = student.planValue !== undefined ? student.planValue : (planInfo.price || 0);
+
+                    // Parse target period
+                    const [targetYear, targetMonth] = period.split('-').map(Number);
+                    // targetDate is 1st of the target month at noon to avoid DST/TZ issues
+                    const targetDate = new Date(targetYear, targetMonth - 1, 1, 12, 0, 0);
+
+                    // Duration of plan (for fidelity check)
+                    let contractEnd = null;
+                    if (student.contractEndDate) {
+                        contractEnd = new Date(student.contractEndDate.includes('T') ? student.contractEndDate : student.contractEndDate + 'T12:00:00');
+                    }
+
+                    // Get student's current next due date via helper
+                    let nextDueObj = getAdjustedNextDueDate(student);
+                    if (!nextDueObj || isNaN(nextDueObj.getTime())) return;
+
+                    // Normalize nextDueObj to 1st of the month for comparison
+                    let projDate = new Date(nextDueObj.getFullYear(), nextDueObj.getMonth(), 1, 12, 0, 0);
                     
-                    if (duePeriod === period) {
-                        const planInfo = window.getPlanInfo(student.plan);
-                        const expectedAmount = student.planValue !== undefined ? student.planValue : (planInfo.price || 0);
-                        
+                    const targetDateTime = targetDate.getTime();
+                    const projDateTime = projDate.getTime();
+                    
+                    // If the student's next due month is <= target month, they are "due" or "will be due"
+                    if (projDateTime <= targetDateTime) {
+                        // Check if plan duration limit applies
+                        if (contractEnd) {
+                            const contractEndNorm = new Date(contractEnd.getFullYear(), contractEnd.getMonth(), 1, 12, 0, 0);
+                            if (targetDateTime > contractEndNorm.getTime()) {
+                                return;
+                            }
+                        }
+
                         let lastPay = '--';
                         if (student.paymentHistory && student.paymentHistory.length > 0) {
                             const sorted = [...student.paymentHistory].sort((a,b) => new Date(b.date) - new Date(a.date));
                             lastPay = formatDate(sorted[0].date);
                         }
 
-                        list.push({ date: nextDue, studentName: student.name, planName: planInfo.short, status: student.paymentStatus || 'Pendente', lastPay, planValue: expectedAmount, projected: expectedAmount });
+                        list.push({ 
+                            date: `${period}-01`, // Generic date for projection
+                            studentName: student.name, 
+                            planName: planInfo.short, 
+                            status: student.paymentStatus || 'Pendente', 
+                            lastPay, 
+                            planValue: expectedAmount, 
+                            projected: expectedAmount 
+                        });
                         stat1 += expectedAmount;
                         stat2++;
                     }
