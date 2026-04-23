@@ -92,6 +92,15 @@
             h1, h2, h3, h4 { page-break-after: avoid; }
             .page-break-inside-avoid { page-break-inside: avoid; break-inside: avoid; }
             .no-print { display: none !important; }
+        
+        .totem-reader {
+            height: 60vh !important;
+            aspect-ratio: auto !important;
+        }
+        .totem-result {
+            font-size: 2.5rem !important;
+            padding: 3rem !important;
+            min-height: 200px !important;
         }
     </style>
 </head>
@@ -1462,6 +1471,65 @@
         </div>
     </div>
 
+    <!-- WHATSAPP ACTIONS MODAL -->
+    <div id="whatsapp-actions-modal" class="fixed inset-0 z-[110] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-fade-in border-t-4 border-green-500">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-brands fa-whatsapp text-green-500 text-xl"></i> Ações do WhatsApp</h3>
+                <button onclick="window.closeWhatsAppActionsModal()" class="text-gray-400 hover:text-gray-800 dark:hover:text-white"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Selecione a mensagem para</p>
+                    <h4 id="whatsapp-student-name" class="font-bold text-lg text-gray-800 dark:text-white">---</h4>
+                </div>
+                <div class="grid grid-cols-1 gap-3">
+                    <input type="hidden" id="whatsapp-student-id">
+                    <button onclick="window.confirmAndSendWhatsApp('welcome')" class="flex items-center justify-between w-full p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg group hover:bg-blue-600 hover:text-white transition-all">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-comment-medical text-blue-600 dark:text-blue-400 group-hover:text-white text-xl"></i>
+                            <div class="text-left">
+                                <div class="font-bold text-sm">Boas-Vindas</div>
+                                <div class="text-[10px] opacity-70">Novos alunos</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-blue-300"></i>
+                    </button>
+                    <button onclick="window.confirmAndSendWhatsApp('reminder')" class="flex items-center justify-between w-full p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg group hover:bg-green-600 hover:text-white transition-all">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-clock text-green-600 dark:text-green-400 group-hover:text-white text-xl"></i>
+                            <div class="text-left">
+                                <div class="font-bold text-sm">Lembrar Mensalidade</div>
+                                <div class="text-[10px] opacity-70">Aviso de vencimento</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-green-300"></i>
+                    </button>
+                    <button onclick="window.confirmAndSendWhatsApp('charge')" class="flex items-center justify-between w-full p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg group hover:bg-red-600 hover:text-white transition-all">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-file-invoice-dollar text-brand-red dark:text-red-400 group-hover:text-white text-xl"></i>
+                            <div class="text-left">
+                                <div class="font-bold text-sm">Enviar Cobrança</div>
+                                <div class="text-[10px] opacity-70">Alunos pendentes</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-red-300"></i>
+                    </button>
+                    <button onclick="window.confirmAndSendWhatsApp('absence')" class="flex items-center justify-between w-full p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg group hover:bg-orange-600 hover:text-white transition-all">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-user-clock text-orange-600 dark:text-orange-400 group-hover:text-white text-xl"></i>
+                            <div class="text-left">
+                                <div class="font-bold text-sm">Mensagem de Ausência</div>
+                                <div class="text-[10px] opacity-70">Sentimos sua falta</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-orange-300"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- NOTICE MODAL -->
     <div id="notice-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in border-t-4 border-yellow-500">
@@ -1494,6 +1562,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query, where, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         window.customAlert = (message) => {
             return new Promise((resolve) => {
@@ -2367,7 +2436,12 @@
             if(user.role !== 'admin' && !isCanvasPreview) window.location.href = "https://www.tanqueteambjj.com.br/login.html";
             else {
                 try {
-                    app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); window.db = db;
+                    app = initializeApp(firebaseConfig); 
+                    auth = getAuth(app); 
+                    db = getFirestore(app); 
+                    window.db = db;
+                    const storage = getStorage(app);
+                    window.storage = storage;
                     const initAuth = async () => {
                         try {
                             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
@@ -2617,7 +2691,7 @@
                 document.getElementById('detail-dob').innerText = s.dob ? formatDate(s.dob) : '--';
                 document.getElementById('detail-belt').innerHTML = '<div class="flex items-center gap-2">' + window.getBeltImageHtml(s.belt) + '<span>' + (s.belt || "Faixa Branca") + '</span></div>';
                 const photoImg = document.getElementById('detail-photo'); const photoIcon = document.getElementById('detail-icon');
-                if(s.photoBase64) { photoImg.src = s.photoBase64; photoImg.classList.remove('hidden'); photoIcon.classList.add('hidden'); } 
+                if(s.photoURL || s.photoBase64) { photoImg.src = s.photoURL || s.photoBase64; photoImg.classList.remove('hidden'); photoIcon.classList.add('hidden'); } 
                 else { photoImg.classList.add('hidden'); photoIcon.classList.remove('hidden'); }
                 const belt = (s.belt || "").toLowerCase(); let headerColor = "bg-gray-200 dark:bg-gray-600"; 
                 if(belt.includes("azul")) headerColor = "bg-blue-600"; else if(belt.includes("roxa")) headerColor = "bg-purple-600"; else if(belt.includes("marrom")) headerColor = "bg-amber-800"; else if(belt.includes("preta")) headerColor = "bg-black"; else if(belt.includes("amarela")) headerColor = "bg-yellow-400"; else if(belt.includes("laranja")) headerColor = "bg-orange-500"; else if(belt.includes("verde")) headerColor = "bg-green-600";
@@ -3275,14 +3349,22 @@ Belém-PA, [DATA_ATUAL].
             
             const nextDueDate = nextDue.toISOString();
 
-            let photoBase64 = null;
+            let photoBase64 = window.currentCroppedPhoto || null;
 
             try {
                 const planDisplayString = planInfo.short + ' - R$ ' + Number(planValue).toFixed(2).replace('.', ',');
                 const studentData = { name, dob, cpf, cep, email, phone, address, guardian, guardianCpf, guardianKinship, plan: planDisplayString, planValue: planValue, titularName: titularName, titularId: titularId, titularRelation: titularRelation, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), nextDueDate: nextDueDate, studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, contractSigned: document.getElementById('reg-contract-signed').checked, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] };
-                if (photoBase64) studentData.photoBase64 = photoBase64;
+                
                 const titularDocRef = await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), studentData);
                 
+                // Upload photo if exists
+                if (photoBase64) {
+                    const photoURL = await window.uploadPhotoToStorage(photoBase64, titularDocRef.id);
+                    if (photoURL) {
+                        await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', titularDocRef.id), { photoURL: photoURL });
+                    }
+                }
+
                 if (planType === 'combo-dupla' || planType === 'combo-casal' || planType === 'combo-familia') {
                     const d1Name = String(document.getElementById('admin-dep1-name').value).toUpperCase();
                     if(d1Name) await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), { name: d1Name, dob: toISODate(document.getElementById('admin-dep1-dob').value), titularName: name, titularId: titularDocRef.id, guardianKinship: document.getElementById('admin-dep1-kinship').value, belt: `Faixa Branca - 0º Grau`, plan: 'dependente', planValue: 0, category: 'Dependente (Combo)', howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), paymentStatus: 'Isento', email, phone, attendance: [], paymentHistory: [], progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] });
@@ -3369,7 +3451,13 @@ Belém-PA, [DATA_ATUAL].
             }
             try {
                 const updateData = { name: name, dob: dobIso, cpf: cpf, cep: cep, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf, enrollmentStatus: status, belt: beltStr, studentLogin: login, studentPassword: pass, email: email, phone: phone, contractSigned: document.getElementById('edit-contract-signed').checked };
-                if(photoBase64) updateData.photoBase64 = photoBase64;
+                
+                if (photoBase64) {
+                    const photoURL = await window.uploadPhotoToStorage(photoBase64, id);
+                    if (photoURL) updateData.photoURL = photoURL;
+                    else updateData.photoBase64 = photoBase64; // Fallback if upload fails
+                }
+
                 if (beltStr !== originalBelt) { updateData.lastGraduationDate = new Date().toISOString(); updateData.progressLog = arrayUnion({ type: 'graduation', text: `Graduado para ${beltStr}`, date: new Date().toISOString() }); }
                 await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), updateData);
                 window.closeEditModal(); window.loadData(); window.customAlert("Dados atualizados com sucesso!");
@@ -3494,20 +3582,37 @@ Belém-PA, [DATA_ATUAL].
         window.toggleTotemMode = () => {
             const modal = document.getElementById('checkin-modal');
             const btnClose = document.getElementById('btn-close-checkin');
+            const header = modal.querySelector('.bg-green-600');
+            const classSel = document.getElementById('checkin-class-selector').parentElement;
+            const reader = document.getElementById('reader');
+            const result = document.getElementById('checkin-result');
+            const flip = modal.querySelector('button[onclick="window.flipCamera()"]').parentElement;
+
             if (modal.classList.contains('totem-mode')) {
                 modal.classList.remove('totem-mode', 'bg-black');
                 modal.classList.add('bg-brand-dark', 'p-4');
                 modal.firstElementChild.classList.remove('h-full', 'max-w-none', 'rounded-none');
                 modal.firstElementChild.classList.add('max-w-lg', 'rounded-xl');
                 btnClose.classList.remove('hidden');
+                header.classList.remove('hidden');
+                classSel.classList.remove('hidden');
+                flip.classList.remove('hidden');
+                reader.classList.remove('totem-reader');
+                result.classList.remove('totem-result');
             } else {
                 modal.classList.add('totem-mode', 'bg-black');
                 modal.classList.remove('bg-brand-dark', 'p-4');
-                modal.firstElementChild.classList.add('h-full', 'max-w-none', 'rounded-none');
+                modal.firstElementChild.classList.add('h-full', 'max-w-none', 'rounded-none', 'flex', 'flex-col');
                 modal.firstElementChild.classList.remove('max-w-lg', 'rounded-xl');
                 btnClose.classList.add('hidden');
-                // Add a way to exit totem mode (e.g. double click on the header)
-                modal.firstElementChild.firstElementChild.ondblclick = window.toggleTotemMode;
+                header.classList.add('hidden');
+                classSel.classList.add('hidden');
+                flip.classList.add('hidden');
+                reader.classList.add('totem-reader');
+                result.classList.add('totem-result');
+                // Exit via double tap/click anywhere or long press? 
+                // Let's use double click on result area
+                result.ondblclick = window.toggleTotemMode;
             }
         };
 
@@ -4202,7 +4307,7 @@ Belém-PA, [DATA_ATUAL].
                 else if(s.paymentStatus === 'Isento') payBadge = `<span class="text-gray-500 font-bold text-xs">Isento</span>`;
 
                 let photoHtml = `<div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 text-xs font-bold shrink-0">${s.name.charAt(0).toUpperCase()}</div>`;
-                if(s.photoBase64) photoHtml = `<img src="${s.photoBase64}" class="w-8 h-8 rounded-full object-cover border border-gray-300 shrink-0">`;
+                if(s.photoURL || s.photoBase64) photoHtml = `<img src="${s.photoURL || s.photoBase64}" class="w-8 h-8 rounded-full object-cover border border-gray-300 shrink-0">`;
 
                 let subNameHtml = '';
                 if (isNewStudent) {
@@ -4218,7 +4323,7 @@ Belém-PA, [DATA_ATUAL].
                     subNameHtml += `<div class="text-[10px] text-yellow-600 dark:text-yellow-500 font-bold mt-0.5"><i class="fa-solid fa-user-shield"></i> Resp: ${s.guardian}</div>`;
                 }
 
-                // Check for 15 days absence
+                // Check for 7 and 15 days absence
                 let absenceWarning = '';
                 if (s.attendance && s.attendance.length > 0) {
                     const lastCheckinStr = s.attendance[s.attendance.length - 1];
@@ -4232,24 +4337,30 @@ Belém-PA, [DATA_ATUAL].
                     
                     const daysSinceLastCheckin = Math.floor((new Date() - lastCheckinDate) / (1000 * 60 * 60 * 24));
                     if (daysSinceLastCheckin >= 15) {
-                        absenceWarning = `<div class="text-[10px] text-orange-600 dark:text-orange-400 font-bold mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i> Sumido há ${daysSinceLastCheckin} dias</div>`;
+                        absenceWarning = `<div class="text-[10px] text-red-600 dark:text-red-400 font-bold mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i> EVASÃO: ${daysSinceLastCheckin} dias ausente</div>`;
+                    } else if (daysSinceLastCheckin >= 7) {
+                        absenceWarning = `<div class="text-[10px] text-orange-600 dark:text-orange-400 font-bold mt-0.5"><i class="fa-solid fa-clock-rotate-left"></i> ALERTA: ${daysSinceLastCheckin} dias ausente</div>`;
                     }
                 } else {
                      const daysSinceRegistration = Math.floor((new Date() - new Date(s.registrationDate)) / (1000 * 60 * 60 * 24));
                      if (daysSinceRegistration >= 15) {
-                         absenceWarning = `<div class="text-[10px] text-orange-600 dark:text-orange-400 font-bold mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i> Nunca fez check-in (${daysSinceRegistration} dias)</div>`;
+                         absenceWarning = `<div class="text-[10px] text-red-600 dark:text-red-400 font-bold mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i> NUNCA APARECEU (${daysSinceRegistration} dias)</div>`;
+                     } else if (daysSinceRegistration >= 7) {
+                         absenceWarning = `<div class="text-[10px] text-orange-600 dark:text-orange-400 font-bold mt-0.5"><i class="fa-solid fa-clock-rotate-left"></i> SEM FREQUÊNCIA (${daysSinceRegistration} dias)</div>`;
                      }
                 }
                 subNameHtml += absenceWarning;
 
                 let actionsHtml = `
-                    <button onclick="window.sendWhatsAppReminder('${s.id}')" class="text-green-600 hover:text-green-800 mx-1" title="Lembrete WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
-                    <button onclick="window.informPayment('${s.id}')" class="text-green-500 hover:text-green-700 mx-1" title="Informar Pagamento"><i class="fa-solid fa-hand-holding-dollar"></i></button>
-                    <button onclick="window.openProgressModal('${s.id}')" class="text-blue-500 hover:text-blue-700 mx-1" title="Progresso"><i class="fa-solid fa-chart-line"></i></button>
-                    <button onclick="window.openContractModal('${s.id}')" class="text-indigo-500 hover:text-indigo-700 mx-1" title="Contrato"><i class="fa-solid fa-file-contract"></i></button>
-                    <button onclick="window.openEditModal('${s.id}')" class="text-orange-500 hover:text-orange-700 mx-1" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                    <button onclick="window.toggleArchive('${s.id}')" class="text-red-500 hover:text-red-700 mx-1" title="${s.archived ? 'Desarquivar' : 'Arquivar'}"><i class="fa-solid ${s.archived ? 'fa-box-open' : 'fa-box-archive'}"></i></button>
-                    ${s.archived ? `<button onclick="window.deleteStudentPermanently('${s.id}')" class="text-red-700 hover:text-red-900 mx-1" title="Excluir Definitivamente"><i class="fa-solid fa-trash"></i></button>` : ''}
+                    <div class="flex items-center justify-end gap-1">
+                        <button onclick="window.openWhatsAppActionsModal('${s.id}')" class="text-green-600 hover:text-green-800 p-1" title="Ações WhatsApp"><i class="fa-brands fa-whatsapp text-lg"></i></button>
+                        <button onclick="window.informPayment('${s.id}')" class="text-green-500 hover:text-green-700 p-1" title="Informar Pagamento"><i class="fa-solid fa-hand-holding-dollar"></i></button>
+                        <button onclick="window.openProgressModal('${s.id}')" class="text-blue-500 hover:text-blue-700 p-1" title="Progresso"><i class="fa-solid fa-chart-line"></i></button>
+                        <button onclick="window.openContractModal('${s.id}')" class="text-indigo-500 hover:text-indigo-700 p-1" title="Contrato"><i class="fa-solid fa-file-contract"></i></button>
+                        <button onclick="window.openEditModal('${s.id}')" class="text-orange-500 hover:text-orange-700 p-1" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="window.toggleArchive('${s.id}')" class="text-red-400 hover:text-red-600 p-1" title="${s.archived ? 'Desarquivar' : 'Arquivar'}"><i class="fa-solid ${s.archived ? 'fa-box-open' : 'fa-box-archive'}"></i></button>
+                        ${s.archived ? `<button onclick="window.deleteStudentPermanently('${s.id}')" class="text-red-700 hover:text-red-900 p-1" title="Excluir Definitivamente"><i class="fa-solid fa-trash"></i></button>` : ''}
+                    </div>
                 `;
 
                 let rowClass = "border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition";
@@ -4378,6 +4489,19 @@ Belém-PA, [DATA_ATUAL].
                 if (window.studentSortable) {
                     window.studentSortable.destroy();
                     window.studentSortable = null;
+
+        window.uploadPhotoToStorage = async (base64, studentId) => {
+            if (!base64 || !base64.startsWith('data:image')) return null;
+            try {
+                const storageRef = ref(window.storage, `students/${studentId}.jpg`);
+                await uploadString(storageRef, base64, 'data_url');
+                const downloadURL = await getDownloadURL(storageRef);
+                return downloadURL;
+            } catch (e) {
+                console.error("Error uploading photo:", e);
+                return null;
+            }
+        };
                 }
                 return;
             }
@@ -4708,9 +4832,7 @@ Belém-PA, [DATA_ATUAL].
             }
             
             let phone = s.phone.replace(/\D/g, '');
-            if (phone.length === 11) {
-                phone = '55' + phone;
-            }
+            if (phone.length === 11) phone = '55' + phone;
             
             let nextDueStr = '--';
             if (s.nextDueDate) {
@@ -4718,26 +4840,89 @@ Belém-PA, [DATA_ATUAL].
                 nextDueStr = adjDate ? formatDate(adjDate) : formatDate(s.nextDueDate);
             }
             
-            const isFirstPayment = !s.paymentHistory || s.paymentHistory.length === 0;
             const isLate = isPaymentLate(s);
-            const isDueSoon = isPaymentDueSoon(s);
             const firstName = s.name.split(' ')[0];
             
-            let message = '';
-            
-            if (isFirstPayment) {
-                message = `Fala ${firstName}, beleza? 🥋 Que bom ter você na Tanque Team! Passando só pra dar um toque sobre o seu primeiro pagamento. Qualquer dúvida, é só chamar! Tamo junto! 🥊`;
-            } else if (isLate) {
-                message = `Opa ${firstName}, tudo tranquilo? Passando aqui rapidinho só pra te lembrar da mensalidade da Tanque Team que venceu no dia ${nextDueStr}. Se já tiver acertado, pode desconsiderar essa mensagem, beleza? Qualquer coisa me dá um grito aqui! Oss! 🥋`;
-            } else if (isDueSoon) {
-                message = `Fala ${firstName}, tudo bem? Passando pra te dar um toque que o vencimento da sua mensalidade da Tanque Team tá chegando (dia ${nextDueStr}). Qualquer dúvida, tô por aqui! Bons treinos! 💪`;
-            } else {
-                message = `Fala ${firstName}, tudo bem? Passando pra te dar um toque sobre a sua mensalidade da Tanque Team (vencimento: ${nextDueStr}). Qualquer dúvida, tô por aqui! Bons treinos! 💪`;
+            let message = `Olá ${firstName}! Tudo bem? Passando para lembrar que sua mensalidade na Tanque Team vence dia ${nextDueStr}. Oss!`;
+            if (isLate) {
+                message = `Olá ${firstName}! Notamos que sua mensalidade na Tanque Team está pendente (vencimento em ${nextDueStr}). Poderia verificar por favor? Oss!`;
             }
+
+            const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        };
+
+        window.sendWhatsAppWelcome = (id) => {
+            const s = window.students.find(st => st.id === id);
+            if (!s || !s.phone) { window.customAlert('Aluno sem telefone.'); return; }
+            let phone = s.phone.replace(/\D/g, '');
+            if (phone.length === 11) phone = '55' + phone;
             
-            const encodedMessage = encodeURIComponent(message);
+            const firstName = s.name.split(' ')[0];
+            const message = `Olá ${firstName}! Seja muito bem-vindo(a) à Família Tanque Team! 🥊🥋 Ficamos felizes em ter você conosco. Qualquer dúvida, estamos à disposição. Oss!`;
             
-            window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
+            const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        };
+
+        window.sendWhatsAppCharge = (id) => {
+            const s = window.students.find(st => st.id === id);
+            if (!s || !s.phone) { window.customAlert('Aluno sem telefone.'); return; }
+            let phone = s.phone.replace(/\D/g, '');
+            if (phone.length === 11) phone = '55' + phone;
+            
+            let nextDueStr = '--';
+            if (s.nextDueDate) {
+                const adjDate = getAdjustedNextDueDate(s);
+                nextDueStr = adjDate ? formatDate(adjDate) : formatDate(s.nextDueDate);
+            }
+
+            const planInfo = window.getPlanInfo(s.plan);
+            const value = s.planValue ? `R$ ${Number(s.planValue).toFixed(2).replace('.', ',')}` : 'o valor da mensalidade';
+            
+            const firstName = s.name.split(' ')[0];
+            const message = `Olá ${firstName}! Esperamos que esteja tudo bem. Passando apenas para formalizar a cobrança da mensalidade (${planInfo.short}) no valor de ${value}, com vencimento original em ${nextDueStr}. Se já realizou o pagamento, favor desconsiderar. Oss!`;
+            
+            const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        };
+
+        window.sendWhatsAppAbsence = (id) => {
+            const s = window.students.find(st => st.id === id);
+            if (!s || !s.phone) { window.customAlert('Aluno sem telefone.'); return; }
+            let phone = s.phone.replace(/\D/g, '');
+            if (phone.length === 11) phone = '55' + phone;
+            
+            const firstName = s.name.split(' ')[0];
+            const message = `Olá ${firstName}! Notamos que você está sumido dos treinos há alguns dias. Está tudo bem? Sentimos sua falta no tatame! Se precisar de algo ou se tiver algum problema, nos avise. Esperamos te ver em breve! Oss! 🥋🥊`;
+            
+            const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        };
+
+        window.openWhatsAppActionsModal = (id) => {
+            const s = window.students.find(st => st.id === id);
+            if (!s) return;
+            document.getElementById('whatsapp-student-id').value = id;
+            document.getElementById('whatsapp-student-name').innerText = s.name;
+            const modal = document.getElementById('whatsapp-actions-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeWhatsAppActionsModal = () => {
+            const modal = document.getElementById('whatsapp-actions-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.confirmAndSendWhatsApp = (type) => {
+            const id = document.getElementById('whatsapp-student-id').value;
+            window.closeWhatsAppActionsModal();
+            if (type === 'welcome') window.sendWhatsAppWelcome(id);
+            else if (type === 'reminder') window.sendWhatsAppReminder(id);
+            else if (type === 'charge') window.sendWhatsAppCharge(id);
+            else if (type === 'absence') window.sendWhatsAppAbsence(id);
         };
 
         window.informPayment = async (id) => {
