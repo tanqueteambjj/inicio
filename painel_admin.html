@@ -199,8 +199,8 @@
                         <p class="text-3xl font-bold text-gray-800 dark:text-white" id="stat-archived">0</p>
                     </div>
                     <div id="card-exempt" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-l-4 border-yellow-500 border-b-4 border-b-transparent relative overflow-hidden cursor-pointer hover:bg-yellow-50 dark:hover:bg-gray-700 transition-all font-medium" onclick="window.switchTab('exempt')">
-                        <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-yellow-500 pointer-events-none"><i class="fa-solid fa-handshake-angle"></i></div>
-                        <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Isentos</p>
+                        <div class="absolute right-0 top-0 opacity-10 text-7xl mt-4 mr-2 text-yellow-500 pointer-events-none"><i class="fa-solid fa-briefcase"></i></div>
+                        <p class="text-gray-400 dark:text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Administrativo</p>
                         <p class="text-3xl font-bold text-gray-800 dark:text-white" id="stat-exempt">0</p>
                     </div>
                 </div>
@@ -2669,11 +2669,15 @@
             let kidsCount = 0, adultsCount = 0, adminCount = 0, adminKidsCount = 0, adminAdultsCount = 0, archivedCount = 0, exemptCount = 0;
             window.students.forEach(s => {
                 if (s.archived) { archivedCount++; return; }
-                if (s.paymentStatus === 'Isento') exemptCount++;
+                const planInfo = window.getPlanInfo(s.plan);
+                const isAdministrative = planInfo && (String(planInfo.short).toLowerCase().includes('administrativo') || String(planInfo.short).toLowerCase().includes('administração') || String(s.plan).toLowerCase().includes('administracao'));
+                
+                if (isAdministrative) exemptCount++;
+                
                 if (isStudentAdmin(s)) {
                     adminCount++;
                     if (isStudentKid(s)) adminKidsCount++; else adminAdultsCount++;
-                } else {
+                } else if (!isAdministrative) {
                     if (isStudentKid(s)) kidsCount++; else adultsCount++;
                 }
             });
@@ -4142,9 +4146,18 @@ Belém-PA, [DATA_ATUAL].
             let filtered = window.students;
             
             if (window.currentTab === 'archived') filtered = filtered.filter(s => s.archived);
-            else if (window.currentTab === 'exempt') filtered = filtered.filter(s => !s.archived && s.paymentStatus === 'Isento');
+            else if (window.currentTab === 'exempt') filtered = filtered.filter(s => {
+                if (s.archived) return false;
+                const planInfo = window.getPlanInfo(s.plan);
+                return planInfo && (String(planInfo.short).toLowerCase().includes('administrativo') || String(planInfo.short).toLowerCase().includes('administração') || String(s.plan).toLowerCase().includes('administracao'));
+            });
             else {
-                filtered = filtered.filter(s => !s.archived);
+                filtered = filtered.filter(s => {
+                    if (s.archived) return false;
+                    const planInfo = window.getPlanInfo(s.plan);
+                    const isAdministrative = planInfo && (String(planInfo.short).toLowerCase().includes('administrativo') || String(planInfo.short).toLowerCase().includes('administração') || String(s.plan).toLowerCase().includes('administracao'));
+                    return !isAdministrative;
+                });
                 if (window.currentTab === 'kids') filtered = filtered.filter(s => isStudentKid(s) && !isStudentAdmin(s));
                 else if (window.currentTab === 'adults') filtered = filtered.filter(s => !isStudentKid(s) && !isStudentAdmin(s));
                 else if (window.currentTab === 'admin') filtered = filtered.filter(s => isStudentAdmin(s));
@@ -4564,8 +4577,12 @@ Belém-PA, [DATA_ATUAL].
             
             window.students.forEach(student => {
                 if (student.attendanceLog) {
+                    const seenClasses = new Set();
                     student.attendanceLog.forEach(log => {
                         if (log.date === dateInput) {
+                            if (seenClasses.has(log.time)) return;
+                            seenClasses.add(log.time);
+                            
                             attendanceRecords.push({
                                 studentId: student.id,
                                 studentName: student.name,
@@ -5535,12 +5552,15 @@ Belém-PA, [DATA_ATUAL].
 
             if (!isProjection) {
                 window.students.forEach(student => {
+                    const planInfo = window.getPlanInfo(student.plan);
+                    const isAdministrative = planInfo && (String(planInfo.short).toLowerCase().includes('administrativo') || String(planInfo.short).toLowerCase().includes('administração') || String(student.plan).toLowerCase().includes('administracao'));
+                    if (isAdministrative) return;
+
                     if (student.paymentHistory) {
                         student.paymentHistory.forEach(payment => {
                             const payDate = new Date(payment.date);
                             const payPeriod = `${payDate.getFullYear()}-${String(payDate.getMonth() + 1).padStart(2, '0')}`;
                             if (payPeriod === period) {
-                                const planInfo = window.getPlanInfo(student.plan);
                                 const amount = payment.amount || 0;
                                 const discount = payment.discount || 0;
                                 const gross = amount + discount;
@@ -5555,10 +5575,13 @@ Belém-PA, [DATA_ATUAL].
                 window.students.forEach(student => {
                     if (student.archived || student.enrollmentStatus === 'Inativo') return;
                     
+                    const planInfo = window.getPlanInfo(student.plan);
+                    const isAdministrative = planInfo && (String(planInfo.short).toLowerCase().includes('administrativo') || String(planInfo.short).toLowerCase().includes('administração') || String(student.plan).toLowerCase().includes('administracao'));
+                    if (isAdministrative) return;
+                    
                     const nextDueStr = student.nextDueDate;
                     if (!nextDueStr) return;
                     
-                    const planInfo = window.getPlanInfo(student.plan);
                     const expectedAmount = student.planValue !== undefined ? student.planValue : (planInfo.price || 0);
 
                     // Parse target period
