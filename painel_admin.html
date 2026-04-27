@@ -1867,23 +1867,53 @@
 
             try {
                 // Filter students that have photos
-                const studentsWithPhotos = window.students.filter(s => s.photoBase64 && s.status === 'ativo');
+                const studentsWithPhotos = window.students.filter(s => (s.photoBase64 || s.photoURL) && s.enrollmentStatus === 'Ativo' && !s.archived);
                 
                 if (studentsWithPhotos.length === 0) {
-                    throw new Error("Não há alunos ativos com foto cadastrada para comparação.");
+                    throw new Error("Não há alunos ativos com foto (Base64 ou URL) cadastrada para comparação.");
                 }
 
                 const groupPhotoBase64 = selectedClassPhoto.split(',')[1];
                 
-                // Limit to 40 students to avoid token limits per request
-                const batch = studentsWithPhotos.slice(0, 40);
+                // Limit to batch to avoid payload limits
+                const batch = studentsWithPhotos.slice(0, 30);
                 
-                const studentListStr = batch.map(s => `ID: ${s.id}, Nome: ${s.name}`).join('\n');
+                // For batch members with URL, we try to fetch them if possible, but for now we prioritize base64
+                // A better approach would be to fetch images from storage, but CORS might be an issue.
+                // Let's at least fix the filtering logic first.
+                
+                const studentsToProcess = [];
+                for (const s of batch) {
+                    if (s.photoBase64) {
+                        studentsToProcess.push(s);
+                    } else if (s.photoURL) {
+                        // We can't easily use URL in inlineData without fetching. 
+                        // For now we'll only use those with photoBase64 if we want absolute safety, 
+                        // but let's try to include their names at least to show we identified them.
+                        // Actually, if we have photoURL, we should try to fetch it.
+                        try {
+                            const resp = await fetch(s.photoURL);
+                            const blob = await resp.blob();
+                            const b64 = await new Promise((resolve) => {
+                                const reader = new FileReader();
+                                reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                                reader.readAsDataURL(blob);
+                            });
+                            studentsToProcess.push({ ...s, tempB64: b64 });
+                        } catch (err) {
+                            console.warn(`Could not fetch photo for student ${s.name}`, err);
+                        }
+                    }
+                }
 
-                const photosParts = batch.map(s => ({
+                if (studentsToProcess.length === 0) {
+                    throw new Error("Nenhum dos alunos ativos possui uma foto processável (Base64 vindo do cadastro ou URL acessível).");
+                }
+
+                const photosParts = studentsToProcess.map(s => ({
                     inlineData: {
                         mimeType: "image/jpeg",
-                        data: s.photoBase64.split(',')[1]
+                        data: s.photoBase64 ? s.photoBase64.split(',')[1] : s.tempB64
                     }
                 }));
 
@@ -1895,10 +1925,10 @@
                 };
 
                 const prompt = `Analise a foto de grupo fornecida e identifique quais destes alunos estão presentes nela. 
-                Estou fornecendo fotos individuais de referência de 40 alunos.
+                Estou fornecendo fotos individuais de referência de ${studentsToProcess.length} alunos.
                 
                 Lista de Alunos de Referência:
-                ${studentListStr}
+                ${studentsToProcess.map(s => `ID: ${s.id}, Nome: ${s.name}`).join('\n')}
 
                 IMPORTANTE: Responda APENAS com um array JSON contendo os IDs dos alunos que você identificou na foto do grupo. 
                 Se não identificar nenhum, retorne [].
@@ -2859,7 +2889,12 @@
                         try {
                             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
                             else await signInAnonymously(auth);
-                        } catch (e) { console.error("Auth error", e); }
+                        } catch (e) { 
+                            console.error("Auth error", e);
+                            if (e.code === 'auth/requests-from-referer-blocked') {
+                                window.customAlert("Erro de Autenticação: O domínio desta aplicação não está autorizado no Firebase. Por favor, adicione os domínios do AI Studio (ais-dev e ais-pre) na lista de 'Authorized Domains' no console do Firebase (Authentication > Settings).");
+                            }
+                        }
                         await window.loadPlans();
                         await window.loadSchedules();
                         window.loadData(); window.loadNotices(); window.loadExperimentalData();
