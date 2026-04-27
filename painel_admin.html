@@ -1664,7 +1664,7 @@
                 
                 if (config.apiKey) {
                     const { GoogleGenAI } = await import("https://cdn.jsdelivr.net/npm/@google/genai/+esm");
-                    ai = new GoogleGenAI({ apiKey: config.apiKey });
+                    ai = new GoogleGenAI(config.apiKey);
                     window.ai = ai;
                 } else {
                     console.warn("NEXT_PUBLIC_GEMINI_API_KEY not defined. AI features disabled.");
@@ -1934,12 +1934,14 @@
                 Se não identificar nenhum, retorne [].
                 Exemplo de resposta: ["ID1", "ID2"]`;
 
-                const response = await ai.models.generateContent({
-                    model: "gemini-3-flash-preview",
-                    contents: { parts: [...photosParts, groupPhotoPart, { text: prompt }] },
-                });
-
-                const text = response.text;
+                const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+                const result = await model.generateContent([
+                    prompt,
+                    ...photosParts,
+                    groupPhotoPart
+                ]);
+                const response = await result.response;
+                const text = response.text();
                 let detectedIds = [];
                 try {
                     const jsonMatch = text.match(/\[.*\]/s);
