@@ -350,6 +350,7 @@
                             <p class="text-xs text-gray-500 dark:text-gray-400">Verifique os alunos que fizeram check-in na data selecionada</p>
                         </div>
                         <div class="flex items-center gap-2">
+                            <button onclick="window.openClassPhotoModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-4 py-1.5 rounded shadow-sm transition flex items-center gap-2"><i class="fa-solid fa-camera"></i> FOTO GERAL (IA)</button>
                             <button onclick="window.printAttendanceReport()" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 text-sm bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 px-3 py-1.5 rounded shadow-sm font-bold"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
                         </div>
                     </div>
@@ -768,6 +769,86 @@
         </div>
     </div>
 
+    <!-- Modal: Foto Geral da Aula -->
+    <div id="class-photo-modal" class="fixed inset-0 z-[90] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-blue-600">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white"><i class="fa-solid fa-camera text-blue-600 mr-2"></i> Foto Geral da Aula</h3>
+                <button onclick="window.closeClassPhotoModal()"><i class="fa-solid fa-times text-gray-400 hover:text-gray-800 dark:hover:text-white"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 bg-white dark:bg-gray-800 flex flex-col items-center gap-6">
+                <div class="text-center">
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Capture uma foto da turma inteira. A IA identificará os rostos dos alunos cadastrados.</p>
+                </div>
+                
+                <div id="class-photo-preview-container" class="w-full aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden relative">
+                    <div id="class-photo-placeholder" class="text-center p-8">
+                        <i class="fa-solid fa-image text-4xl text-gray-300 dark:text-gray-600 mb-2"></i>
+                        <p class="text-xs text-gray-400">Nenhuma foto selecionada</p>
+                    </div>
+                    <img id="class-photo-img-preview" class="hidden w-full h-full object-contain">
+                    <video id="class-photo-camera-stream" class="hidden w-full h-full object-cover" autoplay playsinline></video>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-3">
+                    <button id="class-photo-btn-camera" onclick="window.startClassPhotoCamera()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded text-sm font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition flex items-center gap-2"><i class="fa-solid fa-camera"></i> Usar Câmera</button>
+                    <button id="class-photo-btn-capture" onclick="window.captureClassPhoto()" class="hidden px-4 py-2 bg-brand-red text-white rounded text-sm font-bold hover:bg-red-700 transition flex items-center gap-2 shadow-md"><i class="fa-solid fa-circle-dot"></i> Capturar Agora</button>
+                    <button onclick="document.getElementById('class-photo-upload').click()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded text-sm font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition flex items-center gap-2"><i class="fa-solid fa-upload"></i> Subir Arquivo</button>
+                    <input type="file" id="class-photo-upload" class="hidden" accept="image/*" onchange="window.handleClassPhotoUpload(event)">
+                </div>
+
+                <div id="class-photo-config" class="w-full bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border dark:border-gray-600 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data da Aula</label>
+                        <input type="date" id="class-photo-date" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Turma / Horário</label>
+                        <select id="class-photo-schedule" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-blue-500 focus:outline-none">
+                            <!-- Preenchido via JS -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-t border-gray-200 dark:border-gray-600 flex justify-end gap-3 shrink-0">
+                <button onclick="window.closeClassPhotoModal()" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition">Cancelar</button>
+                <button id="btn-process-class-photo" onclick="window.processClassPhoto()" class="px-4 py-2 bg-blue-600 text-white rounded text-sm font-bold hover:bg-blue-700 transition shadow-sm flex items-center gap-2" disabled><i class="fa-solid fa-wand-magic-sparkles"></i> Analisar Foto com IA</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Resultado do Reconhecimento Facial -->
+    <div id="class-photo-result-modal" class="fixed inset-0 z-[100] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-emerald-500">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white"><i class="fa-solid fa-check-double text-emerald-500 mr-2"></i> Alunos Identificados</h3>
+                <button onclick="window.closeClassPhotoResultModal()"><i class="fa-solid fa-times text-gray-400 hover:text-gray-800 dark:hover:text-white"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 bg-white dark:bg-gray-800">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">A IA identificou os seguintes alunos na foto. Desmarque os que não estiverem presentes:</p>
+                
+                <div id="class-photo-results-list" class="space-y-2">
+                    <!-- Lista de checkboxes injetada via JS -->
+                </div>
+
+                <div id="class-photo-manual-add" class="mt-6 pt-6 border-t dark:border-gray-700">
+                    <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Adicionar aluno manualmente:</p>
+                    <div class="flex gap-2">
+                        <select id="class-photo-manual-select" class="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-emerald-500 focus:outline-none">
+                            <option value="">Selecione um aluno...</option>
+                            <!-- Preenchido via JS -->
+                        </select>
+                        <button onclick="window.addManualRecognition()" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-2 rounded text-sm font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-t border-gray-200 dark:border-gray-600 flex justify-end gap-3 shrink-0">
+                <button onclick="window.closeClassPhotoResultModal()" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition">Voltar</button>
+                <button onclick="window.confirmClassAttendance()" class="px-6 py-2 bg-emerald-600 text-white rounded text-sm font-bold hover:bg-emerald-700 transition shadow-md flex items-center gap-2"><i class="fa-solid fa-calendar-check"></i> Confirmar Presença Total</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Informar Pagamento -->
     <div id="payment-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-green-500">
@@ -921,6 +1002,10 @@
                         <!-- Populated dynamically -->
                     </select>
                 </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data</label>
+                    <input type="date" id="bulk-date-selector" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none">
+                </div>
                 <div class="mt-6 flex justify-end gap-2 border-t border-gray-100 dark:border-gray-700 pt-4">
                     <button onclick="window.closeBulkAttendanceModal()" class="px-4 py-2 border dark:border-gray-600 rounded text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Cancelar</button>
                     <button onclick="window.confirmBulkAttendance()" class="px-5 py-2 bg-green-600 text-white rounded text-sm font-bold hover:bg-green-500 shadow-md">Confirmar</button>
@@ -1014,7 +1099,7 @@
                 <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1"><i class="fa-solid fa-circle-info"></i> O sistema bloqueará check-ins repetidos na mesma turma no mesmo dia.</p>
             </div>
 
-            <div class="p-6 flex-1 flex flex-col items-center bg-white dark:bg-gray-800">
+            <div class="p-6 flex-1 flex flex-col items-center bg-white dark:bg-gray-800 overflow-y-auto">
                 <div class="w-full flex justify-end mb-2">
                     <button onclick="window.flipCamera()" class="text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded font-bold transition flex items-center gap-2 shadow-sm">
                         <i class="fa-solid fa-camera-rotate"></i> Virar Câmera
@@ -1025,6 +1110,12 @@
                 </div>
                 <div id="checkin-result" class="text-center py-4 w-full rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 font-medium text-gray-600 dark:text-gray-300 min-h-[100px] flex flex-col items-center justify-center transition-all duration-300">
                     <i class="fa-solid fa-qrcode text-3xl text-gray-400 mb-2 animate-bounce"></i> Aponte o QR Code...
+                </div>
+                
+                <div class="w-full mt-6">
+                    <button onclick="window.closeCheckinModal()" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg shadow transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-arrow-left"></i> Voltar / Sair do Leitor
+                    </button>
                 </div>
             </div>
         </div>
@@ -1564,6 +1655,26 @@
         import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query, where, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
+        let ai = null;
+        async function initAI() {
+            try {
+                const configResp = await fetch('/api/config');
+                if (!configResp.ok) throw new Error("Config fetch failed");
+                const config = await configResp.json();
+                
+                if (config.apiKey) {
+                    const { GoogleGenAI } = await import("https://cdn.jsdelivr.net/npm/@google/genai/+esm");
+                    ai = new GoogleGenAI({ apiKey: config.apiKey });
+                    window.ai = ai;
+                } else {
+                    console.warn("NEXT_PUBLIC_GEMINI_API_KEY not defined. AI features disabled.");
+                }
+            } catch (e) {
+                console.error("Error initializing Gemini AI:", e);
+            }
+        }
+        initAI();
+
         window.customAlert = (message) => {
             return new Promise((resolve) => {
                 const modal = document.getElementById('custom-modal');
@@ -1618,6 +1729,308 @@
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
             });
+        };
+
+        // --- Class Photo Facial Recognition Logic ---
+        let classPhotoStream = null;
+        let selectedClassPhoto = null;
+        let identifiedStudents = [];
+
+        window.openClassPhotoModal = () => {
+            document.getElementById('class-photo-modal').classList.remove('hidden');
+            document.getElementById('class-photo-modal').classList.add('flex');
+            document.getElementById('class-photo-date').value = window.getLocalISODate ? window.getLocalISODate() : new Date().toISOString().split('T')[0];
+            
+            // Populate schedules
+            const scheduleSelect = document.getElementById('class-photo-schedule');
+            scheduleSelect.innerHTML = '<option value="">Selecione o Horário...</option>';
+            const scheduleList = [
+                "07:00", "08:00", "09:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"
+            ];
+            scheduleList.forEach(time => {
+                const opt = document.createElement('option');
+                opt.value = time;
+                opt.textContent = time;
+                scheduleSelect.appendChild(opt);
+            });
+            
+            // Populate manual add select
+            const manualSelect = document.getElementById('class-photo-manual-select');
+            manualSelect.innerHTML = '<option value="">Adicionar aluno manualmente...</option>';
+            const sortedStudents = [...window.students].sort((a,b) => a.name.localeCompare(b.name));
+            sortedStudents.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                manualSelect.appendChild(opt);
+            });
+        };
+
+        window.closeClassPhotoModal = () => {
+            document.getElementById('class-photo-modal').classList.add('hidden');
+            document.getElementById('class-photo-modal').classList.remove('flex');
+            window.stopClassPhotoCamera();
+            selectedClassPhoto = null;
+            document.getElementById('class-photo-img-preview').classList.add('hidden');
+            document.getElementById('class-photo-placeholder').classList.remove('hidden');
+            document.getElementById('btn-process-class-photo').disabled = true;
+        };
+
+        window.startClassPhotoCamera = async () => {
+            const video = document.getElementById('class-photo-camera-stream');
+            const placeholder = document.getElementById('class-photo-placeholder');
+            const imgPreview = document.getElementById('class-photo-img-preview');
+            const btnCamera = document.getElementById('class-photo-btn-camera');
+            const btnCapture = document.getElementById('class-photo-btn-capture');
+
+            try {
+                classPhotoStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                video.srcObject = classPhotoStream;
+                video.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                imgPreview.classList.add('hidden');
+                btnCamera.innerText = 'Trocar Câmera';
+                btnCapture.classList.remove('hidden');
+            } catch (err) {
+                console.error("Camera error:", err);
+                window.customAlert("Não foi possível acessar a câmera. Tente subir um arquivo.");
+            }
+        };
+
+        window.stopClassPhotoCamera = () => {
+            if (classPhotoStream) {
+                classPhotoStream.getTracks().forEach(track => track.stop());
+                classPhotoStream = null;
+            }
+            const video = document.getElementById('class-photo-camera-stream');
+            video.classList.add('hidden');
+            const btnCapture = document.getElementById('class-photo-btn-capture');
+            if(btnCapture) btnCapture.classList.add('hidden');
+            document.getElementById('class-photo-btn-camera').innerText = 'Usar Câmera';
+        };
+
+        window.captureClassPhoto = () => {
+            const video = document.getElementById('class-photo-camera-stream');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            selectedClassPhoto = canvas.toDataURL('image/jpeg', 0.8);
+            const imgPreview = document.getElementById('class-photo-img-preview');
+            imgPreview.src = selectedClassPhoto;
+            imgPreview.classList.remove('hidden');
+            video.classList.add('hidden');
+            
+            window.stopClassPhotoCamera();
+            document.getElementById('btn-process-class-photo').disabled = false;
+        };
+
+        window.handleClassPhotoUpload = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                selectedClassPhoto = event.target.result;
+                const imgPreview = document.getElementById('class-photo-img-preview');
+                imgPreview.src = selectedClassPhoto;
+                imgPreview.classList.remove('hidden');
+                document.getElementById('class-photo-placeholder').classList.add('hidden');
+                window.stopClassPhotoCamera();
+                document.getElementById('btn-process-class-photo').disabled = false;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.processClassPhoto = async () => {
+            if (!selectedClassPhoto) return;
+            
+            if (!ai) {
+                window.customAlert("Reconhecimento Facial por IA não configurado. Por favor, configure a chave NEXT_PUBLIC_GEMINI_API_KEY.");
+                return;
+            }
+
+            const schedule = document.getElementById('class-photo-schedule').value;
+            if (!schedule) {
+                window.customAlert("Por favor, selecione o horário da aula.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-process-class-photo');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Analisando...';
+            btn.disabled = true;
+
+            try {
+                // Filter students that have photos
+                const studentsWithPhotos = window.students.filter(s => s.photoBase64 && s.status === 'ativo');
+                
+                if (studentsWithPhotos.length === 0) {
+                    throw new Error("Não há alunos ativos com foto cadastrada para comparação.");
+                }
+
+                const groupPhotoBase64 = selectedClassPhoto.split(',')[1];
+                
+                // Limit to 40 students to avoid token limits per request
+                const batch = studentsWithPhotos.slice(0, 40);
+                
+                const studentListStr = batch.map(s => `ID: ${s.id}, Nome: ${s.name}`).join('\n');
+
+                const photosParts = batch.map(s => ({
+                    inlineData: {
+                        mimeType: "image/jpeg",
+                        data: s.photoBase64.split(',')[1]
+                    }
+                }));
+
+                const groupPhotoPart = {
+                    inlineData: {
+                        mimeType: "image/jpeg",
+                        data: groupPhotoBase64
+                    }
+                };
+
+                const prompt = `Analise a foto de grupo fornecida e identifique quais destes alunos estão presentes nela. 
+                Estou fornecendo fotos individuais de referência de 40 alunos.
+                
+                Lista de Alunos de Referência:
+                ${studentListStr}
+
+                IMPORTANTE: Responda APENAS com um array JSON contendo os IDs dos alunos que você identificou na foto do grupo. 
+                Se não identificar nenhum, retorne [].
+                Exemplo de resposta: ["ID1", "ID2"]`;
+
+                const response = await ai.models.generateContent({
+                    model: "gemini-3-flash-preview",
+                    contents: { parts: [...photosParts, groupPhotoPart, { text: prompt }] },
+                });
+
+                const text = response.text;
+                let detectedIds = [];
+                try {
+                    const jsonMatch = text.match(/\[.*\]/s);
+                    if (jsonMatch) {
+                        detectedIds = JSON.parse(jsonMatch[0]);
+                    }
+                } catch (e) {
+                    console.error("JSON Parse error:", e);
+                }
+
+                identifiedStudents = window.students.filter(s => detectedIds.includes(s.id));
+                window.renderIdentifiedList();
+                
+                document.getElementById('class-photo-modal').classList.add('hidden');
+                document.getElementById('class-photo-result-modal').classList.remove('hidden');
+                document.getElementById('class-photo-result-modal').classList.add('flex');
+
+            } catch (err) {
+                console.error("Recognition Error:", err);
+                window.customAlert("Erro no reconhecimento: " + err.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        };
+
+        window.renderIdentifiedList = () => {
+            const listContainer = document.getElementById('class-photo-results-list');
+            listContainer.innerHTML = '';
+            
+            if (identifiedStudents.length === 0) {
+                listContainer.innerHTML = '<p class="text-center text-gray-500 py-4 italic">Nenhum aluno identificado automaticamente.</p>';
+                return;
+            }
+
+            identifiedStudents.forEach(student => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border dark:border-gray-600";
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <img src="${student.photoBase64 || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-full object-cover border dark:border-gray-500">
+                        <div>
+                            <p class="text-sm font-bold text-gray-800 dark:text-white">${student.name}</p>
+                            <p class="text-[10px] text-gray-500">${student.plan || 'Sem plano'}</p>
+                        </div>
+                    </div>
+                    <input type="checkbox" checked class="w-5 h-5 accent-emerald-600 cursor-pointer" data-id="${student.id}">
+                `;
+                listContainer.appendChild(item);
+            });
+        };
+
+        window.addManualRecognition = () => {
+            const select = document.getElementById('class-photo-manual-select');
+            const studentId = select.value;
+            if (!studentId) return;
+            
+            if (identifiedStudents.some(s => s.id === studentId)) {
+                window.customAlert("Este aluno já está na lista.");
+                return;
+            }
+            
+            const student = window.students.find(s => s.id === studentId);
+            if (student) {
+                identifiedStudents.push(student);
+                window.renderIdentifiedList();
+                select.value = '';
+            }
+        };
+
+        window.closeClassPhotoResultModal = () => {
+            document.getElementById('class-photo-result-modal').classList.add('hidden');
+            document.getElementById('class-photo-result-modal').classList.remove('flex');
+            document.getElementById('class-photo-modal').classList.remove('hidden');
+            document.getElementById('class-photo-modal').classList.add('flex');
+        };
+
+        window.confirmClassAttendance = async () => {
+            const checkboxes = document.querySelectorAll('#class-photo-results-list input[type="checkbox"]');
+            const confirmedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.dataset.id);
+            
+            if (confirmedIds.length === 0) {
+                window.customAlert("Selecione ao menos um aluno.");
+                return;
+            }
+
+            const date = document.getElementById('class-photo-date').value;
+            const schedule = document.getElementById('class-photo-schedule').value;
+            
+            const btn = document.querySelector('#class-photo-result-modal button[onclick*="confirmClassAttendance"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Salvando...';
+            btn.disabled = true;
+
+            try {
+                for (const studentId of confirmedIds) {
+                    const checkinId = `${studentId}-${date}-${schedule.replace(':','')}`;
+                    await setDoc(doc(db, 'checkins', checkinId), {
+                        studentId: studentId,
+                        studentName: window.students.find(s => s.id === studentId).name,
+                        date: date,
+                        time: schedule,
+                        timestamp: new Date().toISOString(),
+                        method: 'facial_recognition_ia'
+                    });
+                }
+
+                document.getElementById('class-photo-result-modal').classList.add('hidden');
+                document.getElementById('class-photo-result-modal').classList.remove('flex');
+                window.closeClassPhotoModal();
+                
+                window.customAlert("Presenças registradas com sucesso!");
+                if (window.currentView === 'attendance') window.loadAttendance();
+                
+            } catch (err) {
+                console.error("Error saving attendance:", err);
+                window.customAlert("Erro ao salvar: " + err.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         };
 
         const firebaseConfig = {
@@ -4494,15 +4907,6 @@ Belém-PA, [DATA_ATUAL].
             window.updateBulkActionsBtn();
         };
 
-        window.initDragAndDrop = () => {
-            const sortOrder = document.getElementById('sort-order');
-            const tbody = document.getElementById('students-table-body');
-            
-            if (!sortOrder || sortOrder.value !== 'manual' || !tbody) {
-                if (window.studentSortable) {
-                    window.studentSortable.destroy();
-                    window.studentSortable = null;
-
         window.uploadPhotoToStorage = async (base64, studentId) => {
             if (!base64 || !base64.startsWith('data:image')) return null;
             try {
@@ -4515,6 +4919,15 @@ Belém-PA, [DATA_ATUAL].
                 return null;
             }
         };
+
+        window.initDragAndDrop = () => {
+            const sortOrder = document.getElementById('sort-order');
+            const tbody = document.getElementById('students-table-body');
+            
+            if (!sortOrder || sortOrder.value !== 'manual' || !tbody) {
+                if (window.studentSortable) {
+                    window.studentSortable.destroy();
+                    window.studentSortable = null;
                 }
                 return;
             }
@@ -4726,6 +5139,7 @@ Belém-PA, [DATA_ATUAL].
             const checkboxes = document.querySelectorAll('.student-checkbox:checked');
             if (checkboxes.length === 0) return;
             document.getElementById('bulk-actions-menu').classList.add('hidden');
+            document.getElementById('bulk-date-selector').value = getLocalISODate();
             document.getElementById('bulk-attendance-modal').classList.remove('hidden');
             document.getElementById('bulk-attendance-modal').classList.add('flex');
         };
@@ -4742,7 +5156,9 @@ Belém-PA, [DATA_ATUAL].
             const timeStr = document.getElementById('bulk-class-selector').value;
             if (!timeStr) return;
 
-            const dateStr = getLocalISODate();
+            const dateStr = document.getElementById('bulk-date-selector').value;
+            if (!dateStr) return;
+
             const newLog = { date: dateStr, time: timeStr, timestamp: new Date().toISOString() };
 
             window.closeBulkAttendanceModal();
@@ -6233,6 +6649,7 @@ Belém-PA, [DATA_ATUAL].
                 widget.classList.add('hidden');
             }
         };
+
     </script>
 </body>
 </html>
