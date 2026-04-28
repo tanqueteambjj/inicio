@@ -1726,9 +1726,10 @@
 
                 if (apiKey) {
                     const { GoogleGenerativeAI } = await import("https://esm.run/@google/generative-ai");
+                    // Use a more robust initialization
                     ai = new GoogleGenerativeAI(apiKey);
                     window.ai = ai;
-                    console.log("Gemini AI inicializada com sucesso.");
+                    console.log("Gemini AI inicializada.");
                 } else {
                     console.warn("GEMINI_API_KEY não encontrada.");
                 }
@@ -2134,14 +2135,15 @@
                     
                     RETORNE EXCLUSIVAMENTE UM ARRAY JSON COM OS IDs: ["id1", "id2"]`;
 
-                    const generativeModel = ai.getGenerativeModel({ model: "gemini-1.5-flash" }); 
+                    const generativeModel = ai.getGenerativeModel({ model: "models/gemini-1.5-flash" }); 
                     const result = await generativeModel.generateContent([
                         ...validPhotosParts,
                         { inlineData: { mimeType: "image/jpeg", data: groupPhotoBase64 } },
-                        prompt
+                        { text: prompt }
                     ]);
 
-                    const responseText = await result.response.text();
+                    const response = await result.response;
+                    const responseText = response.text();
                     try {
                         const jsonMatch = responseText.match(/\[.*\]/s);
                         if (jsonMatch) {
@@ -2161,7 +2163,13 @@
 
             } catch (err) {
                 console.error("Recognition Error:", err);
-                window.customAlert("Erro no reconhecimento: " + err.message);
+                let errorMsg = err.message || String(err);
+                if (errorMsg.includes("404")) {
+                    errorMsg = "O modelo 'gemini-1.5-flash' não foi encontrado ou não está disponível para sua chave de API nesta região.";
+                } else if (errorMsg.includes("429")) {
+                    errorMsg = "Muitas solicitações (429). Aguarde um momento e tente novamente.";
+                }
+                window.customAlert("Erro no reconhecimento: " + errorMsg);
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
