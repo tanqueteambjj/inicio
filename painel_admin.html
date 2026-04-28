@@ -349,11 +349,11 @@
                             <h3 class="font-bold text-gray-800 dark:text-white uppercase text-lg"><i class="fa-solid fa-calendar-check text-blue-500 mr-2"></i> Relatório de Frequência</h3>
                             <p class="text-xs text-gray-500 dark:text-gray-400">Verifique os alunos que fizeram check-in na data selecionada</p>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="window.openClassPhotoModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-4 py-1.5 rounded shadow-sm transition flex items-center gap-2"><i class="fa-solid fa-camera"></i> FOTO GERAL (IA)</button>
-                            <button onclick="window.printAttendanceReport()" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 text-sm bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 px-3 py-1.5 rounded shadow-sm font-bold"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
-                        </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="window.openClassPhotoModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-4 py-1.5 rounded shadow-sm transition flex items-center gap-2"><i class="fa-solid fa-camera"></i> PRESENÇA POR FOTO (IA)</button>
+                        <button onclick="window.printAttendanceReport()" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 text-sm bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 px-3 py-1.5 rounded shadow-sm font-bold"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
                     </div>
+                </div>
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-wrap gap-4 items-center text-sm no-print">
                         <label class="font-bold text-gray-700 dark:text-gray-300">Selecione a Data:</label>
                         <input type="date" id="attendance-date-filter" onchange="window.renderAttendanceTable()" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red">
@@ -769,6 +769,7 @@
         </div>
     </div>
 
+
     <!-- Modal: Foto Geral da Aula -->
     <div id="class-photo-modal" class="fixed inset-0 z-[90] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-blue-600">
@@ -778,7 +779,7 @@
             </div>
             <div class="p-6 overflow-y-auto flex-1 bg-white dark:bg-gray-800 flex flex-col items-center gap-6">
                 <div class="text-center">
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Capture uma foto da turma inteira. A IA identificará os rostos dos alunos cadastrados.</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Capture uma foto da turma inteira. A IA identificará os rostos dos alunos cadastrados com base na foto de perfil.</p>
                 </div>
                 
                 <div id="class-photo-preview-container" class="w-full aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden relative">
@@ -847,6 +848,15 @@
                 <button onclick="window.confirmClassAttendance()" class="px-6 py-2 bg-emerald-600 text-white rounded text-sm font-bold hover:bg-emerald-700 transition shadow-md flex items-center gap-2"><i class="fa-solid fa-calendar-check"></i> Confirmar Presença Total</button>
             </div>
         </div>
+    </div>
+
+    <!-- Modal: Visualizador de Imagem -->
+    <div id="image-viewer-modal" class="fixed inset-0 z-[200] hidden bg-black/90 flex flex-col items-center justify-center p-4 backdrop-blur-md" onclick="window.closeImageViewer()">
+        <img id="image-viewer-img" src="" class="max-w-full max-h-full object-contain shadow-2xl animate-fade-in transition-transform duration-300 transform scale-95 hover:scale-100" onclick="event.stopPropagation()">
+        <div class="absolute top-6 right-6 flex gap-4">
+            <button onclick="window.closeImageViewer()" class="text-white text-3xl hover:text-brand-red transition focus:outline-none" title="Fechar"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <p class="absolute bottom-10 text-white/50 text-xs uppercase tracking-widest pointer-events-none">Clique fora para fechar</p>
     </div>
 
     <!-- Modal: Informar Pagamento -->
@@ -1404,7 +1414,34 @@
             <div class="p-6 overflow-y-auto flex-1">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="md:col-span-2 pb-4 border-b border-gray-200 dark:border-gray-700 mb-2">
-                        <h4 class="text-xs font-bold text-brand-red uppercase mb-3"><i class="fa-solid fa-id-card mr-1"></i> Dados do Aluno</h4>
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="relative w-24 h-24 group cursor-pointer" onclick="document.getElementById('photo-options-menu-reg').classList.toggle('hidden'); document.getElementById('photo-options-overlay-reg').classList.toggle('hidden');">
+                                <div id="reg-photo-placeholder" class="w-full h-full rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center text-gray-400">
+                                    <i class="fa-solid fa-camera text-2xl mb-1"></i>
+                                    <span class="text-[10px] font-bold uppercase">Foto</span>
+                                </div>
+                                <img id="reg-photo-preview" src="" class="w-full h-full rounded-full object-cover border-2 border-brand-red shadow-sm hidden">
+                                <div class="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-camera text-white"></i></div>
+                                
+                                <div id="photo-options-overlay-reg" class="fixed inset-0 z-40 hidden cursor-default" onclick="event.stopPropagation(); document.getElementById('photo-options-menu-reg').classList.add('hidden'); this.classList.add('hidden');"></div>
+                                
+                                <div id="photo-options-menu-reg" class="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-50 hidden overflow-hidden">
+                                    <button type="button" onclick="event.stopPropagation(); document.getElementById('reg-photo-camera').click(); document.getElementById('photo-options-menu-reg').classList.add('hidden'); document.getElementById('photo-options-overlay-reg').classList.add('hidden');" class="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 border-b border-gray-100 dark:border-gray-700">
+                                        <i class="fa-solid fa-camera w-4 text-center"></i> Tirar Foto
+                                    </button>
+                                    <button type="button" onclick="event.stopPropagation(); document.getElementById('reg-photo-gallery').click(); document.getElementById('photo-options-menu-reg').classList.add('hidden'); document.getElementById('photo-options-overlay-reg').classList.add('hidden');" class="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3">
+                                        <i class="fa-solid fa-image w-4 text-center"></i> Escolher da Galeria
+                                    </button>
+                                </div>
+                                
+                                <input type="file" id="reg-photo-camera" accept="image/*" capture="environment" class="hidden" onchange="window.previewPhoto(event, 'reg')">
+                                <input type="file" id="reg-photo-gallery" accept="image/*" class="hidden" onchange="window.previewPhoto(event, 'reg')">
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-brand-red uppercase mb-1"><i class="fa-solid fa-id-card mr-1"></i> Dados do Aluno</h4>
+                                <p class="text-[10px] text-gray-500">A foto é essencial para o reconhecimento facial nas aulas.</p>
+                            </div>
+                        </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="md:col-span-2">
                                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nome Completo</label>
@@ -1652,7 +1689,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query, where, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query, where, setDoc, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         let ai = null;
@@ -1663,8 +1700,8 @@
                 const config = await configResp.json();
                 
                 if (config.apiKey) {
-                    const { GoogleGenAI } = await import("https://cdn.jsdelivr.net/npm/@google/genai/+esm");
-                    ai = new GoogleGenAI(config.apiKey);
+                    const { GoogleGenAI } = await import("https://esm.run/@google/genai");
+                    ai = new GoogleGenAI({ apiKey: config.apiKey });
                     window.ai = ai;
                 } else {
                     console.warn("NEXT_PUBLIC_GEMINI_API_KEY not defined. AI features disabled.");
@@ -1675,6 +1712,8 @@
         }
         initAI();
 
+        let cropperInstance = null;
+        
         window.customAlert = (message) => {
             return new Promise((resolve) => {
                 const modal = document.getElementById('custom-modal');
@@ -1731,6 +1770,139 @@
             });
         };
 
+
+        window.enlargePhoto = (url) => {
+            if (!url) return;
+            const modal = document.getElementById('image-viewer-modal');
+            const img = document.getElementById('image-viewer-img');
+            img.src = url;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeImageViewer = () => {
+            const modal = document.getElementById('image-viewer-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.removeStudentPhoto = async (id) => {
+            if (!await window.customConfirm("Tem certeza que deseja remover a foto deste aluno?")) return;
+            try {
+                const sIndex = window.students.findIndex(s => s.id === id);
+                if (sIndex === -1) return;
+
+                const student = window.students[sIndex];
+                
+                // Update Firestore
+                const studentRef = doc(db, 'students', id);
+                await updateDoc(studentRef, {
+                    photoURL: deleteField(),
+                    photoBase64: deleteField()
+                });
+
+                // Update local state
+                delete student.photoURL;
+                delete student.photoBase64;
+                
+                window.renderTable();
+                window.customAlert("Foto removida com sucesso!");
+            } catch (e) {
+                console.error("Erro ao remover foto:", e);
+                window.customAlert("Erro ao remover foto.");
+            }
+        };
+
+        async function fetchImageAsBase64(url) {
+            try {
+                if (url.startsWith('data:image')) return url.split(',')[1];
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Fetch failed");
+                const blob = await response.blob();
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            } catch (e) {
+                console.error("Error fetching image from URL:", e);
+                return null;
+            }
+        }
+
+        window.closeCropperModal = () => {
+            document.getElementById('cropper-modal').classList.add('hidden');
+            document.getElementById('cropper-modal').classList.remove('flex');
+            
+            // Reopen class photo modal if we were cropping it
+            if (window.lastPhotoTarget === 'class') {
+                document.getElementById('class-photo-modal').classList.remove('hidden');
+                document.getElementById('class-photo-modal').classList.add('flex');
+            }
+
+            if (cropperInstance) {
+                cropperInstance.destroy();
+                cropperInstance = null;
+            }
+            // Reset inputs
+            ['edit-photo-camera', 'edit-photo-gallery', 'reg-photo-camera', 'reg-photo-gallery', 'class-photo-upload'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+        };
+
+        window.applyCrop = () => {
+            if (!cropperInstance) return;
+            
+            const target = window.lastPhotoTarget || 'edit';
+            
+            // If it's a class photo, we want more resolution
+            const options = target === 'class' ? {
+                maxWidth: 1600,
+                maxHeight: 1600,
+            } : {
+                width: 400,
+                height: 400,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            };
+
+            const canvas = cropperInstance.getCroppedCanvas(options);
+            const base64 = canvas.toDataURL('image/jpeg', 0.8);
+            
+            if (target === 'class') {
+                selectedClassPhoto = base64;
+                const imgPreview = document.getElementById('class-photo-img-preview');
+                if (imgPreview) {
+                    imgPreview.src = base64;
+                    imgPreview.classList.remove('hidden');
+                }
+                const placeholder = document.getElementById('class-photo-placeholder');
+                if (placeholder) placeholder.classList.add('hidden');
+                
+                window.stopClassPhotoCamera();
+                const btnProcess = document.getElementById('btn-process-class-photo');
+                if (btnProcess) btnProcess.disabled = false;
+            } else {
+                const previewId = target === 'reg' ? 'reg-photo-preview' : 'edit-photo-preview';
+                const placeholderId = target === 'reg' ? 'reg-photo-placeholder' : null;
+
+                const preview = document.getElementById(previewId);
+                if (preview) {
+                    preview.src = base64;
+                    preview.classList.remove('hidden');
+                }
+                if (placeholderId) {
+                    const placeholder = document.getElementById(placeholderId);
+                    if (placeholder) placeholder.classList.add('hidden');
+                }
+                window.currentCroppedPhoto = base64;
+            }
+            
+            window.closeCropperModal();
+        };
+
         // --- Class Photo Facial Recognition Logic ---
         let classPhotoStream = null;
         let selectedClassPhoto = null;
@@ -1744,15 +1916,24 @@
             // Populate schedules
             const scheduleSelect = document.getElementById('class-photo-schedule');
             scheduleSelect.innerHTML = '<option value="">Selecione o Horário...</option>';
-            const scheduleList = [
-                "07:00", "08:00", "09:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"
-            ];
-            scheduleList.forEach(time => {
-                const opt = document.createElement('option');
-                opt.value = time;
-                opt.textContent = time;
-                scheduleSelect.appendChild(opt);
-            });
+            // Attempt to get schedules from settings
+            const schedules = window.schedules || [];
+            if (schedules.length > 0) {
+                schedules.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.time;
+                    opt.textContent = s.time;
+                    scheduleSelect.appendChild(opt);
+                });
+            } else {
+                const scheduleList = ["07:00", "08:00", "09:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"];
+                scheduleList.forEach(time => {
+                    const opt = document.createElement('option');
+                    opt.value = time;
+                    opt.textContent = time;
+                    scheduleSelect.appendChild(opt);
+                });
+            }
             
             // Populate manual add select
             const manualSelect = document.getElementById('class-photo-manual-select');
@@ -1805,10 +1986,11 @@
                 classPhotoStream = null;
             }
             const video = document.getElementById('class-photo-camera-stream');
-            video.classList.add('hidden');
+            if (video) video.classList.add('hidden');
             const btnCapture = document.getElementById('class-photo-btn-capture');
             if(btnCapture) btnCapture.classList.add('hidden');
-            document.getElementById('class-photo-btn-camera').innerText = 'Usar Câmera';
+            const btnCamera = document.getElementById('class-photo-btn-camera');
+            if (btnCamera) btnCamera.innerText = 'Usar Câmera';
         };
 
         window.captureClassPhoto = () => {
@@ -1819,14 +2001,9 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            selectedClassPhoto = canvas.toDataURL('image/jpeg', 0.8);
-            const imgPreview = document.getElementById('class-photo-img-preview');
-            imgPreview.src = selectedClassPhoto;
-            imgPreview.classList.remove('hidden');
-            video.classList.add('hidden');
-            
-            window.stopClassPhotoCamera();
-            document.getElementById('btn-process-class-photo').disabled = false;
+            const base64 = canvas.toDataURL('image/jpeg', 0.9);
+            window.lastPhotoTarget = 'class';
+            window.openCropperWithImage(base64, NaN);
         };
 
         window.handleClassPhotoUpload = (e) => {
@@ -1835,22 +2012,42 @@
             
             const reader = new FileReader();
             reader.onload = (event) => {
-                selectedClassPhoto = event.target.result;
-                const imgPreview = document.getElementById('class-photo-img-preview');
-                imgPreview.src = selectedClassPhoto;
-                imgPreview.classList.remove('hidden');
-                document.getElementById('class-photo-placeholder').classList.add('hidden');
-                window.stopClassPhotoCamera();
-                document.getElementById('btn-process-class-photo').disabled = false;
+                window.lastPhotoTarget = 'class';
+                window.openCropperWithImage(event.target.result, NaN);
             };
             reader.readAsDataURL(file);
+        };
+
+        window.openCropperWithImage = (base64, aspectRatio = 1) => {
+            const croppingImg = document.getElementById('cropper-image');
+            croppingImg.src = base64;
+            
+            // Hide class photo modal if it's open to allow cropping
+            if (window.lastPhotoTarget === 'class') {
+                document.getElementById('class-photo-modal').classList.add('hidden');
+                document.getElementById('class-photo-modal').classList.remove('flex');
+            }
+            
+            document.getElementById('cropper-modal').classList.remove('hidden');
+            document.getElementById('cropper-modal').classList.add('flex');
+            
+            if (cropperInstance) {
+                cropperInstance.destroy();
+            }
+            
+            cropperInstance = new Cropper(croppingImg, {
+                aspectRatio: aspectRatio,
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: (aspectRatio === 1 ? 1 : 0.9),
+            });
         };
 
         window.processClassPhoto = async () => {
             if (!selectedClassPhoto) return;
             
             if (!ai) {
-                window.customAlert("Reconhecimento Facial por IA não configurado. Por favor, configure a chave NEXT_PUBLIC_GEMINI_API_KEY.");
+                window.customAlert("Reconhecimento Facial por IA não configurado.");
                 return;
             }
 
@@ -1866,96 +2063,65 @@
             btn.disabled = true;
 
             try {
-                // Filter students that have photos
-                const studentsWithPhotos = window.students.filter(s => (s.photoBase64 || s.photoURL) && s.enrollmentStatus === 'Ativo' && !s.archived);
-                
+                const studentsWithPhotos = window.students.filter(s => (s.photoBase64 || s.photoURL) && s.enrollmentStatus === 'Ativo');
                 if (studentsWithPhotos.length === 0) {
-                    throw new Error("Não há alunos ativos com foto (Base64 ou URL) cadastrada para comparação.");
+                    throw new Error("Não há alunos ativos com foto de perfil para comparação.");
                 }
 
                 const groupPhotoBase64 = selectedClassPhoto.split(',')[1];
-                
-                // Limit to batch to avoid payload limits
-                const batch = studentsWithPhotos.slice(0, 30);
-                
-                // For batch members with URL, we try to fetch them if possible, but for now we prioritize base64
-                // A better approach would be to fetch images from storage, but CORS might be an issue.
-                // Let's at least fix the filtering logic first.
-                
-                const studentsToProcess = [];
-                for (const s of batch) {
-                    if (s.photoBase64) {
-                        studentsToProcess.push(s);
-                    } else if (s.photoURL) {
-                        // We can't easily use URL in inlineData without fetching. 
-                        // For now we'll only use those with photoBase64 if we want absolute safety, 
-                        // but let's try to include their names at least to show we identified them.
-                        // Actually, if we have photoURL, we should try to fetch it.
-                        try {
-                            const resp = await fetch(s.photoURL);
-                            const blob = await resp.blob();
-                            const b64 = await new Promise((resolve) => {
-                                const reader = new FileReader();
-                                reader.onloadend = () => resolve(reader.result.split(',')[1]);
-                                reader.readAsDataURL(blob);
-                            });
-                            studentsToProcess.push({ ...s, tempB64: b64 });
-                        } catch (err) {
-                            console.warn(`Could not fetch photo for student ${s.name}`, err);
+                const batchSize = 10; // Reduced for reliability
+                let allDetectedIds = [];
+
+                for (let i = 0; i < studentsWithPhotos.length; i += batchSize) {
+                    const batch = studentsWithPhotos.slice(i, i + batchSize);
+                    const studentListStr = batch.map(s => `ID: ${s.id}, Nome: ${s.name}`).join('\n');
+                    
+                    const photosParts = await Promise.all(batch.map(async (s) => {
+                        let base64Data = null;
+                        if (s.photoBase64) base64Data = s.photoBase64.split(',')[1] || s.photoBase64;
+                        else if (s.photoURL) base64Data = await fetchImageAsBase64(s.photoURL);
+                        if (!base64Data) return null;
+                        return { inlineData: { mimeType: "image/jpeg", data: base64Data } };
+                    }));
+
+                    const validPhotosParts = photosParts.filter(p => p !== null);
+                    if (validPhotosParts.length === 0) continue;
+
+                    const prompt = `Analise a foto de grupo (última imagem) e identifique quais dos seguintes alunos estão presentes nela.
+                    IMPORTANTE: O rosto do nível de confiança deve ser alto. Use as fotos individuais enviadas anteriormente como única referência para cada aluno.
+                    Lembre-se que nas fotos de grupo os alunos podem estar usando kimono de diferentes cores e em diferentes posições.
+                    
+                    Lista de candidatos:
+                    ${studentListStr}
+                    
+                    RETORNE EXCLUSIVAMENTE UM ARRAY JSON COM OS IDs: ["id1", "id2"]`;
+
+                    const result = await ai.models.generateContent({
+                        model: "gemini-3-flash-preview",
+                        contents: {
+                            parts: [
+                                ...validPhotosParts,
+                                { inlineData: { mimeType: "image/jpeg", data: groupPhotoBase64 } },
+                                { text: prompt }
+                            ]
                         }
+                    });
+
+                    const responseText = result.text;
+                    try {
+                        const jsonMatch = responseText.match(/\[.*\]/s);
+                        if (jsonMatch) {
+                            const detectedIds = JSON.parse(jsonMatch[0]);
+                            allDetectedIds = allDetectedIds.concat(detectedIds);
+                        }
+                    } catch (e) {
+                         console.error("JSON Parse error:", e);
                     }
                 }
 
-                if (studentsToProcess.length === 0) {
-                    throw new Error("Nenhum dos alunos ativos possui uma foto processável (Base64 vindo do cadastro ou URL acessível).");
-                }
-
-                const photosParts = studentsToProcess.map(s => ({
-                    inlineData: {
-                        mimeType: "image/jpeg",
-                        data: s.photoBase64 ? s.photoBase64.split(',')[1] : s.tempB64
-                    }
-                }));
-
-                const groupPhotoPart = {
-                    inlineData: {
-                        mimeType: "image/jpeg",
-                        data: groupPhotoBase64
-                    }
-                };
-
-                const prompt = `Analise a foto de grupo fornecida e identifique quais destes alunos estão presentes nela. 
-                Estou fornecendo fotos individuais de referência de ${studentsToProcess.length} alunos.
-                
-                Lista de Alunos de Referência:
-                ${studentsToProcess.map(s => `ID: ${s.id}, Nome: ${s.name}`).join('\n')}
-
-                IMPORTANTE: Responda APENAS com um array JSON contendo os IDs dos alunos que você identificou na foto do grupo. 
-                Se não identificar nenhum, retorne [].
-                Exemplo de resposta: ["ID1", "ID2"]`;
-
-                const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
-                const result = await model.generateContent([
-                    prompt,
-                    ...photosParts,
-                    groupPhotoPart
-                ]);
-                const response = await result.response;
-                const text = response.text();
-                let detectedIds = [];
-                try {
-                    const jsonMatch = text.match(/\[.*\]/s);
-                    if (jsonMatch) {
-                        detectedIds = JSON.parse(jsonMatch[0]);
-                    }
-                } catch (e) {
-                    console.error("JSON Parse error:", e);
-                }
-
-                identifiedStudents = window.students.filter(s => detectedIds.includes(s.id));
+                identifiedStudents = window.students.filter(s => allDetectedIds.includes(s.id));
                 window.renderIdentifiedList();
                 
-                document.getElementById('class-photo-modal').classList.add('hidden');
                 document.getElementById('class-photo-result-modal').classList.remove('hidden');
                 document.getElementById('class-photo-result-modal').classList.add('flex');
 
@@ -1971,18 +2137,16 @@
         window.renderIdentifiedList = () => {
             const listContainer = document.getElementById('class-photo-results-list');
             listContainer.innerHTML = '';
-            
             if (identifiedStudents.length === 0) {
                 listContainer.innerHTML = '<p class="text-center text-gray-500 py-4 italic">Nenhum aluno identificado automaticamente.</p>';
                 return;
             }
-
             identifiedStudents.forEach(student => {
                 const item = document.createElement('div');
                 item.className = "flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border dark:border-gray-600";
                 item.innerHTML = `
                     <div class="flex items-center gap-3">
-                        <img src="${student.photoBase64 || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-full object-cover border dark:border-gray-500">
+                        <img src="${student.photoBase64 || student.photoURL || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-full object-cover border dark:border-gray-500">
                         <div>
                             <p class="text-sm font-bold text-gray-800 dark:text-white">${student.name}</p>
                             <p class="text-[10px] text-gray-500">${student.plan || 'Sem plano'}</p>
@@ -1997,13 +2161,7 @@
         window.addManualRecognition = () => {
             const select = document.getElementById('class-photo-manual-select');
             const studentId = select.value;
-            if (!studentId) return;
-            
-            if (identifiedStudents.some(s => s.id === studentId)) {
-                window.customAlert("Este aluno já está na lista.");
-                return;
-            }
-            
+            if (!studentId || identifiedStudents.some(s => s.id === studentId)) return;
             const student = window.students.find(s => s.id === studentId);
             if (student) {
                 identifiedStudents.push(student);
@@ -2022,15 +2180,10 @@
         window.confirmClassAttendance = async () => {
             const checkboxes = document.querySelectorAll('#class-photo-results-list input[type="checkbox"]');
             const confirmedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.dataset.id);
-            
-            if (confirmedIds.length === 0) {
-                window.customAlert("Selecione ao menos um aluno.");
-                return;
-            }
+            if (confirmedIds.length === 0) return window.customAlert("Selecione ao menos um aluno.");
 
             const date = document.getElementById('class-photo-date').value;
             const schedule = document.getElementById('class-photo-schedule').value;
-            
             const btn = document.querySelector('#class-photo-result-modal button[onclick*="confirmClassAttendance"]');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Salvando...';
@@ -2048,14 +2201,11 @@
                         method: 'facial_recognition_ia'
                     });
                 }
-
+                window.closeClassPhotoModal();
                 document.getElementById('class-photo-result-modal').classList.add('hidden');
                 document.getElementById('class-photo-result-modal').classList.remove('flex');
-                window.closeClassPhotoModal();
-                
                 window.customAlert("Presenças registradas com sucesso!");
                 if (window.currentView === 'attendance') window.loadAttendance();
-                
             } catch (err) {
                 console.error("Error saving attendance:", err);
                 window.customAlert("Erro ao salvar: " + err.message);
@@ -2891,12 +3041,7 @@
                         try {
                             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
                             else await signInAnonymously(auth);
-                        } catch (e) { 
-                            console.error("Auth error", e);
-                            if (e.code === 'auth/requests-from-referer-blocked') {
-                                window.customAlert("Erro de Autenticação: O domínio desta aplicação não está autorizado no Firebase. Por favor, adicione os domínios do AI Studio (ais-dev e ais-pre) na lista de 'Authorized Domains' no console do Firebase (Authentication > Settings).");
-                            }
-                        }
+                        } catch (e) { console.error("Auth error", e); }
                         await window.loadPlans();
                         await window.loadSchedules();
                         window.loadData(); window.loadNotices(); window.loadExperimentalData();
@@ -3250,6 +3395,12 @@
             const extraContainer = document.getElementById('extra-minors-container');
             if (extraContainer) extraContainer.innerHTML = '';
 
+            // Reset photo
+            window.currentCroppedPhoto = null;
+            document.getElementById('reg-photo-preview').classList.add('hidden');
+            document.getElementById('reg-photo-preview').src = '';
+            document.getElementById('reg-photo-placeholder').classList.remove('hidden');
+
             window.handleAdminPlanChange(); 
         };
         window.closeAdminRegisterModal = () => {
@@ -3362,7 +3513,15 @@ Belém-PA, [DATA_ATUAL].
                 document.getElementById('edit-email').value = s.email || ''; document.getElementById('edit-phone').value = s.phone || '';
                 
                 const preview = document.getElementById('edit-photo-preview');
-                if(s.photoBase64) { preview.src = s.photoBase64; preview.classList.remove('hidden'); } else { preview.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name || 'Aluno')}&background=random`; preview.classList.remove('hidden'); }
+                const photoSrc = s.photoURL || s.photoBase64;
+                if(photoSrc) { 
+                    preview.src = photoSrc; 
+                    preview.classList.remove('hidden'); 
+                } else { 
+                    preview.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name || 'Aluno')}&background=random`; 
+                    preview.classList.remove('hidden'); 
+                }
+                window.currentCroppedPhoto = null;
                 
                 let color = 'Branca'; let degree = '0';
                 if(s.belt) { const parts = s.belt.split(' - '); if(parts.length > 0) color = parts[0].replace('Faixa ', ''); if(parts.length > 1) degree = parts[1].replace('º Grau', ''); }
@@ -3387,68 +3546,6 @@ Belém-PA, [DATA_ATUAL].
             document.getElementById('photo-options-overlay').classList.add('hidden');
         };
         
-        let cropperInstance = null;
-        window.previewPhoto = (event) => { 
-            const file = event.target.files[0]; 
-            if(file) { 
-                const reader = new FileReader(); 
-                reader.onload = function(e) { 
-                    const image = document.getElementById('cropper-image');
-                    image.src = e.target.result;
-                    document.getElementById('cropper-modal').classList.remove('hidden');
-                    document.getElementById('cropper-modal').classList.add('flex');
-                    
-                    if (cropperInstance) {
-                        cropperInstance.destroy();
-                    }
-                    cropperInstance = new Cropper(image, {
-                        aspectRatio: 1,
-                        viewMode: 1,
-                        dragMode: 'move',
-                        autoCropArea: 1,
-                        restore: false,
-                        guides: false,
-                        center: true,
-                        highlight: false,
-                        cropBoxMovable: true,
-                        cropBoxResizable: true,
-                        toggleDragModeOnDblclick: false,
-                    });
-                }; 
-                reader.readAsDataURL(file); 
-            } 
-        };
-
-        window.closeCropperModal = () => {
-            document.getElementById('cropper-modal').classList.add('hidden');
-            document.getElementById('cropper-modal').classList.remove('flex');
-            if (cropperInstance) {
-                cropperInstance.destroy();
-                cropperInstance = null;
-            }
-            document.getElementById('edit-photo-camera').value = '';
-            document.getElementById('edit-photo-gallery').value = '';
-        };
-
-        window.applyCrop = () => {
-            if (!cropperInstance) return;
-            const canvas = cropperInstance.getCroppedCanvas({
-                width: 300,
-                height: 300,
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high',
-            });
-            const base64 = canvas.toDataURL('image/jpeg', 0.8);
-            
-            const preview = document.getElementById('edit-photo-preview');
-            preview.src = base64;
-            preview.classList.remove('hidden');
-            
-            window.currentCroppedPhoto = base64;
-            
-            window.closeCropperModal();
-        };
-
         window.openContractModal = (id) => {
             try {
                 const s = window.students.find(st => st.id === id);
@@ -4770,7 +4867,13 @@ Belém-PA, [DATA_ATUAL].
                 else if(s.paymentStatus === 'Isento') payBadge = `<span class="text-gray-500 font-bold text-xs">Isento</span>`;
 
                 let photoHtml = `<div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 text-xs font-bold shrink-0">${s.name.charAt(0).toUpperCase()}</div>`;
-                if(s.photoURL || s.photoBase64) photoHtml = `<img src="${s.photoURL || s.photoBase64}" class="w-8 h-8 rounded-full object-cover border border-gray-300 shrink-0">`;
+                if(s.photoURL || s.photoBase64) photoHtml = `
+                    <div class="relative group">
+                        <img src="${s.photoURL || s.photoBase64}" class="w-8 h-8 rounded-full object-cover border border-gray-300 shrink-0 cursor-pointer hover:border-brand-red transition-all" onclick="window.enlargePhoto('${s.photoURL || s.photoBase64}')">
+                        <button onclick="event.stopPropagation(); window.removeStudentPhoto('${s.id}')" class="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-sm border border-white" title="Remover Foto">
+                            <i class="fa-solid fa-times text-[8px]"></i>
+                        </button>
+                    </div>`;
 
                 let subNameHtml = '';
                 if (isNewStudent) {
