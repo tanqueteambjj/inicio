@@ -705,6 +705,20 @@
                     </div>
                 </div>
 
+                <!-- Inteligência Artificial -->
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="font-bold text-lg text-gray-800 dark:text-white border-b pb-2 w-full"><i class="fa-solid fa-robot mr-2 text-blue-600"></i> Inteligência Artificial (Reconhecimento Facial)</h4>
+                    </div>
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <p class="text-xs text-blue-800 dark:text-blue-300 mb-3">Para sites hospedados no GitHub Pages, cole sua chave do Gemini aqui:</p>
+                        <div class="flex gap-2">
+                            <input type="password" id="settings-gemini-key" placeholder="Cole sua chave AIza..." class="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-blue-500 focus:outline-none">
+                            <button onclick="window.saveGeminiKey()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm transition-colors">Salvar Chave</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Horários de Check-in -->
                 <div class="mb-8">
                     <div class="flex justify-between items-center mb-4">
@@ -1695,22 +1709,46 @@
         let ai = null;
         async function initAI() {
             try {
-                const configResp = await fetch('/api/config');
-                if (!configResp.ok) throw new Error("Config fetch failed");
-                const config = await configResp.json();
+                let apiKey = "";
+                try {
+                    const configResp = await fetch('/api/config');
+                    if (configResp.ok) {
+                        const config = await configResp.json();
+                        apiKey = config.apiKey;
+                    }
+                } catch (e) {
+                    console.log("Config server not available (static mode)");
+                }
                 
-                if (config.apiKey) {
-                    const { GoogleGenAI } = await import("https://esm.run/@google/genai");
-                    ai = new GoogleGenAI({ apiKey: config.apiKey });
+                // Fallback to localStorage for static deployments
+                const savedKey = localStorage.getItem('GEMINI_API_KEY');
+                if (savedKey) apiKey = savedKey;
+
+                if (apiKey) {
+                    const { GoogleGenerativeAI } = await import("https://esm.run/@google/generative-ai");
+                    ai = new GoogleGenerativeAI(apiKey);
                     window.ai = ai;
+                    console.log("Gemini AI inicializada com sucesso.");
                 } else {
-                    console.warn("NEXT_PUBLIC_GEMINI_API_KEY not defined. AI features disabled.");
+                    console.warn("GEMINI_API_KEY não encontrada.");
                 }
             } catch (e) {
                 console.error("Error initializing Gemini AI:", e);
             }
         }
         initAI();
+
+        window.saveGeminiKey = () => {
+            const keyInput = document.getElementById('settings-gemini-key');
+            const key = keyInput.value.trim();
+            if (!key || !key.startsWith('AIza')) {
+                window.customAlert("Por favor, insira uma chave válida (começa com AIza).");
+                return;
+            }
+            localStorage.setItem('GEMINI_API_KEY', key);
+            window.customAlert("Chave salva com sucesso!");
+            setTimeout(() => location.reload(), 1000);
+        };
 
         let cropperInstance = null;
         
@@ -2047,7 +2085,7 @@
             if (!selectedClassPhoto) return;
             
             if (!ai) {
-                window.customAlert("Reconhecimento Facial por IA não configurado.");
+                window.customAlert("IA não configurada. Vá em 'Configurações' no menu lateral e preencha o campo 'Inteligência Artificial' com sua chave do Gemini.");
                 return;
             }
 
@@ -2096,18 +2134,14 @@
                     
                     RETORNE EXCLUSIVAMENTE UM ARRAY JSON COM OS IDs: ["id1", "id2"]`;
 
-                    const result = await ai.models.generateContent({
-                        model: "gemini-3-flash-preview",
-                        contents: {
-                            parts: [
-                                ...validPhotosParts,
-                                { inlineData: { mimeType: "image/jpeg", data: groupPhotoBase64 } },
-                                { text: prompt }
-                            ]
-                        }
-                    });
+                    const generativeModel = ai.getGenerativeModel({ model: "gemini-1.5-flash" }); 
+                    const result = await generativeModel.generateContent([
+                        ...validPhotosParts,
+                        { inlineData: { mimeType: "image/jpeg", data: groupPhotoBase64 } },
+                        prompt
+                    ]);
 
-                    const responseText = result.text;
+                    const responseText = await result.response.text();
                     try {
                         const jsonMatch = responseText.match(/\[.*\]/s);
                         if (jsonMatch) {
