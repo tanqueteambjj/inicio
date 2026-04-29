@@ -741,6 +741,21 @@
                     </div>
                 </div>
 
+                <!-- Inteligência Artificial -->
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="font-bold text-lg text-gray-800 dark:text-white border-b pb-2 w-full"><i class="fa-solid fa-wand-magic-sparkles mr-2 text-purple-600"></i> Inteligência Artificial</h4>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase">Gemini API Key</label>
+                        <div class="flex gap-2">
+                            <input type="password" id="settings-gemini-key" placeholder="Cole sua chave aqui..." class="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-purple-500 focus:outline-none">
+                            <button onclick="window.saveGeminiKey()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded text-sm transition-all shadow-md">Salvar Chave</button>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-2"><i class="fa-solid fa-info-circle"></i> A chave fica salva apenas no seu navegador. <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-purple-500 underline">Obter nova chave gratuita aqui.</a></p>
+                    </div>
+                </div>
+
             </div>
             <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-t border-gray-200 dark:border-gray-600 flex justify-end shrink-0">
                 <button onclick="window.closeSettingsModal()" class="px-5 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm rounded text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">Fechar</button>
@@ -1697,53 +1712,36 @@
 
         let ai = null;
         async function initAI() {
-            console.log("Iniciando IA do Painel Admin...");
+            console.log("Iniciando IA...");
             try {
-                let apiKey = window.NEXT_PUBLIC_GEMINI_API_KEY;
+                // PRIORIDADE 1: LocalStorage (Configurado pelo usuário no site)
+                let apiKey = localStorage.getItem('gemini_api_key');
                 
-                // Limpeza básica da chave
-                if (apiKey) apiKey = apiKey.toString().replace(/['"]/g, "").trim();
+                // PRIORIDADE 2: Variável injetada pelo GitHub
+                if (!apiKey || apiKey === "PLACEHOLDER_GEMINI_API_KEY") {
+                    apiKey = window.NEXT_PUBLIC_GEMINI_API_KEY;
+                }
 
-                console.log("Status da Chave (Variavel):", (!apiKey || apiKey === "PLACEHOLDER_GEMINI_API_KEY") ? "Pendente" : "Detectada");
-
-                // SEGUNDA TENTATIVA: Fallback local (Preview AI Studio)
+                // PRIORIDADE 3: Servidor Local (Preview)
                 if (!apiKey || apiKey === "PLACEHOLDER_GEMINI_API_KEY") {
                     try {
                         const configResp = await fetch('/api/config');
                         if (configResp.ok) {
                             const config = await configResp.json();
-                            if (config.apiKey) {
-                                apiKey = config.apiKey;
-                                console.log("Chave carregada do servidor local (/api/config).");
-                            }
+                            if (config.apiKey) apiKey = config.apiKey;
                         }
-                    } catch (e) {
-                        console.warn("Config servidor local não disponível.");
-                    }
+                    } catch (e) {}
                 }
-                
-                if (apiKey && apiKey !== "PLACEHOLDER_GEMINI_API_KEY" && apiKey !== "null") {
+
+                if (apiKey) apiKey = apiKey.toString().replace(/['"]/g, "").trim();
+
+                if (apiKey && apiKey !== "PLACEHOLDER_GEMINI_API_KEY" && apiKey !== "null" && apiKey !== "") {
                     const { GoogleGenAI } = await import("https://esm.run/@google/genai");
                     ai = new GoogleGenAI({ apiKey: apiKey });
                     window.ai = ai;
-                    console.log("Gemini IA inicializada.");
+                    console.log("Gemini IA Pronta.");
                 } else {
-                    console.error("ERRO: GEMINI_API_KEY não encontrada.");
-                    
-                    const isGitHub = window.location.hostname.includes('github.io');
-                    let msg = "Aviso: A chave da Inteligência Artificial (GEMINI_API_KEY) não foi detectada.\n\n";
-                    
-                    if (isGitHub) {
-                        msg += "No GitHub Pages:\n";
-                        msg += "1. Verifique se criou o 'Repository Secret' exatamente com o nome: GEMINI_API_KEY\n";
-                        msg += "2. Verifique na aba 'Actions' se o Workflow terminou com SUCESSO.\n";
-                        msg += "3. Tente abrir em aba anônima para evitar cache.";
-                    } else {
-                        msg += "No ambiente de desenvolvimento:\n";
-                        msg += "A chave deve ser configurada nas variáveis de ambiente do projeto.";
-                    }
-                    
-                    window.customAlert(msg);
+                    console.warn("IA Não configurada. Vá em Configurações para inserir sua Gemini API Key.");
                 }
             } catch (e) {
                 console.error("Erro no initAI:", e);
@@ -2086,7 +2084,7 @@
             if (!selectedClassPhoto) return;
             
             if (!ai) {
-                window.customAlert("Aviso\nERRO: A chave da Inteligência Artificial (GEMINI_API_KEY) não foi detectada.\n\nSe você está no GitHub Pages:\n1. Certifique-se de que configurou o 'Repository Secret' chamado GEMINI_API_KEY.\n2. Note que a chave é injetada automaticamente durante o Deploy.\n3. Verifique se a última execução do seu Workflow (Actions) terminou com sucesso.");
+                window.customAlert("A Inteligência Artificial não está configurada.\n\nPor favor, vá em: Configurações (ícone de engrenagem) e insira sua 'Gemini API Key' para usar esta funcionalidade.");
                 return;
             }
 
@@ -6348,11 +6346,29 @@ Belém-PA, [DATA_ATUAL].
             }, 500);
         };
 
+        window.saveGeminiKey = () => {
+            const keyElement = document.getElementById('settings-gemini-key');
+            const key = keyElement ? keyElement.value.trim() : '';
+            if (!key) {
+                window.customAlert("Por favor, insira uma chave válida.");
+                return;
+            }
+            localStorage.setItem('gemini_api_key', key);
+            window.customAlert("Chave salva com sucesso! Reiniciando a Inteligência Artificial...");
+            if (typeof initAI === 'function') initAI();
+        };
+
         window.openSettingsModal = () => {
             document.getElementById('settings-modal').classList.remove('hidden');
             document.getElementById('settings-modal').classList.add('flex');
             window.renderSettingsPlans();
             window.renderSettingsSchedules();
+            
+            // Carregar chave salva se existir
+            const savedKey = localStorage.getItem('gemini_api_key');
+            if (savedKey && document.getElementById('settings-gemini-key')) {
+                document.getElementById('settings-gemini-key').value = savedKey;
+            }
             
             document.querySelectorAll('#sidebar-menu a').forEach(l => { 
                 l.classList.remove('bg-brand-red', 'text-white'); 
