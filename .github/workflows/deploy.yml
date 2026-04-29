@@ -1,0 +1,67 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Inject API Key
+        env:
+          SECRET_KEY: "${{ secrets.GEMINI_API_KEY || secrets.NEXT_PUBLIC_GEMINI_API_KEY }}"
+        run: |
+          echo "Iniciando processo de injeção de segredos..."
+          
+          if [ -z "$SECRET_KEY" ]; then
+            echo "::error::ERRO: A GEMINI_API_KEY não foi encontrada nos Secrets do GitHub."
+            exit 1
+          fi
+
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const key = process.env.SECRET_KEY.trim();
+            
+            console.log('Chave carregada: ' + key.length + ' caracteres.');
+
+            function processFiles(dir) {
+              const entries = fs.readdirSync(dir, { withFileTypes: true });
+              for (const entry of entries) {
+                const res = path.resolve(dir, entry.name);
+                if (entry.isDirectory()) {
+                  if (entry.name !== 'node_modules' && entry.name !== '.git') processFiles(res);
+                } else if (entry.name.endsWith('.html')) {
+                  let content = fs.readFileSync(res, 'utf8');
+                  if (content.includes('PLACEHOLDER_GEMINI_API_KEY')) {
+                    const newContent = content.split('PLACEHOLDER_GEMINI_API_KEY').join(key);
+                    fs.writeFileSync(res, newContent);
+                    console.log('  [SUCESSO] Chave injetada em: ' + entry.name);
+                  }
+                }
+              }
+            }
+            processFiles('.');
+          "
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
