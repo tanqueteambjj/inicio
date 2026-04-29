@@ -1697,16 +1697,23 @@
 
         let ai = null;
         async function initAI() {
+            console.log("Iniciando IA do site principal...");
             try {
                 let apiKey = window.NEXT_PUBLIC_GEMINI_API_KEY;
 
-                // Fallback for local dev or dynamic server
+                // Limpeza básica da chave (remove aspas se injetado errado)
+                if (apiKey) apiKey = apiKey.toString().replace(/['"]/g, "").trim();
+
+                console.log("Status da Chave (Site):", (!apiKey || apiKey === "PLACEHOLDER_GEMINI_API_KEY") ? "Pendente (GitHub deve injetar)" : "Detectada");
+
+                // Fallback local
                 if (!apiKey || apiKey === "PLACEHOLDER_GEMINI_API_KEY") {
                     try {
                         const configResp = await fetch('/api/config');
                         if (configResp.ok) {
                             const config = await configResp.json();
                             apiKey = config.apiKey;
+                            console.log("Chave carregada do servidor local.");
                         }
                     } catch (e) {
                         console.warn("Server config not available, likely static deploy on GitHub.");
@@ -1717,12 +1724,12 @@
                     const { GoogleGenAI } = await import("https://esm.run/@google/genai");
                     ai = new GoogleGenAI({ apiKey: apiKey });
                     window.ai = ai;
-                    console.log("Gemini AI inicializada com sucesso.");
+                    console.log("Gemini IA inicializada com sucesso. Final da chave: " + apiKey.substring(apiKey.length - 4));
                 } else {
-                    console.error("ERRO: NEXT_PUBLIC_GEMINI_API_KEY não encontrada.");
+                    console.error("ERRO: NEXT_PUBLIC_GEMINI_API_KEY não configurada corretamente.");
                 }
             } catch (e) {
-                console.error("Error initializing Gemini AI:", e);
+                console.error("Erro crítico ao inicializar Gemini IA:", e);
             }
         }
         initAI();
