@@ -1701,36 +1701,52 @@
             try {
                 let apiKey = window.NEXT_PUBLIC_GEMINI_API_KEY;
                 
-                // Limpeza básica da chave (remove aspas se injetado errado)
+                // Limpeza básica da chave
                 if (apiKey) apiKey = apiKey.toString().replace(/['"]/g, "").trim();
 
-                console.log("Status da Chave (Admin):", (!apiKey || apiKey === "PLACEHOLDER_GEMINI_API_KEY") ? "Pendente (GitHub deve injetar)" : "Detectada");
+                console.log("Status da Chave (Variavel):", (!apiKey || apiKey === "PLACEHOLDER_GEMINI_API_KEY") ? "Pendente" : "Detectada");
 
-                // Fallback local
+                // SEGUNDA TENTATIVA: Fallback local (Preview AI Studio)
                 if (!apiKey || apiKey === "PLACEHOLDER_GEMINI_API_KEY") {
                     try {
                         const configResp = await fetch('/api/config');
                         if (configResp.ok) {
                             const config = await configResp.json();
-                            apiKey = config.apiKey;
-                            console.log("Chave carregada do servidor local.");
+                            if (config.apiKey) {
+                                apiKey = config.apiKey;
+                                console.log("Chave carregada do servidor local (/api/config).");
+                            }
                         }
                     } catch (e) {
-                        console.warn("Server config not available.");
+                        console.warn("Config servidor local não disponível.");
                     }
                 }
                 
-                if (apiKey && apiKey !== "PLACEHOLDER_GEMINI_API_KEY") {
+                if (apiKey && apiKey !== "PLACEHOLDER_GEMINI_API_KEY" && apiKey !== "null") {
                     const { GoogleGenAI } = await import("https://esm.run/@google/genai");
                     ai = new GoogleGenAI({ apiKey: apiKey });
                     window.ai = ai;
                     console.log("Gemini IA inicializada.");
                 } else {
-                    console.error("ERRO: GEMINI_API_KEY pendente.");
-                    window.customAlert("Configuração da IA Pendente\n\nPROBLEMA: A chave não foi injetada no arquivo.\n\nSOLUÇÃO:\n1. Vá no GitHub > Settings > Secrets > Actions.\n2. Verifique se o segredo se chama EXATAMENTE: GEMINI_API_KEY.\n3. O arquivo 'deploy.yml' DEVE estar dentro da pasta '.github/workflows/'. Se estiver na raiz, NÃO FUNCIONA.\n4. Verifique na aba 'Actions' se o deploy ocorreu com sucesso.");
+                    console.error("ERRO: GEMINI_API_KEY não encontrada.");
+                    
+                    const isGitHub = window.location.hostname.includes('github.io');
+                    let msg = "Aviso: A chave da Inteligência Artificial (GEMINI_API_KEY) não foi detectada.\n\n";
+                    
+                    if (isGitHub) {
+                        msg += "No GitHub Pages:\n";
+                        msg += "1. Verifique se criou o 'Repository Secret' exatamente com o nome: GEMINI_API_KEY\n";
+                        msg += "2. Verifique na aba 'Actions' se o Workflow terminou com SUCESSO.\n";
+                        msg += "3. Tente abrir em aba anônima para evitar cache.";
+                    } else {
+                        msg += "No ambiente de desenvolvimento:\n";
+                        msg += "A chave deve ser configurada nas variáveis de ambiente do projeto.";
+                    }
+                    
+                    window.customAlert(msg);
                 }
             } catch (e) {
-                console.error("Erro crítico ao inicializar Gemini IA:", e);
+                console.error("Erro no initAI:", e);
             }
         }
         initAI();
