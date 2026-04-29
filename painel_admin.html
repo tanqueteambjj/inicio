@@ -343,6 +343,22 @@
 
             <!-- VIEW: FREQUENCIA -->
             <div id="view-attendance" class="hidden animate-fade-in">
+                <!-- Configuração de IA (Aparece se não houver chave) -->
+                <div id="attendance-ai-config" class="mb-6 bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800 shadow-sm">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h4 class="font-bold text-purple-800 dark:text-purple-300 text-sm uppercase flex items-center gap-2">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Configurar Inteligência Artificial
+                            </h4>
+                            <p class="text-xs text-purple-600 dark:text-purple-400 mt-1">Insira sua Gemini API Key para habilitar a presença por foto.</p>
+                        </div>
+                        <div class="flex gap-2 flex-1 max-w-md">
+                            <input type="password" id="attendance-gemini-key" placeholder="Cole sua API Key aqui..." class="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-purple-500 focus:outline-none">
+                            <button onclick="window.saveGeminiKeyFromAttendance()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded text-sm transition-all shadow-md whitespace-nowrap">Salvar Chave</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex justify-between items-center no-print">
                         <div>
@@ -6356,6 +6372,28 @@ Belém-PA, [DATA_ATUAL].
             localStorage.setItem('gemini_api_key', key);
             window.customAlert("Chave salva com sucesso! Reiniciando a Inteligência Artificial...");
             if (typeof initAI === 'function') initAI();
+            
+            // Atualizar campo na frequência se visível
+            if (document.getElementById('attendance-gemini-key')) {
+                document.getElementById('attendance-gemini-key').value = key;
+            }
+        };
+
+        window.saveGeminiKeyFromAttendance = () => {
+            const keyElement = document.getElementById('attendance-gemini-key');
+            const key = keyElement ? keyElement.value.trim() : '';
+            if (!key) {
+                window.customAlert("Por favor, insira uma chave válida.");
+                return;
+            }
+            localStorage.setItem('gemini_api_key', key);
+            window.customAlert("Chave salva com sucesso!");
+            if (typeof initAI === 'function') initAI();
+            
+            // Atualizar campo nas configurações se visível
+            if (document.getElementById('settings-gemini-key')) {
+                document.getElementById('settings-gemini-key').value = key;
+            }
         };
 
         window.openSettingsModal = () => {
@@ -6366,8 +6404,9 @@ Belém-PA, [DATA_ATUAL].
             
             // Carregar chave salva se existir
             const savedKey = localStorage.getItem('gemini_api_key');
-            if (savedKey && document.getElementById('settings-gemini-key')) {
-                document.getElementById('settings-gemini-key').value = savedKey;
+            if (savedKey) {
+                if (document.getElementById('settings-gemini-key')) document.getElementById('settings-gemini-key').value = savedKey;
+                if (document.getElementById('attendance-gemini-key')) document.getElementById('attendance-gemini-key').value = savedKey;
             }
             
             document.querySelectorAll('#sidebar-menu a').forEach(l => { 
