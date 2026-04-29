@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "master"]
   workflow_dispatch:
 
 permissions:
@@ -22,34 +22,45 @@ jobs:
         uses: actions/checkout@v4
       - name: Inject API Key
         env:
-          SECRET_KEY: "${{ secrets.GEMINI_API_KEY || secrets.NEXT_PUBLIC_GEMINI_API_KEY }}"
+          SECRET_KEY_PRIMARY: ${{ secrets.GEMINI_API_KEY }}
+          SECRET_KEY_SECONDARY: ${{ secrets.NEXT_PUBLIC_GEMINI_API_KEY }}
         run: |
           echo "Iniciando processo de injeção de segredos..."
           
-          if [ -z "$SECRET_KEY" ]; then
-            echo "::error::ERRO: A GEMINI_API_KEY não foi encontrada nos Secrets do GitHub."
+          # Prioriza GEMINI_API_KEY, depois NEXT_PUBLIC_GEMINI_API_KEY
+          KEY="$SECRET_KEY_PRIMARY"
+          if [ -z "$KEY" ]; then
+            KEY="$SECRET_KEY_SECONDARY"
+          fi
+
+          if [ -z "$KEY" ]; then
+            echo "::error::ERRO: Nenhuma chave (GEMINI_API_KEY ou NEXT_PUBLIC_GEMINI_API_KEY) foi encontrada nos Secrets do GitHub."
+            echo "Por favor, vá em Settings > Secrets and variables > Actions e adicione GEMINI_API_KEY."
             exit 1
           fi
+
+          export FINAL_KEY="$KEY"
 
           node -e "
             const fs = require('fs');
             const path = require('path');
-            const key = process.env.SECRET_KEY.trim();
+            const key = process.env.FINAL_KEY.trim();
             
             console.log('Chave carregada: ' + key.length + ' caracteres.');
+            console.log('Buscando arquivos .html para injeção...');
 
             function processFiles(dir) {
               const entries = fs.readdirSync(dir, { withFileTypes: true });
               for (const entry of entries) {
                 const res = path.resolve(dir, entry.name);
                 if (entry.isDirectory()) {
-                  if (entry.name !== 'node_modules' && entry.name !== '.git') processFiles(res);
+                  if (entry.name !== 'node_modules' && entry.name !== '.git' && entry.name !== 'dist') processFiles(res);
                 } else if (entry.name.endsWith('.html')) {
                   let content = fs.readFileSync(res, 'utf8');
                   if (content.includes('PLACEHOLDER_GEMINI_API_KEY')) {
                     const newContent = content.split('PLACEHOLDER_GEMINI_API_KEY').join(key);
                     fs.writeFileSync(res, newContent);
-                    console.log('  [SUCESSO] Chave injetada em: ' + entry.name);
+                    console.log('  [SUCESSO] Chave injetada no arquivo: ' + entry.name);
                   }
                 }
               }
@@ -61,6 +72,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
+          # Deploy the root folder containing index.html
           path: .
       - name: Deploy to GitHub Pages
         id: deployment
