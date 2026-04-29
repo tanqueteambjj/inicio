@@ -1692,20 +1692,34 @@
         import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query, where, setDoc, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
+        // Placeholder for GitHub Pages deployment
+        window.NEXT_PUBLIC_GEMINI_API_KEY = "PLACEHOLDER_GEMINI_API_KEY";
+
         let ai = null;
         async function initAI() {
             try {
-                const configResp = await fetch('/api/config');
-                if (!configResp.ok) throw new Error("Config fetch failed");
-                const config = await configResp.json();
+                let apiKey = window.NEXT_PUBLIC_GEMINI_API_KEY;
+
+                // Fallback for local dev or dynamic server
+                if (!apiKey || apiKey === "PLACEHOLDER_GEMINI_API_KEY") {
+                    try {
+                        const configResp = await fetch('/api/config');
+                        if (configResp.ok) {
+                            const config = await configResp.json();
+                            apiKey = config.apiKey;
+                        }
+                    } catch (e) {
+                        console.warn("Server config not available, likely static deploy on GitHub.");
+                    }
+                }
                 
-                if (config.apiKey) {
+                if (apiKey && apiKey !== "PLACEHOLDER_GEMINI_API_KEY") {
                     const { GoogleGenAI } = await import("https://esm.run/@google/genai");
-                    ai = new GoogleGenAI({ apiKey: config.apiKey });
+                    ai = new GoogleGenAI({ apiKey: apiKey });
                     window.ai = ai;
                     console.log("Gemini AI inicializada com sucesso.");
                 } else {
-                    console.error("ERRO: NEXT_PUBLIC_GEMINI_API_KEY não encontrada nas variáveis de ambiente.");
+                    console.error("ERRO: NEXT_PUBLIC_GEMINI_API_KEY não encontrada.");
                 }
             } catch (e) {
                 console.error("Error initializing Gemini AI:", e);
@@ -2048,7 +2062,7 @@
             if (!selectedClassPhoto) return;
             
             if (!ai) {
-                window.customAlert("ERRO: A chave da Inteligência Artificial (GEMINI_API_KEY) não foi detectada. Se você exportou este app, verifique se configurou as 'Environment Variables' no seu painel de deploy (Vercel/GitHub/etc).");
+                window.customAlert("Aviso\nERRO: A chave da Inteligência Artificial (GEMINI_API_KEY) não foi detectada.\n\nSe você está no GitHub Pages:\n1. Vá nas Configurações (Settings) do seu repositório.\n2. Vá em Secrets and Variables > Actions.\n3. Adicione um novo 'Repository Secret' chamado GEMINI_API_KEY.\n4. Execute o deploy novamente.");
                 return;
             }
 
