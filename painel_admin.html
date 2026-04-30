@@ -1322,7 +1322,9 @@
             </div>
             <div class="bg-gray-100 dark:bg-gray-700 px-6 py-4 flex justify-end gap-3 shrink-0 border-t border-gray-200 dark:border-gray-600">
                 <button onclick="window.closeEditModal()" class="px-5 py-2 border border-gray-300 dark:border-gray-600 dark:text-gray-300 rounded font-bold text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition">Cancelar</button>
-                <button onclick="window.saveStudentChanges()" class="px-6 py-2 bg-brand-red text-white rounded font-bold hover:bg-red-700 transition shadow-md">Salvar Alterações</button>
+                <button id="save-student-edit-btn" onclick="window.saveStudentChanges()" class="px-6 py-2 bg-brand-red text-white rounded font-bold hover:bg-red-700 transition shadow-md flex items-center gap-2">
+                    <span id="save-student-edit-btn-text">Salvar Alterações</span>
+                </button>
             </div>
         </div>
     </div>
@@ -1625,7 +1627,7 @@
             </div>
             <div class="bg-gray-100 dark:bg-gray-700 px-6 py-4 flex justify-end gap-3 shrink-0 border-t border-gray-200 dark:border-gray-600">
                 <button onclick="window.closeAdminRegisterModal()" class="px-5 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm">Cancelar</button>
-                <button onclick="window.saveAdminNewStudent()" class="px-6 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-700 transition shadow-md flex items-center gap-2"><i class="fa-solid fa-user-check"></i> Finalizar Matrícula</button>
+                <button id="save-new-student-btn" onclick="window.saveAdminNewStudent()" class="px-6 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-700 transition shadow-md flex items-center gap-2"><i class="fa-solid fa-user-check"></i> <span id="save-new-student-btn-text">Finalizar Matrícula</span></button>
             </div>
         </div>
     </div>
@@ -1847,8 +1849,8 @@
 
                 const student = window.students[sIndex];
                 
-                // Update Firestore
-                const studentRef = doc(db, 'students', id);
+                // Update Firestore with correct path
+                const studentRef = doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id);
                 await updateDoc(studentRef, {
                     photoURL: deleteField(),
                     photoBase64: deleteField()
@@ -3920,6 +3922,10 @@ Belém-PA, [DATA_ATUAL].
         };
 
         window.saveAdminNewStudent = async () => {
+            console.log("Iniciando saveAdminNewStudent...");
+            const saveBtn = document.getElementById('save-new-student-btn');
+            const saveBtnText = document.getElementById('save-new-student-btn-text');
+
             const cpf = document.getElementById('reg-cpf').value;
             if (cpf && !window.isValidCPF(cpf)) {
                 window.customAlert("CPF inválido. Por favor, verifique o número digitado.");
@@ -3969,23 +3975,28 @@ Belém-PA, [DATA_ATUAL].
 
             let initialPaymentHistory = [];
             let nextDue = new Date(regDate);
-            // nextDue.setMonth(nextDue.getMonth() + 1); // Removed to fix the 2 months ahead bug
             
             const nextDueDate = nextDue.toISOString();
 
             let photoBase64 = window.currentCroppedPhoto || null;
 
             try {
+                if (saveBtn) { saveBtn.disabled = true; if (saveBtnText) saveBtnText.innerText = 'Salvando...'; }
+                
                 const planDisplayString = planInfo.short + ' - R$ ' + Number(planValue).toFixed(2).replace('.', ',');
                 const studentData = { name, dob, cpf, cep, email, phone, address, guardian, guardianCpf, guardianKinship, plan: planDisplayString, planValue: planValue, titularName: titularName, titularId: titularId, titularRelation: titularRelation, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), nextDueDate: nextDueDate, studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, contractSigned: document.getElementById('reg-contract-signed').checked, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] };
                 
+                console.log("Salvando no Firestore...");
                 const titularDocRef = await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), studentData);
+                console.log("Documento criado ID:", titularDocRef.id);
                 
                 // Upload photo if exists
                 if (photoBase64) {
+                    console.log("Fazendo upload da foto...");
                     const photoURL = await window.uploadPhotoToStorage(photoBase64, titularDocRef.id);
                     if (photoURL) {
                         await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', titularDocRef.id), { photoURL: photoURL });
+                        console.log("Foto vinculada.");
                     }
                 }
 
@@ -4033,11 +4044,21 @@ Belém-PA, [DATA_ATUAL].
                     }
                 }
 
+                console.log("Sucesso no cadastro.");
                 window.closeAdminRegisterModal(); window.loadData(); window.customAlert("Aluno cadastrado com sucesso!");
-            } catch(e) { console.error(e); window.customAlert("Erro ao cadastrar."); }
+            } catch(e) { 
+                console.error("Erro no cadastro:", e); 
+                window.customAlert("Erro ao cadastrar: " + (e.message || "Erro desconhecido")); 
+            } finally {
+                if (saveBtn) { saveBtn.disabled = false; if (saveBtnText) saveBtnText.innerText = 'Finalizar Matrícula'; }
+            }
         };
 
         window.saveStudentChanges = async () => {
+            console.log("Iniciando saveStudentChanges...");
+            const saveBtn = document.getElementById('save-student-edit-btn');
+            const saveBtnText = document.getElementById('save-student-edit-btn-text');
+
             const cpf = document.getElementById('edit-cpf').value;
             if (cpf && !window.isValidCPF(cpf)) {
                 window.customAlert("CPF inválido. Por favor, verifique o número digitado.");
@@ -4059,6 +4080,8 @@ Belém-PA, [DATA_ATUAL].
             const email = document.getElementById('edit-email').value; const phone = document.getElementById('edit-phone').value; const color = document.getElementById('edit-belt-color').value; const degree = document.getElementById('edit-belt-degree').value; const beltStr = `Faixa ${color} - ${degree}º Grau`; const login = document.getElementById('edit-login').value; const pass = document.getElementById('edit-password').value; const status = document.getElementById('edit-enrollment-status').value;
             const originalBelt = document.getElementById('edit-original-belt').value;
             
+            console.log("Dados p/ atualização ID:", id);
+
             let photoBase64 = null;
             if (window.currentCroppedPhoto) {
                 photoBase64 = window.currentCroppedPhoto;
@@ -4074,18 +4097,39 @@ Belém-PA, [DATA_ATUAL].
                 }
             }
             try {
+                if (saveBtn) { saveBtn.disabled = true; if (saveBtnText) saveBtnText.innerText = 'Salvando...'; }
+
                 const updateData = { name: name, dob: dobIso, cpf: cpf, cep: cep, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf, enrollmentStatus: status, belt: beltStr, studentLogin: login, studentPassword: pass, email: email, phone: phone, contractSigned: document.getElementById('edit-contract-signed').checked };
                 
                 if (photoBase64) {
+                    console.log("Upload da foto...");
                     const photoURL = await window.uploadPhotoToStorage(photoBase64, id);
-                    if (photoURL) updateData.photoURL = photoURL;
-                    else updateData.photoBase64 = photoBase64; // Fallback if upload fails
+                    if (photoURL) {
+                        updateData.photoURL = photoURL;
+                        console.log("Foto OK.");
+                    } else {
+                        updateData.photoBase64 = photoBase64; // Fallback if upload fails
+                        console.log("Fallback base64.");
+                    }
                 }
 
-                if (beltStr !== originalBelt) { updateData.lastGraduationDate = new Date().toISOString(); updateData.progressLog = arrayUnion({ type: 'graduation', text: `Graduado para ${beltStr}`, date: new Date().toISOString() }); }
+                if (beltStr !== originalBelt) { 
+                    updateData.lastGraduationDate = new Date().toISOString(); 
+                    updateData.progressLog = arrayUnion({ type: 'graduation', text: `Graduado para ${beltStr}`, date: new Date().toISOString() }); 
+                    console.log("Nova graduação.");
+                }
+                
+                console.log("Chamando updateDoc...");
                 await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), updateData);
+                console.log("Salvo com sucesso.");
+
                 window.closeEditModal(); window.loadData(); window.customAlert("Dados atualizados com sucesso!");
-            } catch(e) { console.error(e); window.customAlert("Erro ao salvar."); }
+            } catch(e) { 
+                console.error("Erro ao salvar:", e); 
+                window.customAlert("Erro ao salvar: " + (e.message || "Erro desconhecido")); 
+            } finally {
+                if (saveBtn) { saveBtn.disabled = false; if (saveBtnText) saveBtnText.innerText = 'Salvar Alterações'; }
+            }
         };
 
         // PROGRESSO, FREQUENCIA EMBUTIDA
