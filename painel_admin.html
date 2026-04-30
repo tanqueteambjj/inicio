@@ -2071,6 +2071,26 @@
             reader.readAsDataURL(file);
         };
 
+        window.previewPhoto = (event, target = 'edit') => {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Check file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                window.customAlert("A imagem é muito grande. Escolha uma foto menor que 5MB.");
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                window.lastPhotoTarget = target;
+                // Open cropper modal with 1:1 aspect ratio for student photos
+                window.openCropperWithImage(e.target.result, 1);
+            };
+            reader.readAsDataURL(file);
+        };
+
         window.openCropperWithImage = (base64, aspectRatio = 1) => {
             const croppingImg = document.getElementById('cropper-image');
             croppingImg.src = base64;
