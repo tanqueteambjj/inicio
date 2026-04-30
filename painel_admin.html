@@ -1969,27 +1969,8 @@
             document.getElementById('class-photo-modal').classList.add('flex');
             document.getElementById('class-photo-date').value = window.getLocalISODate ? window.getLocalISODate() : new Date().toISOString().split('T')[0];
             
-            // Populate schedules
-            const scheduleSelect = document.getElementById('class-photo-schedule');
-            scheduleSelect.innerHTML = '<option value="">Selecione o Horário...</option>';
-            // Attempt to get schedules from settings
-            const schedules = window.schedules || [];
-            if (schedules.length > 0) {
-                schedules.forEach(s => {
-                    const opt = document.createElement('option');
-                    opt.value = s.time;
-                    opt.textContent = s.time;
-                    scheduleSelect.appendChild(opt);
-                });
-            } else {
-                const scheduleList = ["07:00", "08:00", "09:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"];
-                scheduleList.forEach(time => {
-                    const opt = document.createElement('option');
-                    opt.value = time;
-                    opt.textContent = time;
-                    scheduleSelect.appendChild(opt);
-                });
-            }
+            // Populate schedules using central function
+            window.populateScheduleSelects();
             
             // Populate manual add select
             const manualSelect = document.getElementById('class-photo-manual-select');
@@ -2752,32 +2733,23 @@
                 optionsHtml += `<option value="${schedule.name}">${schedule.name}</option>`;
             }
             
-            const checkinSelector = document.getElementById('checkin-class-selector');
-            if (checkinSelector) {
-                const currentVal = checkinSelector.value;
-                checkinSelector.innerHTML = optionsHtml;
-                if (currentVal && Object.values(window.SCHEDULE_DICT).some(s => s.name === currentVal)) {
-                    checkinSelector.value = currentVal;
+            const selectors = [
+                'checkin-class-selector',
+                'bulk-class-selector',
+                'prog-add-class',
+                'class-photo-schedule'
+            ];
+
+            selectors.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const currentVal = el.value;
+                    el.innerHTML = (id === 'class-photo-schedule' ? '<option value="">Selecione o Horário...</option>' : '') + optionsHtml;
+                    if (currentVal && Object.values(window.SCHEDULE_DICT).some(s => s.name === currentVal)) {
+                        el.value = currentVal;
+                    }
                 }
-            }
-            
-            const bulkSelector = document.getElementById('bulk-class-selector');
-            if (bulkSelector) {
-                const currentVal = bulkSelector.value;
-                bulkSelector.innerHTML = optionsHtml;
-                if (currentVal && Object.values(window.SCHEDULE_DICT).some(s => s.name === currentVal)) {
-                    bulkSelector.value = currentVal;
-                }
-            }
-            
-            const progAddSelector = document.getElementById('prog-add-class');
-            if (progAddSelector) {
-                const currentVal = progAddSelector.value;
-                progAddSelector.innerHTML = optionsHtml;
-                if (currentVal && Object.values(window.SCHEDULE_DICT).some(s => s.name === currentVal)) {
-                    progAddSelector.value = currentVal;
-                }
-            }
+            });
         };
 
         window.renderSettingsSchedules = () => {
