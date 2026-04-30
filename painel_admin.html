@@ -2268,20 +2268,38 @@
             try {
                 for (const studentId of confirmedIds) {
                     const checkinId = `${studentId}-${date}-${schedule.replace(':','')}`;
-                    await setDoc(doc(db, 'checkins', checkinId), {
+                    const timestamp = new Date().toISOString();
+                    
+                    // Legacy logging
+                    await setDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'checkins', checkinId), {
                         studentId: studentId,
                         studentName: window.students.find(s => s.id === studentId).name,
                         date: date,
                         time: schedule,
-                        timestamp: new Date().toISOString(),
+                        timestamp: timestamp,
                         method: 'facial_recognition_ia'
                     });
+
+                    // Update student document (source of truth for UI)
+                    const student = window.students.find(s => s.id === studentId);
+                    if (student) {
+                        const newLog = { 
+                            date: date, 
+                            time: schedule, 
+                            timestamp: timestamp,
+                            method: 'facial_recognition_ia'
+                        };
+                        await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), { 
+                            attendance: arrayUnion(date), 
+                            attendanceLog: arrayUnion(newLog) 
+                        });
+                    }
                 }
                 window.closeClassPhotoModal();
                 document.getElementById('class-photo-result-modal').classList.add('hidden');
                 document.getElementById('class-photo-result-modal').classList.remove('flex');
                 window.customAlert("Presenças registradas com sucesso!");
-                if (window.currentView === 'attendance') window.loadAttendance();
+                if (window.loadAttendance) window.loadAttendance();
             } catch (err) {
                 console.error("Error saving attendance:", err);
                 window.customAlert("Erro ao salvar: " + err.message);
@@ -3331,6 +3349,7 @@
                 window.students.sort((a, b) => new Date(b.registrationDate || 0) - new Date(a.registrationDate || 0));
                 window.populateTitularSelects(); updateStats();
                 if(window.currentView === 'students') window.renderTable();
+                if(window.currentView === 'attendance' && window.renderAttendanceTable) window.renderAttendanceTable();
                 if(window.renderBirthdays) window.renderBirthdays();
             } catch (error) { console.error(error); }
         }
@@ -5249,6 +5268,10 @@ Belém-PA, [DATA_ATUAL].
         };
 
         // FREQUENCIA
+        window.loadAttendance = async () => {
+            if (window.loadData) await window.loadData();
+        };
+
         window.renderAttendanceTable = () => {
             const dateInput = document.getElementById('attendance-date-filter').value;
             const tbody = document.getElementById('attendance-table-body');
