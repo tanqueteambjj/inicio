@@ -1920,11 +1920,12 @@
                 width: 400,
                 height: 400,
                 imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high',
+                imageSmoothingQuality: 'medium',
             };
 
             const canvas = cropperInstance.getCroppedCanvas(options);
-            const base64 = canvas.toDataURL('image/jpeg', 0.8);
+            // Reduced quality for faster upload
+            const base64 = canvas.toDataURL('image/jpeg', 0.7);
             
             if (target === 'class') {
                 selectedClassPhoto = base64;
@@ -2397,7 +2398,7 @@
 
                 if (editId) {
                     // Update existing plan or create override for default plan
-                    await setDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'plans', editId), planData, { merge: true });
+                    await setDoc(doc(window.db, 'plans', editId), planData, { merge: true });
                 } else {
                     // Add new plan
                     planData.createdAt = new Date().toISOString();
@@ -2451,7 +2452,7 @@
             
             try {
                 // Set as deleted so it overrides defaults
-                await setDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'plans', key), { deleted: true }, { merge: true });
+                await setDoc(doc(window.db, 'plans', key), { deleted: true }, { merge: true });
                 
                 // Remove from PLAN_DICT to reflect immediately
                 delete window.PLAN_DICT[key];
@@ -3607,6 +3608,20 @@ Belém-PA, [DATA_ATUAL].
                 if (document.getElementById('edit-enrollment-status')) document.getElementById('edit-enrollment-status').value = s.enrollmentStatus || 'Ativo';
                 if (document.getElementById('edit-contract-signed')) document.getElementById('edit-contract-signed').checked = !!s.contractSigned;
                 
+                const photoPreview = document.getElementById('edit-photo-preview');
+                if (photoPreview) {
+                    if (s.photoURL) {
+                        photoPreview.src = s.photoURL;
+                        photoPreview.classList.remove('hidden');
+                    } else if (s.photoBase64) {
+                        photoPreview.src = s.photoBase64;
+                        photoPreview.classList.remove('hidden');
+                    } else {
+                        photoPreview.src = '';
+                        photoPreview.classList.add('hidden');
+                    }
+                }
+                
                 window.checkAdminEditAge();
                 document.getElementById('edit-modal').classList.remove('hidden'); document.getElementById('edit-modal').classList.add('flex');
             } catch(e) { console.error("Erro edição:", e); window.customAlert("Erro ao abrir."); }
@@ -4120,7 +4135,7 @@ Belém-PA, [DATA_ATUAL].
                 }
                 
                 console.log("Chamando updateDoc...");
-                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), updateData);
+                await updateDoc(doc(window.db, 'students', id), updateData);
                 console.log("Salvo com sucesso.");
 
                 window.closeEditModal(); window.loadData(); window.customAlert("Dados atualizados com sucesso!");
@@ -4166,7 +4181,7 @@ Belém-PA, [DATA_ATUAL].
 
         window.saveProgressNote = async () => {
             const id = document.getElementById('prog-student-id').value; const text = document.getElementById('prog-new-note').value.trim(); if(!text) { window.customAlert("Escreva uma anotação."); return; }
-            try { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { progressLog: arrayUnion({ type: 'note', text: text, date: new Date().toISOString() }) }); const s = window.students.find(st => st.id === id); if(s) { if(!s.progressLog) s.progressLog = []; s.progressLog.push({ type: 'note', text: text, date: new Date().toISOString() }); } window.openProgressModal(id); } catch(e) { window.customAlert("Erro ao salvar anotação."); }
+            try { await updateDoc(doc(window.db, 'students', id), { progressLog: arrayUnion({ type: 'note', text: text, date: new Date().toISOString() }) }); const s = window.students.find(st => st.id === id); if(s) { if(!s.progressLog) s.progressLog = []; s.progressLog.push({ type: 'note', text: text, date: new Date().toISOString() }); } window.openProgressModal(id); } catch(e) { window.customAlert("Erro ao salvar anotação."); }
         };
 
         window.deleteProgressNote = async (studentId, logDate, logText) => {
@@ -4176,7 +4191,7 @@ Belém-PA, [DATA_ATUAL].
             const logToRemove = s.progressLog.find(l => l.date === logDate && l.text === logText);
             if(!logToRemove) return;
             try {
-                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), { progressLog: arrayRemove(logToRemove) });
+                await updateDoc(doc(window.db, 'students', studentId), { progressLog: arrayRemove(logToRemove) });
                 s.progressLog = s.progressLog.filter(l => l !== logToRemove);
                 window.openProgressModal(studentId);
             } catch(e) { console.error(e); window.customAlert("Erro ao excluir registro."); }
@@ -4213,7 +4228,7 @@ Belém-PA, [DATA_ATUAL].
             try { 
                 const s = window.students.find(x => x.id === id); if (s && s.attendanceLog && s.attendanceLog.some(l => l.date === dateVal && l.time === classVal)) { window.customAlert("Já existe presença!"); return; }
                 const newLog = { date: dateVal, time: classVal, timestamp: new Date().toISOString() };
-                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { attendance: arrayUnion(dateVal), attendanceLog: arrayUnion(newLog) }); 
+                await updateDoc(doc(window.db, 'students', id), { attendance: arrayUnion(dateVal), attendanceLog: arrayUnion(newLog) }); 
                 if (s) { if (!s.attendance) s.attendance = []; if(!s.attendance.includes(dateVal)) s.attendance.push(dateVal); if (!s.attendanceLog) s.attendanceLog = []; s.attendanceLog.push(newLog); }
                 window.filterProgressAttendance(); window.loadData(); 
             } catch(e) { window.customAlert("Erro ao adicionar frequência."); }
@@ -4224,10 +4239,10 @@ Belém-PA, [DATA_ATUAL].
             const s = window.students.find(st => st.id === studentId); if(!s || !s.attendanceLog) return;
             const logEntry = s.attendanceLog.find(l => l.date === dateStr && l.time === timeStr); if (!logEntry) return;
             try {
-                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), { attendanceLog: arrayRemove(logEntry) });
+                await updateDoc(doc(window.db, 'students', studentId), { attendanceLog: arrayRemove(logEntry) });
                 s.attendanceLog = s.attendanceLog.filter(l => l !== logEntry);
                 const stillHasLogsForDate = s.attendanceLog.some(l => l.date === dateStr);
-                if (!stillHasLogsForDate) { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), { attendance: arrayRemove(dateStr) }); if(s.attendance) s.attendance = s.attendance.filter(d => d !== dateStr); }
+                if (!stillHasLogsForDate) { await updateDoc(doc(window.db, 'students', studentId), { attendance: arrayRemove(dateStr) }); if(s.attendance) s.attendance = s.attendance.filter(d => d !== dateStr); }
                 window.filterProgressAttendance(); window.loadData();
             } catch(e) { window.customAlert("Erro ao remover"); }
         };
@@ -4376,7 +4391,7 @@ Belém-PA, [DATA_ATUAL].
                 }
 
                 const newLog = { date: todayISO, time: className, timestamp: new Date().toISOString() };
-                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), { attendance: arrayUnion(todayISO), attendanceLog: arrayUnion(newLog) });
+                await updateDoc(doc(window.db, 'students', studentId), { attendance: arrayUnion(todayISO), attendanceLog: arrayUnion(newLog) });
                 window.playBeep('success');
                 if(isTotem) modal.classList.add('bg-green-900');
                 
@@ -5168,7 +5183,12 @@ Belém-PA, [DATA_ATUAL].
             if (!base64 || !base64.startsWith('data:image')) return null;
             try {
                 const storageRef = ref(window.storage, `students/${studentId}.jpg`);
-                await uploadString(storageRef, base64, 'data_url');
+                
+                // Convert base64 to Blob for faster uploadBytes operation
+                const response = await fetch(base64);
+                const blob = await response.blob();
+                
+                await uploadBytes(storageRef, blob);
                 const downloadURL = await getDownloadURL(storageRef);
                 return downloadURL;
             } catch (e) {
@@ -5211,7 +5231,7 @@ Belém-PA, [DATA_ATUAL].
                             const student = window.students.find(s => s.id === id);
                             if (student && student.orderIndex !== currentIndex) {
                                 student.orderIndex = currentIndex;
-                                updates.push(updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { orderIndex: currentIndex }));
+                                updates.push(updateDoc(doc(window.db, 'students', id), { orderIndex: currentIndex }));
                             }
                             currentIndex++;
                         }
@@ -5426,7 +5446,7 @@ Belém-PA, [DATA_ATUAL].
                     const s = window.students.find(x => x.id === id);
                     if (s) {
                         if (s.attendanceLog && s.attendanceLog.some(l => l.date === dateStr && l.time === timeStr)) continue;
-                        await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { 
+                        await updateDoc(doc(window.db, 'students', id), { 
                             attendance: arrayUnion(dateStr), 
                             attendanceLog: arrayUnion(newLog) 
                         });
@@ -5453,7 +5473,7 @@ Belém-PA, [DATA_ATUAL].
                     const id = cb.value;
                     const s = window.students.find(x => x.id === id);
                     if (s && !s.archived) {
-                        await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { archived: true });
+                        await updateDoc(doc(window.db, 'students', id), { archived: true });
                     }
                 }
                 window.customAlert("Alunos arquivados com sucesso!");
@@ -5477,7 +5497,7 @@ Belém-PA, [DATA_ATUAL].
                     const id = cb.value;
                     const s = window.students.find(x => x.id === id);
                     if (s && s.archived) {
-                        await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), { archived: false });
+                        await updateDoc(doc(window.db, 'students', id), { archived: false });
                     }
                 }
                 window.customAlert("Alunos desarquivados com sucesso!");
@@ -5499,7 +5519,7 @@ Belém-PA, [DATA_ATUAL].
             try {
                 for (const cb of checkboxes) {
                     const id = cb.value;
-                    await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id));
+                    await deleteDoc(doc(window.db, 'students', id));
                 }
                 window.customAlert("Alunos apagados com sucesso!");
                 window.loadData();
@@ -5962,7 +5982,7 @@ Belém-PA, [DATA_ATUAL].
                     updateData.contractNextDue = toISODate(getLocalISODate(cNextDue));
                 }
                 
-                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), updateData);
+                await updateDoc(doc(window.db, 'students', id), updateData);
                 
                 window.customAlert("Pagamento registrado com sucesso!");
                 window.closePaymentModal();
@@ -6039,10 +6059,10 @@ Belém-PA, [DATA_ATUAL].
 
             try {
                 // Remove old, add new
-                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), {
+                await updateDoc(doc(window.db, 'students', studentId), {
                     paymentHistory: arrayRemove(originalPayment)
                 });
-                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), {
+                await updateDoc(doc(window.db, 'students', studentId), {
                     paymentHistory: arrayUnion(updatedPayment)
                 });
 
@@ -6066,7 +6086,7 @@ Belém-PA, [DATA_ATUAL].
             if (!payment) return;
 
             try {
-                await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), {
+                await updateDoc(doc(window.db, 'students', studentId), {
                     paymentHistory: arrayRemove(payment)
                 });
                 window.customAlert("Pagamento excluído com sucesso!");
@@ -6089,8 +6109,7 @@ Belém-PA, [DATA_ATUAL].
             const s = window.students.find(st => st.id === id); if(!s) return;
             if(!await window.customConfirm(`ATENÇÃO: Deseja excluir DEFINITIVAMENTE o aluno ${s.name} do banco de dados? Esta ação não pode ser desfeita.`)) return;
             try { 
-                await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id)); 
-                window.loadData(); 
+                await deleteDoc(doc(window.db, 'students', id));                window.loadData(); 
                 window.customAlert("Aluno excluído com sucesso.");
             } catch(e) { 
                 console.error(e);
@@ -6895,7 +6914,7 @@ Belém-PA, [DATA_ATUAL].
 
             try {
                 const data = { title, text, type, expiryDate: expiryDateStr, timestamp: new Date().toISOString() };
-                await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'notices'), data);
+                await addDoc(collection(window.db, 'notices'), data);
                 window.loadNotices();
                 window.customAlert(`Mensagem de aniversário para ${name} publicada no mural com sucesso!`);
             } catch(e) { 
