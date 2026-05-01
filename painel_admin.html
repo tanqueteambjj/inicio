@@ -7097,6 +7097,15 @@ Belém-PA, [DATA_ATUAL].
             window.printHtmlContent(htmlContent, "Relatorio_Geral_Alunos");
         };
 
+        window.shareBirthdayWhatsApp = (id) => {
+            const s = window.students.find(st => st.id === id);
+            if (!s) return;
+            const name = s.name;
+            const text = `🎉 *Feliz Aniversário, ${name}!* 🎂🥋\n\nA família Tanque Team deseja um excelente aniversário para o nosso aluno ${name}! Que seu novo ciclo seja repleto de vitórias dentro e fora dos tatames. Oss! 🥋🎂`;
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        };
+
         window.shareBirthdayNotice = async (id) => {
             const s = window.students.find(st => st.id === id);
             if (!s) return;
@@ -7110,7 +7119,7 @@ Belém-PA, [DATA_ATUAL].
 
             try {
                 const data = { title, text, type, expiryDate: expiryDateStr, timestamp: new Date().toISOString() };
-                await addDoc(collection(window.db, 'notices'), data);
+                await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'notices'), data);
                 window.loadNotices();
                 window.customAlert(`Mensagem de aniversário para ${name} publicada no mural com sucesso!`);
             } catch(e) { 
@@ -7152,9 +7161,14 @@ Belém-PA, [DATA_ATUAL].
                                     </span>
                                 </div>
                             </div>
-                            <button onclick="window.shareBirthdayNotice('${s.id}')" class="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 flex items-center justify-center shrink-0 shadow-sm relative z-10" title="Publicar Parabéns no Mural">
-                                <i class="fa-solid fa-share-nodes text-xs"></i>
-                            </button>
+                            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity relative z-10 shrink-0">
+                                <button onclick="window.shareBirthdayNotice('${s.id}')" class="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 flex items-center justify-center shadow-sm" title="Publicar Parabéns no Mural">
+                                    <i class="fa-solid fa-bullhorn text-[10px]"></i>
+                                </button>
+                                <button onclick="window.shareBirthdayWhatsApp('${s.id}')" class="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-500 flex items-center justify-center shadow-sm" title="Parabenizar via WhatsApp">
+                                    <i class="fa-brands fa-whatsapp text-xs"></i>
+                                </button>
+                            </div>
                         </div>
                     `;
                 });
