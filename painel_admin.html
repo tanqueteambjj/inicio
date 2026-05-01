@@ -373,18 +373,25 @@
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-wrap gap-4 items-center text-sm no-print">
                         <label class="font-bold text-gray-700 dark:text-gray-300">Selecione a Data:</label>
                         <input type="date" id="attendance-date-filter" onchange="window.renderAttendanceTable()" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red">
-                        <div class="ml-auto text-gray-500 dark:text-gray-400 text-sm">
-                            Total de presenças: <span id="attendance-total-count" class="font-bold text-gray-800 dark:text-white">0</span>
+                        <div class="ml-auto flex items-center gap-2">
+                            <button id="btn-batch-delete-att-report" onclick="window.deleteAttendanceReportBatch()" class="hidden bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded font-bold transition shadow-sm mr-2"><i class="fa-solid fa-trash-can mr-1"></i> Excluir Selecionadas</button>
+                            <div class="text-gray-500 dark:text-gray-400 text-sm">
+                                Total de presenças: <span id="attendance-total-count" class="font-bold text-gray-800 dark:text-white">0</span>
+                            </div>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider">
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold w-10">
+                                        <input type="checkbox" id="select-all-att-report" onclick="window.toggleSelectAllAttReport(this)" class="accent-brand-red">
+                                    </th>
                                     <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Horário</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Aluno</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Modalidade/Plano</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Aula</th>
+                                    <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold text-center">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="attendance-table-body" class="text-sm text-gray-700 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
@@ -859,6 +866,12 @@
             <div class="p-6 overflow-y-auto flex-1 bg-white dark:bg-gray-800">
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">A IA identificou os seguintes alunos na foto. Desmarque os que não estiverem presentes:</p>
                 
+                <!-- Visualization Area -->
+                <div id="class-photo-visualization" class="relative w-full aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-6 hidden border dark:border-gray-600">
+                    <img id="class-photo-visual-img" src="" class="w-full h-full object-contain">
+                    <div id="class-photo-boxes-container" class="absolute inset-0 pointer-events-none"></div>
+                </div>
+
                 <div id="class-photo-results-list" class="space-y-2">
                     <!-- Lista de checkboxes injetada via JS -->
                 </div>
@@ -1097,6 +1110,7 @@
                             <span class="text-xs text-gray-500 dark:text-gray-400">até</span>
                             <input type="date" id="prog-end-filter" class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-teal-500" onchange="window.filterProgressAttendance()">
                             <span class="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-xs px-2 py-1 rounded font-bold whitespace-nowrap" id="prog-att-total">0 aulas</span>
+                            <button id="btn-batch-delete-att" onclick="window.deleteAttendanceBatch()" class="hidden bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-xs px-2 py-1 rounded font-bold hover:bg-red-200 transition"><i class="fa-solid fa-trash-can mr-1"></i> Excluir Selecionadas</button>
                         </div>
                     </div>
 
@@ -2127,7 +2141,7 @@
 
                 const groupPhotoBase64 = selectedClassPhoto.split(',')[1];
                 const batchSize = 10; // Reduced for reliability
-                let allDetectedIds = [];
+                let allDetections = [];
 
                 for (let i = 0; i < studentsWithPhotos.length; i += batchSize) {
                     const batch = studentsWithPhotos.slice(i, i + batchSize);
@@ -2145,13 +2159,15 @@
                     if (validPhotosParts.length === 0) continue;
 
                     const prompt = `Analise a foto de grupo (última imagem) e identifique quais dos seguintes alunos estão presentes nela.
+                    Para cada aluno identificado, forneça também as coordenadas do rosto dele na foto de grupo.
                     IMPORTANTE: O rosto do nível de confiança deve ser alto. Use as fotos individuais enviadas anteriormente como única referência para cada aluno.
                     Lembre-se que nas fotos de grupo os alunos podem estar usando kimono de diferentes cores e em diferentes posições.
                     
                     Lista de candidatos:
                     ${studentListStr}
                     
-                    RETORNE EXCLUSIVAMENTE UM ARRAY JSON COM OS IDs: ["id1", "id2"]`;
+                    RETORNE EXCLUSIVAMENTE UM ARRAY JSON COM OBJETOS NO FORMATO: [{"id": "id_do_aluno", "box_2d": [ymin, xmin, ymax, xmax]}].
+                    As coordenadas [ymin, xmin, ymax, xmax] devem ser normalizadas de 0 a 1000 baseadas na altura e largura da imagem de grupo.`;
 
                     const result = await ai.models.generateContent({
                         model: "gemini-3-flash-preview",
@@ -2168,15 +2184,23 @@
                     try {
                         const jsonMatch = responseText.match(/\[.*\]/s);
                         if (jsonMatch) {
-                            const detectedIds = JSON.parse(jsonMatch[0]);
-                            allDetectedIds = allDetectedIds.concat(detectedIds);
+                            const detections = JSON.parse(jsonMatch[0]);
+                            allDetections = allDetections.concat(detections);
                         }
                     } catch (e) {
                          console.error("JSON Parse error:", e);
                     }
                 }
 
-                identifiedStudents = window.students.filter(s => allDetectedIds.includes(s.id));
+                // identifiedStudents will now store the detection object with coordinates
+                identifiedStudents = allDetections.map(det => {
+                    const student = window.students.find(s => s.id === det.id);
+                    if (student) {
+                        return { ...student, box_2d: det.box_2d };
+                    }
+                    return null;
+                }).filter(s => s !== null);
+
                 window.renderIdentifiedList();
                 
                 document.getElementById('class-photo-result-modal').classList.remove('hidden');
@@ -2193,11 +2217,25 @@
 
         window.renderIdentifiedList = () => {
             const listContainer = document.getElementById('class-photo-results-list');
+            const visualization = document.getElementById('class-photo-visualization');
+            const visualImg = document.getElementById('class-photo-visual-img');
+            const boxesContainer = document.getElementById('class-photo-boxes-container');
+            
             listContainer.innerHTML = '';
+            boxesContainer.innerHTML = '';
+
+            if (selectedClassPhoto) {
+                visualImg.src = selectedClassPhoto;
+                visualization.classList.remove('hidden');
+            } else {
+                visualization.classList.add('hidden');
+            }
+
             if (identifiedStudents.length === 0) {
                 listContainer.innerHTML = '<p class="text-center text-gray-500 py-4 italic">Nenhum aluno identificado automaticamente.</p>';
                 return;
             }
+
             identifiedStudents.forEach(student => {
                 const item = document.createElement('div');
                 item.className = "flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border dark:border-gray-600";
@@ -2209,10 +2247,45 @@
                             <p class="text-[10px] text-gray-500">${student.plan || 'Sem plano'}</p>
                         </div>
                     </div>
-                    <input type="checkbox" checked class="w-5 h-5 accent-emerald-600 cursor-pointer" data-id="${student.id}">
+                    <div class="flex items-center gap-2">
+                        <button onclick="window.highlightFace('${student.id}')" class="text-emerald-600 hover:text-emerald-700 p-1" title="Ver na foto"><i class="fa-solid fa-expand"></i></button>
+                        <input type="checkbox" checked class="w-5 h-5 accent-emerald-600 cursor-pointer" data-id="${student.id}">
+                    </div>
                 `;
                 listContainer.appendChild(item);
+
+                // Add bounding box to image if coordinates exist
+                if (student.box_2d) {
+                    const [ymin, xmin, ymax, xmax] = student.box_2d;
+                    const box = document.createElement('div');
+                    box.id = `box-${student.id}`;
+                    box.className = "absolute border-2 border-emerald-500 bg-emerald-500/10 rounded sm:rounded-md transition-all duration-300";
+                    box.style.top = `${ymin / 10}%`;
+                    box.style.left = `${xmin / 10}%`;
+                    box.style.width = `${(xmax - xmin) / 10}%`;
+                    box.style.height = `${(ymax - ymin) / 10}%`;
+                    
+                    const label = document.createElement('div');
+                    label.className = "absolute -top-6 left-0 bg-emerald-500 text-white text-[10px] sm:text-xs font-bold px-1 rounded whitespace-nowrap";
+                    label.innerText = student.name.split(' ')[0];
+                    box.appendChild(label);
+                    
+                    boxesContainer.appendChild(box);
+                }
             });
+        };
+
+        window.highlightFace = (studentId) => {
+            const boxes = document.querySelectorAll('#class-photo-boxes-container > div');
+            boxes.forEach(b => b.classList.remove('border-yellow-400', 'bg-yellow-400/30', 'scale-110', 'z-10'));
+            boxes.forEach(b => b.classList.add('border-emerald-500', 'bg-emerald-500/10'));
+
+            const targetBox = document.getElementById(`box-${studentId}`);
+            if (targetBox) {
+                targetBox.classList.remove('border-emerald-500', 'bg-emerald-500/10');
+                targetBox.classList.add('border-yellow-400', 'bg-yellow-400/30', 'scale-110', 'z-10');
+                targetBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         };
 
         window.addManualRecognition = () => {
@@ -3238,7 +3311,7 @@
         }
 
         function isPaymentLate(s) {
-            if (!s || s.paymentStatus === 'Isento' || !s.nextDueDate) return false;
+            if (!s || s.paymentStatus === 'Isento' || (s.plan && s.plan.toLowerCase() === 'isento') || !s.nextDueDate) return false;
             if (s.paymentStatus === 'Pendente') return true;
             try {
                 const nextDueObj = getAdjustedNextDueDate(s);
@@ -4208,9 +4281,68 @@ Belém-PA, [DATA_ATUAL].
                 });
                 Object.keys(grouped).sort((a,b) => new Date(b) - new Date(a)).forEach(dateStr => {
                     const formatted = formatDate(dateStr);
-                    let classesHtml = grouped[dateStr].map(log => `<span class="text-[10px] bg-white dark:bg-gray-800 px-2 py-1 rounded font-bold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 inline-flex items-center gap-1 mb-1 mr-1 shadow-sm">${log.time || 'Manual'} <button onclick="window.removeSpecificAttendance('${id}', '${log.date || ''}', '${log.time || ''}')" class="text-red-400 hover:text-red-600 transition ml-1"><i class="fa-solid fa-times"></i></button></span>`).join('');
+                    let classesHtml = grouped[dateStr].map(log => `
+                        <label class="text-[10px] bg-white dark:bg-gray-800 px-2 py-1 rounded font-bold text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 inline-flex items-center gap-1 mb-1 mr-1 shadow-sm cursor-pointer hover:border-emerald-500 transition-colors">
+                            <input type="checkbox" class="att-checkbox accent-emerald-600" data-date="${log.date || ''}" data-time="${log.time || ''}" onchange="window.updateBatchDeleteBtn()">
+                            ${log.time || 'Manual'} 
+                            <button onclick="window.removeSpecificAttendance('${id}', '${log.date || ''}', '${log.time || ''}')" class="text-red-400 hover:text-red-600 transition ml-1"><i class="fa-solid fa-times text-[8px]"></i></button>
+                        </label>`).join('');
                     attList.innerHTML += `<div class="py-2 px-3 hover:bg-white dark:hover:bg-gray-600 transition border-b border-gray-100 dark:border-gray-600 flex flex-col gap-1"><span class="text-sm font-bold text-gray-800 dark:text-gray-200"><i class="fa-regular fa-calendar-check text-green-600 mr-1"></i> ${formatted}</span><div class="flex flex-wrap">${classesHtml}</div></div>`;
                 });
+                window.updateBatchDeleteBtn();
+            }
+        };
+
+        window.updateBatchDeleteBtn = () => {
+            const selected = document.querySelectorAll('.att-checkbox:checked').length;
+            const btn = document.getElementById('btn-batch-delete-att');
+            if (selected > 0) {
+                btn.classList.remove('hidden');
+                btn.innerHTML = `<i class="fa-solid fa-trash-can mr-1"></i> Excluir (${selected})`;
+            } else {
+                btn.classList.add('hidden');
+            }
+        };
+
+        window.deleteAttendanceBatch = async () => {
+            const checkboxes = document.querySelectorAll('.att-checkbox:checked');
+            if (checkboxes.length === 0) return;
+
+            if(!await window.customConfirm(`Deseja realmente excluir ${checkboxes.length} presenças selecionadas?`)) return;
+
+            const studentId = document.getElementById('prog-student-id').value;
+            const s = window.students.find(st => st.id === studentId);
+            if(!s || !s.attendanceLog) return;
+
+            const logsToDelete = [];
+            checkboxes.forEach(cb => {
+                const date = cb.getAttribute('data-date');
+                const time = cb.getAttribute('data-time');
+                const logEntry = s.attendanceLog.find(l => l.date === date && l.time === time);
+                if (logEntry) logsToDelete.push(logEntry);
+            });
+
+            try {
+                const docRef = doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId);
+                
+                for (const log of logsToDelete) {
+                    await updateDoc(docRef, { attendanceLog: arrayRemove(log) });
+                    s.attendanceLog = s.attendanceLog.filter(l => l !== log);
+                    
+                    const dateStr = log.date;
+                    const stillHasLogsForDate = s.attendanceLog.some(l => l.date === dateStr);
+                    if (!stillHasLogsForDate) {
+                        await updateDoc(docRef, { attendance: arrayRemove(dateStr) });
+                        if(s.attendance) s.attendance = s.attendance.filter(d => d !== dateStr);
+                    }
+                }
+
+                window.customAlert(`${logsToDelete.length} presenças excluídas com sucesso!`);
+                window.filterProgressAttendance();
+                window.loadData();
+            } catch(e) {
+                console.error(e);
+                window.customAlert("Erro ao excluir presenças em lote.");
             }
         };
 
@@ -4225,6 +4357,65 @@ Belém-PA, [DATA_ATUAL].
             } catch(e) { window.customAlert("Erro ao adicionar frequência."); }
         };
 
+        window.deleteAttendanceReportBatch = async () => {
+            const checkboxes = document.querySelectorAll('.att-report-checkbox:checked');
+            if (checkboxes.length === 0) return;
+
+            if(!await window.customConfirm(`Deseja realmente excluir ${checkboxes.length} registros de presença selecionados?`)) return;
+
+            const logsToDelete = [];
+            checkboxes.forEach(cb => {
+                const sId = cb.getAttribute('data-sid');
+                const date = cb.getAttribute('data-date');
+                const time = cb.getAttribute('data-time');
+                logsToDelete.push({ sId, date, time });
+            });
+
+            try {
+                for (const item of logsToDelete) {
+                    const student = window.students.find(st => st.id === item.sId);
+                    if (!student || !student.attendanceLog) continue;
+
+                    const logEntry = student.attendanceLog.find(l => l.date === item.date && l.time === item.time);
+                    if (!logEntry) continue;
+
+                    const docRef = doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', item.sId);
+                    
+                    await updateDoc(docRef, { attendanceLog: arrayRemove(logEntry) });
+                    student.attendanceLog = student.attendanceLog.filter(l => l !== logEntry);
+
+                    const stillHasLogsForDate = student.attendanceLog.some(l => l.date === item.date);
+                    if (!stillHasLogsForDate) {
+                        await updateDoc(docRef, { attendance: arrayRemove(item.date) });
+                        if(student.attendance) student.attendance = student.attendance.filter(d => d !== item.date);
+                    }
+                }
+
+                window.customAlert(`${logsToDelete.length} registros excluídos com sucesso!`);
+                window.renderAttendanceTable();
+            } catch(e) {
+                console.error(e);
+                window.customAlert("Erro ao excluir registros em lote.");
+            }
+        };
+
+        window.toggleSelectAllAttReport = (master) => {
+            const checkboxes = document.querySelectorAll('.att-report-checkbox');
+            checkboxes.forEach(cb => cb.checked = master.checked);
+            window.updateBatchDeleteReportBtn();
+        };
+
+        window.updateBatchDeleteReportBtn = () => {
+            const selected = document.querySelectorAll('.att-report-checkbox:checked').length;
+            const btn = document.getElementById('btn-batch-delete-att-report');
+            if (selected > 0) {
+                btn.classList.remove('hidden');
+                btn.innerHTML = `<i class="fa-solid fa-trash-can mr-1"></i> Excluir (${selected})`;
+            } else {
+                btn.classList.add('hidden');
+            }
+        };
+
         window.removeSpecificAttendance = async (studentId, dateStr, timeStr) => {
             if(!await window.customConfirm(`Remover presença da turma ${timeStr} no dia ${dateStr}?`)) return;
             const s = window.students.find(st => st.id === studentId); if(!s || !s.attendanceLog) return;
@@ -4234,7 +4425,9 @@ Belém-PA, [DATA_ATUAL].
                 s.attendanceLog = s.attendanceLog.filter(l => l !== logEntry);
                 const stillHasLogsForDate = s.attendanceLog.some(l => l.date === dateStr);
                 if (!stillHasLogsForDate) { await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), { attendance: arrayRemove(dateStr) }); if(s.attendance) s.attendance = s.attendance.filter(d => d !== dateStr); }
-                window.filterProgressAttendance(); window.loadData();
+                window.filterProgressAttendance(); 
+                window.renderAttendanceTable();
+                window.loadData();
             } catch(e) { window.customAlert("Erro ao remover"); }
         };
 
@@ -4352,7 +4545,7 @@ Belém-PA, [DATA_ATUAL].
                 }
                 
                 let isBlocked = false;
-                if (student.nextDueDate) {
+                if (student.nextDueDate && student.paymentStatus !== 'Isento' && (student.plan && student.plan.toLowerCase() !== 'isento')) {
                     const adjDate = getAdjustedNextDueDate(student);
                     if (adjDate && !isNaN(adjDate)) {
                         const today = new Date();
@@ -4962,7 +5155,7 @@ Belém-PA, [DATA_ATUAL].
                     const adjDate = getAdjustedNextDueDate(s);
                     nextDueStr = adjDate ? formatDate(adjDate) : formatDate(s.nextDueDate);
                     
-                    if (adjDate && !isNaN(adjDate)) {
+                    if (adjDate && !isNaN(adjDate) && s.paymentStatus !== 'Isento' && (s.plan && s.plan.toLowerCase() !== 'isento')) {
                         const today = new Date();
                         today.setHours(0,0,0,0);
                         const daysLate = Math.floor((today - adjDate) / (1000 * 60 * 60 * 24));
@@ -4977,6 +5170,7 @@ Belém-PA, [DATA_ATUAL].
 
                 let payBadge = `<div class="flex flex-col"><span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-check"></i> Em dia</span><span class="text-[10px] text-gray-500 mt-0.5">Venc: ${nextDueStr}</span></div>`;
                 if(isBlocked) payBadge = `<div class="flex flex-col"><span class="text-red-800 font-bold text-xs"><i class="fa-solid fa-ban"></i> Bloqueado</span><span class="text-[10px] text-red-600 mt-0.5">Venc: ${nextDueStr}</span></div>`;
+                else if(s.paymentStatus === 'Isento' || (s.plan && s.plan.toLowerCase() === 'isento')) payBadge = `<span class="text-gray-500 font-bold text-xs">Isento</span>`;
                 else if(isPaymentLate(s) || s.paymentStatus === 'Pendente') {
                     if (isNewStudent) {
                         payBadge = `<div class="flex flex-col"><span class="text-orange-500 font-bold text-xs"><i class="fa-solid fa-clock"></i> 1º Pagamento</span><span class="text-[10px] text-orange-400 mt-0.5">Pendente</span></div>`;
@@ -4987,7 +5181,6 @@ Belém-PA, [DATA_ATUAL].
                 else if(isPaymentDueSoon(s)) {
                     payBadge = `<div class="flex flex-col"><span class="text-yellow-600 font-bold text-xs"><i class="fa-solid fa-triangle-exclamation"></i> Vencendo</span><span class="text-[10px] text-yellow-600 mt-0.5">Venc: ${nextDueStr}</span></div>`;
                 }
-                else if(s.paymentStatus === 'Isento') payBadge = `<span class="text-gray-500 font-bold text-xs">Isento</span>`;
 
                 let photoHtml = `<div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 text-xs font-bold shrink-0">${s.name.charAt(0).toUpperCase()}</div>`;
                 if(s.photoURL || s.photoBase64) photoHtml = `
@@ -5253,7 +5446,7 @@ Belém-PA, [DATA_ATUAL].
             tbody.innerHTML = '';
             
             if (!dateInput) {
-                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">Selecione uma data para ver a frequência.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Selecione uma data para ver a frequência.</td></tr>';
                 countDisplay.innerText = '0';
                 return;
             }
@@ -5287,7 +5480,7 @@ Belém-PA, [DATA_ATUAL].
             countDisplay.innerText = attendanceRecords.length;
 
             if (attendanceRecords.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Nenhum check-in registrado para esta data.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">Nenhum check-in registrado para esta data.</td></tr>`;
                 return;
             }
 
@@ -5301,15 +5494,23 @@ Belém-PA, [DATA_ATUAL].
                 
                 html += `
                     <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                        <td class="px-6 py-3 text-center">
+                            <input type="checkbox" class="att-report-checkbox accent-brand-red" data-sid="${record.studentId}" data-date="${dateInput}" data-time="${record.time}" onchange="window.updateBatchDeleteReportBtn()">
+                        </td>
                         <td class="px-6 py-3 font-mono text-gray-600 dark:text-gray-400 font-bold">${checkinTime}</td>
                         <td class="px-6 py-3"><span class="font-bold text-gray-800 dark:text-gray-200 capitalize">${record.studentName}</span></td>
                         <td class="px-6 py-3 text-gray-600 dark:text-gray-400">${record.studentPlan}</td>
                         <td class="px-6 py-3 text-blue-600 dark:text-blue-400 font-medium">${record.time}</td>
+                        <td class="px-6 py-3 text-center">
+                            <button onclick="window.removeSpecificAttendance('${record.studentId}', '${dateInput}', '${record.time}')" class="text-red-400 hover:text-red-600 transition" title="Excluir"><i class="fa-solid fa-trash-can"></i></button>
+                        </td>
                     </tr>
                 `;
             });
 
             tbody.innerHTML = html;
+            window.updateBatchDeleteReportBtn();
+            if (document.getElementById('select-all-att-report')) document.getElementById('select-all-att-report').checked = false;
         };
 
         window.printAttendanceReport = () => {
