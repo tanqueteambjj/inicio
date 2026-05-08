@@ -2204,14 +2204,15 @@
                     }
                 }
 
-                // identifiedStudents will now store the detection object with coordinates
-                identifiedStudents = allDetections.map(det => {
-                    const student = window.students.find(s => s.id === det.id);
-                    if (student) {
-                        return { ...student, box_2d: det.box_2d };
-                    }
-                    return null;
-                }).filter(s => s !== null);
+                // Store detections with unique IDs and initial student mapping
+                window.classDetections = allDetections.map((det, index) => {
+                    return {
+                        uid: 'det-' + Date.now() + '-' + index,
+                        studentId: det.id,
+                        box_2d: det.box_2d,
+                        confirmed: true
+                    };
+                });
 
                 window.renderIdentifiedList();
                 
@@ -2243,43 +2244,57 @@
                 visualization.classList.add('hidden');
             }
 
-            if (identifiedStudents.length === 0) {
-                listContainer.innerHTML = '<p class="text-center text-gray-500 py-4 italic">Nenhum aluno identificado automaticamente.</p>';
+            if (!window.classDetections || window.classDetections.length === 0) {
+                listContainer.innerHTML = '<p class="text-center text-gray-500 py-4 italic">Nenhum rosto identificado automaticamente.</p>';
                 return;
             }
 
-            identifiedStudents.forEach(student => {
+            // Group students for the dropdown
+            const studentOptions = window.students
+                .filter(s => s.status === 'active')
+                .sort((a,b) => a.name.localeCompare(b.name))
+                .map(s => `<option value="${s.id}">${s.name}</option>`)
+                .join('');
+
+            window.classDetections.forEach(det => {
+                const student = window.students.find(s => s.id === det.studentId) || { name: 'Não Identificado', id: '' };
                 const item = document.createElement('div');
-                item.className = "flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border dark:border-gray-600";
+                item.className = `flex flex-col p-3 rounded-lg border transition-all ${det.confirmed ? 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600' : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900 opacity-60'}`;
+                
                 item.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <img src="${student.photoBase64 || student.photoURL || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-full object-cover border dark:border-gray-500">
-                        <div>
-                            <p class="text-sm font-bold text-gray-800 dark:text-white">${student.name}</p>
-                            <p class="text-[10px] text-gray-500">${student.plan || 'Sem plano'}</p>
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-3">
+                            <img src="${student.photoBase64 || student.photoURL || 'https://via.placeholder.com/40'}" id="det-img-${det.uid}" class="w-10 h-10 rounded-full object-cover border dark:border-gray-500">
+                            <div class="flex-1">
+                                <select onchange="window.updateDetectionStudent('${det.uid}', this.value)" class="bg-transparent border-none p-0 text-sm font-bold text-gray-800 dark:text-white focus:ring-0 w-full cursor-pointer">
+                                    <option value="">Selecione o aluno...</option>
+                                    ${window.students.map(s => `<option value="${s.id}" ${s.id === det.studentId ? 'selected' : ''}>${s.name}</option>`).join('')}
+                                </select>
+                                <p class="text-[10px] text-gray-500" id="det-plan-${det.uid}">${student.plan || 'Sem plano'}</p>
+                            </div>
                         </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="window.highlightFace('${student.id}')" class="text-emerald-600 hover:text-emerald-700 p-1" title="Ver na foto"><i class="fa-solid fa-expand"></i></button>
-                        <input type="checkbox" checked class="w-5 h-5 accent-emerald-600 cursor-pointer" data-id="${student.id}">
+                        <div class="flex items-center gap-2">
+                            <button onclick="window.highlightFace('${det.uid}')" class="text-emerald-600 hover:text-emerald-700 p-1" title="Ver na foto"><i class="fa-solid fa-expand"></i></button>
+                            <input type="checkbox" ${det.confirmed ? 'checked' : ''} onchange="window.toggleDetection('${det.uid}', this.checked)" class="w-5 h-5 accent-emerald-600 cursor-pointer">
+                        </div>
                     </div>
                 `;
                 listContainer.appendChild(item);
 
                 // Add bounding box to image if coordinates exist
-                if (student.box_2d) {
-                    const [ymin, xmin, ymax, xmax] = student.box_2d;
+                if (det.box_2d) {
+                    const [ymin, xmin, ymax, xmax] = det.box_2d;
                     const box = document.createElement('div');
-                    box.id = `box-${student.id}`;
-                    box.className = "absolute border-2 border-emerald-500 bg-emerald-500/10 rounded sm:rounded-md transition-all duration-300";
+                    box.id = `box-${det.uid}`;
+                    box.className = `absolute border-2 rounded sm:rounded-md transition-all duration-300 ${det.confirmed ? 'border-emerald-500 bg-emerald-500/10' : 'border-red-500 bg-red-500/20'}`;
                     box.style.top = `${ymin / 10}%`;
                     box.style.left = `${xmin / 10}%`;
                     box.style.width = `${(xmax - xmin) / 10}%`;
                     box.style.height = `${(ymax - ymin) / 10}%`;
                     
                     const label = document.createElement('div');
-                    label.className = "absolute -top-6 left-0 bg-emerald-500 text-white text-[10px] sm:text-xs font-bold px-1 rounded whitespace-nowrap";
-                    label.innerText = student.name.split(' ')[0];
+                    label.className = `absolute -top-6 left-0 text-white text-[10px] sm:text-xs font-bold px-1 rounded whitespace-nowrap ${det.confirmed ? 'bg-emerald-500' : 'bg-red-500'}`;
+                    label.innerText = student.name ? student.name.split(' ')[0] : '???';
                     box.appendChild(label);
                     
                     boxesContainer.appendChild(box);
@@ -2287,14 +2302,47 @@
             });
         };
 
-        window.highlightFace = (studentId) => {
-            const boxes = document.querySelectorAll('#class-photo-boxes-container > div');
-            boxes.forEach(b => b.classList.remove('border-yellow-400', 'bg-yellow-400/30', 'scale-110', 'z-10'));
-            boxes.forEach(b => b.classList.add('border-emerald-500', 'bg-emerald-500/10'));
+        window.updateDetectionStudent = (uid, studentId) => {
+            const det = window.classDetections.find(d => d.uid === uid);
+            if (!det) return;
 
-            const targetBox = document.getElementById(`box-${studentId}`);
+            // Check if this student is already selected in another detection
+            if (studentId && window.classDetections.some(d => d.uid !== uid && d.studentId === studentId && d.confirmed)) {
+                window.customAlert("Este aluno já foi identificado em outro rosto desta foto.");
+            }
+
+            det.studentId = studentId;
+            const student = window.students.find(s => s.id === studentId);
+            if (student) {
+                document.getElementById(`det-img-${uid}`).src = student.photoBase64 || student.photoURL || 'https://via.placeholder.com/40';
+                document.getElementById(`det-plan-${uid}`).innerText = student.plan || 'Sem plano';
+            }
+            window.renderIdentifiedList();
+        };
+
+        window.toggleDetection = (uid, confirmed) => {
+            const det = window.classDetections.find(d => d.uid === uid);
+            if (det) {
+                det.confirmed = confirmed;
+                window.renderIdentifiedList();
+            }
+        };
+
+        window.highlightFace = (uid) => {
+            const boxes = document.querySelectorAll('#class-photo-boxes-container > div');
+            boxes.forEach(b => {
+                const isConfirmed = !b.className.includes('border-red-500');
+                b.classList.remove('border-yellow-400', 'bg-yellow-400/30', 'scale-110', 'z-10');
+                if (isConfirmed) {
+                    b.classList.add('border-emerald-500', 'bg-emerald-500/10');
+                } else {
+                    b.classList.add('border-red-500', 'bg-red-500/20');
+                }
+            });
+
+            const targetBox = document.getElementById(`box-${uid}`);
             if (targetBox) {
-                targetBox.classList.remove('border-emerald-500', 'bg-emerald-500/10');
+                targetBox.classList.remove('border-emerald-500', 'bg-emerald-500/10', 'border-red-500', 'bg-red-500/20');
                 targetBox.classList.add('border-yellow-400', 'bg-yellow-400/30', 'scale-110', 'z-10');
                 targetBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
@@ -2303,10 +2351,21 @@
         window.addManualRecognition = () => {
             const select = document.getElementById('class-photo-manual-select');
             const studentId = select.value;
-            if (!studentId || identifiedStudents.some(s => s.id === studentId)) return;
+            if (!studentId) return;
+
+            if (window.classDetections && window.classDetections.some(s => s.studentId === studentId && s.confirmed)) {
+                 return window.customAlert("Este aluno já está na lista de identificados.");
+            }
+
             const student = window.students.find(s => s.id === studentId);
             if (student) {
-                identifiedStudents.push(student);
+                if (!window.classDetections) window.classDetections = [];
+                window.classDetections.push({
+                    uid: 'det-' + Date.now(),
+                    studentId: studentId,
+                    box_2d: null, // Manual entries don't have boxes
+                    confirmed: true
+                });
                 window.renderIdentifiedList();
                 select.value = '';
             }
@@ -2320,9 +2379,16 @@
         };
 
         window.confirmClassAttendance = async () => {
-            const checkboxes = document.querySelectorAll('#class-photo-results-list input[type="checkbox"]');
-            const confirmedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.dataset.id);
+            const confirmedDetections = window.classDetections.filter(d => d.confirmed && d.studentId);
+            const confirmedIds = confirmedDetections.map(d => d.studentId);
+            
             if (confirmedIds.length === 0) return window.customAlert("Selecione ao menos um aluno.");
+
+            // Check for duplicates in final selection
+            const uniqueIds = new Set(confirmedIds);
+            if (uniqueIds.size !== confirmedIds.length) {
+                return window.customAlert("Erro: O mesmo aluno está selecionado em mais de um rosto. Corrija antes de salvar.");
+            }
 
             const date = document.getElementById('class-photo-date').value;
             const schedule = document.getElementById('class-photo-schedule').value;
