@@ -1747,7 +1747,7 @@
     <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, addDoc, query, where, setDoc, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
@@ -3289,6 +3289,7 @@
         try {
             app = initializeApp(firebaseConfig); 
             auth = getAuth(app); 
+            window.auth = auth;
                     db = getFirestore(app); 
                     window.db = db;
                     const storage = getStorage(app);
@@ -3371,9 +3372,16 @@
         
 
         try { emailjs.init("joP6USyQXdqGI3GN5"); } catch(e) {}
-        window.handleLogout = () => { 
+        window.handleLogout = async () => { 
+            try {
+                if (window.auth) {
+                    await signOut(window.auth);
+                }
+            } catch (e) {
+                console.error("Erro ao deslogar do Firebase:", e);
+            }
             localStorage.removeItem('tanque_admin_unlocked'); 
-            location.reload(); 
+            window.location.href = "https://www.tanqueteambjj.com.br/login.html"; 
         }
 
         // UTILITÁRIOS E VALIDAÇÕES
