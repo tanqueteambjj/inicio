@@ -5072,41 +5072,49 @@ Belém-PA, [DATA_ATUAL].
 
         // AULAS EXPERIMENTAIS
         window.loadExperimentalData = async () => {
-            console.log("Iniciando carregamento de aulas experimentais...");
-            try {
-                if(!window.db) {
-                    console.error("Firestore não inicializado em loadExperimentalData");
-                    return;
-                }
-                window.experimentalList = [];
-                
-                const paths = [
-                    { path: `artifacts/${APP_ID}/public/data/experimental`, source: 'applet' },
-                    { path: 'experimental', source: 'root' },
-                    { path: 'aulas_experimentais', source: 'root' },
-                    { path: 'experimental_requests', source: 'root' }
-                ];
+             console.log("Iniciando carregamento de aulas experimentais...");
+             try {
+                 if(!window.db) {
+                     console.error("Firestore não inicializado em loadExperimentalData");
+                     return;
+                 }
+                 window.experimentalList = [];
+                 
+                 const paths = [
+                     { path: `artifacts/${APP_ID}/public/data/experimental`, source: 'applet' },
+                     { path: 'experimental', source: 'root' },
+                     { path: 'aulas_experimentais', source: 'root' },
+                     { path: 'experimental_requests', source: 'root' }
+                 ];
 
-                for (const p of paths) {
-                    try {
-                        const q = await getDocs(collection(window.db, p.path));
-                        console.log(`Buscando em ${p.path}: ${q.size} docs encontrados.`);
-                        q.forEach(doc => {
-                            if (!window.experimentalList.find(x => x.id === doc.id)) {
-                                window.experimentalList.push({ id: doc.id, ...doc.data(), _source: p.source, _collection: p.path });
-                            }
-                        });
-                    } catch(e) { 
-                        console.warn(`Erro ao buscar em ${p.path}:`, e.message); 
-                    }
-                }
+                 for (const p of paths) {
+                     try {
+                         const q = await getDocs(collection(window.db, p.path));
+                         console.log(`Buscando em ${p.path}: ${q.size} docs encontrados.`);
+                         q.forEach(doc => {
+                             if (!window.experimentalList.find(x => x.id === doc.id)) {
+                                 window.experimentalList.push({ id: doc.id, ...doc.data(), _source: p.source, _collection: p.path });
+                             }
+                         });
+                     } catch(e) { 
+                         console.warn(`Erro ao buscar em ${p.path}:`, e.message); 
+                     }
+                 }
 
-                window.experimentalList.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
-                console.log("Total de aulas experimentais carregadas:", window.experimentalList.length);
-                
-                if(window.currentView === 'experimental') window.renderExperimentalTable();
-            } catch(e) { console.error("Erro geral loadExperimentalData:", e); }
-        };
+                 window.experimentalList.sort((a, b) => {
+                     const dateA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp || 0);
+                     const dateB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp || 0);
+                     return dateB - dateA;
+                 });
+                 
+                 console.log("Total de aulas experimentais carregadas:", window.experimentalList.length);
+                 window.renderExperimentalTable();
+             } catch(e) { 
+                 console.error("Erro geral loadExperimentalData:", e);
+                 const tbody = document.getElementById('experimental-table-body');
+                 if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-red-500">Erro ao carregar dados. Tente novamente.</td></tr>';
+             }
+         };
 
         window.filterExperimentalTable = () => {
             const nameFilter = document.getElementById('filter-exp-name').value.toLowerCase();
@@ -5140,11 +5148,16 @@ Belém-PA, [DATA_ATUAL].
         };
 
         window.renderExperimentalTable = () => {
+            console.log("Renderizando tabela de aulas experimentais...");
             const tbody = document.getElementById('experimental-table-body');
             if (!tbody) return;
             tbody.innerHTML = '';
-            if (window.experimentalList.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Nenhum agendamento encontrado.</td></tr>'; return; }
-            window.experimentalList.forEach(exp => {
+            const list = window.experimentalList || [];
+            if (list.length === 0) { 
+                tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Nenhum agendamento encontrado.</td></tr>'; 
+                return; 
+            }
+            list.forEach(exp => {
                 const dateStr = formatDate(exp.date);
                 let statusBadge = `<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">Pendente</span>`;
                 if(exp.status === 'Realizada') statusBadge = `<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">Realizada</span>`;
@@ -5152,7 +5165,10 @@ Belém-PA, [DATA_ATUAL].
                 if(exp.status === 'Matriculado') statusBadge = `<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-bold">Matriculado</span>`;
                 
                 let phoneHtml = '-';
-                if(exp.phone) { const cleanPhone = String(exp.phone).replace(/\D/g, ''); phoneHtml = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:underline"><i class="fa-brands fa-whatsapp"></i> ${exp.phone}</a>`; }
+                if(exp.phone) { 
+                    const cleanPhone = String(exp.phone).replace(/\D/g, ''); 
+                    phoneHtml = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:underline"><i class="fa-brands fa-whatsapp"></i> ${exp.phone}</a>`; 
+                }
 
                 let cpfHtml = exp.cpf || '-';
 
@@ -5160,7 +5176,7 @@ Belém-PA, [DATA_ATUAL].
                 let guardianHtml = '';
                 if (exp.dob) {
                     const age = getAge(exp.dob);
-                    if (age !== null) {
+                    if (age !== null && !isNaN(age)) {
                         if (age < 12) {
                             categoryHtml = `<span class="text-blue-600 font-bold"><i class="fa-solid fa-child"></i> Infantil (${age} anos)</span>`;
                             if (exp.guardian) guardianHtml = `<div class="text-[10px] text-gray-500 mt-0.5">Resp: ${exp.guardian}</div>`;
@@ -5176,7 +5192,7 @@ Belém-PA, [DATA_ATUAL].
                 tbody.innerHTML += `
                     <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition" data-date="${exp.date || ''}" data-time="${exp.time || ''}">
                         <td class="p-3 text-sm font-bold text-gray-800 dark:text-gray-200">
-                            ${exp.name}
+                            ${exp.name || 'Sem nome'}
                             ${guardianHtml}
                         </td>
                         <td class="p-3 text-sm text-gray-600 dark:text-gray-400">${cpfHtml}</td>
@@ -5185,20 +5201,20 @@ Belém-PA, [DATA_ATUAL].
                         <td class="p-3 text-sm text-gray-600 dark:text-gray-400">${categoryHtml}</td>
                         <td class="p-3">${statusBadge}</td>
                         <td class="p-3 text-right">
-                            ${user.role === 'admin' ? `
+                            ${((typeof isAdminUnlocked !== 'undefined' && isAdminUnlocked) || (typeof user !== 'undefined' && user.role === 'admin')) ? `
                                 <button onclick="window.enrollExperimentalStudent('${exp.id}')" class="text-green-500 hover:text-green-700 mx-1" title="Matricular Aluno"><i class="fa-solid fa-user-plus"></i></button>
                                 <button onclick="window.openEditExperimental('${exp.id}')" class="text-blue-500 hover:text-blue-700 mx-1" title="Editar"><i class="fa-solid fa-pen"></i></button>
                                 <button onclick="window.deleteExperimental('${exp.id}')" class="text-red-500 hover:text-red-700 mx-1" title="Excluir"><i class="fa-solid fa-trash"></i></button>
                             ` : `
-                                <i class="fa-solid fa-lock text-gray-400 mx-1" title="Matrícula restrita ao Admin"></i>
+                                <i class="fa-solid fa-lock text-gray-400 mx-1" title="Matrícula restrita ao Admin" onclick="window.checkAdminAccess()"></i>
                                 <button onclick="window.openEditExperimental('${exp.id}')" class="text-blue-500 hover:text-blue-700 mx-1" title="Editar Status"><i class="fa-solid fa-pen"></i></button>
-                                <i class="fa-solid fa-lock text-gray-400 mx-1" title="Exclusão restrita ao Admin"></i>
+                                <i class="fa-solid fa-lock text-gray-400 mx-1" title="Exclusão restrita ao Admin" onclick="window.checkAdminAccess()"></i>
                             `}
                         </td>
                     </tr>
                 `;
             });
-            window.filterExperimentalTable();
+            if (window.filterExperimentalTable) window.filterExperimentalTable();
         };
 
         window.openNewExperimentalModal = () => {
