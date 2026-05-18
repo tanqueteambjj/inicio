@@ -3475,7 +3475,8 @@
                         } catch (e) { 
                             console.error("Auth error", e); 
                             if (e.code === 'auth/requests-from-referer-blocked' || (e.message && e.message.includes('auth/requests-from-referer-blocked'))) {
-                                window.customAlert("ERRO DE AUTENTICAÇÃO:\nO domínio atual não está autorizado nas configurações do Firebase Auth.\n\nPor favor, peça ao administrador para adicionar este domínio aos Domínios Autorizados no console do Firebase.");
+                                const currentDomain = window.location.origin;
+                                window.customAlert(`ERRO DE AUTENTICAÇÃO (Firebase):\n\nO domínio atual não está autorizado.\n\nDOMÍNIO: ${currentDomain}\n\nPara corrigir:\n1. Acesse o Console do Firebase\n2. Vá em Authentication > Settings > Authorized domains\n3. Clique em "Add domain" e adicione o endereço acima.`);
                             }
                         }
                         await window.loadPlans();
@@ -3508,8 +3509,8 @@
                     el.classList.add('opacity-60', 'cursor-pointer');
                     el.classList.remove('bg-brand-red', 'text-white');
                     el.classList.add('text-gray-400');
-                    el.removeAttribute('onclick');
-                    el.addEventListener('click', (e) => {
+                    // Usar onclick para evitar múltiplos listeners se chamado repetidamente
+                    el.onclick = (e) => {
                         e.preventDefault();
                         const callback = () => {
                             if (viewId) window.switchMainView(viewId);
@@ -3519,7 +3520,7 @@
                         if (id === 'nav-settings') callback.isSettings = true;
                         
                         checkAdminAccess(callback);
-                    });
+                    };
                     if (!el.querySelector('.fa-lock')) {
                         el.innerHTML += ' <i class="fa-solid fa-lock ml-auto text-[10px]"></i>';
                     }
