@@ -5073,11 +5073,28 @@ Belém-PA, [DATA_ATUAL].
         window.loadExperimentalData = async () => {
             try {
                 if(!window.db) return;
-                const querySnapshot = await getDocs(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental')); window.experimentalList = [];
-                querySnapshot.forEach(doc => window.experimentalList.push({ id: doc.id, ...doc.data() }));
+                window.experimentalList = [];
+                
+                // 1. Tentar caminho padrão do Applet
+                try {
+                    const q1 = await getDocs(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental'));
+                    q1.forEach(doc => window.experimentalList.push({ id: doc.id, ...doc.data(), _source: 'applet' }));
+                } catch(e) { console.warn("Erro ao buscar experimental applet:", e); }
+                
+                // 2. Tentar caminho raiz (comum em formulários externos de landing pages)
+                try {
+                    const q2 = await getDocs(collection(window.db, 'experimental'));
+                    q2.forEach(doc => {
+                        // Evitar duplicados se por acaso for o mesmo doc
+                        if (!window.experimentalList.find(x => x.id === doc.id)) {
+                            window.experimentalList.push({ id: doc.id, ...doc.data(), _source: 'root' });
+                        }
+                    });
+                } catch(e) { console.warn("Erro ao buscar experimental root:", e); }
+
                 window.experimentalList.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
                 if(window.currentView === 'experimental') window.renderExperimentalTable();
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error("Erro geral loadExperimentalData:", e); }
         };
 
         window.filterExperimentalTable = () => {
@@ -5220,7 +5237,11 @@ Belém-PA, [DATA_ATUAL].
 
             try { 
                 if (id) {
-                    await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id), { name, cpf, phone, dob, guardian, date, time, status }); 
+                    const exp = window.experimentalList.find(x => x.id === id);
+                    const path = (exp && exp._source === 'root') 
+                        ? doc(window.db, 'experimental', id)
+                        : doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id);
+                    await updateDoc(path, { name, cpf, phone, dob, guardian, date, time, status }); 
                 } else {
                     await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental'), { name, cpf, phone, dob, guardian, date, time, status, timestamp: new Date().toISOString() });
                 }
@@ -5233,7 +5254,14 @@ Belém-PA, [DATA_ATUAL].
 
         window.deleteExperimental = async (id) => {
             if(!await window.customConfirm("Excluir este agendamento?")) return;
-            try { await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id)); window.loadExperimentalData(); } catch(e) { window.customAlert("Erro ao excluir."); }
+            try { 
+                const exp = window.experimentalList.find(x => x.id === id);
+                const path = (exp && exp._source === 'root')
+                    ? doc(window.db, 'experimental', id)
+                    : doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id);
+                await deleteDoc(path); 
+                window.loadExperimentalData(); 
+            } catch(e) { window.customAlert("Erro ao excluir."); }
         };
 
         window.enrollExperimentalStudent = (id) => {
@@ -5285,7 +5313,10 @@ Belém-PA, [DATA_ATUAL].
             
             // Update experimental status to Matriculado
             try { 
-                updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id), { status: 'Matriculado' }); 
+                const path = (exp && exp._source === 'root')
+                    ? doc(window.db, 'experimental', id)
+                    : doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id);
+                updateDoc(path, { status: 'Matriculado' }); 
                 window.loadExperimentalData(); 
             } catch(e) { 
                 console.error("Erro ao atualizar status da aula experimental", e); 
