@@ -335,7 +335,7 @@
                                 </tr>
                             </thead>
                             <tbody id="experimental-table-body" class="text-sm text-gray-700 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
-                                <tr><td colspan="5" class="px-6 py-4 text-center">A carregar dados...</td></tr>
+                                <tr><td colspan="7" class="px-6 py-4 text-center">A carregar dados...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -366,11 +366,11 @@
                             <h3 class="font-bold text-gray-800 dark:text-white uppercase text-lg"><i class="fa-solid fa-calendar-check text-blue-500 mr-2"></i> Relatório de Frequência</h3>
                             <p class="text-xs text-gray-500 dark:text-gray-400">Verifique os alunos que fizeram check-in na data selecionada</p>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="window.openManualPresenceModal()" class="bg-green-600 hover:bg-green-700 text-white text-sm font-bold px-4 py-1.5 rounded shadow-sm transition flex items-center gap-2"><i class="fa-solid fa-plus"></i> PRESENÇA MANUAL</button>
-                            <button id="btn-class-photo" onclick="window.openClassPhotoModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-4 py-1.5 rounded shadow-sm transition flex items-center gap-2"><i class="fa-solid fa-camera"></i> PRESENÇA POR FOTO (IA)</button>
-                            <button onclick="window.printAttendanceReport()" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 text-sm bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 px-3 py-1.5 rounded shadow-sm font-bold"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
-                        </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="window.openManualPresenceModal()" class="bg-green-600 hover:bg-green-700 text-white text-sm font-bold px-4 py-1.5 rounded shadow-sm transition flex items-center gap-2"><i class="fa-solid fa-plus"></i> PRESENÇA MANUAL</button>
+                        <button id="btn-class-photo" onclick="window.openClassPhotoModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-4 py-1.5 rounded shadow-sm transition flex items-center gap-2"><i class="fa-solid fa-camera"></i> PRESENÇA POR FOTO (IA)</button>
+                        <button onclick="window.printAttendanceReport()" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 text-sm bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 px-3 py-1.5 rounded shadow-sm font-bold"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
+                    </div>
                 </div>
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-wrap gap-4 items-center text-sm no-print">
                         <label class="font-bold text-gray-700 dark:text-gray-300">Selecione a Data:</label>
@@ -1809,15 +1809,15 @@
         async function initAI() {
             console.log("Iniciando IA...");
             try {
-                // PRIORIDADE 1: LocalStorage (Configurado pelo usuário no painel de configurações)
+                // PRIORIDADE 1: LocalStorage (Configurado pelo usuário no site)
                 let apiKey = localStorage.getItem('gemini_api_key');
                 
-                // PRIORIDADE 2: Variável injetada pelo GitHub (se configurado via Secret)
+                // PRIORIDADE 2: Variável injetada pelo GitHub
                 if (!apiKey || apiKey === "PLACEHOLDER_GEMINI_API_KEY") {
                     apiKey = window.NEXT_PUBLIC_GEMINI_API_KEY;
                 }
 
-                // PRIORIDADE 3: Servidor Local (AI Studio Preview)
+                // PRIORIDADE 3: Servidor Local (Preview)
                 if (!apiKey || apiKey === "PLACEHOLDER_GEMINI_API_KEY") {
                     try {
                         const configResp = await fetch('/api/config');
@@ -1836,10 +1836,10 @@
                     window.ai = ai;
                     console.log("Gemini IA Pronta.");
                 } else {
-                    console.error("IA Não configurada. Vá em Configurações para inserir sua Gemini API Key.");
+                    console.warn("IA Não configurada. Vá em Configurações para inserir sua Gemini API Key.");
                 }
             } catch (e) {
-                console.error("Erro ao carregar IA:", e);
+                console.error("Erro no initAI:", e);
             }
         }
         initAI();
@@ -1926,7 +1926,7 @@
 
                 const student = window.students[sIndex];
                 
-                // Update Firestore
+                // Update Firestore with correct path
                 const studentRef = doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id);
                 await updateDoc(studentRef, {
                     photoURL: deleteField(),
@@ -2129,7 +2129,7 @@
 
                 item.innerHTML = `
                     <div class="relative shrink-0 pointer-events-none">
-                        <img src="${s.photoURL || 'https://iili.io/qVofP1S.png'}" class="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-600">
+                        <img src="${s.photoURL || s.photoBase64 || 'https://iili.io/qVofP1S.png'}" class="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-600">
                         ${isSelected ? '<div class="absolute -top-1 -right-1 bg-green-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] shadow-sm"><i class="fa-solid fa-check"></i></div>' : ''}
                     </div>
                     <div class="flex-1 min-w-0 pointer-events-none">
@@ -2431,15 +2431,14 @@
                     }
                 }
 
-                // Store detections with unique IDs and initial student mapping
-                window.classDetections = allDetections.map((det, index) => {
-                    return {
-                        uid: 'det-' + Date.now() + '-' + index,
-                        studentId: det.id,
-                        box_2d: det.box_2d,
-                        confirmed: true
-                    };
-                });
+                // identifiedStudents will now store the detection object with coordinates
+                identifiedStudents = allDetections.map(det => {
+                    const student = window.students.find(s => s.id === det.id);
+                    if (student) {
+                        return { ...student, box_2d: det.box_2d };
+                    }
+                    return null;
+                }).filter(s => s !== null);
 
                 window.renderIdentifiedList();
                 
@@ -2471,57 +2470,43 @@
                 visualization.classList.add('hidden');
             }
 
-            if (!window.classDetections || window.classDetections.length === 0) {
-                listContainer.innerHTML = '<p class="text-center text-gray-500 py-4 italic">Nenhum rosto identificado automaticamente.</p>';
+            if (identifiedStudents.length === 0) {
+                listContainer.innerHTML = '<p class="text-center text-gray-500 py-4 italic">Nenhum aluno identificado automaticamente.</p>';
                 return;
             }
 
-            // Group students for the dropdown
-            const studentOptions = window.students
-                .filter(s => s.enrollmentStatus === 'Ativo')
-                .sort((a,b) => a.name.localeCompare(b.name))
-                .map(s => `<option value="${s.id}">${s.name}</option>`)
-                .join('');
-
-            window.classDetections.forEach(det => {
-                const student = window.students.find(s => s.id === det.studentId) || { name: 'Não Identificado', id: '' };
+            identifiedStudents.forEach(student => {
                 const item = document.createElement('div');
-                item.className = `flex flex-col p-3 rounded-lg border transition-all ${det.confirmed ? 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600' : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900 opacity-60'}`;
-                
+                item.className = "flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border dark:border-gray-600";
                 item.innerHTML = `
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-3">
-                            <img src="${student.photoBase64 || student.photoURL || 'https://via.placeholder.com/40'}" id="det-img-${det.uid}" class="w-10 h-10 rounded-full object-cover border dark:border-gray-500">
-                            <div class="flex-1">
-                                <select onchange="window.updateDetectionStudent('${det.uid}', this.value)" class="bg-transparent border-none p-0 text-sm font-bold text-gray-800 dark:text-white focus:ring-0 w-full cursor-pointer">
-                                    <option value="">Selecione o aluno...</option>
-                                    ${window.students.map(s => `<option value="${s.id}" ${s.id === det.studentId ? 'selected' : ''}>${s.name}</option>`).join('')}
-                                </select>
-                                <p class="text-[10px] text-gray-500" id="det-plan-${det.uid}">${student.plan || 'Sem plano'}</p>
-                            </div>
+                    <div class="flex items-center gap-3">
+                        <img src="${student.photoBase64 || student.photoURL || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-full object-cover border dark:border-gray-500">
+                        <div>
+                            <p class="text-sm font-bold text-gray-800 dark:text-white">${student.name}</p>
+                            <p class="text-[10px] text-gray-500">${student.plan || 'Sem plano'}</p>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="window.highlightFace('${det.uid}')" class="text-emerald-600 hover:text-emerald-700 p-1" title="Ver na foto"><i class="fa-solid fa-expand"></i></button>
-                            <input type="checkbox" ${det.confirmed ? 'checked' : ''} onchange="window.toggleDetection('${det.uid}', this.checked)" class="w-5 h-5 accent-emerald-600 cursor-pointer">
-                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="window.highlightFace('${student.id}')" class="text-emerald-600 hover:text-emerald-700 p-1" title="Ver na foto"><i class="fa-solid fa-expand"></i></button>
+                        <input type="checkbox" checked class="w-5 h-5 accent-emerald-600 cursor-pointer" data-id="${student.id}">
                     </div>
                 `;
                 listContainer.appendChild(item);
 
                 // Add bounding box to image if coordinates exist
-                if (det.box_2d) {
-                    const [ymin, xmin, ymax, xmax] = det.box_2d;
+                if (student.box_2d) {
+                    const [ymin, xmin, ymax, xmax] = student.box_2d;
                     const box = document.createElement('div');
-                    box.id = `box-${det.uid}`;
-                    box.className = `absolute border-2 rounded sm:rounded-md transition-all duration-300 ${det.confirmed ? 'border-emerald-500 bg-emerald-500/10' : 'border-red-500 bg-red-500/20'}`;
+                    box.id = `box-${student.id}`;
+                    box.className = "absolute border-2 border-emerald-500 bg-emerald-500/10 rounded sm:rounded-md transition-all duration-300";
                     box.style.top = `${ymin / 10}%`;
                     box.style.left = `${xmin / 10}%`;
                     box.style.width = `${(xmax - xmin) / 10}%`;
                     box.style.height = `${(ymax - ymin) / 10}%`;
                     
                     const label = document.createElement('div');
-                    label.className = `absolute -top-6 left-0 text-white text-[10px] sm:text-xs font-bold px-1 rounded whitespace-nowrap ${det.confirmed ? 'bg-emerald-500' : 'bg-red-500'}`;
-                    label.innerText = student.name ? student.name.split(' ')[0] : '???';
+                    label.className = "absolute -top-6 left-0 bg-emerald-500 text-white text-[10px] sm:text-xs font-bold px-1 rounded whitespace-nowrap";
+                    label.innerText = student.name.split(' ')[0];
                     box.appendChild(label);
                     
                     boxesContainer.appendChild(box);
@@ -2529,47 +2514,14 @@
             });
         };
 
-        window.updateDetectionStudent = (uid, studentId) => {
-            const det = window.classDetections.find(d => d.uid === uid);
-            if (!det) return;
-
-            // Check if this student is already selected in another detection
-            if (studentId && window.classDetections.some(d => d.uid !== uid && d.studentId === studentId && d.confirmed)) {
-                window.customAlert("Este aluno já foi identificado em outro rosto desta foto.");
-            }
-
-            det.studentId = studentId;
-            const student = window.students.find(s => s.id === studentId);
-            if (student) {
-                document.getElementById(`det-img-${uid}`).src = student.photoBase64 || student.photoURL || 'https://via.placeholder.com/40';
-                document.getElementById(`det-plan-${uid}`).innerText = student.plan || 'Sem plano';
-            }
-            window.renderIdentifiedList();
-        };
-
-        window.toggleDetection = (uid, confirmed) => {
-            const det = window.classDetections.find(d => d.uid === uid);
-            if (det) {
-                det.confirmed = confirmed;
-                window.renderIdentifiedList();
-            }
-        };
-
-        window.highlightFace = (uid) => {
+        window.highlightFace = (studentId) => {
             const boxes = document.querySelectorAll('#class-photo-boxes-container > div');
-            boxes.forEach(b => {
-                const isConfirmed = !b.className.includes('border-red-500');
-                b.classList.remove('border-yellow-400', 'bg-yellow-400/30', 'scale-110', 'z-10');
-                if (isConfirmed) {
-                    b.classList.add('border-emerald-500', 'bg-emerald-500/10');
-                } else {
-                    b.classList.add('border-red-500', 'bg-red-500/20');
-                }
-            });
+            boxes.forEach(b => b.classList.remove('border-yellow-400', 'bg-yellow-400/30', 'scale-110', 'z-10'));
+            boxes.forEach(b => b.classList.add('border-emerald-500', 'bg-emerald-500/10'));
 
-            const targetBox = document.getElementById(`box-${uid}`);
+            const targetBox = document.getElementById(`box-${studentId}`);
             if (targetBox) {
-                targetBox.classList.remove('border-emerald-500', 'bg-emerald-500/10', 'border-red-500', 'bg-red-500/20');
+                targetBox.classList.remove('border-emerald-500', 'bg-emerald-500/10');
                 targetBox.classList.add('border-yellow-400', 'bg-yellow-400/30', 'scale-110', 'z-10');
                 targetBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
@@ -2578,21 +2530,10 @@
         window.addManualRecognition = () => {
             const select = document.getElementById('class-photo-manual-select');
             const studentId = select.value;
-            if (!studentId) return;
-
-            if (window.classDetections && window.classDetections.some(s => s.studentId === studentId && s.confirmed)) {
-                 return window.customAlert("Este aluno já está na lista de identificados.");
-            }
-
+            if (!studentId || identifiedStudents.some(s => s.id === studentId)) return;
             const student = window.students.find(s => s.id === studentId);
             if (student) {
-                if (!window.classDetections) window.classDetections = [];
-                window.classDetections.push({
-                    uid: 'det-' + Date.now(),
-                    studentId: studentId,
-                    box_2d: null, // Manual entries don't have boxes
-                    confirmed: true
-                });
+                identifiedStudents.push(student);
                 window.renderIdentifiedList();
                 select.value = '';
             }
@@ -2606,16 +2547,9 @@
         };
 
         window.confirmClassAttendance = async () => {
-            const confirmedDetections = window.classDetections.filter(d => d.confirmed && d.studentId);
-            const confirmedIds = confirmedDetections.map(d => d.studentId);
-            
+            const checkboxes = document.querySelectorAll('#class-photo-results-list input[type="checkbox"]');
+            const confirmedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.dataset.id);
             if (confirmedIds.length === 0) return window.customAlert("Selecione ao menos um aluno.");
-
-            // Check for duplicates in final selection
-            const uniqueIds = new Set(confirmedIds);
-            if (uniqueIds.size !== confirmedIds.length) {
-                return window.customAlert("Erro: O mesmo aluno está selecionado em mais de um rosto. Corrija antes de salvar.");
-            }
 
             const date = document.getElementById('class-photo-date').value;
             const schedule = document.getElementById('class-photo-schedule').value;
@@ -2775,7 +2709,7 @@
 
                 if (editId) {
                     // Update existing plan or create override for default plan
-                    await setDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'plans', editId), planData, { merge: true });
+                    await setDoc(doc(window.db, 'plans', editId), planData, { merge: true });
                 } else {
                     // Add new plan
                     planData.createdAt = new Date().toISOString();
@@ -2829,7 +2763,7 @@
             
             try {
                 // Set as deleted so it overrides defaults
-                await setDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'plans', key), { deleted: true }, { merge: true });
+                await setDoc(doc(window.db, 'plans', key), { deleted: true }, { merge: true });
                 
                 // Remove from PLAN_DICT to reflect immediately
                 delete window.PLAN_DICT[key];
@@ -3074,7 +3008,7 @@
                 
                 window.SCHEDULE_DICT = { ...window.DEFAULT_SCHEDULES };
 
-                const querySnapshot = await getDocs(collection(window.db, 'schedules'));
+                const querySnapshot = await getDocs(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'schedules'));
                 querySnapshot.forEach(doc => {
                     const data = doc.data();
                     const scheduleId = doc.id;
@@ -3115,7 +3049,8 @@
                 'checkin-class-selector',
                 'bulk-class-selector',
                 'prog-add-class',
-                'class-photo-schedule'
+                'class-photo-schedule',
+                'manual-att-schedule'
             ];
 
             selectors.forEach(id => {
@@ -3168,11 +3103,11 @@
             try {
                 let docRef;
                 if (editId) {
-                    docRef = doc(window.db, 'schedules', editId);
+                    docRef = doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'schedules', editId);
                     await setDoc(docRef, { name: name }, { merge: true });
                 } else {
                     const newId = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString().slice(-4);
-                    docRef = doc(window.db, 'schedules', newId);
+                    docRef = doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'schedules', newId);
                     await setDoc(docRef, { name: name });
                 }
                 
@@ -3214,7 +3149,7 @@
             if (!await window.customConfirm('Tem certeza que deseja excluir este horário?')) return;
             
             try {
-                await setDoc(doc(window.db, 'schedules', key), { deleted: true }, { merge: true });
+                await setDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'schedules', key), { deleted: true }, { merge: true });
                 
                 delete window.SCHEDULE_DICT[key];
                 
@@ -3484,6 +3419,8 @@
             const pinInput = document.getElementById('pin-input');
             pinInput.value = '';
             pinInput.focus();
+            
+            // Armazenar callback para executar após sucesso
             window.pinSuccessCallback = callback;
         };
 
@@ -3508,7 +3445,7 @@
                     }
                     window.pinSuccessCallback();
                 }
-
+                
                 window.customAlert("Acesso Administrativo Desbloqueado!");
                 setTimeout(() => location.reload(), 1000); 
             } else {
@@ -3524,11 +3461,11 @@
             app = initializeApp(firebaseConfig); 
             auth = getAuth(app); 
             window.auth = auth;
-                    db = getFirestore(app); 
-                    window.db = db;
-                    const storage = getStorage(app);
-                    window.storage = storage;
-                    const initAuth = async () => {
+            db = getFirestore(app); 
+            window.db = db;
+            const storage = getStorage(app);
+            window.storage = storage;
+            const initAuth = async () => {
                         try {
                             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                                 await signInWithCustomToken(auth, __initial_auth_token);
@@ -3537,7 +3474,7 @@
                             }
                         } catch (e) { 
                             console.error("Auth error", e); 
-                            if (e.code === 'auth/requests-from-referer-blocked' || e.message.includes('auth/requests-from-referer-blocked')) {
+                            if (e.code === 'auth/requests-from-referer-blocked' || (e.message && e.message.includes('auth/requests-from-referer-blocked'))) {
                                 const currentDomain = window.location.origin;
                                 window.customAlert(`ERRO DE AUTENTICAÇÃO (Firebase):\n\nO domínio atual não está autorizado.\n\nDOMÍNIO: ${currentDomain}\n\nPara corrigir:\n1. Acesse o Console do Firebase\n2. Vá em Authentication > Settings > Authorized domains\n3. Clique em "Add domain" e adicione o endereço acima.`);
                             }
@@ -3551,7 +3488,7 @@
                         }
                     };
                     initAuth();
-
+                    
                     // Restore pending actions after reload
                     const pendingAction = sessionStorage.getItem('pending_admin_action');
                     if (pendingAction === 'open_settings') {
@@ -3606,11 +3543,6 @@
                 btnNewStudent.classList.add('opacity-70');
                 btnNewStudent.onclick = () => checkAdminAccess(() => window.openAdminRegisterModal());
                 btnNewStudent.innerHTML = '<i class="fa-solid fa-lock mr-1"></i> NOVO ALUNO';
-            }
-
-            const btnClassPhoto = document.getElementById('btn-class-photo');
-            if (btnClassPhoto) {
-                btnClassPhoto.onclick = () => checkAdminAccess(() => window.openClassPhotoModal());
             }
 
             const aiConfig = document.getElementById('attendance-ai-config');
@@ -3977,7 +3909,11 @@
         };
 
         window.openAdminRegisterModal = async () => { 
-            if (!checkAdminAccess(() => window.openAdminRegisterModal())) return;
+            const user = JSON.parse(localStorage.getItem('tanque_user_session') || '{}');
+            if (user.role === 'professor') {
+                window.customAlert("Acesso restrito a administradores.");
+                return;
+            }
             await window.loadPlans();
             document.getElementById('admin-register-modal').classList.remove('hidden'); 
             document.getElementById('admin-register-modal').classList.add('flex'); 
@@ -4122,6 +4058,20 @@ Belém-PA, [DATA_ATUAL].
                 document.getElementById('edit-login').value = s.studentLogin || ''; document.getElementById('edit-password').value = s.studentPassword || '';
                 if (document.getElementById('edit-enrollment-status')) document.getElementById('edit-enrollment-status').value = s.enrollmentStatus || 'Ativo';
                 if (document.getElementById('edit-contract-signed')) document.getElementById('edit-contract-signed').checked = !!s.contractSigned;
+                
+                const photoPreview = document.getElementById('edit-photo-preview');
+                if (photoPreview) {
+                    if (s.photoURL) {
+                        photoPreview.src = s.photoURL;
+                        photoPreview.classList.remove('hidden');
+                    } else if (s.photoBase64) {
+                        photoPreview.src = s.photoBase64;
+                        photoPreview.classList.remove('hidden');
+                    } else {
+                        photoPreview.src = '';
+                        photoPreview.classList.add('hidden');
+                    }
+                }
                 
                 window.checkAdminEditAge();
                 document.getElementById('edit-modal').classList.remove('hidden'); document.getElementById('edit-modal').classList.add('flex');
@@ -4441,7 +4391,7 @@ Belém-PA, [DATA_ATUAL].
             console.log("Iniciando saveAdminNewStudent...");
             const saveBtn = document.getElementById('save-new-student-btn');
             const saveBtnText = document.getElementById('save-new-student-btn-text');
-            
+
             const cpf = document.getElementById('reg-cpf').value;
             if (cpf && !window.isValidCPF(cpf)) {
                 window.customAlert("CPF inválido. Por favor, verifique o número digitado.");
@@ -4491,6 +4441,7 @@ Belém-PA, [DATA_ATUAL].
 
             let initialPaymentHistory = [];
             let nextDue = new Date(regDate);
+            
             const nextDueDate = nextDue.toISOString();
 
             let photoBase64 = window.currentCroppedPhoto || null;
@@ -4501,9 +4452,9 @@ Belém-PA, [DATA_ATUAL].
                 const planDisplayString = planInfo.short + ' - R$ ' + Number(planValue).toFixed(2).replace('.', ',');
                 const studentData = { name, dob, cpf, cep, email, phone, address, guardian, guardianCpf, guardianKinship, plan: planDisplayString, planValue: planValue, titularName: titularName, titularId: titularId, titularRelation: titularRelation, paymentStatus: payStatus, enrollmentStatus: 'Ativo', belt: beltStr, category, howDidYouFindUs: origin, registrationDate: regDate.toISOString(), contractEndDate: endDate.toISOString(), nextDueDate: nextDueDate, studentLogin: login, studentPassword: pass, attendance: [], paymentHistory: initialPaymentHistory, contractSigned: document.getElementById('reg-contract-signed').checked, progressLog: [{ type: 'info', text: 'Matrícula realizada.', date: regDate.toISOString() }] };
                 
-                console.log("Enviando dados para o Firestore...");
+                console.log("Salvando no Firestore...");
                 const titularDocRef = await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'students'), studentData);
-                console.log("Documento criado com ID:", titularDocRef.id);
+                console.log("Documento criado ID:", titularDocRef.id);
                 
                 // Upload photo if exists
                 if (photoBase64) {
@@ -4511,7 +4462,7 @@ Belém-PA, [DATA_ATUAL].
                     const photoURL = await window.uploadPhotoToStorage(photoBase64, titularDocRef.id);
                     if (photoURL) {
                         await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', titularDocRef.id), { photoURL: photoURL });
-                        console.log("Foto vinculada com sucesso.");
+                        console.log("Foto vinculada.");
                     }
                 }
 
@@ -4559,10 +4510,10 @@ Belém-PA, [DATA_ATUAL].
                     }
                 }
 
-                console.log("Matrícula finalizada com sucesso.");
+                console.log("Sucesso no cadastro.");
                 window.closeAdminRegisterModal(); window.loadData(); window.customAlert("Aluno cadastrado com sucesso!");
             } catch(e) { 
-                console.error("Erro ao salvar matrícula:", e); 
+                console.error("Erro no cadastro:", e); 
                 window.customAlert("Erro ao cadastrar: " + (e.message || "Erro desconhecido")); 
             } finally {
                 if (saveBtn) { saveBtn.disabled = false; if (saveBtnText) saveBtnText.innerText = 'Finalizar Matrícula'; }
@@ -4573,7 +4524,7 @@ Belém-PA, [DATA_ATUAL].
             console.log("Iniciando saveStudentChanges...");
             const saveBtn = document.getElementById('save-student-edit-btn');
             const saveBtnText = document.getElementById('save-student-edit-btn-text');
-            
+
             const cpf = document.getElementById('edit-cpf').value;
             if (cpf && !window.isValidCPF(cpf)) {
                 window.customAlert("CPF inválido. Por favor, verifique o número digitado.");
@@ -4595,8 +4546,8 @@ Belém-PA, [DATA_ATUAL].
             const email = document.getElementById('edit-email').value; const phone = document.getElementById('edit-phone').value; const color = document.getElementById('edit-belt-color').value; const degree = document.getElementById('edit-belt-degree').value; const beltStr = `Faixa ${color} - ${degree}º Grau`; const login = document.getElementById('edit-login').value; const pass = document.getElementById('edit-password').value; const status = document.getElementById('edit-enrollment-status').value;
             const originalBelt = document.getElementById('edit-original-belt').value;
             
-            console.log("Dados coletados para aluno ID:", id);
-            
+            console.log("Dados p/ atualização ID:", id);
+
             let photoBase64 = null;
             if (window.currentCroppedPhoto) {
                 photoBase64 = window.currentCroppedPhoto;
@@ -4613,36 +4564,34 @@ Belém-PA, [DATA_ATUAL].
             }
             try {
                 if (saveBtn) { saveBtn.disabled = true; if (saveBtnText) saveBtnText.innerText = 'Salvando...'; }
-                
+
                 const updateData = { name: name, dob: dobIso, cpf: cpf, cep: cep, address: address, guardian: guardian, guardianKinship: guardianKinship, guardianCpf: guardianCpf, enrollmentStatus: status, belt: beltStr, studentLogin: login, studentPassword: pass, email: email, phone: phone, contractSigned: document.getElementById('edit-contract-signed').checked };
                 
                 if (photoBase64) {
-                    console.log("Fazendo upload da nova foto...");
+                    console.log("Upload da foto...");
                     const photoURL = await window.uploadPhotoToStorage(photoBase64, id);
                     if (photoURL) {
                         updateData.photoURL = photoURL;
-                        console.log("Foto enviada.");
+                        console.log("Foto OK.");
                     } else {
                         updateData.photoBase64 = photoBase64; // Fallback if upload fails
-                        console.log("Upload falhou, usando base64...");
+                        console.log("Fallback base64.");
                     }
                 }
 
                 if (beltStr !== originalBelt) { 
                     updateData.lastGraduationDate = new Date().toISOString(); 
                     updateData.progressLog = arrayUnion({ type: 'graduation', text: `Graduado para ${beltStr}`, date: new Date().toISOString() }); 
-                    console.log("Graduação detectada.");
+                    console.log("Nova graduação.");
                 }
                 
-                console.log("Atualizando Firestore...");
+                console.log("Chamando updateDoc...");
                 await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), updateData);
-                console.log("Sucesso!");
-                
-                window.closeEditModal(); 
-                await window.loadData(); 
-                window.customAlert("Dados atualizados com sucesso!");
+                console.log("Salvo com sucesso.");
+
+                window.closeEditModal(); window.loadData(); window.customAlert("Dados atualizados com sucesso!");
             } catch(e) { 
-                console.error("Erro ao salvar alterações:", e); 
+                console.error("Erro ao salvar:", e); 
                 window.customAlert("Erro ao salvar: " + (e.message || "Erro desconhecido")); 
             } finally {
                 if (saveBtn) { saveBtn.disabled = false; if (saveBtnText) saveBtnText.innerText = 'Salvar Alterações'; }
@@ -4796,65 +4745,6 @@ Belém-PA, [DATA_ATUAL].
                 if (s) { if (!s.attendance) s.attendance = []; if(!s.attendance.includes(dateVal)) s.attendance.push(dateVal); if (!s.attendanceLog) s.attendanceLog = []; s.attendanceLog.push(newLog); }
                 window.filterProgressAttendance(); window.loadData(); 
             } catch(e) { window.customAlert("Erro ao adicionar frequência."); }
-        };
-
-        window.deleteAttendanceReportBatch = async () => {
-            const checkboxes = document.querySelectorAll('.att-report-checkbox:checked');
-            if (checkboxes.length === 0) return;
-
-            if(!await window.customConfirm(`Deseja realmente excluir ${checkboxes.length} registros de presença selecionados?`)) return;
-
-            const logsToDelete = [];
-            checkboxes.forEach(cb => {
-                const sId = cb.getAttribute('data-sid');
-                const date = cb.getAttribute('data-date');
-                const time = cb.getAttribute('data-time');
-                logsToDelete.push({ sId, date, time });
-            });
-
-            try {
-                for (const item of logsToDelete) {
-                    const student = window.students.find(st => st.id === item.sId);
-                    if (!student || !student.attendanceLog) continue;
-
-                    const logEntry = student.attendanceLog.find(l => l.date === item.date && l.time === item.time);
-                    if (!logEntry) continue;
-
-                    const docRef = doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', item.sId);
-                    
-                    await updateDoc(docRef, { attendanceLog: arrayRemove(logEntry) });
-                    student.attendanceLog = student.attendanceLog.filter(l => l !== logEntry);
-
-                    const stillHasLogsForDate = student.attendanceLog.some(l => l.date === item.date);
-                    if (!stillHasLogsForDate) {
-                        await updateDoc(docRef, { attendance: arrayRemove(item.date) });
-                        if(student.attendance) student.attendance = student.attendance.filter(d => d !== item.date);
-                    }
-                }
-
-                window.customAlert(`${logsToDelete.length} registros excluídos com sucesso!`);
-                window.generateAttendanceReport();
-            } catch(e) {
-                console.error(e);
-                window.customAlert("Erro ao excluir registros em lote.");
-            }
-        };
-
-        window.toggleSelectAllAttReport = (master) => {
-            const checkboxes = document.querySelectorAll('.att-report-checkbox');
-            checkboxes.forEach(cb => cb.checked = master.checked);
-            window.updateBatchDeleteReportBtn();
-        };
-
-        window.updateBatchDeleteReportBtn = () => {
-            const selected = document.querySelectorAll('.att-report-checkbox:checked').length;
-            const btn = document.getElementById('btn-batch-delete-report');
-            if (selected > 0) {
-                btn.classList.remove('hidden');
-                btn.innerHTML = `<i class="fa-solid fa-trash-can mr-1"></i> Excluir (${selected})`;
-            } else {
-                btn.classList.add('hidden');
-            }
         };
 
         window.deleteAttendanceReportBatch = async () => {
@@ -5295,14 +5185,14 @@ Belém-PA, [DATA_ATUAL].
                         <td class="p-3 text-sm text-gray-600 dark:text-gray-400">${categoryHtml}</td>
                         <td class="p-3">${statusBadge}</td>
                         <td class="p-3 text-right">
-                            ${isAdminUnlocked ? `
+                            ${user.role === 'admin' ? `
                                 <button onclick="window.enrollExperimentalStudent('${exp.id}')" class="text-green-500 hover:text-green-700 mx-1" title="Matricular Aluno"><i class="fa-solid fa-user-plus"></i></button>
                                 <button onclick="window.openEditExperimental('${exp.id}')" class="text-blue-500 hover:text-blue-700 mx-1" title="Editar"><i class="fa-solid fa-pen"></i></button>
                                 <button onclick="window.deleteExperimental('${exp.id}')" class="text-red-500 hover:text-red-700 mx-1" title="Excluir"><i class="fa-solid fa-trash"></i></button>
                             ` : `
-                                <i class="fa-solid fa-lock text-gray-400 mx-1" title="Matrícula restrita ao Admin" onclick="window.checkAdminAccess()"></i>
+                                <i class="fa-solid fa-lock text-gray-400 mx-1" title="Matrícula restrita ao Admin"></i>
                                 <button onclick="window.openEditExperimental('${exp.id}')" class="text-blue-500 hover:text-blue-700 mx-1" title="Editar Status"><i class="fa-solid fa-pen"></i></button>
-                                <i class="fa-solid fa-lock text-gray-400 mx-1" title="Exclusão restrita ao Admin" onclick="window.checkAdminAccess()"></i>
+                                <i class="fa-solid fa-lock text-gray-400 mx-1" title="Exclusão restrita ao Admin"></i>
                             `}
                         </td>
                     </tr>
@@ -5916,7 +5806,7 @@ Belém-PA, [DATA_ATUAL].
             try {
                 const storageRef = ref(window.storage, `students/${studentId}.jpg`);
                 
-                // Convert base64 to Blob for faster uploadBytes
+                // Convert base64 to Blob for faster uploadBytes operation
                 const response = await fetch(base64);
                 const blob = await response.blob();
                 
@@ -6012,6 +5902,7 @@ Belém-PA, [DATA_ATUAL].
                             attendanceRecords.push({
                                 studentId: student.id,
                                 studentName: student.name,
+                                studentPhoto: student.photoURL || student.photoBase64 || 'https://iili.io/qVofP1S.png',
                                 studentPlan: window.getPlanInfo(student.plan).short || 'N/A',
                                 time: log.time || 'N/A',
                                 timestamp: log.timestamp || '',
@@ -6024,6 +5915,7 @@ Belém-PA, [DATA_ATUAL].
 
             // Sort by check-in timestamp (latest first)
             attendanceRecords.sort((a, b) => b.timeDate - a.timeDate);
+
             countDisplay.innerText = attendanceRecords.length;
 
             if (attendanceRecords.length === 0) {
@@ -6046,11 +5938,16 @@ Belém-PA, [DATA_ATUAL].
                             <input type="checkbox" class="att-report-checkbox accent-brand-red" data-sid="${record.studentId}" data-date="${dateInput}" data-time="${record.time}" onchange="window.updateBatchDeleteReportBtn()">
                         </td>
                         <td class="px-6 py-3 font-mono text-gray-600 dark:text-gray-400 font-bold">${checkinTime}</td>
-                        <td class="px-6 py-3"><span class="font-bold text-gray-800 dark:text-gray-200 capitalize">${record.studentName}</span></td>
+                        <td class="px-6 py-3">
+                            <div class="flex items-center gap-3">
+                                <img src="${record.studentPhoto || 'https://iili.io/qVofP1S.png'}" class="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-gray-600 shadow-sm">
+                                <span class="font-bold text-gray-800 dark:text-gray-200 capitalize">${record.studentName}</span>
+                            </div>
+                        </td>
                         <td class="px-6 py-3 text-gray-600 dark:text-gray-400">${record.studentPlan}</td>
                         <td class="px-6 py-3 text-blue-600 dark:text-blue-400 font-medium">${record.time}</td>
                         <td class="px-6 py-3 text-center">
-                            ${isAdminUnlocked ? `<button onclick="window.removeSpecificAttendance('${record.studentId}', '${dateInput}', '${record.time}')" class="text-red-400 hover:text-red-600 transition" title="Excluir"><i class="fa-solid fa-trash-can"></i></button>` : '<i class="fa-solid fa-lock text-gray-400" title="Desbloqueie para excluir" onclick="window.checkAdminAccess()"></i>'}
+                            ${user.role === 'admin' ? `<button onclick="window.removeSpecificAttendance('${record.studentId}', '${dateInput}', '${record.time}')" class="text-red-400 hover:text-red-600 transition" title="Excluir"><i class="fa-solid fa-trash-can"></i></button>` : '<i class="fa-solid fa-lock text-gray-400" title="Acesso restrito ao Admin"></i>'}
                         </td>
                     </tr>
                 `;
@@ -6190,7 +6087,7 @@ Belém-PA, [DATA_ATUAL].
                     const s = window.students.find(x => x.id === id);
                     if (s) {
                         if (s.attendanceLog && s.attendanceLog.some(l => l.date === dateStr && l.time === timeStr)) continue;
-                        await updateDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id), {
+                        await updateDoc(doc(window.db, 'students', id), { 
                             attendance: arrayUnion(dateStr), 
                             attendanceLog: arrayUnion(newLog) 
                         });
@@ -6854,8 +6751,7 @@ Belém-PA, [DATA_ATUAL].
             const s = window.students.find(st => st.id === id); if(!s) return;
             if(!await window.customConfirm(`ATENÇÃO: Deseja excluir DEFINITIVAMENTE o aluno ${s.name} do banco de dados? Esta ação não pode ser desfeita.`)) return;
             try { 
-                await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id)); 
-                window.loadData(); 
+                await deleteDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'students', id));                window.loadData(); 
                 window.customAlert("Aluno excluído com sucesso.");
             } catch(e) { 
                 console.error(e);
@@ -6865,8 +6761,9 @@ Belém-PA, [DATA_ATUAL].
 
         // NAVEGAÇÃO
         window.switchMainView = (viewId) => {
-            if (!isAdminUnlocked && ['students', 'notices', 'finance'].includes(viewId)) {
-                return checkAdminAccess(() => window.switchMainView(viewId));
+            const user = JSON.parse(localStorage.getItem('tanque_user_session') || '{}');
+            if (user.role === 'professor' && !['attendance', 'experimental'].includes(viewId)) {
+                return;
             }
             window.currentView = viewId;
             document.getElementById('view-students').classList.add('hidden'); 
@@ -7229,6 +7126,11 @@ Belém-PA, [DATA_ATUAL].
         };
 
         window.openSettingsModal = () => {
+            const user = JSON.parse(localStorage.getItem('tanque_user_session') || '{}');
+            if (user.role === 'professor') {
+                window.customAlert("Acesso restrito a administradores.");
+                return;
+            }
             document.getElementById('settings-modal').classList.remove('hidden');
             document.getElementById('settings-modal').classList.add('flex');
             window.renderSettingsPlans();
@@ -7525,7 +7427,6 @@ Belém-PA, [DATA_ATUAL].
             if (!s) return;
 
             document.getElementById('print-prog-name').innerText = s.name;
-            document.getElementById('print-prog-dob').innerText = s.dob ? formatDate(s.dob) : '--';
             document.getElementById('print-prog-start').innerText = formatDate(s.registrationDate);
             document.getElementById('print-prog-belt').innerText = s.belt || 'Branca';
             
@@ -7601,7 +7502,7 @@ Belém-PA, [DATA_ATUAL].
                     <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11px;">
                         <thead>
                             <tr style="background-color: #f3f4f6; text-align: left; border-bottom: 2px solid #d1d5db;">
-                                <th style="padding: 10px 8px; border: 1px solid #e5e7eb;">ALUNO / NASC.</th>
+                                <th style="padding: 10px 8px; border: 1px solid #e5e7eb;">ALUNO</th>
                                 <th style="padding: 10px 8px; border: 1px solid #e5e7eb;">RESPONSÁVEL (MENOR)</th>
                                 <th style="padding: 10px 8px; border: 1px solid #e5e7eb;">VÍNCULO / DEPENDENTES</th>
                                 <th style="padding: 10px 8px; border: 1px solid #e5e7eb;">PLANO</th>
@@ -7629,10 +7530,7 @@ Belém-PA, [DATA_ATUAL].
 
                 htmlContent += `
                     <tr style="border-bottom: 1px solid #e5e7eb;">
-                        <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: bold; text-transform: uppercase;">
-                            ${s.name}<br>
-                            <span style="font-size: 9px; color: #666; font-weight: normal;">${s.dob ? formatDate(s.dob) : '--/--/----'}</span>
-                        </td>
+                        <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: bold; text-transform: uppercase;">${s.name}</td>
                         <td style="padding: 8px; border: 1px solid #e5e7eb;">${s.guardian || '--'}</td>
                         <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 10px;">${vinculationText}</td>
                         <td style="padding: 8px; border: 1px solid #e5e7eb;">${planInfo.short}</td>
@@ -7741,7 +7639,7 @@ Belém-PA, [DATA_ATUAL].
             <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm">
                 <i class="fa-solid fa-shield-halved"></i>
             </div>
-            <h3 class="text-xl font-bold mb-2 text-gray-800 dark:text-white">Acesso Administrativo</h3>
+            <h3 class="text-xl font-bold mb-2">Acesso Administrativo</h3>
             <p class="text-gray-500 dark:text-gray-400 text-sm mb-6">Insira o PIN Administrativo para desbloquear.</p>
             
             <input type="password" id="pin-input" maxlength="4" placeholder="••••" class="w-full text-center text-3xl tracking-[0.5em] py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-brand-red outline-none transition mb-6 bg-gray-50 dark:bg-gray-900 dark:text-white font-mono" onkeyup="if(this.value.length === 4) window.validatePin()">
