@@ -1041,7 +1041,12 @@
                     </div>
                 </div>
 
-                <h5 class="font-bold text-gray-700 dark:text-gray-300 mb-4 border-b dark:border-gray-700 pb-1 text-sm uppercase">Histórico de Pagamentos</h5>
+                <div class="flex justify-between items-center mb-4 border-b dark:border-gray-700 pb-1">
+                    <h5 class="font-bold text-gray-700 dark:text-gray-300 text-sm uppercase">Histórico de Pagamentos</h5>
+                    <button onclick="window.printPaymentHistory(document.getElementById('pay-student-id').value)" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-xs font-bold flex items-center gap-1 transition">
+                        <i class="fa-solid fa-print"></i> Imprimir Histórico
+                    </button>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-sm">
                         <thead>
@@ -6576,6 +6581,80 @@ Belém-PA, [DATA_ATUAL].
             `;
             
             window.printHtmlContent(htmlContent, "Recibo_TanqueTeam_" + s.name.replace(/\s+/g, '_'));
+        };
+
+        window.printPaymentHistory = (studentId) => {
+            const s = window.students.find(st => st.id === studentId);
+            if (!s || !s.paymentHistory || s.paymentHistory.length === 0) {
+                window.customAlert("Não há histórico de pagamentos para este aluno.");
+                return;
+            }
+            
+            const sortedHistory = [...s.paymentHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const printDate = new Date().toLocaleString('pt-BR');
+            
+            let rowsHtml = '';
+            let totalCollected = 0;
+            
+            sortedHistory.forEach(p => {
+                const paidAmount = parseFloat(p.amount) || 0;
+                totalCollected += paidAmount;
+                const dIso = p.date ? p.date : '';
+                const dateStr = typeof formatDate === 'function' ? formatDate(dIso) : dIso.split('T')[0];
+                rowsHtml += `
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">${dateStr}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">${p.refMonth || '--'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">R$ ${paidAmount.toFixed(2).replace('.', ',')}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">${p.method || '--'}</td>
+                    </tr>
+                `;
+            });
+
+            const planInfo = window.getPlanInfo ? window.getPlanInfo(s.plan) : { long: s.plan || 'Não informado' };
+
+            const htmlContent = `
+                <div style="width: 100%; max-width: 800px; margin: 0 auto; padding: 40px; font-family: 'Arial', sans-serif; color: #333; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+                    <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #1B1B1B; padding-bottom: 20px;">
+                        <h1 style="margin: 0; font-size: 24px; color: #1B1B1B; text-transform: uppercase; letter-spacing: 2px;">Tanque Team BJJ</h1>
+                        <p style="margin: 5px 0 0; color: #666; font-size: 14px;">Escola de Artes Marciais</p>
+                        <h2 style="margin: 20px 0 0; font-size: 20px; color: #2563eb;">HISTÓRICO DE PAGAMENTOS</h2>
+                    </div>
+                    
+                    <div style="margin-bottom: 30px; background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                        <p style="margin: 0 0 5px 0;"><strong>ALUNO:</strong> ${s.name}</p>
+                        <p style="margin: 0 0 5px 0;"><strong>CPF:</strong> ${s.cpf || '--'}</p>
+                        <p style="margin: 0;"><strong>PLANO:</strong> ${planInfo.long}</p>
+                    </div>
+                    
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 14px;">
+                        <thead>
+                            <tr style="background-color: #f1f5f9;">
+                                <th style="padding: 12px 10px; text-align: left; border-bottom: 2px solid #cbd5e1; color: #475569; font-weight: bold; text-transform: uppercase; font-size: 11px;">Data Pago</th>
+                                <th style="padding: 12px 10px; text-align: left; border-bottom: 2px solid #cbd5e1; color: #475569; font-weight: bold; text-transform: uppercase; font-size: 11px;">Mês Referência</th>
+                                <th style="padding: 12px 10px; text-align: left; border-bottom: 2px solid #cbd5e1; color: #475569; font-weight: bold; text-transform: uppercase; font-size: 11px;">Valor Pago</th>
+                                <th style="padding: 12px 10px; text-align: left; border-bottom: 2px solid #cbd5e1; color: #475569; font-weight: bold; text-transform: uppercase; font-size: 11px;">Forma Pagto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background-color: #f8fafc; font-weight: bold;">
+                                <td colspan="2" style="padding: 12px 10px; text-align: right; border-top: 2px solid #cbd5e1;">TOTAL ACUMULADO:</td>
+                                <td colspan="2" style="padding: 12px 10px; text-align: left; border-top: 2px solid #cbd5e1; color: #16a34a; font-size: 16px;">R$ ${totalCollected.toFixed(2).replace('.', ',')}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    
+                    <div style="text-align: center; margin-top: 60px; padding-top: 20px; border-top: 1px solid #eee;">
+                        <p style="margin: 0; font-size: 12px; color: #94a3b8;">Documento oficial gerado em ${printDate}</p>
+                        <p style="margin: 5px 0 0; font-size: 11px; color: #94a3b8;">Tanque Team - Gestão de Alunos</p>
+                    </div>
+                </div>
+            `;
+            
+            window.printHtmlContent(htmlContent, "Historico_Pagamento_" + s.name.replace(/\s+/g, '_'));
         };
 
         window.savePayment = async () => {
