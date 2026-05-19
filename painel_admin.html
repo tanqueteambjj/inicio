@@ -1789,6 +1789,16 @@
                         </div>
                         <i class="fa-solid fa-chevron-right text-orange-300"></i>
                     </button>
+                    <button onclick="window.confirmAndSendWhatsApp('email_billing')" class="flex items-center justify-between w-full p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg group hover:bg-purple-600 hover:text-white transition-all">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-envelope text-purple-600 dark:text-purple-400 group-hover:text-white text-xl"></i>
+                            <div class="text-left">
+                                <div class="font-bold text-sm">Cobrança por E-mail</div>
+                                <div class="text-[10px] opacity-70">Disparar e-mail de atraso</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-purple-300"></i>
+                    </button>
                     <button onclick="window.confirmAndSendWhatsApp('birthday')" class="flex items-center justify-between w-full p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg group hover:bg-emerald-600 hover:text-white transition-all">
                         <div class="flex items-center gap-3">
                             <i class="fa-solid fa-cake-candles text-emerald-600 dark:text-emerald-400 group-hover:text-white text-xl"></i>
@@ -6428,6 +6438,141 @@ Belém-PA, [DATA_ATUAL].
             modal.classList.remove('flex');
         };
 
+        window.sendEmailBilling = (id) => {
+            const s = window.students.find(st => st.id === id);
+            if (!s) { window.customAlert('Aluno não encontrado.'); return; }
+            if (!s.email) {
+                window.customAlert('O aluno não possui um e-mail cadastrado.');
+                return;
+            }
+            if (!s.studentLogin || !s.studentPassword) {
+                window.customAlert('Este aluno não possui usuário e senha de acesso configurados. Cadastre-os no cadastro do aluno antes de enviar.');
+                return;
+            }
+
+            const firstName = s.name.split(' ')[0];
+            const planInfo = window.getPlanInfo(s.plan);
+            const planName = planInfo && planInfo.short ? planInfo.short : (s.plan || 'Plano de Treino');
+
+            let nextDueStr = '--';
+            if (s.nextDueDate) {
+                const adjDate = typeof window.getAdjustedNextDueDate === 'function' ? window.getAdjustedNextDueDate(s) : null;
+                nextDueStr = adjDate ? formatDate(adjDate) : formatDate(s.nextDueDate);
+            }
+
+            const discountVal = Number(s.planValue || (planInfo ? planInfo.price : 0) || 100);
+            const fullVal = discountVal + 68.90;
+
+            const discountValueFormatted = discountVal.toFixed(2).replace('.', ',');
+            const fullValueFormatted = fullVal.toFixed(2).replace('.', ',');
+
+            const bodyHtml = `
+<div style="font-family: Arial, sans-serif; color: #333333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+    <div style="background-color: #1a1a1a; padding: 25px; text-align: center; border-bottom: 4px solid #D90429;">
+        <img src="https://iili.io/qC543c7.png" alt="Tanque Team Logo" style="height: 65px; display: inline-block;">
+    </div>
+    <div style="padding: 35px; background-color: #ffffff;">
+        <h2 style="color: #1a1a1a; font-size: 22px; margin-top: 0; font-weight: 700; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px;">Olá, ${firstName}! 👋</h2>
+        
+        <p style="font-size: 15px; line-height: 1.6; color: #4a5568; margin-bottom: 20px;">
+            A gente sabe que a rotina é corrida e, às vezes, pequenos detalhes acabam passando despercebidos. Notamos que sua mensalidade está em aberto. Mas não se preocupe, estamos aqui para facilitar tudo para você!
+        </p>
+
+        <!-- DICA DE MESTRE BANNER -->
+        <div style="background-color: #fffaf0; border: 1px solid #feebc8; border-left: 5px solid #dd6b20; padding: 18px; border-radius: 8px; margin: 25px 0;">
+            <div style="display: flex; align-items: flex-start;">
+                <span style="font-size: 22px; margin-right: 12px; line-height: 1;">⚡</span>
+                <div>
+                    <strong style="color: #dd6b20; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Dica de Mestre!</strong>
+                    <p style="margin: 6px 0 0 0; font-size: 13px; line-height: 1.5; color: #744210;">
+                        Ative a <strong>Recorrência Automática</strong> no seu cartão de crédito e pague o <strong>VALOR COM DESCONTO</strong> mesmo estando em atraso! Economize agora R$ 68,90 de desconto imediato.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- DETAILS CONTAINER -->
+        <div style="background-color: #f7fafc; border: 1px solid #edf2f7; border-radius: 8px; padding: 20px; margin: 25px 0;">
+            <h3 style="margin-top: 0; margin-bottom: 15px; color: #1a1a1a; font-size: 15px; font-weight: 700; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">📋 Detalhes do seu Pagamento</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                <tr>
+                    <td style="padding: 6px 0; color: #718096; width: 40%;"><strong>Aluno:</strong></td>
+                    <td style="padding: 6px 0; color: #2d3748; font-weight: 600;">${s.name}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 0; color: #718096; width: 40%;"><strong>Plano:</strong></td>
+                    <td style="padding: 6px 0; color: #2d3748; font-weight: 600;">${planName}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 0; color: #718096;"><strong>Vencimento:</strong></td>
+                    <td style="padding: 6px 0; color: #e53e3e; font-weight: 600;">${nextDueStr}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 0; color: #718096;"><strong>Valor Integral c/ Atraso:</strong></td>
+                    <td style="padding: 6px 0; color: #2d3748; text-decoration: line-through;">R$ ${fullValueFormatted}</td>
+                </tr>
+                <tr style="border-top: 1px dashed #e2e8f0;">
+                    <td style="padding: 10px 0 6px 0; color: #1a202c;"><strong>Valor c/ Desconto Recorrência:</strong></td>
+                    <td style="padding: 10px 0 6px 0; color: #2f855a; font-weight: 700; font-size: 16px;">R$ ${discountValueFormatted}</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- LOGIN INFOS -->
+        <div style="background-color: #ebf8ff; border: 1px solid #bee3f8; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: center;">
+            <p style="margin: 0 0 10px 0; color: #2b6cb0; font-size: 14px; font-weight: 600;">🔐 Seus dados de acesso ao portal do aluno:</p>
+            <div style="display: inline-block; background-color: #ffffff; padding: 10px 20px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 14px; text-align: left;">
+                <div style="margin-bottom: 4px;"><strong>Usuário:</strong> <span style="font-family: monospace; color: #2d3748;">${s.studentLogin}</span></div>
+                <div><strong>Senha:</strong> <span style="font-family: monospace; color: #2d3748;">${s.studentPassword}</span></div>
+            </div>
+        </div>
+
+        <!-- PORTAL BUTTON -->
+        <div style="text-align: center; margin: 35px 0;">
+            <a href="https://painel-aluno.vercel.app/" style="background-color: #D90429; color: #ffffff; padding: 14px 30px; text-decoration: none; font-weight: bold; border-radius: 8px; display: inline-block; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(217, 4, 41, 0.2); transition: all 0.2s;">Acessar Portal do Aluno & Pagar</a>
+        </div>
+
+        <p style="font-size: 14px; color: #718096; line-height: 1.5; margin-top: 30px;">
+            Ativando o pagamento recorrente, sua mensalidade é debitada automaticamente no cartão, garantindo sempre o seu desconto pontualidade sem consumir o limite do cartão e sem risco de atrasos.
+        </p>
+
+        <p style="font-size: 14px; color: #718096; line-height: 1.5;">
+            Qualquer dúvida com o portal ou com o pagamento, fale com a gente. Seu apoio e sua presença no tatame são muito importantes para nós!
+        </p>
+        
+        <p style="margin-top: 30px; font-size: 15px; color: #2d3748;">
+            Nos vemos no treino! 💪<br>
+            <strong>Oss! 🥋</strong><br>
+            <span style="font-size: 13px; color: #718096;">Equipe Tanque Team BJJ</span>
+        </p>
+    </div>
+    <div style="background-color: #f7fafc; padding: 20px; text-align: center; font-size: 12px; color: #a0aec0; border-top: 1px solid #edf2f7;">
+        Este é um e-mail de notificação. Se você já realizou o pagamento ou regularizou sua pendência recentemente, por favor desconsidere esta mensagem.
+    </div>
+</div>
+`;
+
+            const templateParams = {
+                to_name: s.name,
+                to_email: s.email,
+                message: bodyHtml,
+                login: s.studentLogin,
+                password: s.studentPassword,
+                subject: "Mensalidade Pendente - Tanque Team BJJ 🥋"
+            };
+
+            const confirmSend = window.confirm(`Deseja disparar este e-mail de cobrança amigável para ${s.name}?`);
+            if (!confirmSend) return;
+
+            emailjs.send('service_yq744mr', 'template_few5bna', templateParams)
+                .then(function(response) {
+                   window.customAlert("E-mail de cobrança enviado com sucesso!");
+                }, function(error) {
+                   console.error("Erro ao enviar e-mail de cobrança:", error);
+                   window.customAlert("Erro ao enviar e-mail. Verifique o console ou a configuração do EmailJS.");
+                });
+        };
+
         window.confirmAndSendWhatsApp = (type) => {
             const id = document.getElementById('whatsapp-student-id').value;
             window.closeWhatsAppActionsModal();
@@ -6436,6 +6581,7 @@ Belém-PA, [DATA_ATUAL].
             else if (type === 'charge') window.sendWhatsAppCharge(id);
             else if (type === 'absence') window.sendWhatsAppAbsence(id);
             else if (type === 'birthday') window.shareBirthdayWhatsApp(id);
+            else if (type === 'email_billing') window.sendEmailBilling(id);
         };
 
         window.informPayment = async (id) => {
