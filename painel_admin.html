@@ -1814,6 +1814,60 @@
         </div>
     </div>
 
+    <!-- EMAIL PREVIEW & EDIT MODAL -->
+    <div id="email-preview-modal" class="fixed inset-0 z-[120] hidden bg-black/70 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] md:h-[85vh] flex flex-col overflow-hidden animate-fade-in border-t-4 border-brand-red text-gray-800 dark:text-gray-100">
+            <!-- Header -->
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
+                <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-envelope-open-text text-brand-red"></i> Visualizar e Editar E-mail de Cobrança</h3>
+                <button onclick="window.closeEmailPreviewModal()" class="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors text-xl"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <!-- Body -->
+            <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+                <!-- Left panel: Inputs & Editor -->
+                <div class="w-full md:w-1/2 p-4 md:p-6 flex flex-col border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 overflow-y-auto space-y-4">
+                    <h4 class="font-bold text-sm text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2"><i class="fa-solid fa-pen-to-square mr-1"></i> Dados do Envio</h4>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">E-mail do Aluno:</label>
+                        <input type="email" id="email-preview-to" class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm bg-gray-50 dark:bg-gray-750 focus:outline-none focus:ring-1 focus:ring-brand-red text-gray-850 dark:text-white">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Assunto do E-mail:</label>
+                        <input type="text" id="email-preview-subject" class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm bg-gray-50 dark:bg-gray-750 focus:outline-none focus:ring-1 focus:ring-brand-red font-semibold text-gray-850 dark:text-white">
+                    </div>
+                    
+                    <div class="flex-1 flex flex-col min-h-[250px]">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Código HTML do E-mail:</label>
+                            <span class="text-[10px] text-gray-400 italic">(O código abaixo será renderizado ao lado)</span>
+                        </div>
+                        <textarea id="email-preview-body" oninput="window.updateEmailPreviewHTML()" class="flex-1 w-full border dark:border-gray-600 rounded p-2 text-xs font-mono bg-gray-50 dark:bg-gray-750 focus:outline-none focus:ring-1 focus:ring-brand-red resize-none text-gray-850 dark:text-white"></textarea>
+                    </div>
+                </div>
+                
+                <!-- Right panel: Live HTML Preview -->
+                <div class="w-full md:w-1/2 p-4 md:p-6 bg-gray-100 dark:bg-gray-900 overflow-y-auto flex flex-col">
+                    <h4 class="font-bold text-sm text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3 shrink-0"><i class="fa-solid fa-eye mr-1"></i> Pré-visualização do Destinatário</h4>
+                    <div id="email-preview-render-container" class="flex-1 bg-white border border-gray-200 dark:border-gray-700 rounded-lg shadow-inner overflow-y-auto p-4 content-preview">
+                        <!-- Renderizado aqui -->
+                        <iframe id="email-preview-iframe" class="w-full h-full border-0 bg-white" style="min-height: 380px;"></iframe>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-end gap-3 shrink-0 border-t border-gray-200 dark:border-gray-600">
+                <button onclick="window.closeEmailPreviewModal()" class="px-5 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm">Cancelar</button>
+                <button id="send-preview-email-btn" onclick="window.sendEmailPreviewed()" class="px-6 py-2 bg-brand-red text-white font-bold rounded hover:bg-red-700 transition shadow-md flex items-center gap-2">
+                    <i class="fa-solid fa-paper-plane"></i> Enviar Agora
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- NOTICE MODAL -->
     <div id="notice-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in border-t-4 border-yellow-500">
@@ -6450,6 +6504,140 @@ Belém-PA, [DATA_ATUAL].
                 return;
             }
 
+            const getBillingValues = (student) => {
+                let planKey = student.plan || '';
+                if (planKey && planKey.includes(' - ')) {
+                    const parts = planKey.split(' - ');
+                    planKey = parts[0];
+                }
+                
+                let planConfig = window.PLAN_DICT[planKey];
+                if (!planConfig) {
+                    const lowerKey = planKey.toLowerCase();
+                    const foundKey = Object.keys(window.PLAN_DICT).find(k => {
+                        return window.PLAN_DICT[k].short.toLowerCase() === lowerKey || 
+                               window.PLAN_DICT[k].long.toLowerCase() === lowerKey ||
+                               lowerKey.includes(k) || k.includes(lowerKey);
+                    });
+                    if (foundKey) {
+                        planConfig = window.PLAN_DICT[foundKey];
+                        planKey = foundKey;
+                    }
+                }
+                
+                let discountVal = Number(student.planValue || (planConfig ? planConfig.price : 0) || 126.90);
+                let fullVal = discountVal;
+                let discountAmount = 0;
+                
+                if (planKey) {
+                    const key = planKey.toLowerCase();
+                    if (key.includes('adulto')) {
+                        if (key.includes('semestral')) {
+                            fullVal = 168.90;
+                            discountVal = 126.90;
+                            discountAmount = 42.00;
+                        } else if (key.includes('trimestral')) {
+                            fullVal = 168.90;
+                            discountVal = 147.90;
+                            discountAmount = 21.00;
+                        } else if (key.includes('mensal')) {
+                            fullVal = 198.90;
+                            discountVal = 168.90;
+                            discountAmount = 30.00;
+                        } else {
+                            fullVal = discountVal + 42.00;
+                            discountAmount = 42.00;
+                        }
+                    } else if (key.includes('infantil')) {
+                        if (key.includes('semestral')) {
+                            fullVal = 189.90;
+                            discountVal = 157.90;
+                            discountAmount = 32.00;
+                        } else if (key.includes('trimestral')) {
+                            fullVal = 189.90;
+                            discountVal = 168.90;
+                            discountAmount = 21.00;
+                        } else if (key.includes('mensal')) {
+                            fullVal = 219.90;
+                            discountVal = 189.90;
+                            discountAmount = 30.00;
+                        } else {
+                            fullVal = discountVal + 30.00;
+                            discountAmount = 30.00;
+                        }
+                    } else if (key.includes('combo-dupla') || key.includes('dupla')) {
+                        fullVal = 300.00;
+                        discountVal = 250.00;
+                        discountAmount = 50.00;
+                    } else if (key.includes('combo-casal') || key.includes('casal')) {
+                        fullVal = 260.00;
+                        discountVal = 220.00;
+                        discountAmount = 40.00;
+                    } else if (key.includes('combo-familia') || key.includes('familia')) {
+                        fullVal = 420.00;
+                        discountVal = 362.02;
+                        discountAmount = 57.98;
+                    } else {
+                        if (discountVal > 0) {
+                            discountAmount = discountVal * 0.3;
+                            fullVal = discountVal + discountAmount;
+                        } else {
+                            fullVal = 0;
+                            discountVal = 0;
+                            discountAmount = 0;
+                        }
+                    }
+                } else {
+                    const planText = String(student.plan || '').toLowerCase();
+                    if (planText.includes('adulto') && planText.includes('semestral')) {
+                        fullVal = 168.90;
+                        discountVal = 126.90;
+                        discountAmount = 42.00;
+                    } else if (planText.includes('adulto') && planText.includes('trimestral')) {
+                        fullVal = 168.90;
+                        discountVal = 147.90;
+                        discountAmount = 21.00;
+                    } else if (planText.includes('adulto') && planText.includes('mensal')) {
+                        fullVal = 198.90;
+                        discountVal = 168.90;
+                        discountAmount = 30.00;
+                    } else if (planText.includes('infantil') && planText.includes('semestral')) {
+                        fullVal = 189.90;
+                        discountVal = 157.90;
+                        discountAmount = 32.00;
+                    } else if (planText.includes('infantil') && planText.includes('trimestral')) {
+                        fullVal = 189.90;
+                        discountVal = 168.90;
+                        discountAmount = 21.00;
+                    } else if (planText.includes('infantil') && planText.includes('mensal')) {
+                        fullVal = 219.90;
+                        discountVal = 189.90;
+                        discountAmount = 30.00;
+                    } else {
+                        if (discountVal > 0) {
+                            discountAmount = discountVal * 0.3;
+                            fullVal = discountVal + discountAmount;
+                        } else {
+                            fullVal = 0;
+                            discountVal = 0;
+                            discountAmount = 0;
+                        }
+                    }
+                }
+
+                if (student.planValue && Number(student.planValue) > 0) {
+                    discountVal = Number(student.planValue);
+                    if (fullVal <= discountVal) {
+                        discountAmount = discountVal * 0.3;
+                        fullVal = discountVal + discountAmount;
+                    } else {
+                        discountAmount = fullVal - discountVal;
+                    }
+                }
+
+                return { discountVal, fullVal, discountAmount };
+            };
+
             const firstName = s.name.split(' ')[0];
             const planInfo = window.getPlanInfo(s.plan);
             const planName = planInfo && planInfo.short ? planInfo.short : (s.plan || 'Plano de Treino');
@@ -6460,11 +6648,11 @@ Belém-PA, [DATA_ATUAL].
                 nextDueStr = adjDate ? formatDate(adjDate) : formatDate(s.nextDueDate);
             }
 
-            const discountVal = Number(s.planValue || (planInfo ? planInfo.price : 0) || 100);
-            const fullVal = discountVal + 68.90;
+            const { discountVal, fullVal, discountAmount } = getBillingValues(s);
 
             const discountValueFormatted = discountVal.toFixed(2).replace('.', ',');
             const fullValueFormatted = fullVal.toFixed(2).replace('.', ',');
+            const discountAmountFormatted = discountAmount.toFixed(2).replace('.', ',');
 
             const bodyHtml = `
 <div style="font-family: Arial, sans-serif; color: #333333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
@@ -6485,7 +6673,7 @@ Belém-PA, [DATA_ATUAL].
                 <div>
                     <strong style="color: #dd6b20; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Dica de Mestre!</strong>
                     <p style="margin: 6px 0 0 0; font-size: 13px; line-height: 1.5; color: #744210;">
-                        Ative a <strong>Recorrência Automática</strong> no seu cartão de crédito e pague o <strong>VALOR COM DESCONTO</strong> mesmo estando em atraso! Economize agora R$ 68,90 de desconto imediato.
+                        Ative a <strong>Recorrência Automática</strong> no seu cartão de crédito e pague o <strong>VALOR COM DESCONTO</strong> mesmo estando em atraso! Economize agora <strong>R$ ${discountAmountFormatted} de desconto imediato</strong>.
                     </p>
                 </div>
             </div>
@@ -6552,24 +6740,77 @@ Belém-PA, [DATA_ATUAL].
 </div>
 `;
 
-            const templateParams = {
-                to_name: s.name,
-                to_email: s.email,
-                message: bodyHtml,
-                login: s.studentLogin,
-                password: s.studentPassword,
-                subject: "Mensalidade Pendente - Tanque Team BJJ 🥋"
-            };
+            // Abrir e configurar o modal de e-mail preview/edit
+            document.getElementById('email-preview-to').value = s.email;
+            document.getElementById('email-preview-subject').value = "Mensalidade Pendente - Tanque Team BJJ 🥋";
+            document.getElementById('email-preview-body').value = bodyHtml;
+            
+            const modal = document.getElementById('email-preview-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            window.updateEmailPreviewHTML();
+        };
 
-            const confirmSend = window.confirm(`Deseja disparar este e-mail de cobrança amigável para ${s.name}?`);
-            if (!confirmSend) return;
+        window.closeEmailPreviewModal = () => {
+            const modal = document.getElementById('email-preview-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        };
+
+        window.updateEmailPreviewHTML = () => {
+            const bodyStr = document.getElementById('email-preview-body').value;
+            const iframe = document.getElementById('email-preview-iframe');
+            if (iframe) {
+                iframe.srcdoc = bodyStr;
+            }
+        };
+
+        window.sendEmailPreviewed = () => {
+            const toEmail = document.getElementById('email-preview-to').value;
+            const subject = document.getElementById('email-preview-subject').value;
+            const bodyHtml = document.getElementById('email-preview-body').value;
+            
+            if (!toEmail) {
+                window.customAlert("Por favor, preencha o e-mail do destinatário.");
+                return;
+            }
+            if (!subject) {
+                window.customAlert("Por favor, preencha o assunto.");
+                return;
+            }
+            if (!bodyHtml) {
+                window.customAlert("O conteúdo do e-mail não pode estar vazio.");
+                return;
+            }
+            
+            const sendBtn = document.getElementById('send-preview-email-btn');
+            const originalText = sendBtn.innerHTML;
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-1"></i> Enviando...`;
+            
+            const templateParams = {
+                to_name: "Aluno",
+                to_email: toEmail,
+                message: bodyHtml,
+                login: "", 
+                password: "", 
+                subject: subject
+            };
 
             emailjs.send('service_yq744mr', 'template_few5bna', templateParams)
                 .then(function(response) {
-                   window.customAlert("E-mail de cobrança enviado com sucesso!");
+                    window.customAlert("E-mail de cobrança enviado com sucesso!");
+                    window.closeEmailPreviewModal();
+                    sendBtn.disabled = false;
+                    sendBtn.innerHTML = originalText;
                 }, function(error) {
-                   console.error("Erro ao enviar e-mail de cobrança:", error);
-                   window.customAlert("Erro ao enviar e-mail. Verifique o console ou a configuração do EmailJS.");
+                    console.error("Erro ao enviar e-mail de cobrança:", error);
+                    window.customAlert("Erro ao enviar e-mail. Verifique a configuração do EmailJS e tente novamente.");
+                    sendBtn.disabled = false;
+                    sendBtn.innerHTML = originalText;
                 });
         };
 
