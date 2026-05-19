@@ -1831,12 +1831,12 @@
                     
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">E-mail do Aluno:</label>
-                        <input type="email" id="email-preview-to" class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm bg-gray-50 dark:bg-gray-750 focus:outline-none focus:ring-1 focus:ring-brand-red text-gray-850 dark:text-white">
+                        <input type="email" id="email-preview-to" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-red text-gray-800 dark:text-white">
                     </div>
                     
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Assunto do E-mail:</label>
-                        <input type="text" id="email-preview-subject" class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm bg-gray-50 dark:bg-gray-750 focus:outline-none focus:ring-1 focus:ring-brand-red font-semibold text-gray-850 dark:text-white">
+                        <input type="text" id="email-preview-subject" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-red font-semibold text-gray-800 dark:text-white">
                     </div>
                     
                     <div class="flex-1 flex flex-col min-h-[250px]">
@@ -1844,7 +1844,7 @@
                             <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Código HTML do E-mail:</label>
                             <span class="text-[10px] text-gray-400 italic">(O código abaixo será renderizado ao lado)</span>
                         </div>
-                        <textarea id="email-preview-body" oninput="window.updateEmailPreviewHTML()" class="flex-1 w-full border dark:border-gray-600 rounded p-2 text-xs font-mono bg-gray-50 dark:bg-gray-750 focus:outline-none focus:ring-1 focus:ring-brand-red resize-none text-gray-850 dark:text-white"></textarea>
+                        <textarea id="email-preview-body" oninput="window.updateEmailPreviewHTML()" class="flex-1 w-full border border-gray-300 dark:border-gray-600 rounded p-2 text-xs font-mono bg-white dark:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-red resize-none text-gray-800 dark:text-white"></textarea>
                     </div>
                 </div>
                 
@@ -3061,6 +3061,22 @@
             }
             
             return { price: 0, short: String(planKey).toUpperCase(), long: 'NÃO INFORMADO' };
+        };
+
+        window.updatePayPlanInfoDisplay = (planInfo) => {
+            if (!planInfo) return;
+            let planInfoText = `<strong>Plano:</strong> ${planInfo.long}`;
+            if (planInfo.basePrice && planInfo.basePrice > planInfo.price) {
+                const discountVal = planInfo.basePrice - planInfo.price;
+                planInfoText += `<br><strong>Valor até o vencimento:</strong> R$ ${planInfo.price.toFixed(2).replace('.', ',')} | <strong>Após vencimento:</strong> R$ ${planInfo.basePrice.toFixed(2).replace('.', ',')}`;
+                planInfoText += `<br><span class="text-green-600 dark:text-green-400 font-bold uppercase">DESCONTO DE R$ ${discountVal.toFixed(2).replace('.', ',')}</span>`;
+            } else if (planInfo.price > 0) {
+                planInfoText += `<br><strong>Valor:</strong> R$ ${planInfo.price.toFixed(2).replace('.', ',')}`;
+            } else {
+                planInfoText += `<br><strong>Valor:</strong> R$ 0,00`;
+            }
+            const el = document.getElementById('pay-student-plan-info');
+            if (el) el.innerHTML = planInfoText;
         };
 
         window.getPlanType = function(planId) {
@@ -4528,6 +4544,9 @@ Belém-PA, [DATA_ATUAL].
                 
                 const baseOneMonth = isLate ? (planInfo.basePrice || planInfo.price || 0) : (planInfo.price || 0);
                 window.lastPayBaseAmount = baseOneMonth;
+
+                // Update information text dynamically
+                window.updatePayPlanInfoDisplay(planInfo);
                 
                 // Refresh quantity calculations
                 if (window.handlePayQuantityChange) window.handlePayQuantityChange();
@@ -6764,7 +6783,30 @@ Belém-PA, [DATA_ATUAL].
             const bodyStr = document.getElementById('email-preview-body').value;
             const iframe = document.getElementById('email-preview-iframe');
             if (iframe) {
-                iframe.srcdoc = bodyStr;
+                // Forçamos o conteúdo do iframe a renderizar sempre com fundo branco e texto preto por padrão,
+                // prevenindo que o modo escuro do navegador inverta as cores de forma indesejada.
+                const wrappedHTML = `
+<!DOCTYPE html>
+<html lang="pt-BR" style="background-color: #ffffff !important; color: #333333 !important; color-scheme: light !important;">
+<head>
+    <meta charset="utf-8">
+    <style>
+        html, body {
+            background-color: #ffffff !important;
+            color: #333333 !important;
+            color-scheme: light !important;
+            margin: 0;
+            padding: 15px;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    ${bodyStr}
+</body>
+</html>
+                `;
+                iframe.srcdoc = wrappedHTML;
             }
         };
 
@@ -6905,13 +6947,7 @@ Belém-PA, [DATA_ATUAL].
             const planInfo = window.getPlanInfo(s.plan);
             
             let amountToPay = planInfo.price || 0;
-            let planInfoText = `<strong>Plano:</strong> ${planInfo.long}`;
-            if (planInfo.basePrice && planInfo.basePrice > planInfo.price) {
-                planInfoText += `<br><strong>Valor até o vencimento:</strong> R$ ${planInfo.price.toFixed(2).replace('.', ',')} | <strong>Após vencimento:</strong> R$ ${planInfo.basePrice.toFixed(2).replace('.', ',')}`;
-            } else if (planInfo.price > 0) {
-                planInfoText += `<br><strong>Valor:</strong> R$ ${planInfo.price.toFixed(2).replace('.', ',')}`;
-            }
-            document.getElementById('pay-student-plan-info').innerHTML = planInfoText;
+            window.updatePayPlanInfoDisplay(planInfo);
 
             if (s.nextDueDate) {
                 let currentNextDue = new Date();
