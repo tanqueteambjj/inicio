@@ -294,6 +294,7 @@
                             <p class="text-xs text-gray-500 dark:text-gray-400">Controle os visitantes que agendaram pelo site</p>
                         </div>
                         <div class="flex items-center gap-2">
+                            <button onclick="window.sendSelectedExpToWhatsApp()" class="bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-emerald-700 shadow-sm transition transform active:scale-95 flex items-center gap-1.5" title="Enviar alunos selecionados para o WhatsApp"><i class="fa-brands fa-whatsapp text-sm"></i> ENVIAR WHATSAPP</button>
                             <button onclick="window.openNewExperimentalModal()" class="bg-brand-red text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-red-700 shadow-sm transition transform active:scale-95"><i class="fa-solid fa-plus mr-1"></i> NOVO AGENDAMENTO</button>
                             <button onclick="window.printExperimentalReport()" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 text-sm bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 px-3 py-1.5 rounded shadow-sm font-bold"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
                             <button onclick="window.loadExperimentalData()" class="text-gray-500 dark:text-gray-300 hover:text-black dark:hover:text-white text-sm bg-white dark:bg-gray-600 border dark:border-gray-500 px-3 py-1.5 rounded shadow-sm"><i class="fa-solid fa-rotate"></i> Atualizar</button>
@@ -305,8 +306,10 @@
                             <input type="text" id="filter-exp-name" onkeyup="window.filterExperimentalTable()" placeholder="Buscar por nome..." class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red transition">
                         </div>
                         <span class="font-bold text-gray-500 dark:text-gray-400"><i class="fa-solid fa-filter"></i> Filtros:</span>
-                        <input type="date" id="filter-exp-date" onchange="window.filterExperimentalTable()" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red" title="Filtrar por data">
-                        <input type="time" id="filter-exp-time" onchange="window.filterExperimentalTable()" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red" title="Filtrar por horário">
+                        <input type="date" id="filter-exp-date" onchange="window.filterExperimentalTable()" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red font-medium shrink-0" title="Filtrar por data">
+                        <select id="filter-exp-time" onchange="window.filterExperimentalTable()" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red font-medium shrink-0" title="Filtrar por horário">
+                            <option value="">⏰ Todos os Horários</option>
+                        </select>
                         <select id="filter-exp-status" onchange="window.filterExperimentalTable()" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red">
                             <option value="all">Todos os Status</option>
                             <option value="Pendente">Pendente</option>
@@ -325,6 +328,9 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider">
+                                    <th class="px-3 py-3 border-b dark:border-gray-600 font-semibold w-12 text-center">
+                                        <input type="checkbox" id="select-all-experimental" onchange="window.toggleAllExperimental(this)" class="rounded text-brand-red focus:ring-brand-red cursor-pointer">
+                                    </th>
                                     <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Nome do Visitante</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">CPF</th>
                                     <th class="px-6 py-3 border-b dark:border-gray-600 font-semibold">Contato</th>
@@ -335,7 +341,7 @@
                                 </tr>
                             </thead>
                             <tbody id="experimental-table-body" class="text-sm text-gray-700 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
-                                <tr><td colspan="5" class="px-6 py-4 text-center">A carregar dados...</td></tr>
+                                <tr><td colspan="8" class="px-6 py-4 text-center">A carregar dados...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -999,6 +1005,10 @@
                         <h4 class="font-bold text-xl text-gray-900 dark:text-white" id="pay-student-name">--</h4>
                         <div id="pay-student-plan-info" class="text-sm text-gray-600 dark:text-gray-300 mt-1 mb-2"></div>
                         <p class="text-sm text-gray-500 dark:text-gray-400">Matrícula: <span id="pay-start-date" class="font-medium text-gray-700 dark:text-gray-300">--</span></p>
+                        <div id="pay-alert-overdue" class="hidden font-bold text-red-600 dark:text-red-400 text-xs bg-red-50 dark:bg-red-900/20 p-2.5 rounded border border-red-100 dark:border-red-800/40 mt-3 items-center gap-1.5 leading-snug">
+                            <i class="fa-solid fa-triangle-exclamation text-sm"></i>
+                            <span>Atenção: Aluno possui mensalidades em atraso! Valor e meses acumulados automaticamente.</span>
+                        </div>
                     </div>
                 </div>
 
@@ -1278,7 +1288,12 @@
                     <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nascimento</label><input type="text" id="edit-exp-dob" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none" placeholder="DD/MM/AAAA"></div>
                     <div class="col-span-2"><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Responsável (se menor)</label><input type="text" id="edit-exp-guardian" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none" placeholder="Nome do responsável"></div>
                     <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data Agendada</label><input type="date" id="edit-exp-date" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
-                    <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Horário</label><input type="time" id="edit-exp-time" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none"></div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Horário</label>
+                        <select id="edit-exp-time" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none font-medium text-gray-800 dark:text-gray-200">
+                            <option value="">Selecione o Horário...</option>
+                        </select>
+                    </div>
                     <div class="col-span-2">
                         <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Status</label>
                         <select id="edit-exp-status" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-yellow-500 focus:outline-none">
@@ -3347,14 +3362,22 @@
                 'checkin-class-selector',
                 'bulk-class-selector',
                 'prog-add-class',
-                'class-photo-schedule'
+                'class-photo-schedule',
+                'filter-exp-time',
+                'edit-exp-time'
             ];
 
             selectors.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     const currentVal = el.value;
-                    el.innerHTML = (id === 'class-photo-schedule' ? '<option value="">Selecione o Horário...</option>' : '') + optionsHtml;
+                    let defaultOpt = '';
+                    if (id === 'filter-exp-time') {
+                        defaultOpt = '<option value="">⏰ Todos os Horários</option>';
+                    } else if (id === 'class-photo-schedule' || id === 'edit-exp-time') {
+                        defaultOpt = '<option value="">Selecione o Horário...</option>';
+                    }
+                    el.innerHTML = defaultOpt + optionsHtml;
                     if (currentVal && Object.values(window.SCHEDULE_DICT).some(s => s.name === currentVal)) {
                         el.value = currentVal;
                     }
@@ -3675,8 +3698,9 @@
             maskInput('reg-phone', '(\\d{0,2})(\\d{0,5})(\\d{0,4})', x => !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : ''));
             maskInput('edit-phone', '(\\d{0,2})(\\d{0,5})(\\d{0,4})', x => !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : ''));
             maskInput('edit-exp-phone', '(\\d{0,2})(\\d{0,5})(\\d{0,4})', x => !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : ''));
+            maskInput('edit-exp-cpf', '(\\d{0,3})(\\d{0,3})(\\d{0,3})(\\d{0,2})', x => !x[2] ? x[1] : x[1] + '.' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '-' + x[4] : ''));
             
-            ['reg-dob', 'admin-dep1-dob', 'admin-dep2-dob', 'edit-dob'].forEach(id => {
+            ['reg-dob', 'admin-dep1-dob', 'admin-dep2-dob', 'edit-dob', 'edit-exp-dob'].forEach(id => {
                 const el = document.getElementById(id);
                 if(el) {
                     el.addEventListener('input', e => {
@@ -3974,6 +3998,25 @@
             } catch (e) { return null; }
             return null;
         }
+
+        window.getOverdueMonthsCount = function(s) {
+            if (!s || s.paymentStatus === 'Isento' || (s.plan && s.plan.toLowerCase() === 'isento') || !s.nextDueDate) return 0;
+            const nextDueObj = getAdjustedNextDueDate(s);
+            if (!nextDueObj || isNaN(nextDueObj)) return 0;
+            
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            
+            if (nextDueObj >= today) return 0;
+            
+            let count = 0;
+            let tempDue = new Date(nextDueObj);
+            while (tempDue < today) {
+                count++;
+                tempDue.setMonth(tempDue.getMonth() + 1);
+            }
+            return count;
+        };
 
         function isPaymentLate(s) {
             if (!s || s.paymentStatus === 'Isento' || (s.plan && s.plan.toLowerCase() === 'isento') || !s.nextDueDate) return false;
@@ -5447,7 +5490,7 @@ Belém-PA, [DATA_ATUAL].
          };
 
         window.filterExperimentalTable = () => {
-            const nameFilter = document.getElementById('filter-exp-name').value.toLowerCase();
+            const nameFilter = document.getElementById('filter-exp-name').value.toLowerCase().trim();
             const statusFilter = document.getElementById('filter-exp-status').value;
             const categoryFilter = document.getElementById('filter-exp-category').value;
             const dateFilter = document.getElementById('filter-exp-date').value;
@@ -5458,11 +5501,11 @@ Belém-PA, [DATA_ATUAL].
             
             const rows = tbody.querySelectorAll('tr');
             rows.forEach(row => {
-                if (row.children.length === 1) return; // Skip "A carregar dados..." or "Nenhum agendamento" row
+                if (row.children.length < 3) return; // Skip "A carregar dados..." or "Nenhum agendamento" row
                 
-                const name = row.querySelector('td:nth-child(1)').innerText.toLowerCase();
-                let category = row.querySelector('td:nth-child(5)').innerText;
-                const status = row.querySelector('td:nth-child(6)').innerText;
+                const name = row.querySelector('td:nth-child(2)').innerText.toLowerCase();
+                let category = row.querySelector('td:nth-child(6)').innerText;
+                const status = row.querySelector('td:nth-child(7)').innerText;
                 const rowDate = row.getAttribute('data-date');
                 const rowTime = row.getAttribute('data-time');
                 
@@ -5471,7 +5514,14 @@ Belém-PA, [DATA_ATUAL].
                 if (statusFilter !== 'all' && status !== statusFilter) show = false;
                 if (categoryFilter !== 'all' && !category.includes(categoryFilter)) show = false;
                 if (dateFilter && rowDate !== dateFilter) show = false;
-                if (timeFilter && rowTime !== timeFilter) show = false;
+                
+                if (timeFilter) {
+                    const fVal = String(timeFilter).toLowerCase().trim();
+                    const rVal = String(rowTime).toLowerCase().trim();
+                    if (rVal !== fVal && !fVal.includes(rVal) && !rVal.includes(fVal)) {
+                        show = false;
+                    }
+                }
                 
                 row.style.display = show ? '' : 'none';
             });
@@ -5484,7 +5534,7 @@ Belém-PA, [DATA_ATUAL].
             tbody.innerHTML = '';
             const list = window.experimentalList || [];
             if (list.length === 0) { 
-                tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Nenhum agendamento encontrado.</td></tr>'; 
+                tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-gray-500">Nenhum agendamento encontrado.</td></tr>'; 
                 return; 
             }
             list.forEach(exp => {
@@ -5521,6 +5571,9 @@ Belém-PA, [DATA_ATUAL].
 
                 tbody.innerHTML += `
                     <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition" data-date="${exp.date || ''}" data-time="${exp.time || ''}">
+                        <td class="p-3 text-center">
+                            <input type="checkbox" data-exp-id="${exp.id}" class="select-experimental-row rounded text-brand-red focus:ring-brand-red cursor-pointer">
+                        </td>
                         <td class="p-3 text-sm font-bold text-gray-800 dark:text-gray-200">
                             ${exp.name || 'Sem nome'}
                             ${guardianHtml}
@@ -5545,6 +5598,77 @@ Belém-PA, [DATA_ATUAL].
             if (window.filterExperimentalTable) window.filterExperimentalTable();
         };
 
+        window.toggleAllExperimental = (masterCb) => {
+            const checkboxes = document.querySelectorAll('.select-experimental-row');
+            checkboxes.forEach(cb => {
+                const tr = cb.closest('tr');
+                if (tr && tr.style.display !== 'none') {
+                    cb.checked = masterCb.checked;
+                }
+            });
+        };
+
+        window.sendSelectedExpToWhatsApp = () => {
+            const selectedChks = document.querySelectorAll('.select-experimental-row:checked');
+            if (selectedChks.length === 0) {
+                window.customAlert('Por favor, selecione pelo menos um agendamento na tabela para enviar.');
+                return;
+            }
+            
+            const selectedExps = [];
+            selectedChks.forEach(chk => {
+                const id = chk.getAttribute('data-exp-id');
+                const exp = (window.experimentalList || []).find(e => e.id === id);
+                if (exp) {
+                    selectedExps.push(exp);
+                }
+            });
+
+            // Sort by date, then by time
+            selectedExps.sort((a, b) => {
+                if (a.date !== b.date) return String(a.date).localeCompare(String(b.date));
+                return String(a.time).localeCompare(String(b.time));
+            });
+
+            let message = `🥊 *AULAS EXPERIMENTAIS - TANQUE TEAM* 🥊\n\n`;
+            
+            let currentDate = '';
+            let currentTime = '';
+            
+            selectedExps.forEach(exp => {
+                const dateStr = formatDate(exp.date);
+                if (exp.date !== currentDate) {
+                    currentDate = exp.date;
+                    message += `\n📅 *DATA: ${dateStr}*\n`;
+                    currentTime = ''; // reset time for new date
+                }
+                
+                if (exp.time !== currentTime) {
+                    currentTime = exp.time;
+                    message += `\n🥋 *Horário: ${exp.time || '--:--'}*\n`;
+                }
+                
+                const age = exp.dob ? getAge(exp.dob) : null;
+                let catStr = exp.category || 'Adulto';
+                if (age !== null && !isNaN(age)) {
+                    catStr = age < 12 ? `Infantil (${age} anos)` : `Adulto (${age} anos)`;
+                }
+                
+                const expName = String(exp.name || 'Sem nome').trim();
+                message += `   👤 *${expName}*\n`;
+                if (exp.phone) message += `   ├ 📞 Contato: ${String(exp.phone).trim()}\n`;
+                const guardianStr = exp.guardian ? String(exp.guardian).trim() : '';
+                if (guardianStr) message += `   ├ 👤 Resp: ${guardianStr}\n`;
+                if (catStr) message += `   ├ 🏷️ Categoria: ${String(catStr).trim()}\n`;
+                message += `   └ 📌 Status: ${String(exp.status || 'Pendente').trim()}\n\n`;
+            });
+            
+            message += `_Mensagem gerada de forma organizada pelo sistema Tanque Team._`;
+
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        };
+
         window.openNewExperimentalModal = () => {
             document.getElementById('edit-exp-id').value = ''; 
             document.getElementById('edit-exp-name').value = ''; 
@@ -5564,7 +5688,14 @@ Belém-PA, [DATA_ATUAL].
             document.getElementById('edit-exp-name').value = exp.name; 
             document.getElementById('edit-exp-cpf').value = exp.cpf || ''; 
             document.getElementById('edit-exp-phone').value = exp.phone || ''; 
-            document.getElementById('edit-exp-dob').value = exp.dob || '';
+            
+            let dobVal = exp.dob || '';
+            if (dobVal && dobVal.includes('-')) {
+                const parts = dobVal.split('-');
+                if (parts.length === 3) dobVal = `${parts[2].substring(0,2)}/${parts[1]}/${parts[0]}`;
+            }
+            document.getElementById('edit-exp-dob').value = dobVal;
+            
             document.getElementById('edit-exp-guardian').value = exp.guardian || '';
             document.getElementById('edit-exp-date').value = exp.date || ''; 
             document.getElementById('edit-exp-time').value = exp.time || ''; 
@@ -5579,7 +5710,7 @@ Belém-PA, [DATA_ATUAL].
             const name = document.getElementById('edit-exp-name').value; 
             const cpf = document.getElementById('edit-exp-cpf').value; 
             const phone = document.getElementById('edit-exp-phone').value; 
-            const dob = document.getElementById('edit-exp-dob').value;
+            const dob = toISODate(document.getElementById('edit-exp-dob').value);
             const guardian = document.getElementById('edit-exp-guardian').value;
             const date = document.getElementById('edit-exp-date').value; 
             const time = document.getElementById('edit-exp-time').value; 
@@ -5593,9 +5724,16 @@ Belém-PA, [DATA_ATUAL].
             try { 
                 if (id) {
                     const exp = window.experimentalList.find(x => x.id === id);
-                    const path = exp && exp._collection 
-                        ? doc(window.db, exp._collection, id)
-                        : doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id);
+                    let path;
+                    if (exp && exp._collection) {
+                        if (typeof exp._collection === 'string') {
+                            path = doc(window.db, exp._collection, id);
+                        } else {
+                            path = doc(exp._collection, id);
+                        }
+                    } else {
+                        path = doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id);
+                    }
                     await updateDoc(path, { name, cpf, phone, dob, guardian, date, time, status }); 
                 } else {
                     await addDoc(collection(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental'), { name, cpf, phone, dob, guardian, date, time, status, timestamp: new Date().toISOString() });
@@ -5603,6 +5741,7 @@ Belém-PA, [DATA_ATUAL].
                 window.closeEditExperimentalModal(); 
                 window.loadExperimentalData(); 
             } catch(e) { 
+                console.error("Erro em saveExperimentalChanges:", e);
                 window.customAlert("Erro ao salvar."); 
             }
         };
@@ -5611,9 +5750,16 @@ Belém-PA, [DATA_ATUAL].
             if(!await window.customConfirm("Excluir este agendamento?")) return;
             try { 
                 const exp = window.experimentalList.find(x => x.id === id);
-                const path = exp && exp._collection
-                    ? doc(window.db, exp._collection, id)
-                    : doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id);
+                let path;
+                if (exp && exp._collection) {
+                    if (typeof exp._collection === 'string') {
+                        path = doc(window.db, exp._collection, id);
+                    } else {
+                        path = doc(exp._collection, id);
+                    }
+                } else {
+                    path = doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'experimental', id);
+                }
                 await deleteDoc(path); 
                 window.loadExperimentalData(); 
             } catch(e) { window.customAlert("Erro ao excluir."); }
@@ -5953,8 +6099,13 @@ Belém-PA, [DATA_ATUAL].
                 if(isBlocked) payBadge = `<div class="flex flex-col"><span class="text-red-800 font-bold text-xs"><i class="fa-solid fa-ban"></i> Bloqueado</span><span class="text-[10px] text-red-600 mt-0.5">Venc: ${nextDueStr}</span></div>`;
                 else if(s.paymentStatus === 'Isento' || (s.plan && s.plan.toLowerCase() === 'isento')) payBadge = `<span class="text-gray-500 font-bold text-xs">Isento</span>`;
                 else if(isPaymentLate(s) || s.paymentStatus === 'Pendente') {
+                    const overdueCount = window.getOverdueMonthsCount(s);
                     if (isNewStudent) {
                         payBadge = `<div class="flex flex-col"><span class="text-orange-500 font-bold text-xs"><i class="fa-solid fa-clock"></i> 1º Pagamento</span><span class="text-[10px] text-orange-400 mt-0.5">Pendente</span></div>`;
+                    } else if (overdueCount > 1) {
+                        const baseAmt = planInfo ? (planInfo.basePrice || planInfo.price || 0) : 0;
+                        const accumulatedVal = baseAmt * overdueCount;
+                        payBadge = `<div class="flex flex-col"><span class="text-red-700 dark:text-red-400 font-extrabold text-xs"><i class="fa-solid fa-circle-exclamation animate-pulse"></i> ${overdueCount} M. Atrasados</span><span class="text-[10px] text-red-600 dark:text-red-400 font-bold mt-0.5">Acumulado: R$ ${accumulatedVal.toFixed(2)}</span><span class="text-[9px] text-gray-500">Venc: ${nextDueStr}</span></div>`;
                     } else {
                         payBadge = `<div class="flex flex-col"><span class="text-red-600 font-bold text-xs"><i class="fa-solid fa-xmark"></i> Pendente</span><span class="text-[10px] text-red-500 mt-0.5">Venc: ${nextDueStr}</span></div>`;
                     }
@@ -7148,6 +7299,26 @@ Belém-PA, [DATA_ATUAL].
                     nextDueInput.value = getLocalISODate(d);
                 }
             };
+            
+            const overdueCount = window.getOverdueMonthsCount(s);
+            const alertDiv = document.getElementById('pay-alert-overdue');
+            if (overdueCount > 1) {
+                document.getElementById('pay-quantity').value = overdueCount;
+                if (alertDiv) {
+                    alertDiv.querySelector('span').innerText = `Atenção: Aluno possui ${overdueCount} mensalidades em atraso! O valor total foi acumulado de acordo (R$ ${(amountToPay * overdueCount).toFixed(2)}).`;
+                    alertDiv.classList.remove('hidden');
+                    alertDiv.classList.add('flex');
+                }
+            } else {
+                document.getElementById('pay-quantity').value = 1;
+                if (alertDiv) {
+                    alertDiv.classList.add('hidden');
+                    alertDiv.classList.remove('flex');
+                }
+            }
+            if (window.handlePayQuantityChange) {
+                window.handlePayQuantityChange();
+            }
             
             // Render history
             const historyList = document.getElementById('pay-history-list');
