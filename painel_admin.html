@@ -1560,7 +1560,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-fade-in border-t-4 border-brand-red">
             <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0">
                 <h3 class="font-display font-bold text-lg tracking-wider text-gray-800 dark:text-white">NOVA MATRÍCULA</h3>
-                <button onclick="window.closeAdminRegisterModal()" class="hover:text-red-500 text-gray-400 dark:text-gray-300 text-xl transition"><i class="fa-solid fa-times"></i></button>
+                <button type="button" onclick="event.stopPropagation(); window.closeAdminRegisterModal()" class="hover:text-red-500 text-gray-400 dark:text-gray-300 text-xl transition"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="p-6 overflow-y-auto flex-1">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1744,7 +1744,7 @@
                 </div>
             </div>
             <div class="bg-gray-100 dark:bg-gray-700 px-6 py-4 flex justify-end gap-3 shrink-0 border-t border-gray-200 dark:border-gray-600">
-                <button onclick="window.closeAdminRegisterModal()" class="px-5 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm">Cancelar</button>
+                <button type="button" onclick="event.stopPropagation(); window.closeAdminRegisterModal()" class="px-5 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm">Cancelar</button>
                 <button id="save-new-student-btn" onclick="window.saveAdminNewStudent()" class="px-6 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-700 transition shadow-md flex items-center gap-2"><i class="fa-solid fa-user-check"></i> <span id="save-new-student-btn-text">Finalizar Matrícula</span></button>
             </div>
         </div>
@@ -2786,10 +2786,13 @@
                             timestamp: timestamp,
                             method: 'facial_recognition_ia'
                         };
-                        await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), { 
-                            attendance: arrayUnion(date), 
-                            attendanceLog: arrayUnion(newLog) 
-                        });
+                        const hasLog = student.attendanceLog && student.attendanceLog.some(log => log.date === date && log.time === schedule);
+                        if (!hasLog) {
+                            await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId), { 
+                                attendance: arrayUnion(date), 
+                                attendanceLog: arrayUnion(newLog) 
+                            });
+                        }
                     }
                 }
                 window.closeClassPhotoModal();
@@ -4235,7 +4238,9 @@
         };
 
         window.openAdminRegisterModal = async () => { 
-            if (!checkAdminAccess(() => window.openAdminRegisterModal())) return;
+            if (!isAdminUnlocked) {
+                if (!checkAdminAccess(() => window.openAdminRegisterModal())) return;
+            }
             await window.loadPlans();
             document.getElementById('admin-register-modal').classList.remove('hidden'); 
             document.getElementById('admin-register-modal').classList.add('flex'); 
@@ -4253,25 +4258,48 @@
             window.handleAdminPlanChange(); 
         };
         window.closeAdminRegisterModal = () => {
-            document.getElementById('admin-register-modal').classList.add('hidden'); document.getElementById('admin-register-modal').classList.remove('flex');
-            document.getElementById('reg-name').value = ''; document.getElementById('reg-dob').value = ''; document.getElementById('reg-cpf').value = ''; document.getElementById('reg-email').value = ''; document.getElementById('reg-phone').value = ''; document.getElementById('reg-address').value = '';
-            if(document.getElementById('reg-address-number')) document.getElementById('reg-address-number').value = '';
-            if(document.getElementById('reg-cep')) document.getElementById('reg-cep').value = '';
-            if(document.getElementById('reg-guardian')) document.getElementById('reg-guardian').value = ''; if(document.getElementById('reg-guardian-cpf')) document.getElementById('reg-guardian-cpf').value = '';
-            document.getElementById('reg-plan').value = ''; document.getElementById('reg-belt-color').value = 'Branca'; document.getElementById('reg-belt-degree').value = '0'; document.getElementById('reg-student-login').value = ''; document.getElementById('reg-student-pass').value = '';
+            const modal = document.getElementById('admin-register-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
             
+            const fieldsToClear = [
+                'reg-name', 'reg-dob', 'reg-cpf', 'reg-email', 'reg-phone', 'reg-address',
+                'reg-address-number', 'reg-cep', 'reg-guardian', 'reg-guardian-cpf',
+                'reg-plan', 'reg-student-login', 'reg-student-pass',
+                'reg-payment-status', 'reg-pay-amount', 'reg-pay-method', 
+                'reg-pay-ref-month', 'reg-pay-next-due'
+            ];
+            
+            fieldsToClear.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            
+            const beltColor = document.getElementById('reg-belt-color');
+            if (beltColor) beltColor.value = 'Branca';
+            
+            const beltDegree = document.getElementById('reg-belt-degree');
+            if (beltDegree) beltDegree.value = '0';
+
+            const paymentStatusSelect = document.getElementById('reg-payment-status');
+            if (paymentStatusSelect) paymentStatusSelect.value = 'Pendente';
+
+            const payMethodSelect = document.getElementById('reg-pay-method');
+            if (payMethodSelect) payMethodSelect.value = 'Pix';
+
             window.extraMinorsCount = 0;
             const extraContainer = document.getElementById('extra-minors-container');
             if (extraContainer) extraContainer.innerHTML = '';
             
-            // Reset Payment Fields
-            if(document.getElementById('reg-payment-status')) document.getElementById('reg-payment-status').value = 'Pendente';
-            if(document.getElementById('reg-pay-amount')) document.getElementById('reg-pay-amount').value = '';
-            if(document.getElementById('reg-pay-method')) document.getElementById('reg-pay-method').value = 'Pix';
-            if(document.getElementById('reg-pay-ref-month')) document.getElementById('reg-pay-ref-month').value = '';
-            if(document.getElementById('reg-pay-next-due')) document.getElementById('reg-pay-next-due').value = '';
-            
-            window.handleAdminPlanChange();
+            if (typeof window.handleAdminPlanChange === 'function') {
+                try {
+                    window.handleAdminPlanChange();
+                } catch (err) {
+                    console.error("Error in handleAdminPlanChange upon closing modal:", err);
+                }
+            }
         };
 
         const defaultContractTemplate = `1. CONTRATADA: TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA, CNPJ: 65.678.191/0001-90.
@@ -8419,8 +8447,22 @@ Belém-PA, [DATA_ATUAL].
                 return;
             }
 
-            // FILTER: Show only active (not archived) students
+            // FILTER: Show only active (not archived) students, sorted by name
             const activeStudents = window.students.filter(s => !s.archived).sort((a, b) => a.name.localeCompare(b.name));
+
+            // Group students by plan (using their plan's long name)
+            const groupedByPlan = {};
+            activeStudents.forEach(s => {
+                const planInfo = window.getPlanInfo(s.plan);
+                const planName = planInfo && planInfo.long ? planInfo.long.toUpperCase() : 'SEM PLANO / OUTROS';
+                if (!groupedByPlan[planName]) {
+                    groupedByPlan[planName] = [];
+                }
+                groupedByPlan[planName].push(s);
+            });
+
+            // Sort plans alphabetically
+            const sortedPlans = Object.keys(groupedByPlan).sort();
 
             let htmlContent = `
                 <div style="font-family: sans-serif; padding: 20px;">
@@ -8428,58 +8470,80 @@ Belém-PA, [DATA_ATUAL].
                         <img src="https://iili.io/qC543c7.png" style="height: 60px;">
                         <div style="text-align: center;">
                             <h1 style="margin: 0; font-size: 24px; color: #1B1B1B; text-transform: uppercase; letter-spacing: 2px;">Tanque Team BJJ</h1>
-                            <p style="margin: 5px 0 0 0; font-size: 14px; color: #666; font-weight: bold; text-transform: uppercase;">Relatório Geral de Alunos</p>
+                            <p style="margin: 5px 0 0 0; font-size: 14px; color: #666; font-weight: bold; text-transform: uppercase;">Relatório Geral de Alunos (Por Planos)</p>
                             <p style="margin: 5px 0 0 0; font-size: 12px; color: #D90429; font-weight: bold;">TOTAL: ${activeStudents.length} ALUNOS ATIVOS</p>
                         </div>
                     </div>
 
-                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11px;">
-                        <thead>
-                            <tr style="background-color: #f3f4f6; text-align: left; border-bottom: 2px solid #d1d5db;">
-                                <th style="padding: 10px 8px; border: 1px solid #e5e7eb;">ALUNO / NASC.</th>
-                                <th style="padding: 10px 8px; border: 1px solid #e5e7eb;">RESPONSÁVEL (MENOR)</th>
-                                <th style="padding: 10px 8px; border: 1px solid #e5e7eb;">VÍNCULO / DEPENDENTES</th>
-                                <th style="padding: 10px 8px; border: 1px solid #e5e7eb;">PLANO</th>
-                                <th style="padding: 10px 8px; border: 1px solid #e5e7eb;">MATRÍCULA</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                    <!-- Resumo dos Planos -->
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                        ${sortedPlans.map(planName => `
+                            <div style="flex: 1; min-width: 150px; padding: 8px 12px; background: white; border-radius: 6px; border: 1px solid #e5e7eb; box-sizing: border-box;">
+                                <div style="font-size: 8px; color: #9ca3af; font-weight: bold; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${planName}">${planName}</div>
+                                <div style="font-size: 16px; font-weight: bold; color: #1b1b1b; margin-top: 2px;">${groupedByPlan[planName].length} <span style="font-size: 11px; font-weight: normal; color: #6b7280;">alunos</span></div>
+                            </div>
+                        `).join('')}
+                    </div>
             `;
 
-            activeStudents.forEach(s => {
-                const planInfo = window.getPlanInfo(s.plan);
-                const regDateFormatted = s.registrationDate ? formatDate(s.registrationDate) : '--';
+            sortedPlans.forEach(planName => {
+                const planStudents = groupedByPlan[planName];
                 
-                let vinculationText = '--';
-                const planType = window.getPlanType(s.plan);
-                
-                if (planType === 'dependente' && s.titularName) {
-                    vinculationText = `<span style="color: #6d28d9; font-weight: bold;">[DIR]</span> Dep: ${s.titularName}`;
-                } else {
-                    const dependents = window.students.filter(ds => ds.titularId === s.id && !ds.archived);
-                    if (dependents.length > 0) {
-                        vinculationText = `<span style="color: #059669; font-weight: bold;">[TIT]</span> ${dependents.map(d => d.name).join(', ')}`;
+                htmlContent += `
+                    <div style="margin-top: 25px; margin-bottom: 15px; page-break-inside: avoid;">
+                        <h2 style="font-size: 13px; margin: 0 0 10px 0; color: #D90429; border-bottom: 2px solid #D90429; padding-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">
+                            ${planName} (${planStudents.length} ALUNOS)
+                        </h2>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                            <thead>
+                                <tr style="background-color: #f3f4f6; text-align: left; border-bottom: 1px solid #d1d5db;">
+                                    <th style="padding: 8px; border: 1px solid #e5e7eb; width: 40px; text-align: center;">Nº</th>
+                                    <th style="padding: 8px; border: 1px solid #e5e7eb; width: 35%;">ALUNO / NASC.</th>
+                                    <th style="padding: 8px; border: 1px solid #e5e7eb; width: 25%;">RESPONSÁVEL (MENOR)</th>
+                                    <th style="padding: 8px; border: 1px solid #e5e7eb; width: 20%;">VÍNCULO / DEPENDENTES</th>
+                                    <th style="padding: 8px; border: 1px solid #e5e7eb; width: 15%;">MATRÍCULA</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                planStudents.forEach((s, index) => {
+                    const regDateFormatted = s.registrationDate ? formatDate(s.registrationDate) : '--';
+                    
+                    let vinculationText = '--';
+                    const planType = window.getPlanType(s.plan);
+                    
+                    if (planType === 'dependente' && s.titularName) {
+                        vinculationText = `<span style="color: #6d28d9; font-weight: bold;">[DIR]</span> Dep: ${s.titularName}`;
+                    } else {
+                        const dependents = window.students.filter(ds => ds.titularId === s.id && !ds.archived);
+                        if (dependents.length > 0) {
+                            vinculationText = `<span style="color: #059669; font-weight: bold;">[TIT]</span> ${dependents.map(d => d.name).join(', ')}`;
+                        }
                     }
-                }
+
+                    htmlContent += `
+                        <tr style="border-bottom: 1px solid #e5e7eb;">
+                            <td style="padding: 6px 8px; border: 1px solid #e5e7eb; text-align: center; color: #6b7280;">${index + 1}</td>
+                            <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-weight: bold; text-transform: uppercase;">
+                                ${s.name}<br>
+                                <span style="font-size: 9px; color: #666; font-weight: normal;">${s.dob ? formatDate(s.dob) : '--/--/----'}</span>
+                            </td>
+                            <td style="padding: 6px 8px; border: 1px solid #e5e7eb;">${s.guardian || '--'}</td>
+                            <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px;">${vinculationText}</td>
+                            <td style="padding: 6px 8px; border: 1px solid #e5e7eb;">${regDateFormatted}</td>
+                        </tr>
+                    `;
+                });
 
                 htmlContent += `
-                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                        <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: bold; text-transform: uppercase;">
-                            ${s.name}<br>
-                            <span style="font-size: 9px; color: #666; font-weight: normal;">${s.dob ? formatDate(s.dob) : '--/--/----'}</span>
-                        </td>
-                        <td style="padding: 8px; border: 1px solid #e5e7eb;">${s.guardian || '--'}</td>
-                        <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 10px;">${vinculationText}</td>
-                        <td style="padding: 8px; border: 1px solid #e5e7eb;">${planInfo.short}</td>
-                        <td style="padding: 8px; border: 1px solid #e5e7eb;">${regDateFormatted}</td>
-                    </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 `;
             });
 
             htmlContent += `
-                        </tbody>
-                    </table>
-                    
                     <div style="margin-top: 30px; text-align: right; font-size: 10px; color: #9ca3af;">
                         Documento gerado em: ${new Date().toLocaleString('pt-BR')} • Total de alunos: ${activeStudents.length}
                     </div>
