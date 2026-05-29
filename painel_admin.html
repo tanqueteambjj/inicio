@@ -361,19 +361,54 @@
             </div>
 
             <!-- VIEW: PRÉ-MATRÍCULAS ONLINE -->
-            <div id="view-pre-registrations" class="hidden animate-fade-in text-gray-800 dark:text-gray-100 mb-6">
+            <div id="view-pre-registrations" class="hidden animate-fade-in text-gray-800 dark:text-gray-100 mb-6 font-sans">
                 <!-- Share Box -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 mb-6">
-                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                        <div class="space-y-1">
-                            <h4 class="font-bold text-gray-800 dark:text-white uppercase text-base flex items-center gap-1.5"><i class="fa-solid fa-link text-brand-red"></i> Link do Formulário do Aluno</h4>
-                            <p class="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">Copie este link para enviar para os alunos ou pais no WhatsApp.</p>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 p-6 mb-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <!-- Left pane: Link and Info -->
+                        <div class="lg:col-span-5 space-y-4 flex flex-col justify-between">
+                            <div class="space-y-2">
+                                <h4 class="font-extrabold text-gray-800 dark:text-white uppercase text-sm tracking-wider flex items-center gap-2">
+                                    <span class="p-1.5 bg-red-100 dark:bg-red-950/40 text-brand-red rounded-lg"><i class="fa-solid fa-link"></i></span> Link do Formulário do Aluno
+                                </h4>
+                                <p class="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                                    Compartilhe este link com novos alunos ou responsáveis para que eles façam o pré-cadastro online de forma autônoma.
+                                </p>
+                            </div>
+                            
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase tracking-wider text-gray-400">Link Direto da Matrícula</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" id="share-enrollment-link" readonly class="flex-1 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-xs font-mono text-gray-600 dark:text-gray-300 focus:outline-none" value="">
+                                    <button onclick="window.copyShareEnrollmentLink()" class="px-3.5 py-2 bg-gray-100 dark:bg-gray-750 text-gray-700 dark:text-gray-200 font-bold rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-xs transition flex items-center gap-1.5 shadow-sm" title="Copiar apenas o link">
+                                        <i class="fa-regular fa-copy"></i> Copiar
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex items-center w-full md:w-auto gap-2">
-                            <input type="text" id="share-enrollment-link" readonly class="flex-1 md:w-80 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-xs font-mono text-gray-600 dark:text-gray-300 focus:outline-none" value="">
-                            <button onclick="window.copyShareEnrollmentLink()" class="px-4 py-2 bg-brand-red text-white font-bold rounded-lg hover:bg-red-700 text-xs transition shrink-0 flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-regular fa-copy"></i> Copiar Link
-                            </button>
+
+                        <!-- Right pane: Invite message templates and actions -->
+                        <div class="lg:col-span-7 border-t lg:border-t-0 lg:border-l border-gray-150 dark:border-gray-700 pt-6 lg:pt-0 lg:pl-6 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h5 class="font-extrabold text-gray-800 dark:text-white uppercase text-xs tracking-wider flex items-center gap-1.5">
+                                    <span class="p-1.5 bg-green-100 dark:bg-green-950/40 text-green-600 rounded-lg"><i class="fa-regular fa-comment-dots"></i></span> Mensagem para o Cliente
+                                </h5>
+                                <button onclick="window.resetInviteMessage()" class="text-[10px] text-gray-400 hover:text-brand-red font-bold transition">Reverter Padrão</button>
+                            </div>
+                            
+                            <div class="space-y-1.5">
+                                <textarea id="enrollment-invite-msg-editor" rows="4" oninput="window.saveInviteTemplate(this.value)" class="w-full bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg p-3 text-xs text-gray-700 dark:text-gray-300 focus:outline-none font-sans leading-relaxed resize-none" placeholder="Escreva a mensagem... Use {link} para inserir o link automaticamente no texto."></textarea>
+                                <p class="text-[10px] text-gray-400 italic">Dica: Use <strong class="text-gray-500 font-bold">{link}</strong> no texto para que o link real seja inserido na hora de copiar ou enviar.</p>
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-2.5">
+                                <button onclick="window.copyFormattedInviteMsg()" class="flex-1 px-4 py-2 bg-brand-red text-white font-extrabold rounded-lg hover:bg-red-700 text-xs transition flex items-center justify-center gap-2 shadow-md">
+                                    <i class="fa-solid fa-copy"></i> Copiar Mensagem Formatada
+                                </button>
+                                <button onclick="window.shareInviteWhatsApp()" class="px-4 py-2 bg-green-600 text-white font-extrabold rounded-lg hover:bg-green-700 text-xs transition flex items-center justify-center gap-1.5 shadow-md">
+                                    <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -6207,8 +6242,53 @@ Belém-PA, [DATA_ATUAL].
         };
 
         // PRÉ-MATRÍCULAS ONLINE LOGIC
+        const DEFAULT_INVITE_MSG = `Olá! Seja muito bem-vindo(a) à Tanque Team BJJ! 🥋\n\nPara agilizarmos o seu cadastro e matrícula em nossa academia, por favor acesse o link abaixo e preencha a sua Ficha de Pré-Matrícula Online:\n👉 {link}\n\nQualquer dúvida ou suporte, fale conosco por aqui! Oss! 👊🔥`;
+
+        window.getInviteTemplate = () => {
+            return localStorage.getItem('enrollment_invite_message') || DEFAULT_INVITE_MSG;
+        };
+
+        window.saveInviteTemplate = (val) => {
+            localStorage.setItem('enrollment_invite_message', val);
+        };
+
+        window.resetInviteMessage = () => {
+            if (confirm("Deseja redefinir a mensagem para o modelo padrão?")) {
+                localStorage.removeItem('enrollment_invite_message');
+                const inviteEditor = document.getElementById('enrollment-invite-msg-editor');
+                if (inviteEditor) inviteEditor.value = DEFAULT_INVITE_MSG;
+                window.customAlert("Mensagem redefinida com sucesso!");
+            }
+        };
+
+        window.copyFormattedInviteMsg = () => {
+            const link = "https://www.tanqueteambjj.com.br/matricula.htm";
+            const template = window.getInviteTemplate();
+            const formatted = template.replace(/{link}/g, link);
+            
+            navigator.clipboard.writeText(formatted).then(() => {
+                window.customAlert("Mensagem de convite formatada copiada com sucesso! Pronta para ser colada no WhatsApp do cliente.");
+            }).catch(e => {
+                const tempInput = document.createElement("textarea");
+                tempInput.value = formatted;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+                window.customAlert("Mensagem de convite formatada copiada com sucesso!");
+            });
+        };
+
+        window.shareInviteWhatsApp = () => {
+            const link = "https://www.tanqueteambjj.com.br/matricula.htm";
+            const template = window.getInviteTemplate();
+            const formatted = template.replace(/{link}/g, link);
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(formatted)}`;
+            window.open(url, '_blank');
+        };
+
         window.copyShareEnrollmentLink = () => {
-            const link = window.location.origin + "/matricula.html";
+            const link = "https://www.tanqueteambjj.com.br/matricula.htm";
             const el = document.getElementById('share-enrollment-link');
             if (el) el.value = link;
             navigator.clipboard.writeText(link).then(() => {
@@ -6227,7 +6307,12 @@ Belém-PA, [DATA_ATUAL].
         window.loadPreRegistrations = async () => {
             const tbody = document.getElementById('pre-registrations-table-body');
             const shareInput = document.getElementById('share-enrollment-link');
-            if (shareInput) shareInput.value = window.location.origin + "/matricula.html";
+            if (shareInput) shareInput.value = "https://www.tanqueteambjj.com.br/matricula.htm";
+
+            const inviteEditor = document.getElementById('enrollment-invite-msg-editor');
+            if (inviteEditor) {
+                inviteEditor.value = window.getInviteTemplate();
+            }
 
             if (!tbody) return;
             tbody.innerHTML = `
