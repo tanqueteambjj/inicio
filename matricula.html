@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tanque Team BJJ | Ficha de Matrícula Online</title>
+    
+    <link rel="icon" href="https://iili.io/qC543c7.png" type="image/png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { red: '#D90429', dark: '#1B1B1B', gray: '#2B2D42', light: '#EDF2F4' }
+                    },
+                    fontFamily: {
+                        sans: ['Roboto', 'sans-serif'],
+                        display: ['Oswald', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    
+    <style>
+        body {
+            background-color: #121212;
+            color: #E2E8F0;
+        }
+        .step-inactive { opacity: 0.5; pointer-events: none; }
+    </style>
+</head>
+<body class="font-sans min-h-screen flex flex-col justify-between py-6 px-4">
+
+    <!-- Header -->
+    <header class="w-full max-w-2xl mx-auto text-center mb-6">
+        <img src="https://iili.io/qC543c7.png" alt="Tanque Team BJJ Logo" class="w-24 h-24 mx-auto object-contain mb-2 drop-shadow-md">
+        <h1 class="text-3xl font-black font-display tracking-wider text-brand-red uppercase">Tanque Team BJJ</h1>
+        <p class="text-xs text-gray-400 font-medium uppercase tracking-widest mt-1">Ficha de Pré-Matrícula / Cadastro de Aluno</p>
+    </header>
+
+    <main class="w-full max-w-2xl mx-auto bg-brand-dark border border-gray-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden flex-1 flex flex-col justify-between">
+        
+        <!-- Wizard Progress Bar -->
+        <div id="step-progressbar-container" class="mb-8">
+            <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-400">
+                <span id="label-step-1" class="text-brand-red font-black">1. Identificação</span>
+                <span id="label-step-2">2. Cadastro</span>
+                <span id="label-step-3">3. Plano</span>
+                <span id="label-step-4">4. Finalizar</span>
+            </div>
+            <div class="w-full bg-gray-800 h-2.5 rounded-full mt-2 overflow-hidden">
+                <div id="step-progressbar-fill" class="bg-brand-red h-full rounded-full transition-all duration-300" style="width: 25%;"></div>
+            </div>
+        </div>
+
+        <form id="enrollment-wizard-form" onsubmit="event.preventDefault();" class="flex-1 flex flex-col justify-between gap-6">
+
+            <!-- STEP 1: Tipo de Matrícula -->
+            <div id="step-1" class="space-y-6">
+                <div class="text-center space-y-1">
+                    <h2 class="text-xl font-bold uppercase font-display tracking-wide text-white">Quem será matriculado na academia?</h2>
+                    <p class="text-xs text-gray-400">Selecione a opção que melhor correspondente à sua matrícula.</p>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 mt-6">
+                    <!-- Option A: Adult Self -->
+                    <label class="relative flex flex-col sm:flex-row items-center sm:items-start gap-4 p-5 bg-gray-900 border-2 border-gray-800 hover:border-brand-red dark:hover:border-brand-red rounded-2xl cursor-pointer transition select-none group">
+                        <input type="radio" name="enrollment_type" value="adult" class="absolute top-4 right-4 accent-brand-red w-5 h-5" checked onchange="window.handleTypeChange()">
+                        <div class="p-3 bg-brand-red/10 rounded-full group-hover:bg-brand-red/20 transition text-brand-red shrink-0 mb-3 sm:mb-0">
+                            <i class="fa-solid fa-user text-xl sm:text-2xl w-6 text-center"></i>
+                        </div>
+                        <div class="text-center sm:text-left">
+                            <h3 class="font-black font-display text-white text-base sm:text-lg tracking-wide uppercase">Eu Mesmo (Maior de idade)</h3>
+                            <p class="text-xs text-gray-400 mt-1">Preencha seus próprios dados. Destinado para alunos com 18 anos ou mais que realizarão seu próprio plano.</p>
+                        </div>
+                    </label>
+
+                    <!-- Option B: Parent Registering Minor -->
+                    <label class="relative flex flex-col sm:flex-row items-center sm:items-start gap-4 p-5 bg-gray-900 border-2 border-gray-800 hover:border-brand-red dark:hover:border-brand-red rounded-2xl cursor-pointer transition select-none group">
+                        <input type="radio" name="enrollment_type" value="minor" class="absolute top-4 right-4 accent-brand-red w-5 h-5" onchange="window.handleTypeChange()">
+                        <div class="p-3 bg-brand-red/10 rounded-full group-hover:bg-brand-red/20 transition text-brand-red shrink-0 mb-3 sm:mb-0">
+                            <i class="fa-solid fa-child text-xl sm:text-2xl w-6 text-center"></i>
+                        </div>
+                        <div class="text-center sm:text-left">
+                            <h3 class="font-black font-display text-white text-base sm:text-lg tracking-wide uppercase">Meu Filho(a) / Menor de Idade</h3>
+                            <p class="text-xs text-gray-400 mt-1">Você preencherá os dados do menor de idade e se cadastrará como o responsável legal (financeiro).</p>
+                        </div>
+                    </label>
+
+                    <!-- Option C: Family Combo -->
+                    <label class="relative flex flex-col sm:flex-row items-center sm:items-start gap-4 p-5 bg-gray-900 border-2 border-gray-800 hover:border-brand-red dark:hover:border-brand-red rounded-2xl cursor-pointer transition select-none group">
+                        <input type="radio" name="enrollment_type" value="combo" class="absolute top-4 right-4 accent-brand-red w-5 h-5" onchange="window.handleTypeChange()">
+                        <div class="p-3 bg-brand-red/10 rounded-full group-hover:bg-brand-red/20 transition text-brand-red shrink-0 mb-3 sm:mb-0">
+                            <i class="fa-solid fa-users text-xl sm:text-2xl w-6 text-center"></i>
+                        </div>
+                        <div class="text-center sm:text-left">
+                            <h3 class="font-black font-display text-white text-base sm:text-lg tracking-wide uppercase">Matrícula Familiar / Combo (Nós dois)</h3>
+                            <p class="text-xs text-gray-400 mt-1">Matrícula para planos duplos, casais ou combos familiares. Cadastre você como titular e insira os seus dependentes.</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- STEP 2: Dados de Cadastro -->
+            <div id="step-2" class="hidden space-y-6">
+                <div class="text-center space-y-1">
+                    <h2 class="text-xl font-bold uppercase font-display tracking-wide text-white" id="step2-title">Informações Cadastrais</h2>
+                    <p class="text-xs text-gray-400">Por favor, preencha com atenção os dados solicitados abaixo.</p>
+                </div>
+
+                <!-- ALUNO PRINCIPAL / TITULAR -->
+                <div class="space-y-4">
+                    <div id="titular-legend" class="text-xs font-black text-brand-red uppercase tracking-widest border-b border-gray-800 pb-1">Dados do Aluno</div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Nome Completo <span class="text-brand-red">*</span></label>
+                        <input type="text" id="reg-name" required placeholder="NOME COMPLETO DO ALUNO" class="w-full bg-gray-900 border border-gray-800 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none uppercase text-white font-bold text-sm">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Data de Nascimento <span class="text-brand-red">*</span></label>
+                            <input type="date" id="reg-dob" required class="w-full bg-gray-900 border border-gray-800 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm" onchange="window.handleAgeCheck()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1" id="label-student-cpf">CPF do Aluno <span class="text-brand-red">*</span></label>
+                            <input type="text" id="reg-cpf" required placeholder="000.000.000-00" maxlength="14" class="w-full bg-gray-900 border border-gray-800 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm font-mono" oninput="window.maskCPF(this)">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">WhatsApp / Celular <span class="text-brand-red">*</span></label>
+                            <input type="tel" id="reg-phone" required placeholder="(00) 00000-0000" maxlength="15" class="w-full bg-gray-900 border border-gray-800 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm font-mono" oninput="window.maskPhone(this)">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">E-mail <span class="text-brand-red">*</span></label>
+                            <input type="email" id="reg-email" required placeholder="nome@provedor.com" class="w-full bg-gray-900 border border-gray-800 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm">
+                        </div>
+                    </div>
+
+                    <!-- Endereço com busca automática -->
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                        <div class="sm:col-span-1">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">CEP</label>
+                            <input type="text" id="reg-cep" placeholder="00000-000" maxlength="9" class="w-full bg-gray-900 border border-gray-800 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm font-mono" oninput="window.maskCEP(this); window.buscarCEP(this.value)">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Endereço <span class="text-brand-red">*</span></label>
+                            <input type="text" id="reg-address" required placeholder="Ex: Rua das Flores, Bairro" class="w-full bg-gray-900 border border-gray-800 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm">
+                        </div>
+                        <div class="sm:col-span-1">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Nº <span class="text-brand-red">*</span></label>
+                            <input type="text" id="reg-number" required placeholder="123" class="w-full bg-gray-900 border border-gray-800 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm uppercase">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO EXCLUSIVA DE RESPONSÁVEL (QUANDO MENOR DE IDADE) -->
+                <div id="guardian-container" class="hidden space-y-4 border-t border-gray-800 pt-5 mt-5">
+                    <div class="text-xs font-black text-brand-red uppercase tracking-widest border-b border-gray-800 pb-1">Responsável Financeiro/Legal</div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Nome Completo do Responsável <span class="text-brand-red">*</span></label>
+                        <input type="text" id="reg-guardian" placeholder="COMPLETO DO PAI, MÃE OU TUTOR" class="w-full bg-gray-900 border border-gray-800 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none uppercase text-white font-bold text-sm">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">CPF do Responsável <span class="text-brand-red">*</span></label>
+                            <input type="text" id="reg-guardian-cpf" placeholder="000.000.000-00" maxlength="14" class="w-full bg-gray-900 border border-gray-800 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm font-mono" oninput="window.maskCPF(this)">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Parentesco ou Vínculo <span class="text-brand-red">*</span></label>
+                            <select id="reg-guardian-relation" class="w-full bg-gray-900 border border-gray-800 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm font-bold">
+                                <option value="Mãe">Mãe</option>
+                                <option value="Pai">Pai</option>
+                                <option value="Responsável Legal">Responsável Legal</option>
+                                <option value="Outro">Outro Vínculo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO DE DEPENDENTES (OPÇÃO COMBO FAMILIAR) -->
+                <div id="dependents-container" class="hidden space-y-4 border-t border-gray-800 pt-5 mt-5">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-1">
+                        <div class="text-xs font-black text-brand-red uppercase tracking-widest">Dependentes do Combo</div>
+                        <button type="button" onclick="window.addDependenteField()" class="text-xs bg-brand-red/10 border border-brand-red/30 px-3 py-1 rounded-lg text-brand-red font-bold hover:bg-brand-red hover:text-white transition">
+                            <i class="fa-solid fa-plus mr-1"></i> Dependente
+                        </button>
+                    </div>
+
+                    <p class="text-[11px] text-gray-500">Cadastre os dependents extras que farão parte do seu plano em conjunto.</p>
+                    
+                    <div id="dependents-list" class="space-y-4">
+                        <!-- Dynamic Dependents fields will be appended here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: Escolha do Plano -->
+            <div id="step-3" class="hidden space-y-6">
+                <div class="text-center space-y-1">
+                    <h2 class="text-xl font-bold uppercase font-display tracking-wide text-white">Escolha o seu Plano</h2>
+                    <p class="text-xs text-gray-400">Os valores abaixo correspondem aos planos oficiais vigentes do Tanque Team BJJ.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="plans-selector-grid">
+                    <!-- Loaded dynamically via JS -->
+                </div>
+                
+                <input type="hidden" id="selected-plan-key" required value="">
+            </div>
+
+            <!-- STEP 4: Finalização e Termos -->
+            <div id="step-4" class="hidden space-y-6">
+                <div class="text-center space-y-1">
+                    <h2 class="text-xl font-bold uppercase font-display tracking-wide text-white">Quase lá! Vamos concluir?</h2>
+                    <p class="text-xs text-gray-400">Confirme algumas informações extras para enviar sua pré-matrícula.</p>
+                </div>
+
+                <div class="space-y-4 bg-gray-900 border border-gray-800 p-5 rounded-2xl">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Como você nos conheceu?</label>
+                        <select id="reg-origin" class="w-full bg-gray-800 border border-gray-700 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm font-bold">
+                            <option value="Instagram">Instagram</option>
+                            <option value="Google">Google / Mapas</option>
+                            <option value="Indicação">Indicação de amigo/familiar</option>
+                            <option value="Passando em frente">Passando em frente da academia</option>
+                            <option value="Panfleto">Panfleto</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+
+                    <div class="border-t border-gray-800/80 pt-4 flex items-start gap-3">
+                        <input type="checkbox" id="reg-agreement" required class="accent-brand-red w-5 h-5 rounded cursor-pointer mt-0.5 shrink-0">
+                        <label for="reg-agreement" class="text-xs text-gray-400 cursor-pointer select-none">
+                            Estou ciente de que as informações fornecidas acima são verdadeiras e estou de acordo com o regulamento interno e normas da academia Tanque Team BJJ. <span class="text-brand-red font-bold">*</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Resumo Breve -->
+                <div class="p-4 bg-red-950/10 border border-brand-red/20 rounded-2xl flex items-start gap-3">
+                    <i class="fa-solid fa-circle-info text-brand-red text-base mt-0.5 shrink-0"></i>
+                    <p class="text-xs text-gray-400 leading-relaxed">
+                        Ao finalizar, um cadastro pendente será criado no sistema. <strong class="text-white">Os professores entrarão em contato com você via WhatsApp</strong> para assinar o termo de matrícula físico ou digital e confirmar o agendamento de sua primeira aula.
+                    </p>
+                </div>
+            </div>
+
+            <!-- STEP SUCCESS: Cadastro Enviado com Sucesso -->
+            <div id="step-success" class="hidden space-y-6 py-6 text-center">
+                <div class="w-20 h-20 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                    <i class="fa-solid fa-circle-check text-4xl"></i>
+                </div>
+                
+                <h2 class="text-2xl sm:text-3xl font-black font-display tracking-wider text-white uppercase">MATRÍCULA ENVIADA!</h2>
+                <p class="text-sm text-gray-400 max-w-md mx-auto leading-relaxed">
+                    Sua pré-matrícula foi enviada diretamente para o painel de aprovação da administração da <strong class="text-white">Tanque Team BJJ</strong>.
+                </p>
+
+                <div class="bg-gray-900 border border-gray-800 p-5 rounded-3xl max-w-sm mx-auto text-left space-y-3">
+                    <p class="text-xs text-gray-400 font-bold uppercase tracking-wider text-center border-b border-gray-800 pb-2">O que fazer agora?</p>
+                    <div class="flex gap-2 text-xs">
+                        <span class="bg-brand-red text-white font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0">1</span>
+                        <p class="text-gray-300">Nossa equipe receberá seus dados.</p>
+                    </div>
+                    <div class="flex gap-2 text-xs">
+                        <span class="bg-brand-red text-white font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0">2</span>
+                        <p class="text-gray-300">Entraremos em contato via WhatsApp para confirmar o seu plano.</p>
+                    </div>
+                    <div class="flex gap-2 text-xs">
+                        <span class="bg-brand-red text-white font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0">3</span>
+                        <p class="text-gray-300">Você já poderá iniciar seus treinos!</p>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <a href="https://wa.me/5581999999999" id="whatsapp-success-btn" target="_blank" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl shadow-md transition-all">
+                        <i class="fa-brands fa-whatsapp text-lg"></i> Falar Conosco no WhatsApp
+                    </a>
+                </div>
+            </div>
+
+            <!-- Wizard Footer Buttons -->
+            <div id="wizard-buttons-container" class="flex items-center justify-between gap-4 mt-8 border-t border-gray-800 pt-6">
+                <button type="button" id="btn-prev" onclick="window.prevStep()" class="hidden px-6 py-3 border border-gray-800 rounded-xl font-bold text-gray-400 hover:text-white transition text-sm">
+                    Voltar
+                </button>
+                <button type="button" id="btn-next" onclick="window.nextStep()" class="ml-auto px-8 py-3 bg-brand-red text-white font-bold rounded-xl hover:bg-red-700 transition shadow-lg text-sm flex items-center gap-1">
+                    <span>Avançar</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </div>
+
+        </form>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center text-[10px] text-gray-500 mt-6 uppercase tracking-wider">
+        <p>&copy; 2026 Tanque Team BJJ. Todos os direitos reservados.</p>
+        <p class="mt-1">Sistema de Gestão de Academias</p>
+    </footer>
+
+    <!-- Firebase SDK Modules -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
+            authDomain: "tanqueteambjj.firebaseapp.com",
+            projectId: "tanqueteambjj",
+            storageBucket: "tanqueteambjj.firebasestorage.app",
+            messagingSenderId: "410605992451",
+            appId: "1:410605992451:web:f0f341f4594fe75f376c36"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const APP_ID = "tanqueteam-bjj";
+
+        // FALLBACK PLANS DICT
+        const PLAN_DICT = {
+            'adulto-semestral': { price: 126.90, short: 'Adulto Semestral', long: 'ADULTO SEMESTRAL' },
+            'adulto-trimestral': { price: 147.90, short: 'Adulto Trimestral', long: 'ADULTO TRIMESTRAL' },
+            'adulto-mensal': { price: 168.90, short: 'Adulto Mensal', long: 'ADULTO MENSAL' },
+            'infantil-semestral': { price: 157.90, short: 'Infantil Semestral', long: 'INFANTIL SEMESTRAL' },
+            'infantil-trimestral': { price: 168.90, short: 'Infantil Trimestral', long: 'INFANTIL TRIMESTRAL' },
+            'infantil-mensal': { price: 189.90, short: 'Infantil Mensal', long: 'INFANTIL MENSAL' },
+            'outro': { price: 0.00, short: 'Outro', long: 'OUTRO' }
+        };
+
+        let currentStep = 1;
+        let selectedPlansCache = {};
+
+        // WIZARD ROUTINES
+        window.handleTypeChange = () => {
+            const val = document.querySelector('input[name="enrollment_type"]:checked').value;
+            
+            const guardianDiv = document.getElementById('guardian-container');
+            const dependentsDiv = document.getElementById('dependents-container');
+            const step2Title = document.getElementById('step2-title');
+            const labelCpf = document.getElementById('label-student-cpf');
+            
+            if (val === 'minor') {
+                guardianDiv.classList.remove('hidden');
+                dependentsDiv.classList.add('hidden');
+                step2Title.innerText = "Cadastro de Aluno (Menor)";
+                labelCpf.innerHTML = "CPF do Aluno <span class='text-gray-500 font-normal'>(Opcional)</span>";
+                document.getElementById('reg-cpf').required = false;
+                document.getElementById('reg-guardian').required = true;
+                document.getElementById('reg-guardian-cpf').required = true;
+            } else if (val === 'combo') {
+                guardianDiv.classList.add('hidden');
+                dependentsDiv.classList.remove('hidden');
+                step2Title.innerText = "Cadastro Titular do Combo";
+                labelCpf.innerHTML = "CPF do Aluno <span class='text-brand-red'>*</span>";
+                document.getElementById('reg-cpf').required = true;
+                document.getElementById('reg-guardian').required = false;
+                document.getElementById('reg-guardian-cpf').required = false;
+            } else {
+                guardianDiv.classList.add('hidden');
+                dependentsDiv.classList.add('hidden');
+                step2Title.innerText = "Seus Dados Básicos";
+                labelCpf.innerHTML = "CPF do Aluno <span class='text-brand-red'>*</span>";
+                document.getElementById('reg-cpf').required = true;
+                document.getElementById('reg-guardian').required = false;
+                document.getElementById('reg-guardian-cpf').required = false;
+            }
+        };
+
+        window.handleAgeCheck = () => {
+            const dobVal = document.getElementById('reg-dob').value;
+            if (!dobVal) return;
+            
+            const birth = new Date(dobVal);
+            const today = new Date();
+            let age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            
+            // Auto switch to minor mode if under 18 and 'adult' is selected
+            const currentType = document.querySelector('input[name="enrollment_type"]:checked').value;
+            if (age < 18 && currentType === 'adult') {
+                document.querySelector('input[name="enrollment_type"][value="minor"]').checked = true;
+                window.handleTypeChange();
+                alert("Verificamos que o aluno é menor de idade. Alteramos o formulário para incluir dados do responsável financeiro/legal.");
+            }
+        };
+
+        window.addDependenteField = () => {
+            const list = document.getElementById('dependents-list');
+            const count = list.children.length + 1;
+            
+            const div = document.createElement('div');
+            div.className = "bg-gray-800/50 p-4 border border-gray-700/60 rounded-xl relative space-y-3 animate-fade-in";
+            div.innerHTML = `
+                <button type="button" onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-500 hove:text-brand-red text-xs">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Dependente #${count}</div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nome Completo do Dependente</label>
+                    <input type="text" required placeholder="NOME DO DEPENDENTE" class="extra-dep-name w-full bg-gray-900 border border-gray-700 px-3 py-2 rounded-lg focus:border-brand-red focus:outline-none uppercase text-white font-bold text-xs">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nascimento</label>
+                        <input type="date" required class="extra-dep-dob w-full bg-gray-900 border border-gray-700 px-3 py-2 rounded-lg focus:border-brand-red focus:outline-none text-white text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Parentesco</label>
+                        <select class="extra-dep-kinship w-full bg-gray-900 border border-gray-700 px-3 py-2 rounded-lg focus:border-brand-red focus:outline-none text-white text-xs font-bold">
+                            <option value="Filho(a)">Filho(a)</option>
+                            <option value="Enteado(a)">Enteado(a)</option>
+                            <option value="Cônjuge">Cônjuge</option>
+                            <option value="Irmão/Irmã">Irmão/Irmã</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            list.appendChild(div);
+        };
+
+        window.renderPlansList = (plans) => {
+            const grid = document.getElementById('plans-selector-grid');
+            grid.innerHTML = '';
+            
+            selectedPlansCache = plans;
+            
+            for (const [key, plan] of Object.entries(plans)) {
+                // Ignore isento/dependente for direct registration
+                if (key === 'dependente' || key === 'isento' || key === 'administracao') continue;
+                
+                grid.innerHTML += `
+                    <label class="relative flex flex-col justify-between p-5 bg-gray-900 border border-gray-800 rounded-xl cursor-pointer hover:border-brand-red transition-all select-none group" id="plan-card-${key}">
+                        <input type="radio" name="plan_type_select" value="${key}" class="absolute top-4 right-4 accent-brand-red w-4 h-4" onchange="window.selectPlanKey('${key}')">
+                        <div class="py-2">
+                            <span class="text-[10px] font-black tracking-widest uppercase text-brand-red">PLANO TANQUE TEAM</span>
+                            <h4 class="font-black font-display text-white text-base tracking-wide uppercase mt-1 group-hover:text-brand-red transition-colors">${plan.long || plan.name || key}</h4>
+                        </div>
+                    </label>
+                `;
+            }
+        };
+
+        window.selectPlanKey = (key) => {
+            document.getElementById('selected-plan-key').value = key;
+            
+            // Visual highlights
+            document.querySelectorAll('[id^="plan-card-"]').forEach(el => {
+                el.classList.remove('border-brand-red', 'bg-red-950/5');
+            });
+            const selectedEl = document.getElementById(`plan-card-${key}`);
+            if (selectedEl) {
+                selectedEl.classList.add('border-brand-red', 'bg-red-950/5');
+            }
+        };
+
+        // NAVIGATION LOGICS
+        window.prevStep = () => {
+            if (currentStep > 1) {
+                document.getElementById(`step-${currentStep}`).classList.add('hidden');
+                currentStep--;
+                document.getElementById(`step-${currentStep}`).classList.remove('hidden');
+                window.updateWizardProgress();
+            }
+        };
+
+        window.nextStep = () => {
+            if (!window.validateStep(currentStep)) return;
+            
+            if (currentStep < 4) {
+                document.getElementById(`step-${currentStep}`).classList.add('hidden');
+                currentStep++;
+                document.getElementById(`step-${currentStep}`).classList.remove('hidden');
+                window.updateWizardProgress();
+            } else {
+                window.submitPreRegistration();
+            }
+        };
+
+        window.validateStep = (step) => {
+            if (step === 1) {
+                return true;
+            }
+            if (step === 2) {
+                const name = document.getElementById('reg-name').value.trim();
+                const dob = document.getElementById('reg-dob').value;
+                const email = document.getElementById('reg-email').value.trim();
+                const phone = document.getElementById('reg-phone').value.trim();
+                const address = document.getElementById('reg-address').value.trim();
+                const numVal = document.getElementById('reg-number') ? document.getElementById('reg-number').value.trim() : '';
+                
+                if (!name || !dob || !email || !phone || !address || !numVal) {
+                    alert("Por favor, preencha todos os campos obrigatórios marcados com (*).");
+                    return false;
+                }
+                
+                const type = document.querySelector('input[name="enrollment_type"]:checked').value;
+                if (type === 'adult' || type === 'combo') {
+                    const cpf = document.getElementById('reg-cpf').value.trim();
+                    if (!cpf) {
+                        alert("CPF é obrigatório para matrículas próprias / titular.");
+                        return false;
+                    }
+                    if (cpf.length < 14) {
+                        alert("CPF incompleto.");
+                        return false;
+                    }
+                }
+                
+                if (type === 'minor') {
+                    const guardian = document.getElementById('reg-guardian').value.trim();
+                    const guardianCpf = document.getElementById('reg-guardian-cpf').value.trim();
+                    if (!guardian || !guardianCpf) {
+                        alert("Os dados do responsável legal/financeiro são obrigatórios.");
+                        return false;
+                    }
+                    if (guardianCpf.length < 14) {
+                        alert("CPF do responsável incompleto.");
+                        return false;
+                    }
+                }
+                
+                if (type === 'combo') {
+                    const extraDeps = document.querySelectorAll('#dependents-list .extra-dep-name');
+                    if (extraDeps.length === 0) {
+                        alert("Por favor, adicione pelo menos um dependente para o plano combo/familiar.");
+                        return false;
+                    }
+                }
+                return true;
+            }
+            if (step === 3) {
+                const plan = document.getElementById('selected-plan-key').value;
+                if (!plan) {
+                    alert("Selecione um dos planos disponíveis para continuar.");
+                    return false;
+                }
+                return true;
+            }
+            return true;
+        };
+
+        window.updateWizardProgress = () => {
+            const fill = document.getElementById('step-progressbar-fill');
+            fill.style.width = `${currentStep * 25}%`;
+            
+            for (let i = 1; i <= 4; i++) {
+                const label = document.getElementById(`label-step-${i}`);
+                if (i <= currentStep) {
+                    label.classList.add('text-brand-red', 'font-black');
+                } else {
+                    label.classList.remove('text-brand-red', 'font-black');
+                }
+            }
+            
+            const btnPrev = document.getElementById('btn-prev');
+            if (currentStep > 1) btnPrev.classList.remove('hidden');
+            else btnPrev.classList.add('hidden');
+            
+            const btnNext = document.getElementById('btn-next');
+            if (currentStep === 4) {
+                btnNext.innerHTML = 'Concluir Pré-Matrícula <i class="fa-solid fa-check ml-1"></i>';
+                btnNext.classList.remove('bg-brand-red', 'hover:bg-red-700');
+                btnNext.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+            } else {
+                btnNext.innerHTML = 'Avançar <i class="fa-solid fa-arrow-right text-xs ml-1"></i>';
+                btnNext.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                btnNext.classList.add('bg-brand-red', 'hover:bg-red-700');
+            }
+        };
+
+        // SUBMIT PRE-REGISTRATION TO FIRESTORE
+        window.submitPreRegistration = async () => {
+            const btnNext = document.getElementById('btn-next');
+            btnNext.disabled = true;
+            btnNext.innerText = "Enviando...";
+            
+            try {
+                // Read fields
+                const enrollment_type = document.querySelector('input[name="enrollment_type"]:checked').value;
+                const name = document.getElementById('reg-name').value.trim().toUpperCase();
+                const dob = document.getElementById('reg-dob').value;
+                const cpf = document.getElementById('reg-cpf').value.trim();
+                const email = document.getElementById('reg-email').value.trim();
+                const phone = document.getElementById('reg-phone').value.trim();
+                const cep = document.getElementById('reg-cep').value.trim();
+                let address = document.getElementById('reg-address').value.trim();
+                const addressNumber = document.getElementById('reg-number') ? document.getElementById('reg-number').value.trim() : '';
+                if (addressNumber) {
+                    address += `, Nº ${addressNumber}`;
+                }
+                
+                const guardian = document.getElementById('reg-guardian').value.trim().toUpperCase();
+                const guardianCpf = document.getElementById('reg-guardian-cpf').value.trim();
+                const guardianKinship = document.getElementById('reg-guardian-relation').value;
+                
+                const planKey = document.getElementById('selected-plan-key').value;
+                const planInfo = selectedPlansCache[planKey] || PLAN_DICT[planKey];
+                
+                const origin = document.getElementById('reg-origin').value;
+                
+                // Read combo dependents
+                let dependents = [];
+                if (enrollment_type === 'combo') {
+                    const depDivs = document.querySelectorAll('#dependents-list > div');
+                    depDivs.forEach(div => {
+                        const dName = div.querySelector('.extra-dep-name').value.trim().toUpperCase();
+                        const dDob = div.querySelector('.extra-dep-dob').value;
+                        const dKin = div.querySelector('.extra-dep-kinship').value;
+                        if (dName && dDob) {
+                            dependents.push({ name: dName, dob: dDob, kinship: dKin });
+                        }
+                    });
+                }
+                
+                const data = {
+                    enrollment_type,
+                    name,
+                    dob,
+                    cpf,
+                    email,
+                    phone,
+                    cep,
+                    address,
+                    guardian: enrollment_type === 'minor' ? guardian : '',
+                    guardianCpf: enrollment_type === 'minor' ? guardianCpf : '',
+                    guardianKinship: enrollment_type === 'minor' ? guardianKinship : '',
+                    planKey,
+                    planName: planInfo.short || planKey,
+                    planValue: planInfo.price || 0,
+                    origin,
+                    dependents,
+                    status: 'Pendente',
+                    timestamp: new Date().toISOString()
+                };
+                
+                await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'pre_registrations'), data);
+                
+                // Track success visual state
+                document.getElementById('step-4').classList.add('hidden');
+                document.getElementById('step-success').classList.remove('hidden');
+                document.getElementById('step-progressbar-container').classList.add('hidden');
+                document.getElementById('wizard-buttons-container').classList.add('hidden');
+                
+                // Set custom text inside whatsapp success link
+                const waUrl = `https://wa.me/5581999999999?text=Olá! Acabei de preencher a minha ficha de pré-matrícula no sistema de vocês como ${name}. Aguardo a confirmação do meu plano para treinar!`;
+                document.getElementById('whatsapp-success-btn').href = waUrl;
+                
+            } catch (e) {
+                console.error(e);
+                alert("Ocorreu um erro ao enviar sua ficha online. Se o erro persistir, tire prints e nos chame no WhatsApp!");
+                btnNext.disabled = false;
+                window.updateWizardProgress();
+            }
+        };
+
+        // AUTO-INIT COMPONENT LOADING
+        const init = async () => {
+            window.handleTypeChange();
+            
+            // Try load plans from firestore to match admin updates
+            try {
+                const coll = collection(db, 'artifacts', APP_ID, 'public', 'data', 'plans');
+                const querySnapshot = await getDocs(coll);
+                let loadedPlans = {};
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    loadedPlans[doc.id] = data;
+                });
+                
+                // Allowed keys according to instructions
+                const ALLOWED_KEYS = [
+                    'adulto-semestral',
+                    'adulto-trimestral',
+                    'adulto-mensal',
+                    'infantil-semestral',
+                    'infantil-trimestral',
+                    'infantil-mensal',
+                    'outro'
+                ];
+                
+                let finalPlans = {};
+                ALLOWED_KEYS.forEach(key => {
+                    let p = loadedPlans[key];
+                    // Fallback to "outros" if they named it "outros" in admin
+                    if (!p && key === 'outro' && loadedPlans['outros']) {
+                        p = loadedPlans['outros'];
+                    }
+                    
+                    if (p && !p.deleted) {
+                        finalPlans[key] = {
+                            price: p.price !== undefined ? p.price : (p.basePrice || 0),
+                            short: p.name || p.short || key,
+                            long: p.name || p.long || key
+                        };
+                    } else {
+                        finalPlans[key] = PLAN_DICT[key];
+                    }
+                });
+                
+                window.renderPlansList(finalPlans);
+            } catch (e) {
+                console.error("Firestore loading error, using fallback plans:", e);
+                window.renderPlansList(PLAN_DICT);
+            }
+        };
+        init();
+
+    </script>
+    
+    <!-- Autocomplete / Mascaras Standard script -->
+    <script>
+        window.maskCPF = (i) => {
+            let v = i.value;
+            v = v.replace(/\D/g,"");
+            v = v.replace(/(\d{3})(\d)/,"$1.$2");
+            v = v.replace(/(\d{3})(\d)/,"$1.$2");
+            v = v.replace(/(\d{3})(\d{1,2})$/,"$1-$2");
+            i.value = v;
+        };
+
+        window.maskPhone = (i) => {
+            let v = i.value;
+            v = v.replace(/\D/g,"");
+            v = v.replace(/^(\d\d)(\d)/g,"($1) $2");
+            v = v.replace(/(\d{5})(\d)/,"$1-$2");
+            i.value = v;
+        };
+
+        window.maskCEP = (i) => {
+            let v = i.value;
+            v = v.replace(/\D/g,"");
+            v = v.replace(/(\d{5})(\d)/,"$1-$2");
+            i.value = v;
+        };
+
+        window.buscarCEP = async (cep) => {
+            const clean = cep.replace(/\D/g, "");
+            if (clean.length === 8) {
+                try {
+                    const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (!data.erro) {
+                            const addressInput = document.getElementById('reg-address');
+                            addressInput.value = `${data.logradouro}, ${data.bairro} - ${data.localidade}/${data.uf}`;
+                        }
+                    }
+                } catch (e) {}
+            }
+        };
+    </script>
+
+</body>
+</html>
