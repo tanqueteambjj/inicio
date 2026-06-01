@@ -219,6 +219,38 @@
                             <input type="text" id="reg-number" required placeholder="123" class="w-full bg-gray-900 border border-gray-800 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm uppercase">
                         </div>
                     </div>
+
+                    <!-- GRADUAÇÃO ESPORTIVA (SE HOUVER) -->
+                    <div class="border-t border-gray-800 pt-5 mt-5 space-y-4">
+                        <div class="text-xs font-black text-brand-red uppercase tracking-widest border-b border-gray-800 pb-1">Graduação / Faixa Atual (Opcional)</div>
+                        <p class="text-[11px] text-gray-400 leading-normal">Caso você já tenha praticado Jiu-Jitsu anteriormente e possua alguma graduação, indique-a abaixo. Caso contrário, mantenha como Iniciante / Faixa Branca.</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-950/40 p-4 rounded-xl border border-gray-900">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Cor da Faixa</label>
+                                <select id="reg-belt-color" class="w-full bg-gray-900 border border-gray-800 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm font-bold">
+                                    <option value="Branca">Branca (Sem Graduação / Iniciante)</option>
+                                    <option value="Cinza">Cinza</option>
+                                    <option value="Amarela">Amarela</option>
+                                    <option value="Laranja">Laranja</option>
+                                    <option value="Verde">Verde</option>
+                                    <option value="Azul">Azul</option>
+                                    <option value="Roxa">Roxa</option>
+                                    <option value="Marrom">Marrom</option>
+                                    <option value="Preta">Preta</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Quantidade de Graus (Se houver)</label>
+                                <select id="reg-belt-degree" class="w-full bg-gray-900 border border-gray-800 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm font-bold">
+                                    <option value="0">0º Grau (Liso)</option>
+                                    <option value="1">1º Grau</option>
+                                    <option value="2">2º Grau</option>
+                                    <option value="3">3º Grau</option>
+                                    <option value="4">4º Grau</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- SEÇÃO EXCLUSIVA DE RESPONSÁVEL (QUANDO MENOR DE IDADE) -->
@@ -511,6 +543,32 @@
                         </select>
                     </div>
                 </div>
+                <div class="grid grid-cols-2 gap-3 pb-1 border-t border-gray-800/60 pt-2.5">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Faixa Atual (Opcional)</label>
+                        <select class="extra-dep-belt-color w-full bg-gray-900 border border-gray-700 px-3 py-2 rounded-lg focus:border-brand-red focus:outline-none text-white text-[11px] font-bold">
+                            <option value="Branca">Branca (Iniciante)</option>
+                            <option value="Cinza">Cinza</option>
+                            <option value="Amarela">Amarela</option>
+                            <option value="Laranja">Laranja</option>
+                            <option value="Verde">Verde</option>
+                            <option value="Azul">Azul</option>
+                            <option value="Roxa">Roxa</option>
+                            <option value="Marrom">Marrom</option>
+                            <option value="Preta">Preta</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Graus</label>
+                        <select class="extra-dep-belt-degree w-full bg-gray-900 border border-gray-700 px-3 py-2 rounded-lg focus:border-brand-red focus:outline-none text-white text-[11px] font-bold">
+                            <option value="0">0º Grau</option>
+                            <option value="1">1º Grau</option>
+                            <option value="2">2º Grau</option>
+                            <option value="3">3º Grau</option>
+                            <option value="4">4º Grau</option>
+                        </select>
+                    </div>
+                </div>
             `;
             list.appendChild(div);
         };
@@ -718,11 +776,18 @@
                         const dName = div.querySelector('.extra-dep-name').value.trim().toUpperCase();
                         const dDob = div.querySelector('.extra-dep-dob').value;
                         const dKin = div.querySelector('.extra-dep-kinship').value;
+                        const dColor = div.querySelector('.extra-dep-belt-color').value;
+                        const dDegree = div.querySelector('.extra-dep-belt-degree').value;
+                        const dBelt = `Faixa ${dColor} - ${dDegree}º Grau`;
                         if (dName && dDob) {
-                            dependents.push({ name: dName, dob: dDob, kinship: dKin });
+                            dependents.push({ name: dName, dob: dDob, kinship: dKin, belt: dBelt });
                         }
                     });
                 }
+
+                const beltColor = document.getElementById('reg-belt-color').value || 'Branca';
+                const beltDegree = document.getElementById('reg-belt-degree').value || '0';
+                const belt = `Faixa ${beltColor} - ${beltDegree}º Grau`;
                 
                 const data = {
                     enrollment_type,
@@ -741,6 +806,7 @@
                     planValue: planInfo.price || 0,
                     origin,
                     dependents,
+                    belt,
                     status: 'Pendente',
                     photoBase64: window.facialPhotoBase64 || null,
                     timestamp: new Date().toISOString()
