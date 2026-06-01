@@ -28,6 +28,10 @@
         };
     </script>
     
+    <!-- Cropper.js -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
     <style>
         body {
             background-color: #121212;
@@ -41,6 +45,11 @@
         }
         .animate-scan {
             animation: scanEffect 2.5s infinite ease-in-out;
+        }
+        /* Circular cropper styling */
+        .cropper-view-box,
+        .cropper-face {
+            border-radius: 50% !important;
         }
     </style>
 </head>
@@ -166,12 +175,21 @@
                             <button type="button" id="btn-capture-photo" onclick="window.captureFacialPhoto()" class="hidden flex items-center gap-2 bg-brand-red hover:bg-red-700 text-white text-[11px] font-bold uppercase tracking-wider px-4 py-2 rounded-xl transition duration-200 shadow-lg">
                                 <i class="fa-solid fa-camera animate-pulse text-xs"></i> <span>Capturar Foto</span>
                             </button>
+                            
+                            <!-- Custom Adjust Crop and Remove Buttons -->
+                            <button type="button" id="btn-edit-crop" onclick="window.openCropFromCurrent()" class="hidden flex items-center gap-1.5 bg-gray-900 border border-blue-800/80 hover:bg-blue-905 hover:border-blue-700 text-blue-400 hover:text-white text-[11px] font-bold uppercase tracking-wider px-3 py-2 rounded-xl transition duration-200 shadow-sm" title="Cortar / Ajustar enquadramento">
+                                <i class="fa-solid fa-crop"></i> <span>Ajustar Foto</span>
+                            </button>
+                            <button type="button" id="btn-remove-photo" onclick="window.resetFacialPhoto()" class="hidden flex items-center gap-1.5 bg-gray-900 border border-red-900 hover:bg-red-950/20 text-brand-red hover:text-white text-[11px] font-bold uppercase tracking-wider px-3 py-2 rounded-xl transition duration-200 shadow-sm" title="Remover esta foto e escolher outra">
+                                <i class="fa-solid fa-trash-can"></i> <span>Remover Foto</span>
+                            </button>
+
                             <button type="button" id="btn-reset-photo" onclick="window.resetFacialPhoto()" class="hidden flex items-center gap-1.5 bg-gray-900 border border-gray-800 hover:text-white text-gray-400 text-[11px] font-bold uppercase tracking-wider px-3 py-2 rounded-xl transition duration-200">
                                 <i class="fa-solid fa-rotate-left"></i> <span>Tirar Outra</span>
                             </button>
                             
-                            <label class="cursor-pointer flex items-center gap-1.5 bg-gray-900 border border-gray-850 hover:border-gray-700 text-gray-400 hover:text-white text-[11px] font-bold uppercase tracking-wider px-3 py-2 rounded-xl transition duration-200">
-                                <i class="fa-solid fa-upload"></i> <span>Enviar Imagem</span>
+                            <label id="label-upload" class="cursor-pointer flex items-center gap-1.5 bg-gray-900 border border-gray-850 hover:border-gray-700 text-gray-400 hover:text-white text-[11px] font-bold uppercase tracking-wider px-3 py-2 rounded-xl transition duration-200">
+                                <i class="fa-solid fa-upload"></i> <span id="label-upload-text">Enviar Imagem</span>
                                 <input type="file" id="facial-file-upload" accept="image/*" class="hidden" onchange="window.handleFacialPhotoUpload(this)">
                             </label>
                         </div>
@@ -938,6 +956,8 @@
             }
         };
 
+        window.originalPhotoSource = null;
+
         window.captureFacialPhoto = () => {
             const video = document.getElementById('facial-video');
             const preview = document.getElementById('facial-img-preview');
@@ -955,43 +975,33 @@
                 container.style.opacity = '0.3';
                 setTimeout(() => { container.style.opacity = '1'; }, 150);
 
-                // Create center crop on square canvas
+                // Create a clear canvas that mirrors the current frame at video aspect ratio
                 const canvas = document.createElement('canvas');
-                canvas.width = 400;
-                canvas.height = 400;
+                const vWidth = video.videoWidth || 640;
+                const vHeight = video.videoHeight || 480;
+                canvas.width = vWidth;
+                canvas.height = vHeight;
                 const ctx = canvas.getContext('2d');
 
                 // Mirror selfie feed
-                ctx.translate(400, 0);
+                ctx.translate(vWidth, 0);
                 ctx.scale(-1, 1);
+                ctx.drawImage(video, 0, 0, vWidth, vHeight);
 
-                const vWidth = video.videoWidth || video.width || 640;
-                const vHeight = video.videoHeight || video.height || 480;
-                const size = Math.min(vWidth, vHeight);
-                const sx = (vWidth - size) / 2;
-                const sy = (vHeight - size) / 2;
-
-                ctx.drawImage(video, sx, sy, size, size, 0, 0, 400, 400);
-
-                const base64 = canvas.toDataURL('image/jpeg', 0.90);
-                window.facialPhotoBase64 = base64;
+                const base64 = canvas.toDataURL('image/jpeg', 0.95);
+                window.originalPhotoSource = base64; // Save the raw captured frame
 
                 // Shutdown stream
                 activeMediaStream.getTracks().forEach(track => track.stop());
                 activeMediaStream = null;
 
-                // Visual outputs
-                preview.src = base64;
-                preview.classList.remove('hidden');
+                // Stop camera view visuals
                 video.classList.add('hidden');
                 scannerLine.classList.add('hidden');
                 scannerLine.classList.remove('animate-scan');
 
-                statusBadge.innerText = "FOTO CAPTURADA";
-                statusBadge.className = "absolute -bottom-2 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg border border-emerald-500 animate-pulse";
-
-                btnCapture.classList.add('hidden');
-                btnReset.classList.remove('hidden');
+                // Auto-open crop modal!
+                window.openCropModal(base64);
 
             } catch (err) {
                 console.error("Frame capture error:", err);
@@ -1010,6 +1020,9 @@
             const btnStartText = document.getElementById('btn-camera-text');
             const btnCapture = document.getElementById('btn-capture-photo');
             const btnReset = document.getElementById('btn-reset-photo');
+            
+            const btnEditCrop = document.getElementById('btn-edit-crop');
+            const btnRemovePhoto = document.getElementById('btn-remove-photo');
 
             if (activeMediaStream) {
                 activeMediaStream.getTracks().forEach(track => track.stop());
@@ -1017,6 +1030,7 @@
             }
 
             window.facialPhotoBase64 = null;
+            window.originalPhotoSource = null;
 
             preview.src = "";
             preview.classList.add('hidden');
@@ -1032,6 +1046,12 @@
             btnStartText.innerText = "Ativar Câmera";
             btnCapture.classList.add('hidden');
             btnReset.classList.add('hidden');
+            
+            if (btnEditCrop) btnEditCrop.classList.add('hidden');
+            if (btnRemovePhoto) btnRemovePhoto.classList.add('hidden');
+
+            const fileInput = document.getElementById('facial-file-upload');
+            if (fileInput) fileInput.value = "";
         };
 
         window.handleFacialPhotoUpload = (input) => {
@@ -1045,52 +1065,99 @@
 
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = 400;
-                        canvas.height = 400;
-                        const ctx = canvas.getContext('2d');
-
-                        const size = Math.min(img.width, img.height);
-                        const sx = (img.width - size) / 2;
-                        const sy = (img.height - size) / 2;
-
-                        ctx.drawImage(img, sx, sy, size, size, 0, 0, 400, 400);
-
-                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.90);
-                        window.facialPhotoBase64 = compressedBase64;
-
-                        const preview = document.getElementById('facial-img-preview');
-                        const video = document.getElementById('facial-video');
-                        const placeholder = document.getElementById('photo-placeholder-avatar');
-                        const scannerLine = document.getElementById('facial-scanner-line');
-                        const statusBadge = document.getElementById('facial-status-badge');
-                        
-                        const btnFirstStart = document.getElementById('btn-start-camera');
-                        const btnStartText = document.getElementById('btn-camera-text');
-                        const btnCapture = document.getElementById('btn-capture-photo');
-                        const btnReset = document.getElementById('btn-reset-photo');
-
-                        preview.src = compressedBase64;
-                        preview.classList.remove('hidden');
-                        video.classList.add('hidden');
-                        placeholder.classList.add('hidden');
-                        scannerLine.classList.add('hidden');
-                        scannerLine.classList.remove('animate-scan');
-
-                        statusBadge.innerText = "FOTO ANEXADA";
-                        statusBadge.className = "absolute -bottom-2 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg border border-emerald-500";
-
-                        btnFirstStart.classList.remove('hidden');
-                        btnStartText.innerText = "Mudar Foto";
-                        btnCapture.classList.add('hidden');
-                        btnReset.classList.add('hidden');
-                    };
-                    img.src = e.target.result;
+                    const rawBase64 = e.target.result;
+                    window.originalPhotoSource = rawBase64;
+                    input.value = ""; // clear file input so they can upload same file if they want
+                    
+                    // Open the crop modal immediately!
+                    window.openCropModal(rawBase64);
                 };
                 reader.readAsDataURL(file);
             }
+        };
+
+        // Cropper JS functions
+        let cropperInstance = null;
+        window.openCropModal = (imageSrc) => {
+            const modal = document.getElementById('crop-modal');
+            const imgElement = document.getElementById('cropper-image');
+            imgElement.src = imageSrc;
+            modal.classList.remove('hidden');
+
+            if (cropperInstance) {
+                cropperInstance.destroy();
+            }
+
+            setTimeout(() => {
+                cropperInstance = new Cropper(imgElement, {
+                    aspectRatio: 1, 
+                    viewMode: 1,
+                    autoCropArea: 0.85,
+                    responsive: true,
+                    restore: false,
+                    checkOrientation: false,
+                    modal: true,
+                    guides: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                });
+                window.cropper = cropperInstance;
+            }, 150);
+        };
+
+        window.closeCropModal = () => {
+            const modal = document.getElementById('crop-modal');
+            modal.classList.add('hidden');
+            if (cropperInstance) {
+                cropperInstance.destroy();
+                cropperInstance = null;
+            }
+        };
+
+        window.openCropFromCurrent = () => {
+            if (window.originalPhotoSource) {
+                window.openCropModal(window.originalPhotoSource);
+            } else if (window.facialPhotoBase64) {
+                window.openCropModal(window.facialPhotoBase64);
+            } else {
+                alert("Nenhuma foto disponível para ajustar.");
+            }
+        };
+
+        window.applyCrop = () => {
+            if (!cropperInstance) return;
+            const canvas = cropperInstance.getCroppedCanvas({
+                width: 400,
+                height: 400
+            });
+            const croppedBase64 = canvas.toDataURL('image/jpeg', 0.90);
+            window.facialPhotoBase64 = croppedBase64;
+
+            const preview = document.getElementById('facial-img-preview');
+            const video = document.getElementById('facial-video');
+            const placeholder = document.getElementById('photo-placeholder-avatar');
+            const scannerLine = document.getElementById('facial-scanner-line');
+            const statusBadge = document.getElementById('facial-status-badge');
+            
+            preview.src = croppedBase64;
+            preview.classList.remove('hidden');
+            video.classList.add('hidden');
+            placeholder.classList.add('hidden');
+            scannerLine.classList.add('hidden');
+
+            statusBadge.innerText = "FOTO AJUSTADA";
+            statusBadge.className = "absolute -bottom-2 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg border border-emerald-500";
+
+            // Visual buttons adjustments
+            document.getElementById('btn-start-camera').classList.add('hidden');
+            document.getElementById('btn-capture-photo').classList.add('hidden');
+            
+            document.getElementById('btn-edit-crop').classList.remove('hidden');
+            document.getElementById('btn-remove-photo').classList.remove('hidden');
+
+            window.closeCropModal();
         };
 
     </script>
@@ -1137,6 +1204,50 @@
             }
         };
     </script>
+
+    <!-- Crop Modal -->
+    <div id="crop-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden p-4">
+        <div class="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl scale-100 transition-all">
+            <div class="px-5 py-4 border-b border-gray-850 flex justify-between items-center bg-gray-950">
+                <h4 class="font-display font-bold text-sm tracking-widest text-brand-red uppercase">Ajustar Foto do Rosto</h4>
+                <button type="button" onclick="window.closeCropModal()" class="text-gray-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="p-5 flex flex-col items-center gap-4">
+                <p class="text-[11px] text-gray-400 text-center leading-normal">
+                    Arraste e ajuste a imagem de forma que seu rosto fique bem centralizado dentro do círculo.
+                </p>
+                <!-- Cropper Area -->
+                <div class="w-full h-64 bg-gray-950 rounded-xl overflow-hidden flex items-center justify-center relative border border-gray-850">
+                    <img id="cropper-image" src="" alt="Cortar" class="max-w-full max-h-full">
+                </div>
+                <!-- Extra zoom/rotation tools -->
+                <div class="flex gap-4">
+                    <button type="button" onclick="window.cropper.zoom(0.1)" class="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-white text-xs border border-gray-750" title="Aproximar">
+                        <i class="fa-solid fa-plus font-bold"></i>
+                    </button>
+                    <button type="button" onclick="window.cropper.zoom(-0.1)" class="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-white text-xs border border-gray-750" title="Afastar">
+                        <i class="fa-solid fa-minus font-bold"></i>
+                    </button>
+                    <button type="button" onclick="window.cropper.rotate(-90)" class="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-white text-xs border border-gray-750" title="Rotacionar Esquerda">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                    <button type="button" onclick="window.cropper.rotate(90)" class="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-white text-xs border border-gray-750" title="Rotacionar Direita">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="px-5 py-4 border-t border-gray-850 bg-gray-950 flex justify-end gap-2.5">
+                <button type="button" onclick="window.closeCropModal()" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-xl text-xs font-bold uppercase tracking-wider transition">
+                    Cancelar
+                </button>
+                <button type="button" onclick="window.applyCrop()" class="px-5 py-2 bg-brand-red hover:bg-red-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-check"></i> Confirmar Ajuste
+                </button>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>
