@@ -34,6 +34,14 @@
             color: #E2E8F0;
         }
         .step-inactive { opacity: 0.5; pointer-events: none; }
+        @keyframes scanEffect {
+            0% { top: 0%; opacity: 0.1; }
+            50% { top: 100%; opacity: 0.9; }
+            100% { top: 0%; opacity: 0.1; }
+        }
+        .animate-scan {
+            animation: scanEffect 2.5s infinite ease-in-out;
+        }
     </style>
 </head>
 <body class="font-sans min-h-screen flex flex-col justify-between py-6 px-4">
@@ -118,6 +126,56 @@
                 <!-- ALUNO PRINCIPAL / TITULAR -->
                 <div class="space-y-4">
                     <div id="titular-legend" class="text-xs font-black text-brand-red uppercase tracking-widest border-b border-gray-800 pb-1">Dados do Aluno</div>
+                    
+                    <!-- FOTO DE PERFIL / RECONHECIMENTO FACIAL -->
+                    <div class="flex flex-col items-center justify-center p-4 bg-gray-950/40 border border-gray-800 rounded-2xl gap-4">
+                        <div class="text-center">
+                            <label class="block text-xs font-black text-gray-300 uppercase tracking-widest mb-1">Foto de Perfil (Facial de Segurança) <span class="text-brand-red font-black">*</span></label>
+                            <p class="text-[10px] text-gray-400">Insira uma foto nítida do seu rosto para o seu perfil e reconhecimento eletrônico.</p>
+                        </div>
+
+                        <!-- Scan Frame Container -->
+                        <div class="relative w-40 h-40 flex items-center justify-center">
+                            <!-- Circular Scan Frame with glowing border -->
+                            <div class="absolute inset-0 rounded-full border-4 border-brand-red/40 shadow-[0_0_15px_rgba(217,4,41,0.2)] overflow-hidden flex items-center justify-center bg-gray-900" id="camera-frame-container">
+                                <!-- Default Placeholder Avatar -->
+                                <div id="photo-placeholder-avatar" class="flex flex-col items-center justify-center text-gray-600">
+                                    <i class="fa-solid fa-user-astronaut text-4xl mb-1 animate-pulse"></i>
+                                    <span class="text-[9px] uppercase tracking-widest font-black text-gray-500">Sem Imagem</span>
+                                </div>
+                                <!-- Video Stream for capturing -->
+                                <video id="facial-video" autoplay playsinline class="hidden w-full h-full object-cover rounded-full scale-x-[-1]"></video>
+                                <!-- Cropped output preview -->
+                                <img id="facial-img-preview" class="hidden w-full h-full object-cover rounded-full" alt="Foto Capturada">
+                                
+                                <!-- Scanner Neon Line -->
+                                <div id="facial-scanner-line" class="hidden absolute left-0 right-0 h-1 bg-brand-red shadow-[0_0_8px_#D90429] opacity-75"></div>
+                            </div>
+                            
+                            <!-- Status Badges/Overlays -->
+                            <div id="facial-status-badge" class="absolute -bottom-2 bg-brand-red text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
+                                Foto Obrigatória
+                            </div>
+                        </div>
+
+                        <!-- Buttons grid -->
+                        <div class="flex flex-wrap gap-2 justify-center w-full max-w-sm">
+                            <button type="button" id="btn-start-camera" onclick="window.startFacialCamera()" class="flex items-center gap-1.5 bg-gray-900 border border-gray-850 hover:border-brand-red hover:bg-brand-red/10 text-white text-[11px] font-bold uppercase tracking-wider px-3 py-2 rounded-xl transition duration-200">
+                                <img src="https://iili.io/qC543c7.png" class="w-3.5 h-3.5 object-contain opacity-80" alt=""> <span id="btn-camera-text">Ativar Câmera</span>
+                            </button>
+                            <button type="button" id="btn-capture-photo" onclick="window.captureFacialPhoto()" class="hidden flex items-center gap-2 bg-brand-red hover:bg-red-700 text-white text-[11px] font-bold uppercase tracking-wider px-4 py-2 rounded-xl transition duration-200 shadow-lg">
+                                <i class="fa-solid fa-camera animate-pulse text-xs"></i> <span>Capturar Foto</span>
+                            </button>
+                            <button type="button" id="btn-reset-photo" onclick="window.resetFacialPhoto()" class="hidden flex items-center gap-1.5 bg-gray-900 border border-gray-800 hover:text-white text-gray-400 text-[11px] font-bold uppercase tracking-wider px-3 py-2 rounded-xl transition duration-200">
+                                <i class="fa-solid fa-rotate-left"></i> <span>Tirar Outra</span>
+                            </button>
+                            
+                            <label class="cursor-pointer flex items-center gap-1.5 bg-gray-900 border border-gray-850 hover:border-gray-700 text-gray-400 hover:text-white text-[11px] font-bold uppercase tracking-wider px-3 py-2 rounded-xl transition duration-200">
+                                <i class="fa-solid fa-upload"></i> <span>Enviar Imagem</span>
+                                <input type="file" id="facial-file-upload" accept="image/*" class="hidden" onchange="window.handleFacialPhotoUpload(this)">
+                            </label>
+                        </div>
+                    </div>
                     
                     <div>
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Nome Completo <span class="text-brand-red">*</span></label>
@@ -240,11 +298,33 @@
                         </select>
                     </div>
 
-                    <div class="border-t border-gray-800/80 pt-4 flex items-start gap-3">
-                        <input type="checkbox" id="reg-agreement" required class="accent-brand-red w-5 h-5 rounded cursor-pointer mt-0.5 shrink-0">
-                        <label for="reg-agreement" class="text-xs text-gray-400 cursor-pointer select-none">
-                            Estou ciente de que as informações fornecidas acima são verdadeiras e estou de acordo com o regulamento interno e normas da academia Tanque Team BJJ. <span class="text-brand-red font-bold">*</span>
-                        </label>
+                    <!-- Resumo do Contrato Scrollable -->
+                    <div class="text-left space-y-1 pt-2">
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Resumo do Contrato de Adesão & Termos de Uso <span class="text-brand-red font-bold">*</span></label>
+                        <div class="h-32 overflow-y-auto bg-gray-950 border border-gray-850 rounded-xl p-3 text-[10.5px] text-gray-400 space-y-2 leading-relaxed scrollbar-thin scrollbar-thumb-gray-800">
+                            <p class="font-bold text-brand-red uppercase text-xs border-b border-gray-850 pb-1">CONTRATO DE ADESÃO – ACADEMIA TANQUE TEAM BJJ</p>
+                            <p><strong>1. OBJETO GERAL DO SERVIÇO:</strong> O presente termo estabelece as normas para prestação de serviços de aulas presenciais regulares de Jiu-Jitsu Brasileiro, visando ao condicionamento físico, defesa pessoal e aperfeiçoamento da modalidade na unidade Tanque Team BJJ.</p>
+                            <p><strong>2. PLANO E COBRANÇAS:</strong> O aluno opta formalmente pelo plano de pagamento selecionado na etapa anterior (Mensal, Trimestral ou Semestral). Fica estipulado o compromisso de pagamento até as respectivas datas de vencimento, sob incidência de encargos moratórios vigentes no caso de inadimplemento.</p>
+                            <p><strong>3. VIGÊNCIA E RESCISÃO:</strong> A vigência do plano obedece rigorosamente ao período contratado. Em caso de desistência em planos plurimensais (Semestral e Trimestral), o aluno reconhece a aplicação de multa rescisória compensatória proporcional de 20% das parcelas remanescentes.</p>
+                            <p><strong>4. NORMAS INTERNAS DE CONVIVÊNCIA:</strong> É obrigatório manter uma postura respeitosa, prezar pela higiene corporal, treinar devidamente equipado com kimono oficial limpo e respeitar a hiergargia, integridade física e normas disciplinares estipuladas pelos instrutores no tatame.</p>
+                            <p><strong>5. AUTORIZAÇÃO DE IMAGEM:</strong> O aluno cede à academia, de forma não onerosa, o direito de uso de sua imagem e áudio em eventuais materiais promocionais, postagens nas redes sociais oficiais e divulgações jornalísticas da Tanque Team BJJ.</p>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-800/80 pt-4 space-y-3">
+                        <div class="flex items-start gap-3">
+                            <input type="checkbox" id="reg-contract-agreement" required class="accent-brand-red w-5 h-5 rounded cursor-pointer mt-0.5 shrink-0">
+                            <label for="reg-contract-agreement" class="text-xs text-gray-300 cursor-pointer select-none">
+                                <strong class="text-white">Li e concordo com o resumo do contrato acima</strong>, assumindo todas as obrigações financeiras e regras descritas. <span class="text-brand-red font-bold">*</span>
+                            </label>
+                        </div>
+                        
+                        <div class="flex items-start gap-3 border-t border-gray-950/60 pt-3">
+                            <input type="checkbox" id="reg-agreement" required class="accent-brand-red w-5 h-5 rounded cursor-pointer mt-0.5 shrink-0">
+                            <label for="reg-agreement" class="text-xs text-gray-300 cursor-pointer select-none">
+                                Confirmo que todas as informações prestadas são fidedignas e aceito as normas internas gerais do tatame. <span class="text-brand-red font-bold">*</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -543,12 +623,27 @@
                         return false;
                     }
                 }
+
+                // Facial profile photo check
+                if (!window.facialPhotoBase64) {
+                    alert("A foto de perfil (Facial de Segurança) é obrigatória para prosseguir. Ative a câmera ou faça o envio de uma imagem.");
+                    return false;
+                }
                 return true;
             }
             if (step === 3) {
                 const plan = document.getElementById('selected-plan-key').value;
                 if (!plan) {
                     alert("Selecione um dos planos disponíveis para continuar.");
+                    return false;
+                }
+                return true;
+            }
+            if (step === 4) {
+                const agreement = document.getElementById('reg-agreement').checked;
+                const contractAgreement = document.getElementById('reg-contract-agreement').checked;
+                if (!agreement || !contractAgreement) {
+                    alert("Por favor, você precisa concordar com as regras gerais e com o Contrato de Adesão para concluir sua pré-matrícula.");
                     return false;
                 }
                 return true;
@@ -647,6 +742,7 @@
                     origin,
                     dependents,
                     status: 'Pendente',
+                    photoBase64: window.facialPhotoBase64 || null,
                     timestamp: new Date().toISOString()
                 };
                 
@@ -721,6 +817,215 @@
             }
         };
         init();
+
+        window.facialPhotoBase64 = null;
+        let activeMediaStream = null;
+
+        window.startFacialCamera = async () => {
+            const video = document.getElementById('facial-video');
+            const preview = document.getElementById('facial-img-preview');
+            const placeholder = document.getElementById('photo-placeholder-avatar');
+            const scannerLine = document.getElementById('facial-scanner-line');
+            const statusBadge = document.getElementById('facial-status-badge');
+            
+            const btnStart = document.getElementById('btn-start-camera');
+            const btnCapture = document.getElementById('btn-capture-photo');
+            const btnReset = document.getElementById('btn-reset-photo');
+
+            try {
+                // Check if already active
+                if (activeMediaStream) {
+                    activeMediaStream.getTracks().forEach(track => track.stop());
+                }
+
+                // Request user camera access
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }
+                });
+
+                activeMediaStream = stream;
+                video.srcObject = stream;
+                
+                // Show elements
+                video.classList.remove('hidden');
+                preview.classList.add('hidden');
+                placeholder.classList.add('hidden');
+                scannerLine.classList.remove('hidden');
+                scannerLine.classList.add('animate-scan');
+
+                // Adjust badge
+                statusBadge.innerText = "CÂMERA ATIVA";
+                statusBadge.className = "absolute -bottom-2 bg-yellow-500 text-black text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg border border-yellow-400";
+
+                // Adjust buttons
+                btnStart.classList.add('hidden');
+                btnCapture.classList.remove('hidden');
+                btnReset.classList.add('hidden');
+
+            } catch (err) {
+                console.error("Camera access error:", err);
+                alert("Não foi possível acessar a câmera do dispositivo. Por favor, certifique-se de conceder permissão de acesso à câmera no seu navegador ou faça o envio de uma foto pronta usando o botão 'Enviar Imagem'!");
+            }
+        };
+
+        window.captureFacialPhoto = () => {
+            const video = document.getElementById('facial-video');
+            const preview = document.getElementById('facial-img-preview');
+            const scannerLine = document.getElementById('facial-scanner-line');
+            const statusBadge = document.getElementById('facial-status-badge');
+            
+            const btnCapture = document.getElementById('btn-capture-photo');
+            const btnReset = document.getElementById('btn-reset-photo');
+
+            if (!video || !activeMediaStream) return;
+
+            try {
+                // Flash animation effect
+                const container = document.getElementById('camera-frame-container');
+                container.style.opacity = '0.3';
+                setTimeout(() => { container.style.opacity = '1'; }, 150);
+
+                // Create center crop on square canvas
+                const canvas = document.createElement('canvas');
+                canvas.width = 400;
+                canvas.height = 400;
+                const ctx = canvas.getContext('2d');
+
+                // Mirror selfie feed
+                ctx.translate(400, 0);
+                ctx.scale(-1, 1);
+
+                const vWidth = video.videoWidth || video.width || 640;
+                const vHeight = video.videoHeight || video.height || 480;
+                const size = Math.min(vWidth, vHeight);
+                const sx = (vWidth - size) / 2;
+                const sy = (vHeight - size) / 2;
+
+                ctx.drawImage(video, sx, sy, size, size, 0, 0, 400, 400);
+
+                const base64 = canvas.toDataURL('image/jpeg', 0.90);
+                window.facialPhotoBase64 = base64;
+
+                // Shutdown stream
+                activeMediaStream.getTracks().forEach(track => track.stop());
+                activeMediaStream = null;
+
+                // Visual outputs
+                preview.src = base64;
+                preview.classList.remove('hidden');
+                video.classList.add('hidden');
+                scannerLine.classList.add('hidden');
+                scannerLine.classList.remove('animate-scan');
+
+                statusBadge.innerText = "FOTO CAPTURADA";
+                statusBadge.className = "absolute -bottom-2 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg border border-emerald-500 animate-pulse";
+
+                btnCapture.classList.add('hidden');
+                btnReset.classList.remove('hidden');
+
+            } catch (err) {
+                console.error("Frame capture error:", err);
+                alert("Erro ao congelar foto da câmera. Tente novamente ou faça o upload de uma imagem.");
+            }
+        };
+
+        window.resetFacialPhoto = () => {
+            const video = document.getElementById('facial-video');
+            const preview = document.getElementById('facial-img-preview');
+            const placeholder = document.getElementById('photo-placeholder-avatar');
+            const scannerLine = document.getElementById('facial-scanner-line');
+            const statusBadge = document.getElementById('facial-status-badge');
+            
+            const btnFirstStart = document.getElementById('btn-start-camera');
+            const btnStartText = document.getElementById('btn-camera-text');
+            const btnCapture = document.getElementById('btn-capture-photo');
+            const btnReset = document.getElementById('btn-reset-photo');
+
+            if (activeMediaStream) {
+                activeMediaStream.getTracks().forEach(track => track.stop());
+                activeMediaStream = null;
+            }
+
+            window.facialPhotoBase64 = null;
+
+            preview.src = "";
+            preview.classList.add('hidden');
+            video.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            scannerLine.classList.add('hidden');
+            scannerLine.classList.remove('animate-scan');
+
+            statusBadge.innerText = "Foto Obrigatória";
+            statusBadge.className = "absolute -bottom-2 bg-brand-red text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg";
+
+            btnFirstStart.classList.remove('hidden');
+            btnStartText.innerText = "Ativar Câmera";
+            btnCapture.classList.add('hidden');
+            btnReset.classList.add('hidden');
+        };
+
+        window.handleFacialPhotoUpload = (input) => {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+
+                if (activeMediaStream) {
+                    activeMediaStream.getTracks().forEach(track => track.stop());
+                    activeMediaStream = null;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 400;
+                        canvas.height = 400;
+                        const ctx = canvas.getContext('2d');
+
+                        const size = Math.min(img.width, img.height);
+                        const sx = (img.width - size) / 2;
+                        const sy = (img.height - size) / 2;
+
+                        ctx.drawImage(img, sx, sy, size, size, 0, 0, 400, 400);
+
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.90);
+                        window.facialPhotoBase64 = compressedBase64;
+
+                        const preview = document.getElementById('facial-img-preview');
+                        const video = document.getElementById('facial-video');
+                        const placeholder = document.getElementById('photo-placeholder-avatar');
+                        const scannerLine = document.getElementById('facial-scanner-line');
+                        const statusBadge = document.getElementById('facial-status-badge');
+                        
+                        const btnFirstStart = document.getElementById('btn-start-camera');
+                        const btnStartText = document.getElementById('btn-camera-text');
+                        const btnCapture = document.getElementById('btn-capture-photo');
+                        const btnReset = document.getElementById('btn-reset-photo');
+
+                        preview.src = compressedBase64;
+                        preview.classList.remove('hidden');
+                        video.classList.add('hidden');
+                        placeholder.classList.add('hidden');
+                        scannerLine.classList.add('hidden');
+                        scannerLine.classList.remove('animate-scan');
+
+                        statusBadge.innerText = "FOTO ANEXADA";
+                        statusBadge.className = "absolute -bottom-2 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg border border-emerald-500";
+
+                        btnFirstStart.classList.remove('hidden');
+                        btnStartText.innerText = "Mudar Foto";
+                        btnCapture.classList.add('hidden');
+                        btnReset.classList.add('hidden');
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        };
 
     </script>
     
