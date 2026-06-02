@@ -144,6 +144,9 @@
             <a href="#" onclick="window.switchMainView('finance')" id="nav-finance" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
                 <i class="fa-solid fa-file-invoice-dollar w-6"></i> <span class="ml-2">Relatório de Receita</span>
             </a>
+            <a href="#" onclick="window.switchMainView('plans')" id="nav-plans" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
+                <i class="fa-solid fa-tags w-6"></i> <span class="ml-2">Planos</span>
+            </a>
             <a href="#" onclick="window.openSettingsModal()" id="nav-settings" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold">
                 <i class="fa-solid fa-gear w-6"></i> <span class="ml-2">Configurações</span>
             </a>
@@ -610,6 +613,62 @@
                     
                     <div id="admin-notices-list" class="space-y-4">
                         <div class="text-center py-8 text-gray-400 dark:text-gray-500 italic text-sm">A carregar avisos...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: PLANOS -->
+            <div id="view-plans" class="hidden animate-fade-in text-gray-800 dark:text-gray-100 font-sans mb-6">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 md:p-6 border-t-4 border-brand-red max-w-5xl mx-auto border border-gray-200 dark:border-gray-700">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-3">
+                        <div>
+                            <h3 class="font-display text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-tags text-brand-red"></i> Gestão de Planos de Matrícula</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Crie, edite ou remova planos de mensalidade. Os planos cadastrados são integrados ao sistema de matrículas e relatórios.</p>
+                        </div>
+                        <button onclick="window.openPlanModal()" class="bg-brand-red hover:bg-red-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold shadow-sm transition self-start sm:self-auto flex items-center gap-1.5 leading-none">
+                            <i class="fa-solid fa-plus text-xs"></i> NOVO PLANO
+                        </button>
+                    </div>
+
+                    <!-- estatísticas -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                        <div class="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-100 dark:border-gray-700">
+                            <div class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Planos Cadastrados</div>
+                            <div class="text-2xl font-black text-gray-700 dark:text-gray-200" id="plans-stat-total">0</div>
+                        </div>
+                        <div class="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-100 dark:border-gray-700">
+                            <div class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Alunos Ativos com Plano</div>
+                            <div class="text-2xl font-black text-green-600 dark:text-green-400" id="plans-stat-active-students">0</div>
+                        </div>
+                        <div class="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-100 dark:border-gray-700">
+                            <div class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Plano Mais Popular</div>
+                            <div class="text-xs font-black text-gray-700 dark:text-gray-200 truncate mt-1.5 uppercase" id="plans-stat-popular">Carregando...</div>
+                        </div>
+                    </div>
+
+                    <!-- List of Plans Table -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div class="overflow-x-auto w-full">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-gray-850 select-none">
+                                        <th class="px-4 py-3 font-bold">Nome do Plano / Identificador</th>
+                                        <th class="px-4 py-3 font-bold text-center">Duração</th>
+                                        <th class="px-4 py-3 font-bold text-right">Valor Mensal</th>
+                                        <th class="px-4 py-3 font-bold text-right">Valor Base</th>
+                                        <th class="px-4 py-3 font-bold text-center">Alunos (Ativos / Total)</th>
+                                        <th class="px-4 py-3 text-center font-bold">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="plans-table-body" class="text-sm text-gray-700 dark:text-gray-300 divide-y divide-gray-205 dark:divide-gray-700">
+                                    <tr>
+                                        <td colspan="6" class="px-4 py-8 text-center text-gray-400 dark:text-gray-500 font-bold">
+                                            <i class="fa-solid fa-spinner fa-spin mr-2 text-brand-red"></i> Carregando planos...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2163,6 +2222,56 @@
         </div>
     </div>
 
+    <!-- MODAL: GESTÃO DE PLANOS (CRIAR E EDITAR) -->
+    <div id="plan-modal" class="fixed inset-0 z-[80] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-fade-in border-t-4 border-brand-red">
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600">
+                <h3 class="font-bold text-lg text-gray-800 dark:text-white" id="plan-modal-title"><i class="fa-solid fa-tags text-brand-red mr-2"></i> Adicionar Plano</h3>
+                <button onclick="window.closePlanModal()" class="text-gray-400 hover:text-gray-800 dark:hover:text-white"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="plan-id">
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Nome do Plano</label>
+                    <input type="text" id="plan-name" placeholder="Ex: Adulto Anual, Combo Prime" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-3 text-sm focus:border-brand-red focus:outline-none font-bold">
+                    <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1">Nome amigável exibido nas fichas e no financeiro.</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Valor Vencimento (R$)</label>
+                        <input type="number" step="0.01" id="plan-price" placeholder="Ex: 149.90" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-3 text-sm focus:border-brand-red focus:outline-none font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Valor Total (R$)</label>
+                        <input type="number" step="0.01" id="plan-base-price" placeholder="Ex: 168.90" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-3 text-sm focus:border-brand-red focus:outline-none font-bold">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Duração (Meses)</label>
+                        <input type="number" id="plan-duration" min="1" max="120" placeholder="Ex: 12" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-3 text-sm focus:border-brand-red focus:outline-none font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Cód. Único (Opcional)</label>
+                        <input type="text" id="plan-slug" placeholder="slug-do-plano" class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-3 text-sm focus:border-brand-red focus:outline-none font-mono text-xs font-bold">
+                    </div>
+                </div>
+
+                <p class="text-[10px] text-gray-400 dark:text-gray-500 leading-relaxed border-t border-gray-100 dark:border-gray-700 pt-3">
+                    <i class="fa-solid fa-info-circle mr-1 text-brand-red"></i> <strong>Aviso:</strong> O identificador único será gerado de forma limpa a partir do nome se deixado em branco. Se alterado num plano existente, alunos já matriculados nele manterão o plano antigo nas fichas, sendo necessário editá-los um a um se desejar atualizá-los.
+                </p>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <button onclick="window.closePlanModal()" class="px-5 py-2 border dark:border-gray-600 rounded text-sm hover:bg-gray-100 dark:hover:bg-gray-700 font-bold text-gray-600 dark:text-gray-300 transition">Cancelar</button>
+                    <button id="btn-save-plan" onclick="window.savePlan()" class="px-6 py-2 bg-brand-red text-white rounded text-sm hover:bg-red-700 font-bold shadow-md transition flex items-center gap-1.5"><i class="fa-solid fa-floppy-disk"></i> Salvar Plano</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -3572,9 +3681,9 @@
                         ...defaultPlan,
                         price: data.price !== undefined ? data.price : (defaultPlan.price || 0),
                         basePrice: data.basePrice !== undefined ? data.basePrice : (data.price || defaultPlan.basePrice || 0),
-                        short: data.name || defaultPlan.short,
-                        long: (data.name || '').toUpperCase() || defaultPlan.long,
-                        durationMonths: data.durationMonths || defaultPlan.durationMonths
+                        short: data.name || defaultPlan.short || id,
+                        long: (data.name || '').toUpperCase() || defaultPlan.long || id.toUpperCase(),
+                        durationMonths: data.durationMonths || defaultPlan.durationMonths || 1
                     };
                 });
                 
@@ -3582,6 +3691,9 @@
                 console.error("Erro ao carregar planos:", error);
             } finally {
                 window.populatePlanSelects();
+                if (window.currentView === 'plans' && window.renderPlansAdmin) {
+                    window.renderPlansAdmin();
+                }
             }
         };
 
@@ -5790,6 +5902,249 @@ Belém-PA, [DATA_ATUAL].
                     `;
                 });
             } catch(e) { console.error(e); }
+        };
+
+        // PLANS MANAGEMENT CORE INTERACTION MODULE
+        const slugify = (text) => {
+            return text.toString()
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .trim()
+                .replace(/\s+/g, '-')
+                .replace(/[^\w\-]+/g, '')
+                .replace(/\-\-+/g, '-');
+        };
+
+        window.getStudentsInPlan = (planId) => {
+            if (!window.students) return { active: 0, total: 0, students: [] };
+            const list = window.students.filter(s => {
+                const sPlan = s.plan || '';
+                // Resolve any variations of the plan string
+                return sPlan === planId || (window.getPlanKey && window.getPlanKey(sPlan) === planId);
+            });
+            const active = list.filter(s => !s.archived && s.enrollmentStatus === 'Ativo').length;
+            return {
+                active,
+                total: list.length,
+                students: list
+            };
+        };
+
+        window.renderPlansAdmin = () => {
+            const tbody = document.getElementById('plans-table-body');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+            
+            const keys = Object.keys(window.PLAN_DICT);
+            
+            let totalPlansCount = keys.length;
+            let activeStudentsCount = 0;
+            let popularPlan = { name: 'Nenhum', count: -1 };
+            
+            const list = keys.map(key => {
+                const plan = window.PLAN_DICT[key];
+                const stats = window.getStudentsInPlan ? window.getStudentsInPlan(key) : { active: 0, total: 0 };
+                activeStudentsCount += stats.active;
+                
+                if (stats.active > popularPlan.count) {
+                    popularPlan = { name: plan.short || key, count: stats.active };
+                }
+                
+                return {
+                    key,
+                    name: plan.short || key,
+                    duration: plan.durationMonths || 1,
+                    price: plan.price || 0,
+                    basePrice: plan.basePrice || plan.price || 0,
+                    active: stats.active,
+                    total: stats.total
+                };
+            });
+
+            const statTotal = document.getElementById('plans-stat-total');
+            if (statTotal) statTotal.innerText = totalPlansCount;
+            const statActive = document.getElementById('plans-stat-active-students');
+            if (statActive) statActive.innerText = activeStudentsCount;
+            const statPopular = document.getElementById('plans-stat-popular');
+            if (statPopular) statPopular.innerText = popularPlan.count > 0 ? `${popularPlan.name.toUpperCase()} (${popularPlan.count} ATIVOS)` : 'NENHUM ALUNO ATIVO';
+
+            if (list.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-4 py-8 text-center text-gray-400 dark:text-gray-500 font-bold">
+                            Nenhum plano cadastrado ou encontrado.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            list.forEach(p => {
+                const badgeStyle = p.active > 0 ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-750 dark:text-gray-400';
+                const formattedPrice = Number(p.price).toFixed(2).replace('.', ',');
+                const formattedBasePrice = Number(p.basePrice).toFixed(2).replace('.', ',');
+                
+                let isBuiltin = ['infantil-mensal', 'infantil-trimestral', 'infantil-semestral', 'adulto-mensal', 'adulto-trimestral', 'adulto-semestral', 'combo-dupla', 'combo-casal', 'combo-familia', 'administracao', 'dependente', 'isento', 'outros'].includes(p.key);
+                
+                const deleteBtnHtml = `
+                    <button onclick="window.deletePlan('${p.key}')" class="text-xs font-bold text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 flex items-center gap-1 inline-flex transition" title="Excluir Plano">
+                        <i class="fa-solid fa-trash"></i> Excluir
+                    </button>
+                `;
+                
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-700/10 transition">
+                        <td class="px-4 py-4.5 align-middle">
+                            <div class="font-bold text-gray-800 dark:text-white uppercase font-sans tracking-wide text-sm">${p.name}</div>
+                            <div class="text-[10px] text-gray-400 dark:text-gray-500 font-mono font-medium flex items-center gap-1.5 mt-0.5">${p.key} ${isBuiltin ? '<span class="text-blue-500 font-bold select-none">[Padrão]</span>' : ''}</div>
+                        </td>
+                        <td class="px-4 py-4.5 text-center font-bold text-gray-700 dark:text-gray-300 align-middle">
+                            ${p.duration} ${p.duration === 1 ? 'mês' : 'meses'}
+                        </td>
+                        <td class="px-4 py-4.5 text-right font-bold text-gray-800 dark:text-white font-mono align-middle">
+                            R$ ${formattedPrice}
+                        </td>
+                        <td class="px-4 py-4.5 text-right text-gray-400 dark:text-gray-500 font-mono text-xs align-middle">
+                            R$ ${formattedBasePrice}
+                        </td>
+                        <td class="px-4 py-4.5 text-center align-middle">
+                            <span class="${badgeStyle} text-xs font-black px-3 py-1 rounded-full cursor-default select-none shadow-sm transition">
+                                ${p.active} Ativos <span class="opacity-50">/ ${p.total} total</span>
+                            </span>
+                        </td>
+                        <td class="px-4 py-4.5 text-center align-middle">
+                            <div class="flex items-center justify-center gap-4">
+                                <button onclick="window.openPlanModal('${p.key}')" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 flex items-center gap-1 inline-flex transition" title="Editar Plano">
+                                    <i class="fa-solid fa-pen-to-square"></i> Editar
+                                </button>
+                                ${deleteBtnHtml}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        };
+
+        window.openPlanModal = (id = null) => {
+            const modal = document.getElementById('plan-modal');
+            if (!modal) return;
+            
+            modal.classList.remove('hidden'); 
+            modal.classList.add('flex');
+            
+            const titleEl = document.getElementById('plan-modal-title');
+            const idInput = document.getElementById('plan-id');
+            const nameInput = document.getElementById('plan-name');
+            const priceInput = document.getElementById('plan-price');
+            const basePriceInput = document.getElementById('plan-base-price');
+            const durationInput = document.getElementById('plan-duration');
+            const slugInput = document.getElementById('plan-slug');
+            
+            if (id && window.PLAN_DICT[id]) {
+                const p = window.PLAN_DICT[id];
+                titleEl.innerHTML = `<i class="fa-solid fa-pen-to-square text-brand-red mr-2"></i> Editar Plano`;
+                idInput.value = id;
+                nameInput.value = p.short || id;
+                priceInput.value = p.price || 0;
+                basePriceInput.value = p.basePrice || p.price || 0;
+                durationInput.value = p.durationMonths || 1;
+                slugInput.value = id;
+                slugInput.setAttribute('disabled', 'true');
+            } else {
+                titleEl.innerHTML = `<i class="fa-solid fa-plus text-brand-red mr-2"></i> Adicionar Plano`;
+                idInput.value = '';
+                nameInput.value = '';
+                priceInput.value = '';
+                basePriceInput.value = '';
+                durationInput.value = 1;
+                slugInput.value = '';
+                slugInput.removeAttribute('disabled');
+            }
+        };
+
+        window.closePlanModal = () => {
+            const modal = document.getElementById('plan-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        };
+
+        window.savePlan = async () => {
+            const saveBtn = document.getElementById('btn-save-plan');
+            const editId = document.getElementById('plan-id').value;
+            const name = document.getElementById('plan-name').value.trim();
+            const price = parseFloat(document.getElementById('plan-price').value);
+            const basePriceVal = parseFloat(document.getElementById('plan-base-price').value);
+            const basePrice = isNaN(basePriceVal) ? price : basePriceVal;
+            const duration = parseInt(document.getElementById('plan-duration').value) || 1;
+            let slug = document.getElementById('plan-slug').value.trim();
+            
+            if (!name) {
+                window.customAlert("O nome do plano é obrigatório.");
+                return;
+            }
+            if (isNaN(price) || price < 0) {
+                window.customAlert("Por favor, preencha um valor correto.");
+                return;
+            }
+            if (duration < 1) {
+                window.customAlert("Duração inválida do plano.");
+                return;
+            }
+            
+            if (!slug) {
+                slug = slugify(name);
+            } else {
+                slug = slugify(slug);
+            }
+            
+            if (!slug) {
+                window.customAlert("Por favor, preencha o identificador único.");
+                return;
+            }
+            
+            const targetId = editId || slug;
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Salvando...';
+            
+            try {
+                const planData = {
+                    name: name,
+                    price: price,
+                    basePrice: basePrice,
+                    durationMonths: duration,
+                    deleted: false,
+                    updatedAt: new Date().toISOString()
+                };
+                
+                if (window.db) {
+                    await setDoc(doc(window.db, 'artifacts', APP_ID, 'public', 'data', 'plans', targetId), planData, { merge: true });
+                }
+                
+                // Set locally to avoid network delays
+                window.PLAN_DICT[targetId] = {
+                    price: price,
+                    basePrice: basePrice,
+                    short: name,
+                    long: name.toUpperCase(),
+                    durationMonths: duration
+                };
+                
+                window.customAlert("Plano gravado com sucesso.");
+                window.closePlanModal();
+                await window.loadPlans();
+                if (window.renderPlansAdmin) window.renderPlansAdmin();
+                if (window.renderSettingsPlans) window.renderSettingsPlans();
+            } catch (e) {
+                console.error(e);
+                window.customAlert("Erro ao salvar plano no Firestore.");
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-1"></i> Salvar Plano';
+            }
         };
 
         // AULAS EXPERIMENTAIS
@@ -8795,6 +9150,8 @@ Belém-PA, [DATA_ATUAL].
             if (attView) attView.classList.add('hidden');
             const finView = document.getElementById('view-finance');
             if (finView) finView.classList.add('hidden');
+            const plansView = document.getElementById('view-plans');
+            if (plansView) plansView.classList.add('hidden');
             
             const viewEl = document.getElementById(`view-${viewId}`);
             if (viewEl) viewEl.classList.remove('hidden');
@@ -8812,6 +9169,7 @@ Belém-PA, [DATA_ATUAL].
             if(viewId === 'students') window.renderTable();
             if(viewId === 'pre-registrations') window.loadPreRegistrations();
             if(viewId === 'experimental') window.renderExperimentalTable();
+            if(viewId === 'plans') if (window.renderPlansAdmin) window.renderPlansAdmin();
             if(viewId === 'finance') {
                 if (!document.getElementById('finance-month-filter').value) {
                     const today = new Date();
