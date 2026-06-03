@@ -356,7 +356,7 @@
                             <p><strong>1. OBJETO GERAL DO SERVIÇO:</strong> O presente termo estabelece as normas para prestação de serviços de aulas presenciais regulares de Jiu-Jitsu Brasileiro, visando ao condicionamento físico, defesa pessoal e aperfeiçoamento da modalidade na unidade Tanque Team BJJ.</p>
                             <p><strong>2. PLANO E COBRANÇAS:</strong> O aluno opta formalmente pelo plano de pagamento selecionado na etapa anterior (Mensal, Trimestral ou Semestral). Fica estipulado o compromisso de pagamento até as respectivas datas de vencimento, sob incidência de encargos moratórios vigentes no caso de inadimplemento.</p>
                             <p><strong>3. VIGÊNCIA E RESCISÃO:</strong> A vigência do plano obedece rigorosamente ao período contratado. Em caso de desistência em planos plurimensais (Semestral e Trimestral), o aluno reconhece a aplicação de multa rescisória compensatória proporcional de 20% das parcelas remanescentes.</p>
-                            <p><strong>4. NORMAS INTERNAS DE CONVIVÊNCIA:</strong> É obrigatório manter uma postura respeitosa, prezar pela higiene corporal, treinar devidamente equipado com kimono oficial limpo e respeitar a hiergargia, integridade física e normas disciplinares estipuladas pelos instrutores no tatame.</p>
+                            <p><strong>4. NORMAS INTERNAS DE CONVIVÊNCIA:</strong> É obrigatório manter uma postura respeitosa, prezar pela higiene corporal, treinar devidamente equipado com kimono oficial limpo e respeitar a hierarquia, integridade física e normas disciplinares estipuladas pelos instrutores no tatame.</p>
                             <p><strong>5. AUTORIZAÇÃO DE IMAGEM:</strong> O aluno cede à academia, de forma não onerosa, o direito de uso de sua imagem e áudio em eventuais materiais promocionais, postagens nas redes sociais oficiais e divulgações jornalísticas da Tanque Team BJJ.</p>
                         </div>
                     </div>
@@ -523,18 +523,26 @@
                 age--;
             }
             
-            // Auto switch to minor mode if under 18 and 'adult' is selected
+            // Auto switch to minor mode if under 18 and 'adult' is selected asks first
             const currentType = document.querySelector('input[name="enrollment_type"]:checked').value;
             if (age < 18 && currentType === 'adult') {
-                document.querySelector('input[name="enrollment_type"][value="minor"]').checked = true;
-                window.handleTypeChange();
-                alert("Verificamos que o aluno é menor de idade. Alteramos o formulário para incluir dados do responsável financeiro/legal.");
+                if (confirm("A data de nascimento preenchida indica que o aluno possui menos de 18 anos.\n\nDeseja alterar o formulário para incluir os dados de um responsável legal/financeiro?\n\n(Clique em OK para alterar o formulário, ou em Cancelar se você digitou a data errada para poder corrigi-la).")) {
+                    document.querySelector('input[name="enrollment_type"][value="minor"]').checked = true;
+                    window.handleTypeChange();
+                } else {
+                    const dobInput = document.getElementById('reg-dob');
+                    if (dobInput) dobInput.focus();
+                }
             } else if (age >= 18 && currentType === 'minor') {
-                document.querySelector('input[name="enrollment_type"][value="adult"]').checked = true;
-                window.handleTypeChange();
-                alert("Verificamos que o aluno é maior de idade. O formulário foi alterado para 'Eu Mesmo' (Maior de idade), deixando de exigir um responsável legal.");
-                document.getElementById('reg-guardian').value = '';
-                document.getElementById('reg-guardian-cpf').value = '';
+                if (confirm("A data de nascimento preenchida indica que o aluno é maior de idade (18 anos ou mais).\n\nDeseja alterar o formulário para 'Eu Mesmo' (Maior de idade) e remover a exigência de um responsável legal?\n\n(Clique em OK para alterar o formulário, ou em Cancelar se você digitou a data errada para poder corrigi-la).")) {
+                    document.querySelector('input[name="enrollment_type"][value="adult"]').checked = true;
+                    window.handleTypeChange();
+                    document.getElementById('reg-guardian').value = '';
+                    document.getElementById('reg-guardian-cpf').value = '';
+                } else {
+                    const dobInput = document.getElementById('reg-dob');
+                    if (dobInput) dobInput.focus();
+                }
             }
         };
 
@@ -689,18 +697,26 @@
 
                 const type = document.querySelector('input[name="enrollment_type"]:checked').value;
                 if (age >= 18 && type === 'minor') {
-                    alert("Aluno maior de idade não deve possuir responsável legal. O formulário foi alterado para 'Eu Mesmo' (Maior de idade).");
-                    document.querySelector('input[name="enrollment_type"][value="adult"]').checked = true;
-                    window.handleTypeChange();
-                    document.getElementById('reg-guardian').value = '';
-                    document.getElementById('reg-guardian-cpf').value = '';
+                    if (confirm("O aluno é maior de idade (18 anos ou mais) e não precisa de responsável legal.\n\nDeseja alterar o formulário para 'Eu Mesmo' (Maior de idade)?\n\n(Clique em OK para alterar o formulário, ou em Cancelar para corrigir a data de nascimento do aluno).")) {
+                        document.querySelector('input[name="enrollment_type"][value="adult"]').checked = true;
+                        window.handleTypeChange();
+                        document.getElementById('reg-guardian').value = '';
+                        document.getElementById('reg-guardian-cpf').value = '';
+                    } else {
+                        const dobInput = document.getElementById('reg-dob');
+                        if (dobInput) dobInput.focus();
+                    }
                     return false;
                 }
 
                 if (age < 18 && type === 'adult') {
-                    alert("Aluno menor de idade deve possuir um responsável legal. O formulário foi alterado para 'Meu Filho(a) / Menor de Idade'.");
-                    document.querySelector('input[name="enrollment_type"][value="minor"]').checked = true;
-                    window.handleTypeChange();
+                    if (confirm("O aluno é menor de idade e necessita possuir um responsável legal cadastrado para prosseguir.\n\nDeseja alterar o formulário para 'Meu Filho(a) / Menor de Idade' para preencher os dados do responsável?\n\n(Clique em OK para alterar o formulário, ou em Cancelar para corrigir a data de nascimento do aluno).")) {
+                        document.querySelector('input[name="enrollment_type"][value="minor"]').checked = true;
+                        window.handleTypeChange();
+                    } else {
+                        const dobInput = document.getElementById('reg-dob');
+                        if (dobInput) dobInput.focus();
+                    }
                     return false;
                 }
 
