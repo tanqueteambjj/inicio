@@ -203,7 +203,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Data de Nascimento <span class="text-brand-red">*</span></label>
-                            <input type="date" id="reg-dob" required class="w-full bg-gray-900 border border-gray-800 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm" onchange="window.handleAgeCheck()">
+                            <input type="text" id="reg-dob" required placeholder="DD/MM/AAAA" maxlength="10" class="w-full bg-gray-900 border border-gray-800 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm font-mono" oninput="window.maskDate(this); window.handleAgeCheck()">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-1" id="label-student-cpf">CPF do Aluno <span class="text-brand-red">*</span></label>
@@ -511,9 +511,11 @@
 
         window.handleAgeCheck = () => {
             const dobVal = document.getElementById('reg-dob').value;
-            if (!dobVal) return;
+            if (!dobVal || dobVal.length < 10) return;
             
-            const birth = new Date(dobVal);
+            const birth = window.parseDateBR(dobVal);
+            if (!birth) return;
+            
             const today = new Date();
             let age = today.getFullYear() - birth.getFullYear();
             const m = today.getMonth() - birth.getMonth();
@@ -527,6 +529,12 @@
                 document.querySelector('input[name="enrollment_type"][value="minor"]').checked = true;
                 window.handleTypeChange();
                 alert("Verificamos que o aluno é menor de idade. Alteramos o formulário para incluir dados do responsável financeiro/legal.");
+            } else if (age >= 18 && currentType === 'minor') {
+                document.querySelector('input[name="enrollment_type"][value="adult"]').checked = true;
+                window.handleTypeChange();
+                alert("Verificamos que o aluno é maior de idade. O formulário foi alterado para 'Eu Mesmo' (Maior de idade), deixando de exigir um responsável legal.");
+                document.getElementById('reg-guardian').value = '';
+                document.getElementById('reg-guardian-cpf').value = '';
             }
         };
 
@@ -548,7 +556,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nascimento</label>
-                        <input type="date" required class="extra-dep-dob w-full bg-gray-900 border border-gray-700 px-3 py-2 rounded-lg focus:border-brand-red focus:outline-none text-white text-xs">
+                        <input type="text" required placeholder="DD/MM/AAAA" maxlength="10" oninput="window.maskDate(this)" class="extra-dep-dob w-full bg-gray-900 border border-gray-700 px-3 py-2 rounded-lg focus:border-brand-red focus:outline-none text-white text-xs font-mono">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Parentesco</label>
@@ -666,7 +674,36 @@
                     return false;
                 }
                 
+                // Age verification
+                const birth = window.parseDateBR(dob);
+                if (!birth) {
+                    alert("A data de nascimento preenchida é inválida. Por favor, utilize o formato DD/MM/AAAA.");
+                    return false;
+                }
+                const today = new Date();
+                let age = today.getFullYear() - birth.getFullYear();
+                const m = today.getMonth() - birth.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                    age--;
+                }
+
                 const type = document.querySelector('input[name="enrollment_type"]:checked').value;
+                if (age >= 18 && type === 'minor') {
+                    alert("Aluno maior de idade não deve possuir responsável legal. O formulário foi alterado para 'Eu Mesmo' (Maior de idade).");
+                    document.querySelector('input[name="enrollment_type"][value="adult"]').checked = true;
+                    window.handleTypeChange();
+                    document.getElementById('reg-guardian').value = '';
+                    document.getElementById('reg-guardian-cpf').value = '';
+                    return false;
+                }
+
+                if (age < 18 && type === 'adult') {
+                    alert("Aluno menor de idade deve possuir um responsável legal. O formulário foi alterado para 'Meu Filho(a) / Menor de Idade'.");
+                    document.querySelector('input[name="enrollment_type"][value="minor"]').checked = true;
+                    window.handleTypeChange();
+                    return false;
+                }
+
                 if (type === 'adult' || type === 'combo') {
                     const cpf = document.getElementById('reg-cpf').value.trim();
                     if (!cpf) {
@@ -686,6 +723,16 @@
                         alert("Os dados do responsável legal/financeiro são obrigatórios.");
                         return false;
                     }
+
+                    // Check for invalid or generic guardian names like "PROPRIO", "SI MESMO", etc.
+                    const normalizedGuardian = guardian.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                    const forbiddenNames = ["PROPRIO", "PRÓPRIO", "PROPRIA", "PRÓPRIA", "MESMO", "O MESMO", "SI MESMO", "TESTE", "N/A", "NAO", "NÃO", "NENHUM", "PROPRIOPROPRIO"];
+                    
+                    if (forbiddenNames.includes(normalizedGuardian) || normalizedGuardian.length < 3 || normalizedGuardian === name.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()) {
+                        alert("Por favor, preencha o nome de um responsável legal real (ex: Pai, Mãe, Tutor). Não é permitido usar o próprio nome do aluno menor ou termos genéricos como '" + guardian + "'.");
+                        return false;
+                    }
+
                     if (guardianCpf.length < 14) {
                         alert("CPF do responsável incompleto.");
                         return false;
@@ -693,10 +740,27 @@
                 }
                 
                 if (type === 'combo') {
-                    const extraDeps = document.querySelectorAll('#dependents-list .extra-dep-name');
-                    if (extraDeps.length === 0) {
+                    const divList = document.querySelectorAll('#dependents-list > div');
+                    if (divList.length === 0) {
                         alert("Por favor, adicione pelo menos um dependente para o plano combo/familiar.");
                         return false;
+                    }
+                    for (let div of divList) {
+                        const dName = div.querySelector('.extra-dep-name').value.trim();
+                        const dDob = div.querySelector('.extra-dep-dob').value.trim();
+                        if (!dName) {
+                            alert("Por favor, preencha o nome completo de todos os dependentes.");
+                            return false;
+                        }
+                        if (!dDob) {
+                            alert("Por favor, preencha a data de nascimento de todos os dependentes.");
+                            return false;
+                        }
+                        const parsedDob = window.parseDateBR(dDob);
+                        if (!parsedDob) {
+                            alert(`A data de nascimento do dependente "${dName}" não está no formato correto (DD/MM/AAAA) ou não possui uma data real.`);
+                            return false;
+                        }
                     }
                 }
 
@@ -767,6 +831,7 @@
                 const enrollment_type = document.querySelector('input[name="enrollment_type"]:checked').value;
                 const name = document.getElementById('reg-name').value.trim().toUpperCase();
                 const dob = document.getElementById('reg-dob').value;
+                const isoDob = window.formatDateToISO(dob);
                 const cpf = document.getElementById('reg-cpf').value.trim();
                 const email = document.getElementById('reg-email').value.trim();
                 const phone = document.getElementById('reg-phone').value.trim();
@@ -793,12 +858,13 @@
                     depDivs.forEach(div => {
                         const dName = div.querySelector('.extra-dep-name').value.trim().toUpperCase();
                         const dDob = div.querySelector('.extra-dep-dob').value;
+                        const dIsoDob = window.formatDateToISO(dDob);
                         const dKin = div.querySelector('.extra-dep-kinship').value;
                         const dColor = div.querySelector('.extra-dep-belt-color').value;
                         const dDegree = div.querySelector('.extra-dep-belt-degree').value;
                         const dBelt = `Faixa ${dColor} - ${dDegree}º Grau`;
                         if (dName && dDob) {
-                            dependents.push({ name: dName, dob: dDob, kinship: dKin, belt: dBelt });
+                            dependents.push({ name: dName, dob: dIsoDob, kinship: dKin, belt: dBelt });
                         }
                     });
                 }
@@ -810,7 +876,7 @@
                 const data = {
                     enrollment_type,
                     name,
-                    dob,
+                    dob: isoDob,
                     cpf,
                     email,
                     phone,
@@ -1164,6 +1230,42 @@
     
     <!-- Autocomplete / Mascaras Standard script -->
     <script>
+        window.maskDate = (i) => {
+            let v = i.value;
+            v = v.replace(/\D/g,"");
+            v = v.replace(/(\d{2})(\d)/,"$1/$2");
+            v = v.replace(/(\d{2})(\d)/,"$1/$2");
+            v = v.slice(0, 10);
+            i.value = v;
+        };
+
+        window.parseDateBR = (str) => {
+            if (!str) return null;
+            const parts = str.split('/');
+            if (parts.length === 3) {
+                const day = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1;
+                const year = parseInt(parts[2], 10);
+                if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+                    if (year < 1900 || year > 2100) return null;
+                    const date = new Date(year, month, day);
+                    if (date.getFullYear() === year && date.getMonth() === month && date.getDate() === day) {
+                        return date;
+                    }
+                }
+            }
+            return null;
+        };
+
+        window.formatDateToISO = (str) => {
+            const date = window.parseDateBR(str);
+            if (!date) return "";
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
         window.maskCPF = (i) => {
             let v = i.value;
             v = v.replace(/\D/g,"");
