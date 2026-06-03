@@ -1670,8 +1670,16 @@
                                 </div>
                             </div>
                             
-                            <div id="admin-edit-guardian-container" class="md:col-span-2 bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded border border-yellow-200 dark:border-yellow-800 hidden">
-                                <h4 class="text-xs font-bold text-yellow-800 dark:text-yellow-500 mb-3 uppercase border-b border-yellow-200 dark:border-yellow-800 pb-1"><i class="fa-solid fa-triangle-exclamation"></i> Dados do Responsável Legal</h4>
+                            <div id="admin-edit-guardian-container" class="md:col-span-2 bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded border border-yellow-200 dark:border-yellow-800">
+                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 mb-3 border-b border-yellow-105 dark:border-yellow-800 pb-1.5">
+                                    <h4 class="text-xs font-bold text-yellow-800 dark:text-yellow-500 uppercase flex flex-wrap items-center gap-1">
+                                        <i class="fa-solid fa-user-shield"></i> Dados do Responsável Legal
+                                        <span id="edit-guardian-status-badge" class="text-[10px] font-bold text-gray-500 dark:text-gray-400 ml-1.5"></span>
+                                    </h4>
+                                    <button type="button" onclick="document.getElementById('edit-guardian').value=''; document.getElementById('edit-guardian-cpf').value=''; document.getElementById('edit-guardian-kinship').value='';" class="text-[10px] font-bold text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition uppercase flex items-center gap-1 leading-none py-1 px-2 hover:bg-red-50 dark:hover:bg-red-950/20 rounded">
+                                        <i class="fa-solid fa-trash-can"></i> Remover Responsável
+                                    </button>
+                                </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-[10px] font-bold text-yellow-800 dark:text-yellow-500 mb-1 uppercase">Nome do Pai/Mãe/Responsável</label>
@@ -4537,9 +4545,37 @@
         };
 
         window.checkAdminEditAge = function() {
-            const dob = document.getElementById('edit-dob').value; const container = document.getElementById('admin-edit-guardian-container');
-            if(dob && dob.length === 10) { const age = getAge(dob); if(age !== null && age < 18) { if(container) container.classList.remove('hidden'); } else { if(container) container.classList.add('hidden'); } } 
-            else { if(container) container.classList.remove('hidden'); }
+            const dob = document.getElementById('edit-dob').value;
+            const container = document.getElementById('admin-edit-guardian-container');
+            const guardianName = document.getElementById('edit-guardian');
+            const guardianCpf = document.getElementById('edit-guardian-cpf');
+            
+            if (container) {
+                container.classList.remove('hidden');
+            }
+            
+            const badge = document.getElementById('edit-guardian-status-badge');
+            if (badge) {
+                if (dob && dob.length === 10) {
+                    const age = getAge(dob);
+                    if (age !== null && age < 18) {
+                        badge.innerText = '(Obrigatório - Menor de idade)';
+                        badge.className = 'text-[11px] font-bold text-red-600 dark:text-red-400 ml-1.5';
+                        if (guardianName) guardianName.setAttribute('required', 'true');
+                        if (guardianCpf) guardianCpf.setAttribute('required', 'true');
+                    } else {
+                        badge.innerText = '(Opcional para maiores de idade)';
+                        badge.className = 'text-[11px] font-bold text-gray-500 dark:text-gray-400 ml-1.5';
+                        if (guardianName) guardianName.removeAttribute('required');
+                        if (guardianCpf) guardianCpf.removeAttribute('required');
+                    }
+                } else {
+                    badge.innerText = '(Opcional)';
+                    badge.className = 'text-[11px] font-bold text-gray-500 dark:text-gray-400 ml-1.5';
+                    if (guardianName) guardianName.removeAttribute('required');
+                    if (guardianCpf) guardianCpf.removeAttribute('required');
+                }
+            }
         };
 
         window.populateTitularSelects = function() {
