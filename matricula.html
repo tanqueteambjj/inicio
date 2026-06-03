@@ -204,6 +204,13 @@
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Data de Nascimento <span class="text-brand-red">*</span></label>
                             <input type="text" id="reg-dob" required placeholder="DD/MM/AAAA" maxlength="10" class="w-full bg-gray-900 border border-gray-800 px-4 py-3 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm font-mono" oninput="window.maskDate(this); window.handleAgeCheck()">
+                            <!-- Alertas de Idade -->
+                            <div id="dob-warning-box" class="mt-1.5 text-xs font-bold text-brand-red hidden flex items-center gap-1.5 max-w-full leading-tight">
+                                <i class="fa-solid fa-triangle-exclamation shrink-0"></i> <span id="dob-warning-text"></span>
+                            </div>
+                            <div id="dob-info-box" class="mt-1.5 text-xs font-bold text-emerald-500 hidden flex items-center gap-1.5 max-w-full leading-tight">
+                                <i class="fa-solid fa-circle-check shrink-0"></i> <span id="dob-info-text"></span>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-1" id="label-student-cpf">CPF do Aluno <span class="text-brand-red">*</span></label>
@@ -507,14 +514,33 @@
                 document.getElementById('reg-guardian').required = false;
                 document.getElementById('reg-guardian-cpf').required = false;
             }
+
+            if (window.handleAgeCheck) {
+                window.handleAgeCheck();
+            }
         };
 
         window.handleAgeCheck = () => {
             const dobVal = document.getElementById('reg-dob').value;
+            const warnBox = document.getElementById('dob-warning-box');
+            const warnText = document.getElementById('dob-warning-text');
+            const infoBox = document.getElementById('dob-info-box');
+            const infoText = document.getElementById('dob-info-text');
+
+            if (!warnBox || !infoBox) return;
+
+            // Initially hide both
+            warnBox.classList.add('hidden');
+            infoBox.classList.add('hidden');
+
             if (!dobVal || dobVal.length < 10) return;
             
             const birth = window.parseDateBR(dobVal);
-            if (!birth) return;
+            if (!birth) {
+                warnBox.classList.remove('hidden');
+                warnText.innerText = "Data inválida (DD/MM/AAAA)";
+                return;
+            }
             
             const today = new Date();
             let age = today.getFullYear() - birth.getFullYear();
@@ -522,26 +548,24 @@
             if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
                 age--;
             }
-            
-            // Auto switch to minor mode if under 18 and 'adult' is selected asks first
+
             const currentType = document.querySelector('input[name="enrollment_type"]:checked').value;
-            if (age < 18 && currentType === 'adult') {
-                if (confirm("A data de nascimento preenchida indica que o aluno possui menos de 18 anos.\n\nDeseja alterar o formulário para incluir os dados de um responsável legal/financeiro?\n\n(Clique em OK para alterar o formulário, ou em Cancelar se você digitou a data errada para poder corrigi-la).")) {
-                    document.querySelector('input[name="enrollment_type"][value="minor"]').checked = true;
-                    window.handleTypeChange();
+            
+            if (age < 18) {
+                if (currentType === 'adult') {
+                    warnBox.classList.remove('hidden');
+                    warnText.innerText = `⚠️ Menor de idade (${age} anos). Requer responsável legal.`;
                 } else {
-                    const dobInput = document.getElementById('reg-dob');
-                    if (dobInput) dobInput.focus();
+                    infoBox.classList.remove('hidden');
+                    infoText.innerText = `Menor de idade (${age} anos).`;
                 }
-            } else if (age >= 18 && currentType === 'minor') {
-                if (confirm("A data de nascimento preenchida indica que o aluno é maior de idade (18 anos ou mais).\n\nDeseja alterar o formulário para 'Eu Mesmo' (Maior de idade) e remover a exigência de um responsável legal?\n\n(Clique em OK para alterar o formulário, ou em Cancelar se você digitou a data errada para poder corrigi-la).")) {
-                    document.querySelector('input[name="enrollment_type"][value="adult"]').checked = true;
-                    window.handleTypeChange();
-                    document.getElementById('reg-guardian').value = '';
-                    document.getElementById('reg-guardian-cpf').value = '';
+            } else {
+                if (currentType === 'minor') {
+                    warnBox.classList.remove('hidden');
+                    warnText.innerText = `⚠️ Maior de idade (${age} anos). Não requer responsável legal.`;
                 } else {
-                    const dobInput = document.getElementById('reg-dob');
-                    if (dobInput) dobInput.focus();
+                    infoBox.classList.remove('hidden');
+                    infoText.innerText = `Maior de idade (${age} anos).`;
                 }
             }
         };
@@ -697,26 +721,30 @@
 
                 const type = document.querySelector('input[name="enrollment_type"]:checked').value;
                 if (age >= 18 && type === 'minor') {
-                    if (confirm("O aluno é maior de idade (18 anos ou mais) e não precisa de responsável legal.\n\nDeseja alterar o formulário para 'Eu Mesmo' (Maior de idade)?\n\n(Clique em OK para alterar o formulário, ou em Cancelar para corrigir a data de nascimento do aluno).")) {
-                        document.querySelector('input[name="enrollment_type"][value="adult"]').checked = true;
-                        window.handleTypeChange();
-                        document.getElementById('reg-guardian').value = '';
-                        document.getElementById('reg-guardian-cpf').value = '';
-                    } else {
-                        const dobInput = document.getElementById('reg-dob');
-                        if (dobInput) dobInput.focus();
-                    }
+                    window.showAgeConfirmModal(
+                        "Aluno Maior de Idade",
+                        `A data de nascimento preenchida indica que o aluno é maior de idade (${age} anos), mas o formulário está configurado para "Menor de idade" (Meu Filho). \n\nDeseja alterar o formulário para "Eu Mesmo (Maior de idade)" para prosseguir?`,
+                        "Mudar para Maior de Idade",
+                        () => {
+                            document.querySelector('input[name="enrollment_type"][value="adult"]').checked = true;
+                            window.handleTypeChange();
+                            document.getElementById('reg-guardian').value = '';
+                            document.getElementById('reg-guardian-cpf').value = '';
+                        }
+                    );
                     return false;
                 }
 
                 if (age < 18 && type === 'adult') {
-                    if (confirm("O aluno é menor de idade e necessita possuir um responsável legal cadastrado para prosseguir.\n\nDeseja alterar o formulário para 'Meu Filho(a) / Menor de Idade' para preencher os dados do responsável?\n\n(Clique em OK para alterar o formulário, ou em Cancelar para corrigir a data de nascimento do aluno).")) {
-                        document.querySelector('input[name="enrollment_type"][value="minor"]').checked = true;
-                        window.handleTypeChange();
-                    } else {
-                        const dobInput = document.getElementById('reg-dob');
-                        if (dobInput) dobInput.focus();
-                    }
+                    window.showAgeConfirmModal(
+                        "Aluno Menor de Idade",
+                        `A data de nascimento preenchida indica que o aluno é menor de idade (${age} anos), mas você selecionou a opção "Eu Mesmo" (Maior de idade).\n\nDeseja alterar o formulário para "Meu Filho (Menor de idade)" para incluir os dados do responsável financeiro/legal?`,
+                        "Mudar para Menor de Idade",
+                        () => {
+                            document.querySelector('input[name="enrollment_type"][value="minor"]').checked = true;
+                            window.handleTypeChange();
+                        }
+                    );
                     return false;
                 }
 
@@ -1321,6 +1349,29 @@
                 } catch (e) {}
             }
         };
+
+        window.showAgeConfirmModal = (title, text, buttonText, onConfirm) => {
+            document.getElementById('age-confirm-title').innerText = title;
+            document.getElementById('age-confirm-description').innerText = text;
+            document.getElementById('btn-age-confirm-text').innerText = buttonText;
+            
+            const btn = document.getElementById('btn-age-confirm-action');
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            
+            newBtn.addEventListener('click', () => {
+                onConfirm();
+                window.closeAgeConfirmModal();
+            });
+            
+            document.getElementById('age-confirm-modal').classList.remove('hidden');
+        };
+
+        window.closeAgeConfirmModal = () => {
+            document.getElementById('age-confirm-modal').classList.add('hidden');
+            const dobInput = document.getElementById('reg-dob');
+            if (dobInput) dobInput.focus();
+        };
     </script>
 
     <!-- Crop Modal -->
@@ -1362,6 +1413,30 @@
                 </button>
                 <button type="button" onclick="window.applyCrop()" class="px-5 py-2 bg-brand-red hover:bg-red-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg transition flex items-center gap-1.5">
                     <i class="fa-solid fa-check"></i> Confirmar Ajuste
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Age Clarification / Confirmation Modal -->
+    <div id="age-confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden p-4 animate-fade-in">
+        <div class="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl scale-100 transition-all p-6">
+            <div class="flex items-center justify-center w-14 h-14 bg-red-500/10 border border-red-500/30 text-brand-red rounded-full mx-auto mb-4">
+                <i class="fa-solid fa-triangle-exclamation text-2xl animate-pulse"></i>
+            </div>
+            
+            <h3 class="font-display font-black text-lg tracking-wider text-white uppercase text-center mb-2" id="age-confirm-title">Inconsistência de Idade</h3>
+            
+            <p class="text-xs text-gray-300 text-center leading-relaxed mb-6" id="age-confirm-description">
+                A data de nascimento preenchida indica uma divergência operacional com a opção selecionada no formulário.
+            </p>
+
+            <div class="flex flex-col gap-3">
+                <button type="button" id="btn-age-confirm-action" class="w-full py-3.5 bg-brand-red hover:bg-red-700 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-arrows-left-right text-xs"></i> <span id="btn-age-confirm-text">Alterar Formulário</span>
+                </button>
+                <button type="button" onclick="window.closeAgeConfirmModal()" class="w-full py-3 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white font-bold rounded-xl text-xs uppercase tracking-wider transition border border-gray-750">
+                    Corrigir Data de Nascimento
                 </button>
             </div>
         </div>
