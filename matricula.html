@@ -31,6 +31,9 @@
     <!-- Cropper.js -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    
+    <!-- EmailJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
     <style>
         body {
@@ -466,6 +469,10 @@
         const db = getFirestore(app);
         const APP_ID = "tanqueteam-bjj";
 
+        if (window.emailjs) {
+            window.emailjs.init("joP6USyQXdqGI3GN5");
+        }
+
         // FALLBACK PLANS DICT
         const PLAN_DICT = {
             'adulto-semestral': { price: 126.90, short: 'Adulto Semestral', long: 'ADULTO SEMESTRAL' },
@@ -864,6 +871,102 @@
             }
         };
 
+        // SEND PRE-REGISTRATION CONFIRMATION EMAIL VIA EMAILJS
+        window.sendPreRegistrationEmails = async (data) => {
+            if (!window.emailjs) {
+                console.error("EmailJS não carregado ou inicializado.");
+                return;
+            }
+
+            const formatValue = (val) => {
+                const numeric = parseFloat(val);
+                return isNaN(numeric) ? "0,00" : numeric.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+            };
+
+            const enrollmentLabels = {
+                'adult': 'Eu Mesmo (Maior de idade)',
+                'minor': 'Meu Filho / Menor de Idade',
+                'combo': 'Combo Família / Dependente'
+            };
+            const typeLabel = enrollmentLabels[data.enrollment_type] || data.enrollment_type;
+
+            const planFormattedValue = `R$ ${formatValue(data.planValue)}`;
+
+            // 1. STUDENT EMAIL MESSAGE
+            const studentMessage = `Olá, ${data.name}!
+
+Sua pré-matrícula na Tanque Team BJJ foi recebida com sucesso! 🥋
+
+Aqui estão os detalhes do seu cadastro:
+• Nome: ${data.name}
+• Tipo de Inscrição: ${typeLabel}
+• Plano Escolhido: ${data.planName} (Valor: ${planFormattedValue}/mês)
+• Data de Nascimento: ${data.dobBR || ''}
+• Graduação: ${data.belt}
+
+Próximo Passo:
+Para concluir sua matrícula e liberar seu acesso, por favor compareça à recepção da Tanque Team BJJ ou toque no link do WhatsApp na tela de confirmação para combinar os horários e o primeiro pagamento.
+
+Oss!
+Equipe Tanque Team BJJ`;
+
+            const studentParams = {
+                to_name: data.name,
+                to_email: data.email,
+                message: studentMessage,
+                login: "",
+                password: "",
+                subject: "Pré-Matrícula Recebida - Tanque Team BJJ 🥋"
+            };
+
+            // 2. ACADEMY SUMMARY EMAIL (RESUMIDO)
+            let academyMessage = `Ficha de Pré-Matrícula Recebida!
+
+DADOS RESUMIDOS DO ALUNO:
+• Aluno: ${data.name}
+• Data de Nasc.: ${data.dobBR || ''}
+• CPF: ${data.cpf || 'Não informado'}
+• Telefone: ${data.phone}
+• E-mail: ${data.email}
+• Endereço: ${data.address || ''} (CEP: ${data.cep || ''})
+• Tipo Insc.: ${typeLabel}
+• Plano: ${data.planName} (${planFormattedValue}/mês)
+• Graduação: ${data.belt}
+• Origem (Como conheceu): ${data.origin || 'Não informado'}`;
+
+            if (data.enrollment_type === 'minor') {
+                academyMessage += `\n• Responsável: ${data.guardian || ''} (CPF: ${data.guardianCpf || ''}, Parentesco: ${data.guardianKinship || ''})`;
+            }
+
+            if (data.dependents && data.dependents.length > 0) {
+                academyMessage += `\n• Dependentes (${data.dependents.length}):`;
+                data.dependents.forEach((dep, idx) => {
+                    academyMessage += `\n  - Dep ${idx + 1}: ${dep.name} (${dep.belt})`;
+                });
+            }
+
+            academyMessage += `\n\nPor favor, acesse o Painel Administrativo para aprovar a ficha e liberar o acesso do aluno.`;
+
+            const academyParams = {
+                to_name: "Tanque Team BJJ",
+                to_email: "tanqueteambjj@gmail.com",
+                message: academyMessage,
+                login: "",
+                password: "",
+                subject: `[Nova Pré-Matrícula] ${data.name} - ${data.planName}`
+            };
+
+            try {
+                await Promise.all([
+                    window.emailjs.send("service_yq744mr", "template_few5bna", studentParams),
+                    window.emailjs.send("service_yq744mr", "template_few5bna", academyParams)
+                ]);
+                console.log("E-mails de pré-matrícula enviados com sucesso via EmailJS!");
+            } catch (err) {
+                console.error("Erro na chamada do EmailJS:", err);
+            }
+        };
+
         // SUBMIT PRE-REGISTRATION TO FIRESTORE
         window.submitPreRegistration = async () => {
             const btnNext = document.getElementById('btn-next');
@@ -941,6 +1044,13 @@
                 };
                 
                 await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'pre_registrations'), data);
+
+                // Enviar e-mails de confirmação
+                try {
+                    await window.sendPreRegistrationEmails({ ...data, dobBR: dob });
+                } catch (emailError) {
+                    console.error("Erro no envio dos e-mails de confirmação:", emailError);
+                }
                 
                 // Track success visual state
                 document.getElementById('step-4').classList.add('hidden');
