@@ -23,16 +23,18 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- SortableJS for drag and drop -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
     <!-- EmailJS SDK -->
     <script
+      defer
       type="text/javascript"
       src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"
     ></script>
 
     <!-- Leitor de QR Code HTML5 -->
     <script
+      defer
       src="https://unpkg.com/html5-qrcode"
       type="text/javascript"
     ></script>
@@ -42,7 +44,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"
       rel="stylesheet"
     />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
     <link
       href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&display=swap"
@@ -252,10 +254,17 @@
           <span class="ml-2">Configurações</span>
         </a>
       </nav>
-      <div class="p-4 border-t border-gray-800">
+      <div class="p-4 border-t border-gray-800 flex flex-col gap-2">
+        <button
+          onclick="window.refreshAllData()"
+          class="flex items-center w-full px-4 py-2 text-emerald-400 hover:text-emerald-350 transition font-bold text-sm bg-emerald-950/20 rounded-lg border border-emerald-900/30 hover:bg-emerald-900/10"
+        >
+          <i class="fa-solid fa-arrows-rotate w-6" id="sidebar-refresh-icon"></i>
+          <span class="ml-2">Sincronizar Dados</span>
+        </button>
         <button
           onclick="window.handleLogout()"
-          class="flex items-center w-full px-4 py-2 text-red-400 hover:text-red-300 transition font-bold"
+          class="flex items-center w-full px-4 py-2 text-red-400 hover:text-red-300 transition font-bold text-sm"
         >
           <i class="fa-solid fa-right-from-bracket w-6"></i>
           <span class="ml-2">Sair</span>
@@ -294,10 +303,23 @@
             id="searchInput"
             onkeyup="window.filterTable()"
             placeholder="Buscar aluno..."
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="none"
+            spellcheck="false"
             class="w-full pl-10 pr-4 py-2 border dark:border-gray-600 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red transition-colors"
           />
         </div>
         <div class="flex items-center gap-3">
+          <!-- Botão Sincronizar (Geral) -->
+          <button
+            onclick="window.refreshAllData()"
+            title="Sincronizar Dados"
+            id="refresh-data-btn"
+            class="text-gray-400 hover:text-brand-red dark:text-gray-300 dark:hover:text-emerald-400 focus:outline-none text-lg transition-colors w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700/50"
+          >
+            <i class="fa-solid fa-arrows-rotate"></i>
+          </button>
           <!-- Botão Modo Noturno -->
           <button
             onclick="window.toggleTheme()"
@@ -541,6 +563,10 @@
                   id="searchInputMobile1"
                   onkeyup="window.filterTable()"
                   placeholder="Buscar aluno..."
+                  autocomplete="off"
+                  autocorrect="off"
+                  autocapitalize="none"
+                  spellcheck="false"
                   class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red transition"
                 />
               </div>
@@ -2585,6 +2611,10 @@
                 type="text"
                 id="manual-att-search"
                 placeholder="Digite o nome do aluno..."
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="none"
+                spellcheck="false"
                 oninput="window.filterManualPresenceStudents()"
                 class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded pl-10 pr-4 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 transition-all"
               />
@@ -8149,6 +8179,13 @@
             themeIconMobile.classList.add("fa-sun");
           }
         }
+        // Force clear search inputs to avoid cached autofill text on reload/navigation
+        const sInput = document.getElementById("searchInput");
+        if (sInput) sInput.value = "";
+        const sLogMobile = document.getElementById("searchInputMobile1");
+        if (sLogMobile) sLogMobile.value = "";
+        const sManual = document.getElementById("manual-att-search");
+        if (sManual) sManual.value = "";
       });
 
       window.printHtmlContent = function (htmlContent, titleStr) {
@@ -9001,6 +9038,42 @@
           document.getElementById("reg-titular").innerHTML = optionsHtml;
         if (document.getElementById("edit-titular"))
           document.getElementById("edit-titular").innerHTML = optionsHtml;
+      };
+
+      window.refreshAllData = async () => {
+        const refreshBtn = document.getElementById("refresh-data-btn");
+        const sidebarIcon = document.getElementById("sidebar-refresh-icon");
+        
+        if (refreshBtn) {
+          const icon = refreshBtn.querySelector("i");
+          if (icon) icon.classList.add("fa-spin");
+        }
+        if (sidebarIcon) {
+          sidebarIcon.classList.add("fa-spin");
+        }
+        
+        try {
+          if (window.loadPlans) await window.loadPlans();
+          if (window.loadSchedules) await window.loadSchedules();
+          if (window.loadData) await window.loadData();
+          if (window.loadNotices) await window.loadNotices();
+          if (window.loadExperimentalData) await window.loadExperimentalData();
+          if (window.loadPreRegistrations) await window.loadPreRegistrations();
+          if (window.loadAttendance) await window.loadAttendance();
+          
+          window.customAlert("Dados sincronizados com sucesso!");
+        } catch (e) {
+          console.error("Erro ao sincronizar dados:", e);
+          window.customAlert("Erro ao sincronizar dados. Tente novamente.");
+        } finally {
+          if (refreshBtn) {
+            const icon = refreshBtn.querySelector("i");
+            if (icon) icon.classList.remove("fa-spin");
+          }
+          if (sidebarIcon) {
+            sidebarIcon.classList.remove("fa-spin");
+          }
+        }
       };
 
       window.loadData = async function () {
@@ -12389,7 +12462,7 @@ Belém-PA, [DATA_ATUAL].
         }
       };
 
-      window.enrollExperimentalStudent = (id) => {
+      window.enrollExperimentalStudent = async (id) => {
         const exp = window.experimentalList.find((x) => x.id === id);
         if (!exp) return;
 
@@ -12454,8 +12527,8 @@ Belém-PA, [DATA_ATUAL].
                   "experimental",
                   id,
                 );
-          updateDoc(path, { status: "Matriculado" });
-          window.loadExperimentalData();
+          await updateDoc(path, { status: "Matriculado" });
+          await window.loadExperimentalData();
         } catch (e) {
           console.error("Erro ao atualizar status da aula experimental", e);
         }
