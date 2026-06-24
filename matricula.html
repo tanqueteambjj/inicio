@@ -142,8 +142,8 @@
                     <!-- FOTO DE PERFIL / RECONHECIMENTO FACIAL -->
                     <div class="flex flex-col items-center justify-center p-4 bg-gray-950/40 border border-gray-800 rounded-2xl gap-4">
                         <div class="text-center">
-                            <label class="block text-xs font-black text-gray-300 uppercase tracking-widest mb-1">Foto de Perfil (Facial de Segurança) <span class="text-brand-red font-black">*</span></label>
-                            <p class="text-[10px] text-gray-400">Insira uma foto nítida do seu rosto para o seu perfil e reconhecimento eletrônico.</p>
+                            <label class="block text-xs font-black text-gray-300 uppercase tracking-widest mb-1" id="profile-photo-label">Foto de Perfil <span class="text-brand-red font-black">*</span></label>
+                            <p class="text-[10px] text-gray-400" id="profile-photo-desc">Insira uma foto nítida do seu rosto para o seu perfil e reconhecimento eletrônico.</p>
                         </div>
 
                         <!-- Scan Frame Container -->
@@ -495,6 +495,7 @@
             const dependentsDiv = document.getElementById('dependents-container');
             const step2Title = document.getElementById('step2-title');
             const labelCpf = document.getElementById('label-student-cpf');
+            const photoDesc = document.getElementById('profile-photo-desc');
             
             if (val === 'minor') {
                 guardianDiv.classList.remove('hidden');
@@ -504,6 +505,11 @@
                 document.getElementById('reg-cpf').required = false;
                 document.getElementById('reg-guardian').required = true;
                 document.getElementById('reg-guardian-cpf').required = true;
+                if (photoDesc) {
+                    photoDesc.innerText = "Atenção: A foto de perfil cadastrada deve ser a do próprio ALUNO (menor de idade), não do responsável.";
+                    photoDesc.classList.add('text-brand-red');
+                    photoDesc.classList.remove('text-gray-400');
+                }
             } else if (val === 'combo') {
                 guardianDiv.classList.add('hidden');
                 dependentsDiv.classList.remove('hidden');
@@ -512,6 +518,11 @@
                 document.getElementById('reg-cpf').required = true;
                 document.getElementById('reg-guardian').required = false;
                 document.getElementById('reg-guardian-cpf').required = false;
+                if (photoDesc) {
+                    photoDesc.innerText = "Insira uma foto nítida do seu rosto para o seu perfil e reconhecimento eletrônico.";
+                    photoDesc.classList.remove('text-brand-red');
+                    photoDesc.classList.add('text-gray-400');
+                }
             } else {
                 guardianDiv.classList.add('hidden');
                 dependentsDiv.classList.add('hidden');
@@ -520,6 +531,11 @@
                 document.getElementById('reg-cpf').required = true;
                 document.getElementById('reg-guardian').required = false;
                 document.getElementById('reg-guardian-cpf').required = false;
+                if (photoDesc) {
+                    photoDesc.innerText = "Insira uma foto nítida do seu rosto para o seu perfil e reconhecimento eletrônico.";
+                    photoDesc.classList.remove('text-brand-red');
+                    photoDesc.classList.add('text-gray-400');
+                }
             }
 
             if (window.handleAgeCheck) {
@@ -584,17 +600,42 @@
             const div = document.createElement('div');
             div.className = "bg-gray-800/50 p-4 border border-gray-700/60 rounded-xl relative space-y-3 animate-fade-in";
             div.innerHTML = `
-                <button type="button" onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-500 hove:text-brand-red text-xs">
+                <button type="button" onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-500 hover:text-brand-red text-xs">
                     <i class="fa-solid fa-trash"></i>
                 </button>
                 <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Dependente #${count}</div>
+                
+                <!-- Foto de Perfil do Dependente -->
+                <div class="flex flex-col sm:flex-row items-center gap-4 bg-gray-950/40 p-3 border border-gray-750 rounded-xl">
+                    <div class="relative w-16 h-16 flex items-center justify-center bg-gray-900 border border-gray-850 rounded-full overflow-hidden shrink-0">
+                        <img class="extra-dep-preview hidden w-full h-full object-cover" src="" alt="Foto">
+                        <div class="extra-dep-placeholder flex flex-col items-center justify-center text-gray-600 text-center">
+                            <i class="fa-solid fa-user text-lg mb-0.5 animate-pulse"></i>
+                            <span class="text-[7px] uppercase tracking-wider text-gray-500">Sem Foto</span>
+                        </div>
+                    </div>
+                    <div class="space-y-1.5 flex-1 w-full text-center sm:text-left">
+                        <label class="block text-[10px] font-black text-gray-300 uppercase tracking-wider">Foto do Dependente <span class="text-brand-red font-black">*</span></label>
+                        <div class="flex gap-2 justify-center sm:justify-start">
+                            <label class="cursor-pointer bg-gray-900 border border-gray-750 hover:border-gray-700 px-2.5 py-1.5 rounded-lg text-white font-bold text-[9px] uppercase transition flex items-center gap-1 select-none">
+                                <i class="fa-solid fa-upload"></i> Enviar Foto
+                                <input type="file" accept="image/*" class="extra-dep-file hidden" onchange="window.handleDepPhotoUpload(this)">
+                            </label>
+                            <button type="button" class="bg-gray-900 border border-gray-750 hover:border-gray-700 px-2.5 py-1.5 rounded-lg text-white font-bold text-[9px] uppercase transition flex items-center gap-1" onclick="window.captureDepPhoto(this)">
+                                <i class="fa-solid fa-camera"></i> Câmera
+                            </button>
+                        </div>
+                        <input type="hidden" class="extra-dep-photo-data" value="">
+                    </div>
+                </div>
+
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nome Completo do Dependente</label>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nome Completo do Dependente <span class="text-brand-red">*</span></label>
                     <input type="text" required placeholder="NOME DO DEPENDENTE" class="extra-dep-name w-full bg-gray-900 border border-gray-700 px-3 py-2 rounded-lg focus:border-brand-red focus:outline-none uppercase text-white font-bold text-xs">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nascimento</label>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nascimento <span class="text-brand-red">*</span></label>
                         <input type="text" required placeholder="DD/MM/AAAA" maxlength="10" oninput="window.maskDate(this)" class="extra-dep-dob w-full bg-gray-900 border border-gray-700 px-3 py-2 rounded-lg focus:border-brand-red focus:outline-none text-white text-xs font-mono">
                     </div>
                     <div>
@@ -812,12 +853,17 @@
                             alert(`A data de nascimento do dependente "${dName}" não está no formato correto (DD/MM/AAAA) ou não possui uma data real.`);
                             return false;
                         }
+                        const dPhoto = div.querySelector('.extra-dep-photo-data').value;
+                        if (!dPhoto) {
+                            alert(`A foto de perfil para o dependente "${dName}" é obrigatória. Por favor, tire ou envie uma foto para este dependente.`);
+                            return false;
+                        }
                     }
                 }
 
                 // Facial profile photo check
                 if (!window.facialPhotoBase64) {
-                    alert("A foto de perfil (Facial de Segurança) é obrigatória para prosseguir. Ative a câmera ou faça o envio de uma imagem.");
+                    alert("A foto de perfil é obrigatória para prosseguir. Ative a câmera ou faça o envio de uma imagem.");
                     return false;
                 }
                 return true;
@@ -1134,8 +1180,15 @@ DADOS RESUMIDOS DO ALUNO:
                         const dColor = div.querySelector('.extra-dep-belt-color').value;
                         const dDegree = div.querySelector('.extra-dep-belt-degree').value;
                         const dBelt = `Faixa ${dColor} - ${dDegree}º Grau`;
+                        const dPhoto = div.querySelector('.extra-dep-photo-data').value;
                         if (dName && dDob) {
-                            dependents.push({ name: dName, dob: dIsoDob, kinship: dKin, belt: dBelt });
+                            dependents.push({ 
+                                name: dName, 
+                                dob: dIsoDob, 
+                                kinship: dKin, 
+                                belt: dBelt,
+                                photoBase64: dPhoto || null
+                            });
                         }
                     });
                 }
@@ -1477,6 +1530,19 @@ DADOS RESUMIDOS DO ALUNO:
                 height: 400
             });
             const croppedBase64 = canvas.toDataURL('image/jpeg', 0.90);
+            
+            if (window.currentCropTarget && window.currentCropTarget !== 'titular') {
+                const target = window.currentCropTarget;
+                target.input.value = croppedBase64;
+                target.preview.src = croppedBase64;
+                target.preview.classList.remove('hidden');
+                target.placeholder.classList.add('hidden');
+                
+                window.closeCropModal();
+                window.currentCropTarget = null;
+                return;
+            }
+
             window.facialPhotoBase64 = croppedBase64;
 
             const preview = document.getElementById('facial-img-preview');
@@ -1502,6 +1568,103 @@ DADOS RESUMIDOS DO ALUNO:
             document.getElementById('btn-remove-photo').classList.remove('hidden');
 
             window.closeCropModal();
+        };
+
+        // DEPENDENTS PHOTO ROUTINES
+        window.handleDepPhotoUpload = (input) => {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const rawBase64 = e.target.result;
+                    const container = input.closest('.flex-col') || input.parentElement.parentElement;
+                    const rootBox = container.closest('.bg-gray-800\\/50') || container.parentElement;
+                    const preview = rootBox.querySelector('.extra-dep-preview');
+                    const placeholder = rootBox.querySelector('.extra-dep-placeholder');
+                    const inputData = rootBox.querySelector('.extra-dep-photo-data');
+                    
+                    window.currentCropTarget = {
+                        input: inputData,
+                        preview: preview,
+                        placeholder: placeholder
+                    };
+                    window.openCropModal(rawBase64);
+                };
+                reader.readAsDataURL(file);
+                input.value = "";
+            }
+        };
+
+        let depMediaStream = null;
+        window.captureDepPhoto = (btn) => {
+            const rootBox = btn.closest('.bg-gray-800\\/50') || btn.parentElement.parentElement.parentElement;
+            const preview = rootBox.querySelector('.extra-dep-preview');
+            const placeholder = rootBox.querySelector('.extra-dep-placeholder');
+            const inputData = rootBox.querySelector('.extra-dep-photo-data');
+            
+            window.currentCropTarget = {
+                input: inputData,
+                preview: preview,
+                placeholder: placeholder
+            };
+
+            window.openDepCameraModal();
+        };
+
+        window.openDepCameraModal = async () => {
+            const modal = document.getElementById('dep-camera-modal');
+            const video = document.getElementById('dep-camera-video');
+            if (modal) modal.classList.remove('hidden');
+
+            try {
+                if (depMediaStream) {
+                    depMediaStream.getTracks().forEach(track => track.stop());
+                }
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }
+                });
+                depMediaStream = stream;
+                if (video) video.srcObject = stream;
+            } catch (err) {
+                console.error("Camera error for dependent:", err);
+                alert("Não foi possível acessar a câmera do dispositivo. Utilize a opção 'Enviar Foto'.");
+                window.closeDepCameraModal();
+            }
+        };
+
+        window.closeDepCameraModal = () => {
+            const modal = document.getElementById('dep-camera-modal');
+            if (modal) modal.classList.add('hidden');
+            if (depMediaStream) {
+                depMediaStream.getTracks().forEach(track => track.stop());
+                depMediaStream = null;
+            }
+        };
+
+        window.captureDepCameraPhoto = () => {
+            const video = document.getElementById('dep-camera-video');
+            if (!video || !depMediaStream) return;
+
+            const canvas = document.createElement('canvas');
+            const vWidth = video.videoWidth || 640;
+            const vHeight = video.videoHeight || 480;
+            canvas.width = vWidth;
+            canvas.height = vHeight;
+            const ctx = canvas.getContext('2d');
+
+            ctx.translate(vWidth, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0, vWidth, vHeight);
+
+            const base64 = canvas.toDataURL('image/jpeg', 0.95);
+            window.closeDepCameraModal();
+
+            // Open the crop modal immediately!
+            window.openCropModal(base64);
         };
 
     </script>
@@ -1671,6 +1834,34 @@ DADOS RESUMIDOS DO ALUNO:
                 </button>
                 <button type="button" onclick="window.closeAgeConfirmModal()" class="w-full py-3 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white font-bold rounded-xl text-xs uppercase tracking-wider transition border border-gray-750">
                     Corrigir Data de Nascimento
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dependent Camera Modal -->
+    <div id="dep-camera-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm hidden p-4">
+        <div class="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
+            <div class="px-5 py-4 border-b border-gray-850 flex justify-between items-center bg-gray-950">
+                <h4 class="font-display font-bold text-sm tracking-widest text-brand-red uppercase">Tirar Foto do Dependente</h4>
+                <button type="button" onclick="window.closeDepCameraModal()" class="text-gray-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="p-5 flex flex-col items-center gap-4">
+                <div class="relative w-64 h-64 rounded-full border-4 border-brand-red/40 overflow-hidden flex items-center justify-center bg-gray-950">
+                    <video id="dep-camera-video" autoplay playsinline class="w-full h-full object-cover scale-x-[-1]"></video>
+                </div>
+                <p class="text-[10px] text-gray-400 text-center">
+                    Posicione o rosto do dependente no centro e clique em Capturar.
+                </p>
+            </div>
+            <div class="px-5 py-4 border-t border-gray-850 bg-gray-950 flex justify-end gap-2.5">
+                <button type="button" onclick="window.closeDepCameraModal()" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-xl text-xs font-bold uppercase tracking-wider transition">
+                    Cancelar
+                </button>
+                <button type="button" onclick="window.captureDepCameraPhoto()" class="px-5 py-2 bg-brand-red hover:bg-red-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-camera"></i> Capturar
                 </button>
             </div>
         </div>
