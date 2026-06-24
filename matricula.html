@@ -143,7 +143,7 @@
                     <div class="flex flex-col items-center justify-center p-4 bg-gray-950/40 border border-gray-800 rounded-2xl gap-4">
                         <div class="text-center">
                             <label class="block text-xs font-black text-gray-300 uppercase tracking-widest mb-1" id="profile-photo-label">Foto de Perfil <span class="text-brand-red font-black">*</span></label>
-                            <p class="text-[10px] text-gray-400" id="profile-photo-desc">Insira uma foto nítida do seu rosto para o seu perfil e reconhecimento eletrônico.</p>
+                            <p class="text-[10px] text-gray-400" id="profile-photo-desc">Insira uma foto nítida do rosto do ALUNO para o seu perfil e reconhecimento.</p>
                         </div>
 
                         <!-- Scan Frame Container -->
@@ -519,7 +519,7 @@
                 document.getElementById('reg-guardian').required = false;
                 document.getElementById('reg-guardian-cpf').required = false;
                 if (photoDesc) {
-                    photoDesc.innerText = "Insira uma foto nítida do seu rosto para o seu perfil e reconhecimento eletrônico.";
+                    photoDesc.innerText = "Insira uma foto nítida do rosto do ALUNO para o seu perfil e reconhecimento.";
                     photoDesc.classList.remove('text-brand-red');
                     photoDesc.classList.add('text-gray-400');
                 }
@@ -532,7 +532,7 @@
                 document.getElementById('reg-guardian').required = false;
                 document.getElementById('reg-guardian-cpf').required = false;
                 if (photoDesc) {
-                    photoDesc.innerText = "Insira uma foto nítida do seu rosto para o seu perfil e reconhecimento eletrônico.";
+                    photoDesc.innerText = "Insira uma foto nítida do rosto do ALUNO para o seu perfil e reconhecimento.";
                     photoDesc.classList.remove('text-brand-red');
                     photoDesc.classList.add('text-gray-400');
                 }
@@ -615,7 +615,7 @@
                         </div>
                     </div>
                     <div class="space-y-1.5 flex-1 w-full text-center sm:text-left">
-                        <label class="block text-[10px] font-black text-gray-300 uppercase tracking-wider">Foto do Dependente <span class="text-brand-red font-black">*</span></label>
+                        <label class="block text-[10px] font-black text-gray-300 uppercase tracking-wider">Foto do Dependente <span class="dep-photo-required text-brand-red font-black">*</span></label>
                         <div class="flex gap-2 justify-center sm:justify-start">
                             <label class="cursor-pointer bg-gray-900 border border-gray-750 hover:border-gray-700 px-2.5 py-1.5 rounded-lg text-white font-bold text-[9px] uppercase transition flex items-center gap-1 select-none">
                                 <i class="fa-solid fa-upload"></i> Enviar Foto
@@ -625,6 +625,10 @@
                                 <i class="fa-solid fa-camera"></i> Câmera
                             </button>
                         </div>
+                        <label class="inline-flex items-center gap-1.5 mt-1 cursor-pointer select-none">
+                            <input type="checkbox" class="dep-send-later rounded border-gray-700 bg-gray-950 text-brand-red focus:ring-brand-red" onchange="window.toggleDepPhotoRequirement(this)">
+                            <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wide">Enviar foto mais tarde</span>
+                        </label>
                         <input type="hidden" class="extra-dep-photo-data" value="">
                     </div>
                 </div>
@@ -936,11 +940,7 @@
                             }
                         }
 
-                        const dPhoto = div.querySelector('.extra-dep-photo-data').value;
-                        if (!dPhoto) {
-                            alert(`A foto de perfil para o dependente "${dName}" é obrigatória. Por favor, tire ou envie uma foto para este dependente.`);
-                            return false;
-                        }
+                        // Dependent photo is optional now
                     }
                 }
 
@@ -1059,7 +1059,7 @@
                         </tr>
                         <tr>
                             <td style="padding: 6px 0; color: #718096; font-weight: 600;">Plano:</td>
-                            <td style="padding: 6px 0; color: #D90429; font-weight: 700;">${data.planName} <span style="color:#718096; font-size: 11px; font-weight: normal;">(${planFormattedValue}/mês)</span></td>
+                            <td style="padding: 6px 0; color: #D90429; font-weight: 700;">${data.planName}</td>
                         </tr>
                         <tr>
                             <td style="padding: 6px 0; color: #718096; font-weight: 600;">Nascimento:</td>
@@ -1104,7 +1104,7 @@
                             
                             <div style="background-color: #1B1B1B; border-radius: 8px; padding: 10px;">
                                 <div style="color: #A0AEC0; font-size: 10px; font-weight: bold; text-transform: uppercase;">Ter e Qui</div>
-                                <div style="color: #FFFFFF; font-size: 13px; font-weight: bold; margin-top: 2px;">12h30 <span style="color: #718096; font-size: 11px;">ou</span> 21h00</div>
+                                <div style="color: #FFFFFF; font-size: 13px; font-weight: bold; margin-top: 2px;">20h00</div>
                             </div>
                         </td>
                         
@@ -1183,7 +1183,7 @@ DADOS RESUMIDOS DO ALUNO:
 • E-mail: ${data.email}
 • Endereço: ${data.address || ''} (CEP: ${data.cep || ''})
 • Tipo Insc.: ${typeLabel}
-• Plano: ${data.planName} (${planFormattedValue}/mês)
+• Plano: ${data.planName}
 • Graduação: ${data.belt}
 • Origem (Como conheceu): ${data.origin || 'Não informado'}`;
 
@@ -1649,6 +1649,19 @@ DADOS RESUMIDOS DO ALUNO:
                 target.preview.classList.remove('hidden');
                 target.placeholder.classList.add('hidden');
                 
+                // Uncheck the "Enviar mais tarde" checkbox if it was checked
+                const container = target.input.closest('.space-y-1\\.5') || target.input.parentElement;
+                if (container) {
+                    const checkbox = container.querySelector('.dep-send-later');
+                    if (checkbox) {
+                        checkbox.checked = false;
+                        const requiredIndicator = container.querySelector('.dep-photo-required');
+                        if (requiredIndicator) {
+                            requiredIndicator.innerHTML = "*";
+                        }
+                    }
+                }
+                
                 window.closeCropModal();
                 window.currentCropTarget = null;
                 return;
@@ -1679,6 +1692,43 @@ DADOS RESUMIDOS DO ALUNO:
             document.getElementById('btn-remove-photo').classList.remove('hidden');
 
             window.closeCropModal();
+        };
+        
+        window.toggleDepPhotoRequirement = (checkbox) => {
+            const container = checkbox.closest('.space-y-1\\.5') || checkbox.parentElement.parentElement;
+            const requiredIndicator = container.querySelector('.dep-photo-required');
+            const hiddenInput = container.querySelector('.extra-dep-photo-data');
+            const rootBox = checkbox.closest('.bg-gray-800\\/50') || checkbox.parentElement.parentElement.parentElement;
+            const preview = rootBox.querySelector('.extra-dep-preview');
+            const placeholder = rootBox.querySelector('.extra-dep-placeholder');
+
+            if (checkbox.checked) {
+                if (requiredIndicator) {
+                    requiredIndicator.innerHTML = " <span class='text-gray-500 font-normal'>(Mais tarde)</span>";
+                }
+                if (!hiddenInput.value) {
+                    hiddenInput.value = "mais_tarde";
+                    if (placeholder) {
+                        placeholder.innerHTML = `
+                            <i class="fa-solid fa-clock text-lg mb-0.5 text-brand-red/70 animate-pulse"></i>
+                            <span class="text-[7px] uppercase tracking-wider text-brand-red/70">Mais Tarde</span>
+                        `;
+                    }
+                }
+            } else {
+                if (requiredIndicator) {
+                    requiredIndicator.innerHTML = "*";
+                }
+                if (hiddenInput.value === "mais_tarde") {
+                    hiddenInput.value = "";
+                    if (placeholder) {
+                        placeholder.innerHTML = `
+                            <i class="fa-solid fa-user text-lg mb-0.5 animate-pulse"></i>
+                            <span class="text-[7px] uppercase tracking-wider text-gray-500">Sem Foto</span>
+                        `;
+                    }
+                }
+            }
         };
 
         // DEPENDENTS PHOTO ROUTINES
