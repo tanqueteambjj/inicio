@@ -1307,7 +1307,7 @@
                 // Kids II
                 if ([1, 3, 5].includes(dayOfWeek)) times = ['16:30'];
             } else if (age >= 12) {
-                // Adultos
+                // Adultos (Removido 12h30, Ter/Qui para 20h00)
                 if ([1, 3, 5].includes(dayOfWeek)) times = ['10:30', '18:00'];
                 else if ([2, 4].includes(dayOfWeek)) times = ['20:00'];
             }
@@ -1392,6 +1392,30 @@
                 window.customAlert("A idade mínima para participar das aulas é de 4 anos.");
                 btn.innerHTML = originalBtnText; btn.disabled = false; return;
             }
+
+            // --- TRAVA DE SEGURANÇA ESTRITA (Impede Race Conditions e Fraudes) ---
+            const [y, m, d] = date.split('-');
+            const dayOfWeek = new Date(y, m - 1, d).getDay();
+            let allowedTimes = [];
+            
+            if (age >= 4 && age <= 7) { // Kids I
+                if ([1, 3, 5].includes(dayOfWeek)) allowedTimes = ['15:00'];
+            } else if (age >= 8 && age <= 11) { // Kids II
+                if ([1, 3, 5].includes(dayOfWeek)) allowedTimes = ['16:30'];
+            } else if (age >= 12) { // Adultos
+                if ([1, 3, 5].includes(dayOfWeek)) allowedTimes = ['10:30', '18:00'];
+                else if ([2, 4].includes(dayOfWeek)) allowedTimes = ['20:00'];
+            }
+
+            if (!allowedTimes.includes(time)) {
+                window.customAlert("O horário selecionado não é válido para este dia da semana ou para a sua idade. Por favor, selecione o horário novamente.");
+                btn.innerHTML = originalBtnText; 
+                btn.disabled = false; 
+                document.getElementById('expTime').innerHTML = '<option value="" disabled selected>Atualizando horários...</option>';
+                document.getElementById('expDate').dispatchEvent(new Event('change'));
+                return;
+            }
+            // ----------------------------------------------------------------------
 
             let finalCpf = '';
             let guardian = '';
