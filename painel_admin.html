@@ -103,6 +103,11 @@
           }
           body.printing-report #report-container *, body.printing-payment-report #printable-finance * { visibility: visible !important; color: #000 !important; }
 
+          body.printing-dynamic #dynamic-print-container {
+              display: block !important; position: static !important; width: 100% !important; height: auto !important; visibility: visible !important; background: #fff !important; color: #000 !important; margin: 0 !important; padding: 0 !important;
+          }
+          body.printing-dynamic #dynamic-print-container * { visibility: visible !important; color: #000 !important; }
+
           body.printing-qr #print-only-qr { display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: flex-start !important; padding: 2cm 0 !important; }
 
           table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 15px; page-break-inside: auto; }
@@ -215,6 +220,15 @@
         >
           <i class="fa-solid fa-file-invoice-dollar w-6"></i>
           <span class="ml-2">Relatório de Receita</span>
+        </a>
+        <a
+          href="#"
+          onclick="window.switchMainView('marketing')"
+          id="nav-marketing"
+          class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold"
+        >
+          <i class="fa-solid fa-chart-pie w-6"></i>
+          <span class="ml-2">Marketing & Aquisição</span>
         </a>
         <a
           href="#"
@@ -1434,6 +1448,128 @@
                 Nenhum registro encontrado para este período.
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- VIEW: MARKETING & AQUISIÇÃO -->
+        <div id="view-marketing" class="hidden animate-fade-in">
+          <div
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-t-4 border-indigo-500 max-w-6xl mx-auto border border-gray-200 dark:border-gray-700"
+          >
+            <!-- Header -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-6 border-b border-gray-100 dark:border-gray-700">
+              <div>
+                <h3 class="font-display text-xl font-bold text-gray-800 dark:text-white uppercase">
+                  <i class="fa-solid fa-chart-pie mr-2 text-indigo-500"></i>
+                  Estatísticas de Marketing & Aquisição
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  Analise as fontes de captação de alunos e métricas de conversão.
+                </p>
+              </div>
+              <button
+                onclick="window.printMarketingReport()"
+                class="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg shadow-sm transition-all focus:outline-none no-print"
+              >
+                <i class="fa-solid fa-print"></i>
+                <span>IMPRIMIR RELATÓRIO</span>
+              </button>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <!-- Total Alunos -->
+              <div class="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-indigo-100 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-500 text-xl shrink-0">
+                  <i class="fa-solid fa-user-graduate"></i>
+                </div>
+                <div>
+                  <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total de Alunos</div>
+                  <div class="text-2xl font-black text-gray-800 dark:text-white" id="mkt-kpi-alunos">0</div>
+                </div>
+              </div>
+
+              <!-- Total Pré-Matrículas -->
+              <div class="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-yellow-100 dark:bg-yellow-950/40 flex items-center justify-center text-yellow-500 text-xl shrink-0">
+                  <i class="fa-solid fa-id-card"></i>
+                </div>
+                <div>
+                  <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Pré-Matrículas</div>
+                  <div class="text-2xl font-black text-gray-800 dark:text-white" id="mkt-kpi-leads">0</div>
+                </div>
+              </div>
+
+              <!-- Alunos com Origem Identificada -->
+              <div class="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-500 text-xl shrink-0">
+                  <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div>
+                  <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Origem Mapeada</div>
+                  <div class="text-2xl font-black text-gray-800 dark:text-white" id="mkt-kpi-mapeados">0</div>
+                </div>
+              </div>
+
+              <!-- Conversion Rate -->
+              <div class="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-brand-red/10 flex items-center justify-center text-brand-red text-xl shrink-0">
+                  <i class="fa-solid fa-arrow-up-right-dots"></i>
+                </div>
+                <div>
+                  <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Mapeamento de Origem</div>
+                  <div class="text-2xl font-black text-gray-800 dark:text-white" id="mkt-kpi-conversion">0%</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Two Column Chart Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <!-- Active Students Acquisition Channels -->
+              <div class="border border-gray-100 dark:border-gray-750 rounded-xl p-5 bg-gray-50/50 dark:bg-gray-900/10">
+                <div class="flex items-center gap-2 mb-4">
+                  <span class="w-3 h-3 bg-indigo-500 rounded-full"></span>
+                  <h4 class="font-display font-bold text-gray-700 dark:text-gray-300 uppercase text-sm tracking-wider">Origem dos Alunos Cadastrados</h4>
+                </div>
+                <div class="space-y-4" id="mkt-active-channels-list">
+                  <!-- JS Populated -->
+                </div>
+              </div>
+
+              <!-- Pre-Registration Acquisition Channels -->
+              <div class="border border-gray-100 dark:border-gray-750 rounded-xl p-5 bg-gray-50/50 dark:bg-gray-900/10">
+                <div class="flex items-center gap-2 mb-4">
+                  <span class="w-3 h-3 bg-yellow-500 rounded-full"></span>
+                  <h4 class="font-display font-bold text-gray-700 dark:text-gray-300 uppercase text-sm tracking-wider">Origem das Pré-Matrículas</h4>
+                </div>
+                <div class="space-y-4" id="mkt-leads-channels-list">
+                  <!-- JS Populated -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Converted vs Lost overview -->
+            <div class="mt-8 p-5 bg-indigo-50/40 dark:bg-indigo-950/10 border border-indigo-100 dark:border-indigo-900/30 rounded-xl">
+              <h4 class="font-display font-bold text-gray-800 dark:text-gray-200 uppercase text-xs tracking-wider mb-2">Resumo de Atração Comercial</h4>
+              <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+                Este relatório compila os canais declarados pelos alunos no momento do cadastro ou da pré-matrícula pelo site. O mapeamento permite focar os investimentos de publicidade nos canais que geram o maior retorno real de alunos frequentes.
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                <div class="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                  <div class="text-[10px] text-gray-400 font-bold uppercase">Melhor Canal (Alunos)</div>
+                  <div class="text-base font-black text-indigo-600 dark:text-indigo-400 uppercase mt-1" id="mkt-best-active-channel">-</div>
+                </div>
+                <div class="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                  <div class="text-[10px] text-gray-400 font-bold uppercase">Melhor Canal (Pré-Matrículas)</div>
+                  <div class="text-base font-black text-yellow-600 dark:text-yellow-400 uppercase mt-1" id="mkt-best-lead-channel">-</div>
+                </div>
+                <div class="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                  <div class="text-[10px] text-gray-400 font-bold uppercase">Total de Interações Registradas</div>
+                  <div class="text-base font-black text-emerald-600 dark:text-emerald-400 uppercase mt-1" id="mkt-total-interactions">-</div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -8075,43 +8211,39 @@
       });
 
       window.printHtmlContent = function (htmlContent, titleStr) {
-        const iframe = document.createElement("iframe");
-        iframe.style.position = "absolute";
-        iframe.style.width = "0px";
-        iframe.style.height = "0px";
-        iframe.style.border = "none";
-        document.body.appendChild(iframe);
+        // Dynamic printing container approach that works perfectly on both desktop and mobile
+        // bypassing iframe limitations (especially iOS Safari iframe print blocks)
+        const container = document.createElement("div");
+        container.id = "dynamic-print-container";
+        container.className = "print-only-element bg-white text-black p-4";
+        container.style.position = "absolute";
+        container.style.left = "0";
+        container.style.top = "0";
+        container.style.width = "100%";
+        container.style.boxSizing = "border-box";
+        container.style.fontFamily = "Arial, sans-serif";
+        container.innerHTML = htmlContent;
+        document.body.appendChild(container);
 
-        const docIframe = iframe.contentWindow.document;
-        docIframe.open();
-        docIframe.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>${titleStr}</title>
-                    <style>
-                        @media print {
-                            @page { margin: 1cm; size: A4 portrait; }
-                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0; }
-                            .receipt-container { page-break-inside: avoid; }
-                        }
-                        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; box-sizing: border-box; }
-                    </style>
-                </head>
-                <body>
-                    ${htmlContent}
-                </body>
-                </html>
-            `);
-        docIframe.close();
+        document.body.classList.add("printing-dynamic");
+        
+        const originalTitle = document.title;
+        if (titleStr) {
+          document.title = titleStr;
+        }
 
         setTimeout(() => {
-          iframe.contentWindow.focus();
-          iframe.contentWindow.print();
+          window.focus();
+          window.print();
+          
           setTimeout(() => {
-            document.body.removeChild(iframe);
-          }, 2000);
-        }, 500);
+            document.body.classList.remove("printing-dynamic");
+            if (document.getElementById("dynamic-print-container")) {
+              document.body.removeChild(container);
+            }
+            document.title = originalTitle;
+          }, 1000);
+        }, 300);
       };
 
       window.printAdminQrCard = () => {
@@ -13817,46 +13949,40 @@ Belém-PA, [DATA_ATUAL].
         const dParts = dateInput.split("-");
         const formattedDate = `${dParts[2]}/${dParts[1]}/${dParts[0]}`;
 
-        let printWindow = window.open("", "_blank");
-        printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Relatório de Frequência - ${formattedDate}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
-                        h1 { color: #333; text-align: center; }
-                        h2 { color: #666; text-align: center; margin-bottom: 30px; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                        th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
-                        th { background-color: #f4f4f4; border-bottom: 2px solid #ccc; }
-                        .timestamp { font-family: monospace; color: #555; }
-                        .total { margin-top: 20px; text-align: right; font-weight: bold; font-size: 1.1em; }
-                    </style>
-                </head>
-                <body>
-                    <h1>Relatório de Frequência</h1>
-                    <h2>Data: ${formattedDate}</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Horário de Check-in</th>
-                                <th>Aluno</th>
-                                <th>Plano/Modalidade</th>
-                                <th>Turma Informada</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${tbodyHTML}
-                        </tbody>
-                    </table>
-                    <div class="total">Total de Presenças: ${document.getElementById("attendance-total-count").innerText}</div>
-                    <script>
-                        window.onload = function() { window.print(); window.close(); }
-                    <\/script>
-                </body>
-                </html>
-            `);
-        printWindow.document.close();
+        const html = `
+          <div style="font-family: Arial, sans-serif; padding: 20px; color: #111;">
+            <div style="text-align: center; border-bottom: 2px solid #ed1c24; padding-bottom: 15px; margin-bottom: 25px;">
+              <h1 style="margin: 0; font-size: 22px; text-transform: uppercase; color: #000;">Relatório de Frequência</h1>
+              <h2 style="margin: 5px 0 0 0; font-size: 16px; color: #666;">Data: ${formattedDate}</h2>
+            </div>
+            <style>
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+              th, td { border: 1px solid #ddd; padding: 10px 12px; text-align: left; font-size: 12px; }
+              th { background-color: #f4f4f4; border-bottom: 2px solid #ccc; font-weight: bold; }
+              /* Hide student photo, checkbox column, and delete button column in print */
+              td img, .no-print-col, td:nth-child(1), th:nth-child(1), td:nth-child(6), th:nth-child(6) { display: none !important; }
+              .timestamp { font-family: monospace; color: #333; }
+            </style>
+            <table>
+              <thead>
+                <tr>
+                  <th style="display:none;"></th>
+                  <th>Horário de Check-in</th>
+                  <th>Aluno</th>
+                  <th>Plano/Modalidade</th>
+                  <th>Turma Informada</th>
+                  <th style="display:none;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tbodyHTML}
+              </tbody>
+            </table>
+            <div style="margin-top: 20px; text-align: right; font-weight: bold; font-size: 14px;">Total de Presenças: ${document.getElementById("attendance-total-count").innerText}</div>
+          </div>
+        `;
+
+        window.printHtmlContent(html, `Relatorio_Frequencia_${formattedDate.replace(/\//g, "-")}`);
       };
 
       window.updateBulkActionsBtn = () => {
@@ -15436,6 +15562,8 @@ Belém-PA, [DATA_ATUAL].
           document
             .getElementById("view-pre-registrations")
             .classList.add("hidden");
+        if (document.getElementById("view-marketing"))
+          document.getElementById("view-marketing").classList.add("hidden");
         const attView = document.getElementById("view-attendance");
         if (attView) attView.classList.add("hidden");
         const finView = document.getElementById("view-finance");
@@ -15463,6 +15591,7 @@ Belém-PA, [DATA_ATUAL].
         if (viewId === "students") window.renderTable();
         if (viewId === "pre-registrations") window.loadPreRegistrations();
         if (viewId === "experimental") window.renderExperimentalTable();
+        if (viewId === "marketing") window.renderMarketingReport();
         if (viewId === "plans")
           if (window.renderPlansAdmin) window.renderPlansAdmin();
         if (viewId === "finance") {
@@ -15488,6 +15617,199 @@ Belém-PA, [DATA_ATUAL].
           window.renderAttendanceTable();
         }
         if (window.innerWidth < 1024) window.toggleMobileMenu();
+      };
+
+      // MARKETING & AQUISIÇÃO
+      window.renderMarketingReport = async () => {
+        const activeChannelsList = document.getElementById("mkt-active-channels-list");
+        const leadsChannelsList = document.getElementById("mkt-leads-channels-list");
+        
+        if (activeChannelsList) {
+          activeChannelsList.innerHTML = `<div class="p-8 text-center text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Calculando estatísticas...</div>`;
+        }
+        if (leadsChannelsList) {
+          leadsChannelsList.innerHTML = `<div class="p-8 text-center text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Carregando solicitações...</div>`;
+        }
+
+        try {
+          // 1. Fetch active students count and sources
+          const studentsList = window.students || [];
+          
+          // 2. Fetch all pre-registrations (leads) from Firestore
+          const qAll = query(
+            collection(
+              window.db,
+              "artifacts",
+              APP_ID,
+              "public",
+              "data",
+              "pre_registrations",
+            )
+          );
+          const querySnapshot = await getDocs(qAll);
+          const leadsList = [];
+          querySnapshot.forEach((doc) => {
+            leadsList.push(doc.data());
+          });
+
+          // Helper to normalize
+          const normalizeOrigin = (origin) => {
+            if (!origin || origin === "Não informado") return "Não informado";
+            const lower = origin.trim().toLowerCase();
+            if (lower.includes("instagram")) return "Instagram";
+            if (lower.includes("facebook")) return "Facebook";
+            if (lower.includes("google") || lower.includes("pesquisa")) return "Google / Pesquisa";
+            if (lower.includes("indicação") || lower.includes("indicacao") || lower.includes("amigo") || lower.includes("aluno")) return "Indicação";
+            if (lower.includes("passou") || lower.includes("passei") || lower.includes("frente") || lower.includes("fachada")) return "Passou em Frente";
+            if (lower.includes("panfleto") || lower.includes("cartaz")) return "Panfleto / Cartaz";
+            if (lower.includes("experimental")) return "Aula Experimental";
+            return "Outros";
+          };
+
+          // Group active students
+          const activeMap = {};
+          let activeMapeadosCount = 0;
+          studentsList.forEach((s) => {
+            const originVal = s.howDidYouFindUs || s.origin || "Não informado";
+            const normalized = normalizeOrigin(originVal);
+            if (normalized !== "Não informado") {
+              activeMapeadosCount++;
+            }
+            activeMap[normalized] = (activeMap[normalized] || 0) + 1;
+          });
+
+          // Group leads
+          const leadsMap = {};
+          let leadsMapeadosCount = 0;
+          leadsList.forEach((l) => {
+            const originVal = l.origin || l.howDidYouFindUs || "Não informado";
+            const normalized = normalizeOrigin(originVal);
+            if (normalized !== "Não informado") {
+              leadsMapeadosCount++;
+            }
+            leadsMap[normalized] = (leadsMap[normalized] || 0) + 1;
+          });
+
+          // Set KPIs
+          document.getElementById("mkt-kpi-alunos").innerText = studentsList.length;
+          document.getElementById("mkt-kpi-leads").innerText = leadsList.length;
+          document.getElementById("mkt-kpi-mapeados").innerText = activeMapeadosCount;
+          
+          const conversionRate = studentsList.length > 0 
+            ? Math.round((activeMapeadosCount / studentsList.length) * 100) 
+            : 0;
+          document.getElementById("mkt-kpi-conversion").innerText = `${conversionRate}%`;
+
+          // Generate HTML list for Active Students
+          const activeSorted = Object.entries(activeMap)
+            .sort((a, b) => b[1] - a[1]);
+          
+          let activeHtml = "";
+          const activeMaxCount = activeSorted.length > 0 ? activeSorted[0][1] : 1;
+          
+          activeSorted.forEach(([channel, count]) => {
+            const pct = studentsList.length > 0 ? Math.round((count / studentsList.length) * 100) : 0;
+            const barWidth = Math.round((count / activeMaxCount) * 100);
+            activeHtml += `
+              <div style="margin-bottom: 12px;">
+                <div class="flex justify-between items-center text-xs mb-1">
+                  <span class="font-bold text-gray-700 dark:text-gray-300 uppercase">${channel}</span>
+                  <span class="font-mono font-bold text-gray-500 dark:text-gray-400">${count} (${pct}%)</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
+                  <div class="bg-indigo-500 h-full rounded-full transition-all" style="width: ${barWidth}%"></div>
+                </div>
+              </div>
+            `;
+          });
+          if (activeChannelsList) activeChannelsList.innerHTML = activeHtml || '<p class="text-xs text-gray-400 italic">Nenhum dado cadastrado.</p>';
+
+          // Generate HTML list for Leads
+          const leadsSorted = Object.entries(leadsMap)
+            .sort((a, b) => b[1] - a[1]);
+          
+          let leadsHtml = "";
+          const leadsMaxCount = leadsSorted.length > 0 ? leadsSorted[0][1] : 1;
+          
+          leadsSorted.forEach(([channel, count]) => {
+            const pct = leadsList.length > 0 ? Math.round((count / leadsList.length) * 100) : 0;
+            const barWidth = Math.round((count / leadsMaxCount) * 100);
+            leadsHtml += `
+              <div style="margin-bottom: 12px;">
+                <div class="flex justify-between items-center text-xs mb-1">
+                  <span class="font-bold text-gray-700 dark:text-gray-300 uppercase">${channel}</span>
+                  <span class="font-mono font-bold text-gray-500 dark:text-gray-400">${count} (${pct}%)</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
+                  <div class="bg-yellow-500 h-full rounded-full transition-all" style="width: ${barWidth}%"></div>
+                </div>
+              </div>
+            `;
+          });
+          if (leadsChannelsList) leadsChannelsList.innerHTML = leadsHtml || '<p class="text-xs text-gray-400 italic">Nenhum dado cadastrado.</p>';
+
+          // Top Channels Summary
+          const topActive = activeSorted.find(([ch]) => ch !== "Não informado");
+          const topLead = leadsSorted.find(([ch]) => ch !== "Não informado");
+          
+          document.getElementById("mkt-best-active-channel").innerText = topActive ? topActive[0] : "Nenhum";
+          document.getElementById("mkt-best-lead-channel").innerText = topLead ? topLead[0] : "Nenhum";
+          document.getElementById("mkt-total-interactions").innerText = (studentsList.length + leadsList.length);
+
+        } catch (err) {
+          console.error("Error calculating marketing stats:", err);
+          if (activeChannelsList) activeChannelsList.innerHTML = `<p class="text-xs text-red-500">Erro ao processar estatísticas.</p>`;
+        }
+      };
+
+      window.printMarketingReport = () => {
+        const studentsList = window.students || [];
+        const activeContainerHTML = document.getElementById("mkt-active-channels-list").innerHTML;
+        const leadsContainerHTML = document.getElementById("mkt-leads-channels-list").innerHTML;
+
+        const html = `
+          <div style="font-family: Arial, sans-serif; padding: 30px; color: #111; max-width: 800px; margin: 0 auto;">
+            <div style="text-align: center; border-bottom: 3px solid #6366f1; padding-bottom: 15px; margin-bottom: 25px;">
+              <h1 style="margin: 0; font-size: 24px; text-transform: uppercase; color: #111;">Relatório de Marketing & Aquisição</h1>
+              <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">Tanque Team Jiu-Jitsu - Dashboard Comercial</p>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-bottom: 30px; background-color: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div>
+                <span style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: bold; display: block;">Total Alunos Cadastrados</span>
+                <span style="font-size: 20px; font-weight: 900; color: #1e293b;">${studentsList.length}</span>
+              </div>
+              <div>
+                <span style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: bold; display: block;">Mapeamento Origem</span>
+                <span style="font-size: 20px; font-weight: 900; color: #1e293b;">${document.getElementById("mkt-kpi-mapeados").innerText} (${document.getElementById("mkt-kpi-conversion").innerText})</span>
+              </div>
+              <div>
+                <span style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: bold; display: block;">Melhor Canal (Alunos)</span>
+                <span style="font-size: 20px; font-weight: 900; color: #1e293b; text-transform: uppercase;">${document.getElementById("mkt-best-active-channel").innerText}</span>
+              </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+              <h3 style="border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; font-size: 16px; color: #1e293b; text-transform: uppercase;">Origem dos Alunos Cadastrados</h3>
+              <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 15px;">
+                ${activeContainerHTML}
+              </div>
+            </div>
+
+            <div style="margin-top: 35px;">
+              <h3 style="border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; font-size: 16px; color: #1e293b; text-transform: uppercase;">Origem das Pré-Matrículas (Leads)</h3>
+              <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 15px;">
+                ${leadsContainerHTML}
+              </div>
+            </div>
+
+            <div style="margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 15px; text-align: center; font-size: 11px; color: #94a3b8;">
+              Relatório comercial gerado automaticamente em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
+            </div>
+          </div>
+        `;
+
+        window.printHtmlContent(html, `Relatorio_Marketing_Aquisicao_${new Date().toLocaleDateString('pt-BR').replace(/\//g, "-")}`);
       };
 
       // FINANCEIRO
