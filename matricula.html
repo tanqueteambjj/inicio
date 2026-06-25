@@ -196,6 +196,14 @@
                                 <input type="file" id="facial-file-upload" accept="image/*" class="hidden" onchange="window.handleFacialPhotoUpload(this)">
                             </label>
                         </div>
+
+                        <!-- Enviar foto mais tarde option -->
+                        <div class="mt-1 flex justify-center">
+                            <label class="inline-flex items-center gap-2 cursor-pointer select-none px-3 py-1.5 bg-gray-900/60 hover:bg-gray-900 border border-gray-800 rounded-xl transition">
+                                <input type="checkbox" id="titular-send-later" class="rounded border-gray-750 bg-gray-950 text-brand-red focus:ring-brand-red w-4 h-4" onchange="window.toggleTitularPhotoRequirement(this)">
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Enviar foto mais tarde</span>
+                            </label>
+                        </div>
                     </div>
                     
                     <div>
@@ -944,10 +952,13 @@
                     }
                 }
 
-                // Facial profile photo check
+                // Facial profile photo check is now optional (automatically falls back to "mais_tarde")
                 if (!window.facialPhotoBase64) {
-                    alert("A foto de perfil é obrigatória para prosseguir. Ative a câmera ou faça o envio de uma imagem.");
-                    return false;
+                    const titularCheckbox = document.getElementById('titular-send-later');
+                    if (titularCheckbox) {
+                        titularCheckbox.checked = true;
+                    }
+                    window.toggleTitularPhotoRequirement({ checked: true });
                 }
                 return true;
             }
@@ -1562,6 +1573,104 @@ DADOS RESUMIDOS DO ALUNO:
             if (fileInput) fileInput.value = "";
         };
 
+        // IMAGE PREPROCESSING RESIZER FOR HIGH-RES SMARTPHONE PHOTOS
+        window.preprocessAndResizeImage = (file, maxDim, callback) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    try {
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        // Check if resizing is necessary
+                        if (width > maxDim || height > maxDim) {
+                            if (width > height) {
+                                height = Math.round((height * maxDim) / width);
+                                width = maxDim;
+                            } else {
+                                width = Math.round((width * maxDim) / height);
+                                height = maxDim;
+                            }
+                            
+                            const canvas = document.createElement('canvas');
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            // Get resized base64
+                            const resizedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                            callback(resizedBase64);
+                        } else {
+                            callback(e.target.result);
+                        }
+                    } catch (err) {
+                        console.error("Error resizing image, using original:", err);
+                        callback(e.target.result);
+                    }
+                };
+                img.onerror = () => {
+                    console.error("Error loading image object, using raw reader result");
+                    callback(e.target.result);
+                };
+                img.src = e.target.result;
+            };
+            reader.onerror = () => {
+                console.error("FileReader error");
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.toggleTitularPhotoRequirement = (checkbox) => {
+            const label = document.getElementById('profile-photo-label');
+            const preview = document.getElementById('facial-img-preview');
+            const placeholder = document.getElementById('photo-placeholder-avatar');
+            const video = document.getElementById('facial-video');
+            const statusBadge = document.getElementById('facial-status-badge');
+            const scannerLine = document.getElementById('facial-scanner-line');
+
+            if (checkbox.checked) {
+                if (label) {
+                    label.innerHTML = "Foto de Perfil <span class='text-gray-500 font-normal'>(Mais tarde)</span>";
+                }
+                if (!window.facialPhotoBase64 || window.facialPhotoBase64 === '' || window.facialPhotoBase64 === 'mais_tarde') {
+                    window.facialPhotoBase64 = "mais_tarde";
+                    if (preview) preview.classList.add('hidden');
+                    if (video) video.classList.add('hidden');
+                    if (scannerLine) scannerLine.classList.add('hidden');
+                    if (placeholder) {
+                        placeholder.classList.remove('hidden');
+                        placeholder.innerHTML = `
+                            <i class="fa-solid fa-clock text-4xl mb-1 text-brand-red/70 animate-pulse"></i>
+                            <span class="text-[9px] uppercase tracking-widest font-black text-brand-red/70">Mais Tarde</span>
+                        `;
+                    }
+                    if (statusBadge) {
+                        statusBadge.innerText = "ENVIAR MAIS TARDE";
+                        statusBadge.className = "absolute -bottom-2 bg-brand-red text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg";
+                    }
+                }
+            } else {
+                if (label) {
+                    label.innerHTML = "Foto de Perfil <span class='text-brand-red font-black'>*</span>";
+                }
+                if (window.facialPhotoBase64 === "mais_tarde") {
+                    window.facialPhotoBase64 = null;
+                    if (placeholder) {
+                        placeholder.innerHTML = `
+                            <i class="fa-solid fa-user-astronaut text-4xl mb-1 animate-pulse"></i>
+                            <span class="text-[9px] uppercase tracking-widest font-black text-gray-500">Sem Imagem</span>
+                        `;
+                    }
+                    if (statusBadge) {
+                        statusBadge.innerText = "Foto Obrigatória";
+                        statusBadge.className = "absolute -bottom-2 bg-brand-red text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg";
+                    }
+                }
+            }
+        };
+
         window.handleFacialPhotoUpload = (input) => {
             if (input.files && input.files[0]) {
                 const file = input.files[0];
@@ -1571,16 +1680,19 @@ DADOS RESUMIDOS DO ALUNO:
                     activeMediaStream = null;
                 }
 
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const rawBase64 = e.target.result;
-                    window.originalPhotoSource = rawBase64;
+                // Show processing indicator in badge
+                const statusBadge = document.getElementById('facial-status-badge');
+                if (statusBadge) {
+                    statusBadge.innerText = "PROCESSANDO...";
+                }
+
+                window.preprocessAndResizeImage(file, 1200, (resizedBase64) => {
+                    window.originalPhotoSource = resizedBase64;
                     input.value = ""; // clear file input so they can upload same file if they want
                     
                     // Open the crop modal immediately!
-                    window.openCropModal(rawBase64);
-                };
-                reader.readAsDataURL(file);
+                    window.openCropModal(resizedBase64);
+                });
             }
         };
 
@@ -1669,6 +1781,16 @@ DADOS RESUMIDOS DO ALUNO:
 
             window.facialPhotoBase64 = croppedBase64;
 
+            // Uncheck the "Enviar mais tarde" checkbox for titular if checked
+            const titularCheckbox = document.getElementById('titular-send-later');
+            if (titularCheckbox) {
+                titularCheckbox.checked = false;
+                const label = document.getElementById('profile-photo-label');
+                if (label) {
+                    label.innerHTML = "Foto de Perfil <span class='text-brand-red font-black'>*</span>";
+                }
+            }
+
             const preview = document.getElementById('facial-img-preview');
             const video = document.getElementById('facial-video');
             const placeholder = document.getElementById('photo-placeholder-avatar');
@@ -1735,9 +1857,8 @@ DADOS RESUMIDOS DO ALUNO:
         window.handleDepPhotoUpload = (input) => {
             if (input.files && input.files[0]) {
                 const file = input.files[0];
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const rawBase64 = e.target.result;
+                
+                window.preprocessAndResizeImage(file, 1200, (resizedBase64) => {
                     const container = input.closest('.flex-col') || input.parentElement.parentElement;
                     const rootBox = container.closest('.bg-gray-800\\/50') || container.parentElement;
                     const preview = rootBox.querySelector('.extra-dep-preview');
@@ -1749,10 +1870,9 @@ DADOS RESUMIDOS DO ALUNO:
                         preview: preview,
                         placeholder: placeholder
                     };
-                    window.openCropModal(rawBase64);
-                };
-                reader.readAsDataURL(file);
-                input.value = "";
+                    window.openCropModal(resizedBase64);
+                    input.value = "";
+                });
             }
         };
 
