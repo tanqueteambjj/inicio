@@ -510,7 +510,16 @@
                   >
                 </h3>
               </div>
-              <div class="flex gap-1.5 sm:gap-2">
+              <div class="flex gap-1.5 sm:gap-2 items-center">
+                <select
+                  id="print-report-filter"
+                  class="text-indigo-600 dark:text-indigo-400 text-[11px] sm:text-xs bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 px-2 py-1.5 rounded shadow-sm font-bold no-print outline-none cursor-pointer"
+                  title="Filtro do Relatório"
+                >
+                  <option value="all" class="bg-white dark:bg-gray-800 text-gray-800 dark:text-white">TODOS OS ALUNOS</option>
+                  <option value="adults" class="bg-white dark:bg-gray-800 text-gray-800 dark:text-white">ADULTO</option>
+                  <option value="kids" class="bg-white dark:bg-gray-800 text-gray-800 dark:text-white">INFANTIL</option>
+                </select>
                 <button
                   onclick="window.printGeneralStudentReport()"
                   class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 text-xs sm:text-sm bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 px-2.5 py-1.5 sm:px-3 rounded shadow-sm font-bold no-print flex items-center gap-1"
@@ -16701,10 +16710,19 @@ Belém-PA, [DATA_ATUAL].
           return;
         }
 
+        const filterEl = document.getElementById("print-report-filter");
+        const filterVal = filterEl ? filterEl.value : "all";
+
         // FILTER: Show only active (not archived) students, sorted by name
-        const activeStudents = window.students
-          .filter((s) => !s.archived)
-          .sort((a, b) => a.name.localeCompare(b.name));
+        let activeStudents = window.students.filter((s) => !s.archived);
+
+        if (filterVal === "adults") {
+          activeStudents = activeStudents.filter((s) => !isStudentKid(s));
+        } else if (filterVal === "kids") {
+          activeStudents = activeStudents.filter((s) => isStudentKid(s));
+        }
+
+        activeStudents = activeStudents.sort((a, b) => a.name.localeCompare(b.name));
 
         // Group students by plan (using their plan's long name)
         const groupedByPlan = {};
@@ -16723,13 +16741,17 @@ Belém-PA, [DATA_ATUAL].
         // Sort plans alphabetically
         const sortedPlans = Object.keys(groupedByPlan).sort();
 
+        let subTitleText = "Relatório Geral de Alunos (Por Planos)";
+        if (filterVal === "adults") subTitleText = "Relatório Geral de Alunos - Adultos (Por Planos)";
+        if (filterVal === "kids") subTitleText = "Relatório Geral de Alunos - Infantil (Por Planos)";
+
         let htmlContent = `
                 <div style="font-family: sans-serif; padding: 20px;">
                     <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 25px; border-bottom: 2px solid #ed1c24; padding-bottom: 15px; position: relative;">
                         <img src="https://iili.io/qC543c7.png" style="height: 60px;">
                         <div style="text-align: center;">
                             <h1 style="margin: 0; font-size: 24px; color: #1B1B1B; text-transform: uppercase; letter-spacing: 2px;">Tanque Team BJJ</h1>
-                            <p style="margin: 5px 0 0 0; font-size: 14px; color: #666; font-weight: bold; text-transform: uppercase;">Relatório Geral de Alunos (Por Planos)</p>
+                            <p style="margin: 5px 0 0 0; font-size: 14px; color: #666; font-weight: bold; text-transform: uppercase;">${subTitleText}</p>
                             <p style="margin: 5px 0 0 0; font-size: 12px; color: #D90429; font-weight: bold;">TOTAL: ${activeStudents.length} ALUNOS ATIVOS</p>
                         </div>
                     </div>
@@ -16761,10 +16783,11 @@ Belém-PA, [DATA_ATUAL].
                             <thead>
                                 <tr style="background-color: #f3f4f6; text-align: left; border-bottom: 1px solid #d1d5db;">
                                     <th style="padding: 8px; border: 1px solid #e5e7eb; width: 40px; text-align: center;">Nº</th>
-                                    <th style="padding: 8px; border: 1px solid #e5e7eb; width: 35%;">ALUNO / NASC.</th>
+                                    <th style="padding: 8px; border: 1px solid #e5e7eb; width: 30%;">ALUNO / NASC.</th>
                                     <th style="padding: 8px; border: 1px solid #e5e7eb; width: 25%;">RESPONSÁVEL (MENOR)</th>
-                                    <th style="padding: 8px; border: 1px solid #e5e7eb; width: 20%;">VÍNCULO / DEPENDENTES</th>
+                                    <th style="padding: 8px; border: 1px solid #e5e7eb; width: 15%;">VÍNCULO / DEPENDENTES</th>
                                     <th style="padding: 8px; border: 1px solid #e5e7eb; width: 15%;">MATRÍCULA</th>
+                                    <th style="padding: 8px; border: 1px solid #e5e7eb; width: 15%; text-align: center;">FREQUÊNCIA</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -16799,6 +16822,7 @@ Belém-PA, [DATA_ATUAL].
                             <td style="padding: 6px 8px; border: 1px solid #e5e7eb;">${s.guardian || "--"}</td>
                             <td style="padding: 6px 8px; border: 1px solid #e5e7eb; font-size: 10px;">${vinculationText}</td>
                             <td style="padding: 6px 8px; border: 1px solid #e5e7eb;">${regDateFormatted}</td>
+                            <td style="padding: 6px 8px; border: 1px solid #e5e7eb; text-align: center; font-weight: bold; color: #4b5563;">${s.attendance ? s.attendance.length : 0} presenças</td>
                         </tr>
                     `;
           });
