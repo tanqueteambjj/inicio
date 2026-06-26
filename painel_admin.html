@@ -3422,16 +3422,22 @@
               class="block text-xs font-bold text-teal-800 dark:text-teal-400 mb-2 uppercase tracking-wider"
               >Adicionar Anotação / Ocorrência</label
             >
-            <div class="flex gap-2">
+            <div class="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 id="prog-new-note"
-                class="w-full border border-teal-200 dark:border-teal-700 rounded p-2 text-sm focus:border-teal-500 dark:bg-gray-700 dark:text-white focus:outline-none"
+                class="flex-1 border border-teal-200 dark:border-teal-700 rounded p-2 text-sm focus:border-teal-500 dark:bg-gray-700 dark:text-white focus:outline-none"
                 placeholder="Ex: Excelente desempenho hoje..."
+              />
+              <input
+                type="text"
+                id="prog-new-note-author"
+                class="w-full sm:w-48 border border-teal-200 dark:border-teal-700 rounded p-2 text-sm focus:border-teal-500 dark:bg-gray-700 dark:text-white focus:outline-none"
+                placeholder="Quem adicionou? (Ex: Prof. Silva)"
               />
               <button
                 onclick="window.saveProgressNote()"
-                class="bg-teal-600 text-white px-4 py-2 rounded font-bold hover:bg-teal-700 transition shadow-sm"
+                class="bg-teal-600 text-white px-4 py-2 rounded font-bold hover:bg-teal-700 transition shadow-sm shrink-0"
               >
                 Salvar
               </button>
@@ -10708,6 +10714,9 @@ Belém-PA, [DATA_ATUAL].
           (s.belt || "Branca") +
           "</span></span>";
         document.getElementById("prog-new-note").value = "";
+        if (document.getElementById("prog-new-note-author")) {
+          document.getElementById("prog-new-note-author").value = "";
+        }
         document.getElementById("prog-add-date").valueAsDate = new Date();
         const tl = document.getElementById("prog-timeline");
         tl.innerHTML = "";
@@ -10748,7 +10757,10 @@ Belém-PA, [DATA_ATUAL].
             deleteBtn = `<button onclick="window.deleteProgressNote('${id}', '${log.date}', '${safeText}')" class="text-red-400 hover:text-red-600 ml-2" title="Excluir registro"><i class="fa-solid fa-trash text-xs"></i></button>`;
           }
 
-          tl.innerHTML += `<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active"><div class="flex items-center justify-center w-8 h-8 rounded-full border border-white dark:border-gray-800 bg-white dark:bg-gray-800 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">${icon}</div><div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-3 rounded border shadow-sm ${bg}"><div class="flex items-center justify-between mb-1"><div class="font-bold text-gray-800 dark:text-gray-200 text-xs">${log.type === "graduation" ? "Graduação" : log.type === "note" ? "Anotação" : "Sistema"}</div><div class="flex items-center"><time class="text-[10px] font-medium text-gray-500 dark:text-gray-400">${d}</time>${deleteBtn}</div></div><div class="text-sm text-gray-600 dark:text-gray-300">${log.text}</div></div></div>`;
+          const authorVal = log.author || "Sistema";
+          const headerText = log.type === "graduation" ? `Graduação (${authorVal})` : log.type === "note" ? `Anotação (${authorVal})` : authorVal;
+
+          tl.innerHTML += `<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active"><div class="flex items-center justify-center w-8 h-8 rounded-full border border-white dark:border-gray-800 bg-white dark:bg-gray-800 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">${icon}</div><div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-3 rounded border shadow-sm ${bg}"><div class="flex items-center justify-between mb-1"><div class="font-bold text-gray-800 dark:text-gray-200 text-xs">${headerText}</div><div class="flex items-center"><time class="text-[10px] font-medium text-gray-500 dark:text-gray-400">${d}</time>${deleteBtn}</div></div><div class="text-sm text-gray-600 dark:text-gray-300">${log.text}</div></div></div>`;
         });
         window.filterProgressAttendance();
         document.getElementById("progress-modal").classList.remove("hidden");
@@ -10763,6 +10775,9 @@ Belém-PA, [DATA_ATUAL].
       window.saveProgressNote = async () => {
         const id = document.getElementById("prog-student-id").value;
         const text = document.getElementById("prog-new-note").value.trim();
+        const authorInput = document.getElementById("prog-new-note-author");
+        const authorVal = authorInput && authorInput.value.trim() ? authorInput.value.trim() : "Sistema";
+
         if (!text) {
           window.customAlert("Escreva uma anotação.");
           return;
@@ -10783,6 +10798,7 @@ Belém-PA, [DATA_ATUAL].
                 type: "note",
                 text: text,
                 date: new Date().toISOString(),
+                author: authorVal,
               }),
             },
           );
@@ -10793,6 +10809,7 @@ Belém-PA, [DATA_ATUAL].
               type: "note",
               text: text,
               date: new Date().toISOString(),
+              author: authorVal,
             });
           }
           window.openProgressModal(id);
@@ -16644,12 +16661,13 @@ Belém-PA, [DATA_ATUAL].
           const d = formatDate(
             dateVal.includes("T") ? dateVal : dateVal + "T12:00:00",
           );
+          const authorVal = log.author || "Sistema";
           const typeStr =
             log.type === "graduation"
-              ? "Graduação"
+              ? `Graduação (${authorVal})`
               : log.type === "note"
-                ? "Anotação"
-                : "Sistema";
+                ? `Anotação (${authorVal})`
+                : authorVal;
           printTableBody.innerHTML += `<tr><td class="p-2 border border-gray-300">${d}</td><td class="p-2 border border-gray-300">${typeStr}</td><td class="p-2 border border-gray-300">${log.text}</td></tr>`;
         });
 
