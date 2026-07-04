@@ -5977,36 +5977,55 @@
       async function initAI() {
         console.log("Iniciando IA...");
         try {
-          // PRIORIDADE 1: LocalStorage (Configurado pelo usuário no site)
-          let apiKey = localStorage.getItem("gemini_api_key");
-
-          // PRIORIDADE 2: Variável injetada pelo GitHub
-          if (!apiKey || apiKey === "PLACEHOLDER_GEMINI_API_KEY") {
-            apiKey = window.NEXT_PUBLIC_GEMINI_API_KEY;
-          }
-
-          // PRIORIDADE 3: Servidor Local (Preview)
-          if (!apiKey || apiKey === "PLACEHOLDER_GEMINI_API_KEY") {
+          const savedKey = localStorage.getItem("gemini_api_key");
+          let isConfigured = false;
+          
+          if (savedKey && savedKey !== "PLACEHOLDER_GEMINI_API_KEY" && savedKey !== "null" && savedKey !== "") {
+            isConfigured = true;
+          } else {
             try {
               const configResp = await fetch("/api/config");
               if (configResp.ok) {
                 const config = await configResp.json();
-                if (config.apiKey) apiKey = config.apiKey;
+                if (config.configured) {
+                  isConfigured = true;
+                }
               }
             } catch (e) {}
           }
 
-          if (apiKey) apiKey = apiKey.toString().replace(/['"]/g, "").trim();
-
-          if (
-            apiKey &&
-            apiKey !== "PLACEHOLDER_GEMINI_API_KEY" &&
-            apiKey !== "null" &&
-            apiKey !== ""
-          ) {
-            const { GoogleGenAI } =
-              await import("https://esm.run/@google/genai");
-            ai = new GoogleGenAI({ apiKey: apiKey });
+          if (isConfigured) {
+            ai = {
+              models: {
+                generateContent: async ({ model, contents, config }) => {
+                  let modelToUse = model || "gemini-3.5-flash";
+                  if (modelToUse.includes("gemini-3-flash-preview")) {
+                    modelToUse = "gemini-3.5-flash";
+                  }
+                  
+                  const response = await fetch("/api/gemini/generate", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "x-gemini-key": localStorage.getItem("gemini_api_key") || ""
+                    },
+                    body: JSON.stringify({
+                      model: modelToUse,
+                      contents: contents,
+                      config: config
+                    })
+                  });
+                  
+                  if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || "Erro na geração do Gemini no servidor");
+                  }
+                  
+                  const data = await response.json();
+                  return { text: data.text };
+                }
+              }
+            };
             window.ai = ai;
             console.log("Gemini IA Pronta.");
           } else {
@@ -6691,7 +6710,7 @@
                     As coordenadas [ymin, xmin, ymax, xmax] devem ser normalizadas de 0 a 1000 baseadas na altura e largura da imagem de grupo.`;
 
             const result = await ai.models.generateContent({
-              model: "gemini-3-flash-preview",
+              model: "gemini-3.5-flash",
               contents: {
                 parts: [
                   ...validPhotosParts,
