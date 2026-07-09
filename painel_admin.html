@@ -1219,6 +1219,14 @@
                   <i class="fa-solid fa-trash-can mr-1"></i> Excluir
                   Selecionadas
                 </button>
+                <button
+                  id="btn-batch-move-att-report"
+                  onclick="window.moveAttendanceReportBatch()"
+                  class="hidden bg-blue-600 hover:bg-blue-700 text-white text-xs px-2.5 py-1.5 rounded font-bold transition shadow-sm mr-2"
+                >
+                  <i class="fa-solid fa-calendar-days mr-1"></i> Mover
+                  Selecionadas
+                </button>
                 <div
                   class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm"
                 >
@@ -1260,7 +1268,7 @@
                     <th
                       class="px-6 py-3 border-b dark:border-gray-600 font-semibold"
                     >
-                      Modalidade/Plano
+                      Faixa
                     </th>
                     <th
                       class="px-6 py-3 border-b dark:border-gray-600 font-semibold"
@@ -6459,6 +6467,31 @@
           const now = new Date().toISOString();
           const updates = [];
 
+          const alreadyPresent = [];
+          for (const studentId of window.selectedManualStudents) {
+            const student = window.students.find((s) => s.id === studentId);
+            if (!student) continue;
+            const hasLog =
+              student.attendanceLog &&
+              student.attendanceLog.some(
+                (l) => l.date === date && window.isSameHourGroup(l.time, schedule),
+              );
+            if (hasLog) {
+              alreadyPresent.push(student);
+            }
+          }
+
+          let skipDuplicates = false;
+          if (alreadyPresent.length > 0) {
+            const names = alreadyPresent.map((s) => s.name);
+            const formattedDate = date.split("-").reverse().join("/");
+            const confirmMsg = `Alunos que já possuem presença para a aula de ${schedule} em ${formattedDate}:\n\n${names.map((n) => `• ${n}`).join("\n")}\n\nDeseja confirmar o lançamento duplicado para eles? (Se 'Cancelar', lançará apenas para quem ainda não tem).`;
+            const confirmed = await window.customConfirm(confirmMsg);
+            if (!confirmed) {
+              skipDuplicates = true;
+            }
+          }
+
           for (const studentId of window.selectedManualStudents) {
             const student = window.students.find((s) => s.id === studentId);
             if (!student) continue;
@@ -6466,9 +6499,9 @@
             const alreadyHas =
               student.attendanceLog &&
               student.attendanceLog.some(
-                (l) => l.date === date && l.time === schedule,
+                (l) => l.date === date && window.isSameHourGroup(l.time, schedule),
               );
-            if (alreadyHas) continue;
+            if (alreadyHas && skipDuplicates) continue;
 
             const newLog = {
               date: date,
@@ -7059,7 +7092,42 @@
         btn.disabled = true;
 
         try {
+          const alreadyPresent = [];
           for (const studentId of confirmedIds) {
+            const student = window.students.find((s) => s.id === studentId);
+            if (!student) continue;
+            const hasLog =
+              student.attendanceLog &&
+              student.attendanceLog.some(
+                (log) => log.date === date && window.isSameHourGroup(log.time, schedule),
+              );
+            if (hasLog) {
+              alreadyPresent.push(student);
+            }
+          }
+
+          let skipDuplicates = false;
+          if (alreadyPresent.length > 0) {
+            const names = alreadyPresent.map((s) => s.name);
+            const formattedDate = date.split("-").reverse().join("/");
+            const confirmMsg = `Alunos que já possuem presença para a aula de ${schedule} em ${formattedDate}:\n\n${names.map((n) => `• ${n}`).join("\n")}\n\nDeseja confirmar o lançamento duplicado para eles? (Se 'Cancelar', lançará apenas para quem ainda não tem).`;
+            const confirmed = await window.customConfirm(confirmMsg);
+            if (!confirmed) {
+              skipDuplicates = true;
+            }
+          }
+
+          for (const studentId of confirmedIds) {
+            const student = window.students.find((s) => s.id === studentId);
+            if (!student) continue;
+
+            const hasLog =
+              student.attendanceLog &&
+              student.attendanceLog.some(
+                (log) => log.date === date && window.isSameHourGroup(log.time, schedule),
+              );
+            if (hasLog && skipDuplicates) continue;
+
             const checkinId = `${studentId}-${date}-${schedule.replace(":", "")}`;
             const timestamp = new Date().toISOString();
 
@@ -7076,8 +7144,7 @@
               ),
               {
                 studentId: studentId,
-                studentName: window.students.find((s) => s.id === studentId)
-                  .name,
+                studentName: student.name,
                 date: date,
                 time: schedule,
                 timestamp: timestamp,
@@ -7086,37 +7153,28 @@
             );
 
             // Update student document (source of truth for UI)
-            const student = window.students.find((s) => s.id === studentId);
-            if (student) {
-              const newLog = {
-                date: date,
-                time: schedule,
-                timestamp: timestamp,
-                method: "facial_recognition_ia",
-              };
-              const hasLog =
-                student.attendanceLog &&
-                student.attendanceLog.some(
-                  (log) => log.date === date && log.time === schedule,
-                );
-              if (!hasLog) {
-                await updateDoc(
-                  doc(
-                    db,
-                    "artifacts",
-                    APP_ID,
-                    "public",
-                    "data",
-                    "students",
-                    studentId,
-                  ),
-                  {
-                    attendance: arrayUnion(date),
-                    attendanceLog: arrayUnion(newLog),
-                  },
-                );
-              }
-            }
+            const newLog = {
+              date: date,
+              time: schedule,
+              timestamp: timestamp,
+              method: "facial_recognition_ia",
+            };
+
+            await updateDoc(
+              doc(
+                db,
+                "artifacts",
+                APP_ID,
+                "public",
+                "data",
+                "students",
+                studentId,
+              ),
+              {
+                attendance: arrayUnion(date),
+                attendanceLog: arrayUnion(newLog),
+              },
+            );
           }
           window.closeClassPhotoModal();
           document
@@ -8077,6 +8135,12 @@
 
         if (!name) {
           window.customAlert("Por favor, preencha o nome da turma/horário.");
+          return;
+        }
+
+        const timeRegex = /\b([0-1]?[0-9]|2[0-3]):[0-5][0-9]\b/;
+        if (!timeRegex.test(name)) {
+          window.customAlert("O nome da turma/horário DEVE obrigatoriamente conter a hora no formato HH:MM (ex: '18:00', 'AULA 18:00' ou 'Aula 18:00 - Mestre Cadu').");
           return;
         }
 
@@ -11017,11 +11081,14 @@ Belém-PA, [DATA_ATUAL].
             s &&
             s.attendanceLog &&
             s.attendanceLog.some(
-              (l) => l.date === dateVal && l.time === classVal,
+              (l) => l.date === dateVal && window.isSameHourGroup(l.time, classVal),
             )
           ) {
-            window.customAlert("Já existe presença!");
-            return;
+            const formattedDate = dateVal.split("-").reverse().join("/");
+            const confirmed = await window.customConfirm(
+              `O aluno ${s.name} já possui presença para a aula de ${classVal} em ${formattedDate}.\n\nDeseja confirmar o lançamento duplicado mesmo assim?`
+            );
+            if (!confirmed) return;
           }
           const newLog = {
             date: dateVal,
@@ -11134,12 +11201,243 @@ Belém-PA, [DATA_ATUAL].
         const selected = document.querySelectorAll(
           ".att-report-checkbox:checked",
         ).length;
-        const btn = document.getElementById("btn-batch-delete-att-report");
+        const btnDelete = document.getElementById("btn-batch-delete-att-report");
+        const btnMove = document.getElementById("btn-batch-move-att-report");
         if (selected > 0) {
-          btn.classList.remove("hidden");
-          btn.innerHTML = `<i class="fa-solid fa-trash-can mr-1"></i> Excluir (${selected})`;
+          if (btnDelete) {
+            btnDelete.classList.remove("hidden");
+            btnDelete.innerHTML = `<i class="fa-solid fa-trash-can mr-1"></i> Excluir (${selected})`;
+          }
+          if (btnMove) {
+            btnMove.classList.remove("hidden");
+            btnMove.innerHTML = `<i class="fa-solid fa-calendar-days mr-1"></i> Mover (${selected})`;
+          }
         } else {
-          btn.classList.add("hidden");
+          if (btnDelete) btnDelete.classList.add("hidden");
+          if (btnMove) btnMove.classList.add("hidden");
+        }
+      };
+
+      window.moveAttendanceReportBatch = async () => {
+        const checkboxes = document.querySelectorAll(
+          ".att-report-checkbox:checked",
+        );
+        if (checkboxes.length === 0) return;
+
+        const currentDate = document.getElementById("attendance-date-filter").value;
+        const targetDateInput = prompt(
+          `Digite a nova data para onde deseja mover as ${checkboxes.length} presenças selecionadas (formato AAAA-MM-DD ou DD/MM/AAAA):`,
+          currentDate || ""
+        );
+        
+        let targetDate = targetDateInput ? targetDateInput.trim() : null;
+        if (!targetDate) return;
+
+        if (targetDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+          const parts = targetDate.split("/");
+          targetDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+
+        if (!targetDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          window.customAlert("Formato de data inválido! Use o formato AAAA-MM-DD ou DD/MM/AAAA.");
+          return;
+        }
+
+        if (targetDate === currentDate) {
+          window.customAlert("A data de destino é igual à data atual.");
+          return;
+        }
+
+        if (
+          !(await window.customConfirm(
+            `Confirmar a transferência de ${checkboxes.length} presenças para o dia ${targetDate.split("-").reverse().join("/")}?`,
+          ))
+        )
+          return;
+
+        const logsToMove = [];
+        checkboxes.forEach((cb) => {
+          const sId = cb.getAttribute("data-sid");
+          const date = cb.getAttribute("data-date");
+          const time = cb.getAttribute("data-time");
+          logsToMove.push({ sId, date, time });
+        });
+
+        try {
+          let movedCount = 0;
+          for (const item of logsToMove) {
+            const student = window.students.find((st) => st.id === item.sId);
+            if (!student || !student.attendanceLog) continue;
+
+            const logEntry = student.attendanceLog.find(
+              (l) => l.date === item.date && l.time === item.time,
+            );
+            if (!logEntry) continue;
+
+            const oldLogEntry = { ...logEntry };
+            const newLogEntry = { ...logEntry, date: targetDate };
+            
+            if (newLogEntry.timestamp) {
+              const oldTime = new Date(newLogEntry.timestamp);
+              const targetParts = targetDate.split("-");
+              const newTime = new Date(oldTime);
+              newTime.setFullYear(parseInt(targetParts[0]), parseInt(targetParts[1]) - 1, parseInt(targetParts[2]));
+              newLogEntry.timestamp = newTime.getTime();
+            }
+
+            const docRef = doc(
+              window.db,
+              "artifacts",
+              APP_ID,
+              "public",
+              "data",
+              "students",
+              item.sId,
+            );
+
+            await updateDoc(docRef, {
+              attendanceLog: arrayRemove(oldLogEntry)
+            });
+            await updateDoc(docRef, {
+              attendanceLog: arrayUnion(newLogEntry)
+            });
+
+            student.attendanceLog = student.attendanceLog.filter(
+              (l) => l !== logEntry,
+            );
+            student.attendanceLog.push(newLogEntry);
+
+            const stillHasLogsForDate = student.attendanceLog.some(
+              (l) => l.date === item.date,
+            );
+            if (!stillHasLogsForDate) {
+              await updateDoc(docRef, { attendance: arrayRemove(item.date) });
+              if (student.attendance) {
+                student.attendance = student.attendance.filter(
+                  (d) => d !== item.date,
+                );
+              }
+            }
+
+            if (!student.attendance) student.attendance = [];
+            if (!student.attendance.includes(targetDate)) {
+              await updateDoc(docRef, { attendance: arrayUnion(targetDate) });
+              student.attendance.push(targetDate);
+            }
+
+            movedCount++;
+          }
+
+          window.customAlert(
+            `${movedCount} presenças movidas com sucesso para o dia ${targetDate.split("-").reverse().join("/")}!`,
+          );
+          
+          window.renderAttendanceTable();
+          if (window.filterProgressAttendance) window.filterProgressAttendance();
+          window.loadData();
+        } catch (e) {
+          console.error("Erro ao mover presenças em lote:", e);
+          window.customAlert("Erro ao mover presenças em lote.");
+        }
+      };
+
+      window.moveSpecificAttendance = async (studentId, dateStr, timeStr) => {
+        const targetDateInput = prompt(
+          `Digite a nova data para onde deseja mover esta presença (formato AAAA-MM-DD ou DD/MM/AAAA):`,
+          dateStr || ""
+        );
+        let targetDate = targetDateInput ? targetDateInput.trim() : null;
+        if (!targetDate) return;
+
+        if (targetDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+          const parts = targetDate.split("/");
+          targetDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+
+        if (!targetDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          window.customAlert("Formato de data inválido! Use o formato AAAA-MM-DD ou DD/MM/AAAA.");
+          return;
+        }
+
+        if (targetDate === dateStr) {
+          window.customAlert("A data de destino é igual à data atual.");
+          return;
+        }
+
+        const student = window.students.find((st) => st.id === studentId);
+        if (!student || !student.attendanceLog) return;
+
+        const logEntry = student.attendanceLog.find(
+          (l) => l.date === dateStr && l.time === timeStr,
+        );
+        if (!logEntry) return;
+
+        if (
+          !(await window.customConfirm(
+            `Confirmar a transferência desta presença para o dia ${targetDate.split("-").reverse().join("/")}?`,
+          ))
+        )
+          return;
+
+        try {
+          const oldLogEntry = { ...logEntry };
+          const newLogEntry = { ...logEntry, date: targetDate };
+
+          if (newLogEntry.timestamp) {
+            const oldTime = new Date(newLogEntry.timestamp);
+            const targetParts = targetDate.split("-");
+            const newTime = new Date(oldTime);
+            newTime.setFullYear(parseInt(targetParts[0]), parseInt(targetParts[1]) - 1, parseInt(targetParts[2]));
+            newLogEntry.timestamp = newTime.getTime();
+          }
+
+          const docRef = doc(
+            window.db,
+            "artifacts",
+            APP_ID,
+            "public",
+            "data",
+            "students",
+            studentId,
+          );
+
+          await updateDoc(docRef, {
+            attendanceLog: arrayRemove(oldLogEntry)
+          });
+          await updateDoc(docRef, {
+            attendanceLog: arrayUnion(newLogEntry)
+          });
+
+          student.attendanceLog = student.attendanceLog.filter(
+            (l) => l !== logEntry,
+          );
+          student.attendanceLog.push(newLogEntry);
+
+          const stillHasLogsForDate = student.attendanceLog.some(
+            (l) => l.date === dateStr,
+          );
+          if (!stillHasLogsForDate) {
+            await updateDoc(docRef, { attendance: arrayRemove(dateStr) });
+            if (student.attendance) {
+              student.attendance = student.attendance.filter(
+                (d) => d !== dateStr,
+              );
+            }
+          }
+
+          if (!student.attendance) student.attendance = [];
+          if (!student.attendance.includes(targetDate)) {
+            await updateDoc(docRef, { attendance: arrayUnion(targetDate) });
+            student.attendance.push(targetDate);
+          }
+
+          window.customAlert(`Presença movida com sucesso para o dia ${targetDate.split("-").reverse().join("/")}!`);
+          window.renderAttendanceTable();
+          if (window.filterProgressAttendance) window.filterProgressAttendance();
+          window.loadData();
+        } catch (e) {
+          console.error("Erro ao mover presença:", e);
+          window.customAlert("Erro ao mover presença.");
         }
       };
 
@@ -13138,6 +13436,31 @@ Belém-PA, [DATA_ATUAL].
             `;
       };
 
+      window.extractTime = (str) => {
+        if (!str) return null;
+        const match = str.match(/\b([0-1]?[0-9]|2[0-3]):([0-5][0-9])\b/);
+        if (match) {
+          const hr = match[1].padStart(2, '0');
+          const min = match[2];
+          return `${hr}:${min}`;
+        }
+        const matchH = str.match(/\b([0-1]?[0-9]|2[0-3])[hH]([0-5][0-9])\b/);
+        if (matchH) {
+          const hr = matchH[1].padStart(2, '0');
+          const min = matchH[2];
+          return `${hr}:${min}`;
+        }
+        return null;
+      };
+
+      window.isSameHourGroup = (timeA, timeB) => {
+        if (timeA === timeB) return true;
+        const normA = window.extractTime(timeA);
+        const normB = window.extractTime(timeB);
+        if (normA && normB) return normA === normB;
+        return false;
+      };
+
       window.getBeltImageInlineHtml = (beltStr) => {
         if (!beltStr) beltStr = "Faixa Branca - 0º Grau";
 
@@ -13816,10 +14139,27 @@ Belém-PA, [DATA_ATUAL].
 
         if (!dateInput) {
           tbody.innerHTML =
-            '<tr><td colspan="5" class="p-4 text-center text-gray-500">Selecione uma data para ver a frequência.</td></tr>';
+            '<tr><td colspan="6" class="p-4 text-center text-gray-500">Selecione uma data para ver a frequência.</td></tr>';
           countDisplay.innerText = "0";
           return;
         }
+
+        const extractTime = (str) => {
+          if (!str) return null;
+          const match = str.match(/\b([0-1]?[0-9]|2[0-3]):([0-5][0-9])\b/);
+          if (match) {
+            const hr = match[1].padStart(2, '0');
+            const min = match[2];
+            return `${hr}:${min}`;
+          }
+          const matchH = str.match(/\b([0-1]?[0-9]|2[0-3])[hH]([0-5][0-9])\b/);
+          if (matchH) {
+            const hr = matchH[1].padStart(2, '0');
+            const min = matchH[2];
+            return `${hr}:${min}`;
+          }
+          return null;
+        };
 
         let attendanceRecords = [];
 
@@ -13842,6 +14182,7 @@ Belém-PA, [DATA_ATUAL].
                   studentName: student.name,
                   studentPhoto: studentPhoto,
                   studentPlan: window.getPlanInfo(student.plan).short || "N/A",
+                  studentBelt: student.belt || "Branca",
                   time: log.time || "N/A",
                   timestamp: log.timestamp || "",
                   timeDate: log.timestamp
@@ -13859,22 +14200,29 @@ Belém-PA, [DATA_ATUAL].
         countDisplay.innerText = attendanceRecords.length;
 
         if (attendanceRecords.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">Nenhum check-in registrado para esta data.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">Nenhum check-in registrado para esta data.</td></tr>`;
           return;
         }
 
-        // Group by class time (record.time)
+        // Group by normalized time
         const grouped = {};
         attendanceRecords.forEach((record) => {
-          const t = record.time || "Sem Horário";
+          const rawTime = record.time || "Sem Horário";
+          const normalized = extractTime(rawTime);
+          const t = normalized ? `AULA ${normalized}` : rawTime;
           if (!grouped[t]) grouped[t] = [];
           grouped[t].push(record);
         });
 
-        // Sort keys (scheduled times) chronologically
+        // Sort keys chronologically
         const sortedTimes = Object.keys(grouped).sort((a, b) => {
           if (a === "Sem Horário" || a === "N/A") return 1;
           if (b === "Sem Horário" || b === "N/A") return -1;
+          const timeA = extractTime(a);
+          const timeB = extractTime(b);
+          if (timeA && timeB) {
+            return timeA.localeCompare(timeB);
+          }
           return a.localeCompare(b);
         });
 
@@ -13885,6 +14233,7 @@ Belém-PA, [DATA_ATUAL].
 
         sortedTimes.forEach((classTime) => {
           const recordsInTime = grouped[classTime];
+          const headerText = classTime.toUpperCase().startsWith("AULA") ? classTime : `AULA ${classTime}`;
 
           // Beautiful divider row
           html += `
@@ -13893,7 +14242,7 @@ Belém-PA, [DATA_ATUAL].
                             <div class="flex items-center justify-between flex-wrap gap-2 w-full">
                                 <div class="flex items-center gap-2 text-brand-red dark:text-red-400 font-display text-base tracking-wide uppercase font-black">
                                     <i class="fa-solid fa-clock text-xs sm:text-sm"></i>
-                                    <span>AULA ${classTime}</span>
+                                    <span>${headerText}</span>
                                 </div>
                                 <div class="flex items-center gap-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-sans font-medium">
                                     <span>Alunos:</span>
@@ -13926,7 +14275,7 @@ Belém-PA, [DATA_ATUAL].
                                 </label>
                             </td>
                             <!-- Horário -->
-                            <td class="px-0 md:px-6 py-2 md:py-3 font-mono text-gray-600 dark:text-gray-400 font-bold block md:table-cell text-xs sm:text-sm">
+                            <td class="px-0 md:px-6 py-2 md:py-3 font-mono text-gray-600 dark:text-gray-400 block md:table-cell text-xs sm:text-sm">
                                 <span class="text-xs font-bold text-gray-400 uppercase md:hidden mr-2">Horário:</span>${checkinTime}
                             </td>
                             <!-- Aluno -->
@@ -13936,9 +14285,9 @@ Belém-PA, [DATA_ATUAL].
                                     <span class="font-bold text-gray-800 dark:text-gray-200 capitalize text-sm sm:text-base">${record.studentName}</span>
                                 </div>
                             </td>
-                            <!-- Modalidade/Plano -->
+                            <!-- Faixa -->
                             <td class="px-0 md:px-6 py-2 md:py-3 text-gray-600 dark:text-gray-400 block md:table-cell text-xs sm:text-sm">
-                                <span class="text-xs font-bold text-gray-400 uppercase md:hidden mr-2">Plano:</span>${record.studentPlan}
+                                <span class="text-xs font-bold text-gray-400 uppercase md:hidden mr-2">Faixa:</span>${record.studentBelt}
                             </td>
                             <!-- Aula -->
                             <td class="px-0 md:px-6 py-2 md:py-3 text-blue-600 dark:text-blue-400 font-semibold block md:table-cell text-xs sm:text-sm">
@@ -13953,12 +14302,15 @@ Belém-PA, [DATA_ATUAL].
                                       (typeof isAdminUnlocked !== "undefined" &&
                                         isAdminUnlocked)
                                         ? `
+                                        <button onclick="window.moveSpecificAttendance('${record.studentId}', '${dateInput}', '${record.time}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 dark:bg-blue-955/20 active:bg-blue-100 md:bg-transparent px-3 py-1.5 md:p-0 rounded text-xs sm:text-sm transition flex items-center gap-1 font-bold mr-2" title="Mover">
+                                            <i class="fa-solid fa-calendar-days"></i> <span class="md:hidden">MOVER</span>
+                                        </button>
                                         <button onclick="window.removeSpecificAttendance('${record.studentId}', '${dateInput}', '${record.time}')" class="text-red-500 hover:text-red-700 bg-red-50 dark:bg-red-955/20 active:bg-red-100 md:bg-transparent px-3 py-1.5 md:p-0 rounded text-xs sm:text-sm transition flex items-center gap-1 font-bold" title="Excluir">
                                             <i class="fa-solid fa-trash-can"></i> <span class="md:hidden">EXCLUIR</span>
                                         </button>
                                     `
                                         : `
-                                        <span class="p-1 px-2.5 bg-gray-100 dark:bg-gray-700 rounded text-xs text-gray-400 flex items-center gap-1 cursor-pointer" title="Desbloqueie para excluir" onclick="window.checkAdminAccess()">
+                                        <span class="p-1 px-2.5 bg-gray-100 dark:bg-gray-700 rounded text-xs text-gray-400 flex items-center gap-1 cursor-pointer" title="Desbloqueie para gerenciar" onclick="window.checkAdminAccess()">
                                             <i class="fa-solid fa-lock"></i> Bloqueado
                                         </span>
                                     `
@@ -14116,6 +14468,33 @@ Belém-PA, [DATA_ATUAL].
           timestamp: new Date().toISOString(),
         };
 
+        const alreadyPresent = [];
+        for (const cb of checkboxes) {
+          const id = cb.value;
+          const s = window.students.find((x) => x.id === id);
+          if (s) {
+            const hasLog =
+              s.attendanceLog &&
+              s.attendanceLog.some(
+                (l) => l.date === dateStr && window.isSameHourGroup(l.time, timeStr),
+              );
+            if (hasLog) {
+              alreadyPresent.push(s);
+            }
+          }
+        }
+
+        let skipDuplicates = false;
+        if (alreadyPresent.length > 0) {
+          const names = alreadyPresent.map((s) => s.name);
+          const formattedDate = dateStr.split("-").reverse().join("/");
+          const confirmMsg = `Alunos que já possuem presença para a aula de ${timeStr} em ${formattedDate}:\n\n${names.map((n) => `• ${n}`).join("\n")}\n\nDeseja confirmar o lançamento duplicado para eles? (Se 'Cancelar', lançará apenas para quem ainda não tem).`;
+          const confirmed = await window.customConfirm(confirmMsg);
+          if (!confirmed) {
+            skipDuplicates = true;
+          }
+        }
+
         window.closeBulkAttendanceModal();
 
         try {
@@ -14123,13 +14502,12 @@ Belém-PA, [DATA_ATUAL].
             const id = cb.value;
             const s = window.students.find((x) => x.id === id);
             if (s) {
-              if (
+              const alreadyHas =
                 s.attendanceLog &&
                 s.attendanceLog.some(
-                  (l) => l.date === dateStr && l.time === timeStr,
-                )
-              )
-                continue;
+                  (l) => l.date === dateStr && window.isSameHourGroup(l.time, timeStr),
+                );
+              if (alreadyHas && skipDuplicates) continue;
               await updateDoc(doc(window.db, "students", id), {
                 attendance: arrayUnion(dateStr),
                 attendanceLog: arrayUnion(newLog),
