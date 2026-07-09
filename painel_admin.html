@@ -2110,12 +2110,13 @@
       >
         <div class="p-6 overflow-y-auto flex-1">
           <h3
+            id="delinquent-modal-title"
             class="font-bold text-lg text-gray-800 dark:text-white mb-2 flex items-center gap-2"
           >
             <i class="fa-solid fa-triangle-exclamation text-brand-red"></i>
             Alunos Inadimplentes
           </h3>
-          <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+          <p id="delinquent-modal-desc" class="text-sm text-gray-600 dark:text-gray-300 mb-4">
             Os seguintes alunos possuem mensalidade(s) em atraso. Selecione os alunos para os quais deseja confirmar o lançamento de presença:
           </p>
           <div id="delinquent-students-checkbox-list" class="space-y-2 max-h-60 overflow-y-auto border border-gray-100 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-900/50">
@@ -6166,13 +6167,30 @@
           const modal = document.getElementById("delinquent-confirm-modal");
           const listContainer = document.getElementById("delinquent-students-checkbox-list");
           
+          const titleEl = document.getElementById("delinquent-modal-title") || modal.querySelector("h3");
+          const descEl = document.getElementById("delinquent-modal-desc") || modal.querySelector("p");
+          
+          if (titleEl) {
+            titleEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-brand-red"></i> Validação de Presença`;
+          }
+          if (descEl) {
+            descEl.textContent = `Os seguintes alunos possuem mensalidade em atraso ou já têm presença nesta aula. Selecione aqueles para os quais deseja lançar a presença (os demais alunos da chamada serão confirmados automaticamente):`;
+          }
+
           listContainer.innerHTML = "";
           delinquentStudents.forEach((student) => {
             const div = document.createElement("div");
             div.className = "flex items-center gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition";
             
-            const statusLabel = student.paymentStatus === "Pendente" ? "Pendente" : "Atrasado";
-            
+            let badgesHtml = "";
+            if (student.isDelinquent) {
+              const statusLabel = student.paymentStatus === "Pendente" ? "Pendente" : "Atrasado";
+              badgesHtml += `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 mr-1">${statusLabel}</span>`;
+            }
+            if (student.isDuplicate) {
+              badgesHtml += `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400">DUPLICADO</span>`;
+            }
+
             div.innerHTML = `
               <input 
                 type="checkbox" 
@@ -6183,7 +6201,7 @@
               />
               <label for="delinquent-cb-${student.id}" class="flex-1 text-sm font-medium text-gray-700 dark:text-gray-200 cursor-pointer flex items-center justify-between">
                 <span>${student.name}</span>
-                <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">${statusLabel}</span>
+                <div class="flex items-center gap-1">${badgesHtml}</div>
               </label>
             `;
             listContainer.appendChild(div);
@@ -6590,57 +6608,35 @@
           const now = new Date().toISOString();
           const updates = [];
 
-          const alreadyPresent = [];
-          for (const studentId of window.selectedManualStudents) {
-            const student = window.students.find((s) => s.id === studentId);
-            if (!student) continue;
-            const hasLog =
-              student.attendanceLog &&
-              student.attendanceLog.some(
-                (l) => l.date === date && window.isSameHourGroup(l.time, schedule),
-              );
-            if (hasLog) {
-              alreadyPresent.push(student);
-            }
-          }
-
-          let skipDuplicates = false;
-          if (alreadyPresent.length > 0) {
-            const names = alreadyPresent.map((s) => s.name);
-            const formattedDate = date.split("-").reverse().join("/");
-            const confirmMsg = `Alunos que já possuem presença para a aula de ${schedule} em ${formattedDate}:\n\n${names.map((n) => `• ${n}`).join("\n")}\n\nDeseja confirmar o lançamento duplicado para eles? (Se 'Cancelar', lançará apenas para quem ainda não tem).`;
-            const confirmed = await window.customConfirm(confirmMsg);
-            if (!confirmed) {
-              skipDuplicates = true;
-            }
-          }
-
-          const delinquentStudents = [];
+          const alertedStudents = [];
           for (const studentId of window.selectedManualStudents) {
             const student = window.students.find((s) => s.id === studentId);
             if (!student) continue;
 
-            const alreadyHas =
+            const isDuplicate =
               student.attendanceLog &&
               student.attendanceLog.some(
                 (l) => l.date === date && window.isSameHourGroup(l.time, schedule),
               );
-            if (alreadyHas && skipDuplicates) continue;
-
             const isDelinquent = student.paymentStatus === "Pendente" || isPaymentLate(student);
-            if (isDelinquent) {
-              delinquentStudents.push(student);
+
+            if (isDuplicate || isDelinquent) {
+              alertedStudents.push({
+                ...student,
+                isDuplicate,
+                isDelinquent,
+              });
             }
           }
 
-          let approvedDelinquentIds = [];
-          if (delinquentStudents.length > 0) {
-            const approved = await window.confirmDelinquentStudents(delinquentStudents);
+          let approvedIds = [];
+          if (alertedStudents.length > 0) {
+            const approved = await window.confirmDelinquentStudents(alertedStudents);
             if (approved === null) {
-              // Cancelled means we skip all delinquent students
-              approvedDelinquentIds = [];
+              // Cancel the entire operation
+              return;
             } else {
-              approvedDelinquentIds = approved;
+              approvedIds = approved;
             }
           }
 
@@ -6648,15 +6644,8 @@
             const student = window.students.find((s) => s.id === studentId);
             if (!student) continue;
 
-            const alreadyHas =
-              student.attendanceLog &&
-              student.attendanceLog.some(
-                (l) => l.date === date && window.isSameHourGroup(l.time, schedule),
-              );
-            if (alreadyHas && skipDuplicates) continue;
-
-            const isDelinquent = student.paymentStatus === "Pendente" || isPaymentLate(student);
-            if (isDelinquent && !approvedDelinquentIds.includes(studentId)) continue;
+            const isAlerted = alertedStudents.some((s) => s.id === studentId);
+            if (isAlerted && !approvedIds.includes(studentId)) continue;
 
             const newLog = {
               date: date,
@@ -7247,56 +7236,37 @@
         btn.disabled = true;
 
         try {
-          const alreadyPresent = [];
-          for (const studentId of confirmedIds) {
-            const student = window.students.find((s) => s.id === studentId);
-            if (!student) continue;
-            const hasLog =
-              student.attendanceLog &&
-              student.attendanceLog.some(
-                (log) => log.date === date && window.isSameHourGroup(log.time, schedule),
-              );
-            if (hasLog) {
-              alreadyPresent.push(student);
-            }
-          }
-
-          let skipDuplicates = false;
-          if (alreadyPresent.length > 0) {
-            const names = alreadyPresent.map((s) => s.name);
-            const formattedDate = date.split("-").reverse().join("/");
-            const confirmMsg = `Alunos que já possuem presença para a aula de ${schedule} em ${formattedDate}:\n\n${names.map((n) => `• ${n}`).join("\n")}\n\nDeseja confirmar o lançamento duplicado para eles? (Se 'Cancelar', lançará apenas para quem ainda não tem).`;
-            const confirmed = await window.customConfirm(confirmMsg);
-            if (!confirmed) {
-              skipDuplicates = true;
-            }
-          }
-
-          const delinquentStudents = [];
+          const alertedStudents = [];
           for (const studentId of confirmedIds) {
             const student = window.students.find((s) => s.id === studentId);
             if (!student) continue;
 
-            const hasLog =
+            const isDuplicate =
               student.attendanceLog &&
               student.attendanceLog.some(
                 (log) => log.date === date && window.isSameHourGroup(log.time, schedule),
               );
-            if (hasLog && skipDuplicates) continue;
-
             const isDelinquent = student.paymentStatus === "Pendente" || isPaymentLate(student);
-            if (isDelinquent) {
-              delinquentStudents.push(student);
+
+            if (isDuplicate || isDelinquent) {
+              alertedStudents.push({
+                ...student,
+                isDuplicate,
+                isDelinquent,
+              });
             }
           }
 
-          let approvedDelinquentIds = [];
-          if (delinquentStudents.length > 0) {
-            const approved = await window.confirmDelinquentStudents(delinquentStudents);
+          let approvedIds = [];
+          if (alertedStudents.length > 0) {
+            const approved = await window.confirmDelinquentStudents(alertedStudents);
             if (approved === null) {
-              approvedDelinquentIds = [];
+              // Cancel the entire operation
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+              return;
             } else {
-              approvedDelinquentIds = approved;
+              approvedIds = approved;
             }
           }
 
@@ -7304,15 +7274,8 @@
             const student = window.students.find((s) => s.id === studentId);
             if (!student) continue;
 
-            const hasLog =
-              student.attendanceLog &&
-              student.attendanceLog.some(
-                (log) => log.date === date && window.isSameHourGroup(log.time, schedule),
-              );
-            if (hasLog && skipDuplicates) continue;
-
-            const isDelinquent = student.paymentStatus === "Pendente" || isPaymentLate(student);
-            if (isDelinquent && !approvedDelinquentIds.includes(studentId)) continue;
+            const isAlerted = alertedStudents.some((s) => s.id === studentId);
+            if (isAlerted && !approvedIds.includes(studentId)) continue;
 
             const checkinId = `${studentId}-${date}-${schedule.replace(":", "")}`;
             const timestamp = new Date().toISOString();
@@ -14664,59 +14627,36 @@ Belém-PA, [DATA_ATUAL].
           timestamp: new Date().toISOString(),
         };
 
-        const alreadyPresent = [];
+        const alertedStudents = [];
         for (const cb of checkboxes) {
           const id = cb.value;
           const s = window.students.find((x) => x.id === id);
           if (s) {
-            const hasLog =
+            const isDuplicate =
               s.attendanceLog &&
               s.attendanceLog.some(
                 (l) => l.date === dateStr && window.isSameHourGroup(l.time, timeStr),
               );
-            if (hasLog) {
-              alreadyPresent.push(s);
-            }
-          }
-        }
-
-        let skipDuplicates = false;
-        if (alreadyPresent.length > 0) {
-          const names = alreadyPresent.map((s) => s.name);
-          const formattedDate = dateStr.split("-").reverse().join("/");
-          const confirmMsg = `Alunos que já possuem presença para a aula de ${timeStr} em ${formattedDate}:\n\n${names.map((n) => `• ${n}`).join("\n")}\n\nDeseja confirmar o lançamento duplicado para eles? (Se 'Cancelar', lançará apenas para quem ainda não tem).`;
-          const confirmed = await window.customConfirm(confirmMsg);
-          if (!confirmed) {
-            skipDuplicates = true;
-          }
-        }
-
-        const delinquentStudents = [];
-        for (const cb of checkboxes) {
-          const id = cb.value;
-          const s = window.students.find((x) => x.id === id);
-          if (s) {
-            const alreadyHas =
-              s.attendanceLog &&
-              s.attendanceLog.some(
-                (l) => l.date === dateStr && window.isSameHourGroup(l.time, timeStr),
-              );
-            if (alreadyHas && skipDuplicates) continue;
-
             const isDelinquent = s.paymentStatus === "Pendente" || isPaymentLate(s);
-            if (isDelinquent) {
-              delinquentStudents.push(s);
+
+            if (isDuplicate || isDelinquent) {
+              alertedStudents.push({
+                ...s,
+                isDuplicate,
+                isDelinquent,
+              });
             }
           }
         }
 
-        let approvedDelinquentIds = [];
-        if (delinquentStudents.length > 0) {
-          const approved = await window.confirmDelinquentStudents(delinquentStudents);
+        let approvedIds = [];
+        if (alertedStudents.length > 0) {
+          const approved = await window.confirmDelinquentStudents(alertedStudents);
           if (approved === null) {
-            approvedDelinquentIds = [];
+            // Cancel the entire operation
+            return;
           } else {
-            approvedDelinquentIds = approved;
+            approvedIds = approved;
           }
         }
 
@@ -14727,15 +14667,8 @@ Belém-PA, [DATA_ATUAL].
             const id = cb.value;
             const s = window.students.find((x) => x.id === id);
             if (s) {
-              const alreadyHas =
-                s.attendanceLog &&
-                s.attendanceLog.some(
-                  (l) => l.date === dateStr && window.isSameHourGroup(l.time, timeStr),
-                );
-              if (alreadyHas && skipDuplicates) continue;
-
-              const isDelinquent = s.paymentStatus === "Pendente" || isPaymentLate(s);
-              if (isDelinquent && !approvedDelinquentIds.includes(id)) continue;
+              const isAlerted = alertedStudents.some((x) => x.id === id);
+              if (isAlerted && !approvedIds.includes(id)) continue;
               await updateDoc(doc(window.db, "students", id), {
                 attendance: arrayUnion(dateStr),
                 attendanceLog: arrayUnion(newLog),
