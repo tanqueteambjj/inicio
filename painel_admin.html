@@ -6492,6 +6492,7 @@
             }
           }
 
+          const delinquentStudents = [];
           for (const studentId of window.selectedManualStudents) {
             const student = window.students.find((s) => s.id === studentId);
             if (!student) continue;
@@ -6502,6 +6503,36 @@
                 (l) => l.date === date && window.isSameHourGroup(l.time, schedule),
               );
             if (alreadyHas && skipDuplicates) continue;
+
+            const isDelinquent = student.paymentStatus === "Pendente" || isPaymentLate(student);
+            if (isDelinquent) {
+              delinquentStudents.push(student);
+            }
+          }
+
+          let skipDelinquents = false;
+          if (delinquentStudents.length > 0) {
+            const names = delinquentStudents.map((s) => s.name);
+            const confirmMsg = `Atenção: Os seguintes alunos possuem mensalidade(s) em atraso (inadimplentes):\n\n${names.map((n) => `• ${n}`).join("\n")}\n\nDeseja confirmar o lançamento de presença para eles mesmo assim? (Se clicar em "Cancelar", a presença NÃO será lançada para estes alunos).`;
+            const confirmed = await window.customConfirm(confirmMsg);
+            if (!confirmed) {
+              skipDelinquents = true;
+            }
+          }
+
+          for (const studentId of window.selectedManualStudents) {
+            const student = window.students.find((s) => s.id === studentId);
+            if (!student) continue;
+
+            const alreadyHas =
+              student.attendanceLog &&
+              student.attendanceLog.some(
+                (l) => l.date === date && window.isSameHourGroup(l.time, schedule),
+              );
+            if (alreadyHas && skipDuplicates) continue;
+
+            const isDelinquent = student.paymentStatus === "Pendente" || isPaymentLate(student);
+            if (isDelinquent && skipDelinquents) continue;
 
             const newLog = {
               date: date,
@@ -7117,6 +7148,7 @@
             }
           }
 
+          const delinquentStudents = [];
           for (const studentId of confirmedIds) {
             const student = window.students.find((s) => s.id === studentId);
             if (!student) continue;
@@ -7127,6 +7159,36 @@
                 (log) => log.date === date && window.isSameHourGroup(log.time, schedule),
               );
             if (hasLog && skipDuplicates) continue;
+
+            const isDelinquent = student.paymentStatus === "Pendente" || isPaymentLate(student);
+            if (isDelinquent) {
+              delinquentStudents.push(student);
+            }
+          }
+
+          let skipDelinquents = false;
+          if (delinquentStudents.length > 0) {
+            const names = delinquentStudents.map((s) => s.name);
+            const confirmMsg = `Atenção: Os seguintes alunos possuem mensalidade(s) em atraso (inadimplentes):\n\n${names.map((n) => `• ${n}`).join("\n")}\n\nDeseja confirmar o lançamento de presença para eles mesmo assim? (Se clicar em "Cancelar", a presença NÃO será lançada para estes alunos).`;
+            const confirmed = await window.customConfirm(confirmMsg);
+            if (!confirmed) {
+              skipDelinquents = true;
+            }
+          }
+
+          for (const studentId of confirmedIds) {
+            const student = window.students.find((s) => s.id === studentId);
+            if (!student) continue;
+
+            const hasLog =
+              student.attendanceLog &&
+              student.attendanceLog.some(
+                (log) => log.date === date && window.isSameHourGroup(log.time, schedule),
+              );
+            if (hasLog && skipDuplicates) continue;
+
+            const isDelinquent = student.paymentStatus === "Pendente" || isPaymentLate(student);
+            if (isDelinquent && skipDelinquents) continue;
 
             const checkinId = `${studentId}-${date}-${schedule.replace(":", "")}`;
             const timestamp = new Date().toISOString();
@@ -11090,6 +11152,16 @@ Belém-PA, [DATA_ATUAL].
             );
             if (!confirmed) return;
           }
+
+          if (s) {
+            const isDelinquent = s.paymentStatus === "Pendente" || isPaymentLate(s);
+            if (isDelinquent) {
+              const confirmed = await window.customConfirm(
+                `Atenção: O aluno ${s.name} possui mensalidade(s) em atraso (inadimplentes).\n\nDeseja confirmar o lançamento de presença para ele mesmo assim?`
+              );
+              if (!confirmed) return;
+            }
+          }
           const newLog = {
             date: dateVal,
             time: classVal,
@@ -14495,6 +14567,35 @@ Belém-PA, [DATA_ATUAL].
           }
         }
 
+        const delinquentStudents = [];
+        for (const cb of checkboxes) {
+          const id = cb.value;
+          const s = window.students.find((x) => x.id === id);
+          if (s) {
+            const alreadyHas =
+              s.attendanceLog &&
+              s.attendanceLog.some(
+                (l) => l.date === dateStr && window.isSameHourGroup(l.time, timeStr),
+              );
+            if (alreadyHas && skipDuplicates) continue;
+
+            const isDelinquent = s.paymentStatus === "Pendente" || isPaymentLate(s);
+            if (isDelinquent) {
+              delinquentStudents.push(s);
+            }
+          }
+        }
+
+        let skipDelinquents = false;
+        if (delinquentStudents.length > 0) {
+          const names = delinquentStudents.map((s) => s.name);
+          const confirmMsg = `Atenção: Os seguintes alunos possuem mensalidade(s) em atraso (inadimplentes):\n\n${names.map((n) => `• ${n}`).join("\n")}\n\nDeseja confirmar o lançamento de presença para eles mesmo assim? (Se clicar em "Cancelar", a presença NÃO será lançada para estes alunos).`;
+          const confirmed = await window.customConfirm(confirmMsg);
+          if (!confirmed) {
+            skipDelinquents = true;
+          }
+        }
+
         window.closeBulkAttendanceModal();
 
         try {
@@ -14508,6 +14609,9 @@ Belém-PA, [DATA_ATUAL].
                   (l) => l.date === dateStr && window.isSameHourGroup(l.time, timeStr),
                 );
               if (alreadyHas && skipDuplicates) continue;
+
+              const isDelinquent = s.paymentStatus === "Pendente" || isPaymentLate(s);
+              if (isDelinquent && skipDelinquents) continue;
               await updateDoc(doc(window.db, "students", id), {
                 attendance: arrayUnion(dateStr),
                 attendanceLog: arrayUnion(newLog),
