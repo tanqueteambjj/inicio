@@ -2100,6 +2100,62 @@
       </div>
     </div>
 
+    <!-- Modal: Mover Presença (Date Picker) -->
+    <div
+      id="move-attendance-modal"
+      class="fixed inset-0 z-[180] hidden bg-black/60 flex-col items-center justify-center p-4 backdrop-blur-sm"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-sm flex flex-col animate-fade-in border-t-4 border-brand-red"
+      >
+        <div class="p-6">
+          <h3
+            id="move-attendance-title"
+            class="font-bold text-lg text-gray-800 dark:text-white mb-2 flex items-center gap-2"
+          >
+            <i class="fa-solid fa-calendar-days text-brand-red"></i>
+            Mover Frequência
+          </h3>
+          <p
+            id="move-attendance-description"
+            class="text-sm text-gray-600 dark:text-gray-300 mb-4"
+          >
+            Selecione a nova data para onde deseja mover as presenças selecionadas.
+          </p>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
+                Nova Data
+              </label>
+              <input
+                type="date"
+                id="move-attendance-date-input"
+                class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-red bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
+              />
+            </div>
+          </div>
+        </div>
+        <div
+          class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-end gap-2 rounded-b-lg"
+        >
+          <button
+            id="move-attendance-cancel"
+            class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded text-sm transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            id="move-attendance-confirm"
+            class="bg-brand-red hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm transition-colors flex items-center gap-1.5"
+          >
+            <i class="fa-solid fa-arrows-spin text-xs"></i>
+            Mover
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal: Confirmação de Alunos Inadimplentes com Seleção -->
     <div
       id="delinquent-confirm-modal"
@@ -6223,6 +6279,48 @@
           cancelBtn.onclick = () => {
             cleanup();
             resolve(false);
+          };
+
+          modal.classList.remove("hidden");
+          modal.classList.add("flex");
+        });
+      };
+
+      window.showMoveAttendanceModal = (title, htmlDescription, defaultDate) => {
+        return new Promise((resolve) => {
+          const modal = document.getElementById("move-attendance-modal");
+          const titleEl = document.getElementById("move-attendance-title");
+          const descEl = document.getElementById("move-attendance-description");
+          const dateInput = document.getElementById("move-attendance-date-input");
+          const cancelBtn = document.getElementById("move-attendance-cancel");
+          const confirmBtn = document.getElementById("move-attendance-confirm");
+
+          titleEl.innerHTML = `<i class="fa-solid fa-calendar-days text-brand-red"></i> ${title}`;
+          descEl.innerHTML = htmlDescription;
+          
+          if (defaultDate && defaultDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            dateInput.value = defaultDate;
+          } else {
+            const today = typeof window.getLocalISODate === "function" ? window.getLocalISODate() : new Date().toISOString().split("T")[0];
+            dateInput.value = today;
+          }
+
+          const cleanup = () => {
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+            confirmBtn.onclick = null;
+            cancelBtn.onclick = null;
+          };
+
+          confirmBtn.onclick = () => {
+            const selectedVal = dateInput.value;
+            cleanup();
+            resolve(selectedVal || null);
+          };
+
+          cancelBtn.onclick = () => {
+            cleanup();
+            resolve(null);
           };
 
           modal.classList.remove("hidden");
@@ -11522,23 +11620,13 @@ Belém-PA, [DATA_ATUAL].
         if (checkboxes.length === 0) return;
 
         const currentDate = document.getElementById("attendance-date-filter").value;
-        const targetDateInput = prompt(
-          `Digite a nova data para onde deseja mover as ${checkboxes.length} presenças selecionadas (formato AAAA-MM-DD ou DD/MM/AAAA):`,
+        const targetDate = await window.showMoveAttendanceModal(
+          "Mover Presenças em Lote",
+          `Selecione a nova data para onde deseja mover as <span class="font-bold text-brand-red">${checkboxes.length}</span> presenças selecionadas:`,
           currentDate || ""
         );
         
-        let targetDate = targetDateInput ? targetDateInput.trim() : null;
         if (!targetDate) return;
-
-        if (targetDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-          const parts = targetDate.split("/");
-          targetDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-        }
-
-        if (!targetDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-          window.customAlert("Formato de data inválido! Use o formato AAAA-MM-DD ou DD/MM/AAAA.");
-          return;
-        }
 
         if (targetDate === currentDate) {
           window.customAlert("A data de destino é igual à data atual.");
@@ -11639,28 +11727,6 @@ Belém-PA, [DATA_ATUAL].
       };
 
       window.moveSpecificAttendance = async (studentId, dateStr, timeStr) => {
-        const targetDateInput = prompt(
-          `Digite a nova data para onde deseja mover esta presença (formato AAAA-MM-DD ou DD/MM/AAAA):`,
-          dateStr || ""
-        );
-        let targetDate = targetDateInput ? targetDateInput.trim() : null;
-        if (!targetDate) return;
-
-        if (targetDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-          const parts = targetDate.split("/");
-          targetDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-        }
-
-        if (!targetDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-          window.customAlert("Formato de data inválido! Use o formato AAAA-MM-DD ou DD/MM/AAAA.");
-          return;
-        }
-
-        if (targetDate === dateStr) {
-          window.customAlert("A data de destino é igual à data atual.");
-          return;
-        }
-
         const student = window.students.find((st) => st.id === studentId);
         if (!student || !student.attendanceLog) return;
 
@@ -11668,6 +11734,20 @@ Belém-PA, [DATA_ATUAL].
           (l) => l.date === dateStr && l.time === timeStr,
         );
         if (!logEntry) return;
+
+        const studentName = student ? student.name : "Aluno";
+        const formattedDate = dateStr.split("-").reverse().join("/");
+        const targetDate = await window.showMoveAttendanceModal(
+          "Mover Presença",
+          `Selecione a nova data para onde deseja mover a presença de <span class="font-bold text-brand-red">${studentName}</span> (atualmente no dia ${formattedDate} às ${timeStr}):`,
+          dateStr || ""
+        );
+        if (!targetDate) return;
+
+        if (targetDate === dateStr) {
+          window.customAlert("A data de destino é igual à data atual.");
+          return;
+        }
 
         if (
           !(await window.customConfirm(
