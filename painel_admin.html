@@ -731,10 +731,25 @@
               id="pagination-controls"
               class="px-6 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4 no-print hidden"
             >
-              <span
-                class="text-sm text-gray-600 dark:text-gray-400"
-                id="pagination-info"
-              ></span>
+              <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                  <span>Exibir por página:</span>
+                  <select
+                    id="items-per-page-select"
+                    onchange="window.changeItemsPerPage(this.value)"
+                    class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-brand-red cursor-pointer"
+                  >
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="100000">Todos</option>
+                  </select>
+                </div>
+                <span
+                  class="text-sm text-gray-600 dark:text-gray-400 font-medium"
+                  id="pagination-info"
+                ></span>
+              </div>
               <div
                 class="flex gap-1 flex-wrap justify-center"
                 id="pagination-buttons"
@@ -1312,6 +1327,13 @@
                 class="px-6 py-2 border-b-2 border-transparent text-gray-500 hover:text-green-500 font-bold text-sm transition-all focus:outline-none"
               >
                 PROJEÇÃO FUTURA
+              </button>
+              <button
+                onclick="window.switchFinanceTab('late')"
+                id="finance-tab-late"
+                class="px-6 py-2 border-b-2 border-transparent text-gray-500 hover:text-green-500 font-bold text-sm transition-all focus:outline-none"
+              >
+                INADIMPLENTES
               </button>
             </div>
 
@@ -13918,6 +13940,12 @@ Belém-PA, [DATA_ATUAL].
       window.currentPage = 1;
       window.itemsPerPage = 20;
 
+      window.changeItemsPerPage = (val) => {
+        window.itemsPerPage = parseInt(val);
+        window.currentPage = 1;
+        window.renderTable();
+      };
+
       window.goToPage = (page) => {
         window.currentPage = page;
         window.renderTable();
@@ -14096,34 +14124,46 @@ Belém-PA, [DATA_ATUAL].
         const paginationButtons = document.getElementById("pagination-buttons");
 
         if (paginationControls && paginationInfo && paginationButtons) {
-          if (totalPages > 1) {
+          if (totalItems > 0) {
             paginationControls.classList.remove("hidden");
             paginationInfo.innerText = `Mostrando ${startIndex + 1} a ${endIndex} de ${totalItems} alunos`;
 
-            let buttonsHtml = "";
-
-            // Prev button
-            buttonsHtml += `<button onclick="window.goToPage(${window.currentPage - 1})" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed" ${window.currentPage === 1 ? "disabled" : ""}><i class="fa-solid fa-chevron-left"></i></button>`;
-
-            // Page numbers
-            let startPage = Math.max(1, window.currentPage - 2);
-            let endPage = Math.min(totalPages, startPage + 4);
-            if (endPage - startPage < 4) {
-              startPage = Math.max(1, endPage - 4);
+            // Sync select dropdown
+            const itemsSelect = document.getElementById("items-per-page-select");
+            if (itemsSelect) {
+              itemsSelect.value = String(window.itemsPerPage);
             }
 
-            for (let i = startPage; i <= endPage; i++) {
-              if (i === window.currentPage) {
-                buttonsHtml += `<button class="px-3 py-1 border border-brand-red bg-brand-red text-white rounded font-bold">${i}</button>`;
-              } else {
-                buttonsHtml += `<button onclick="window.goToPage(${i})" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">${i}</button>`;
+            if (totalPages > 1) {
+              paginationButtons.classList.remove("hidden");
+              let buttonsHtml = "";
+
+              // Prev button
+              buttonsHtml += `<button onclick="window.goToPage(${window.currentPage - 1})" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed" ${window.currentPage === 1 ? "disabled" : ""}><i class="fa-solid fa-chevron-left"></i></button>`;
+
+              // Page numbers
+              let startPage = Math.max(1, window.currentPage - 2);
+              let endPage = Math.min(totalPages, startPage + 4);
+              if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
               }
+
+              for (let i = startPage; i <= endPage; i++) {
+                if (i === window.currentPage) {
+                  buttonsHtml += `<button class="px-3 py-1 border border-brand-red bg-brand-red text-white rounded font-bold">${i}</button>`;
+                } else {
+                  buttonsHtml += `<button onclick="window.goToPage(${i})" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">${i}</button>`;
+                }
+              }
+
+              // Next button
+              buttonsHtml += `<button onclick="window.goToPage(${window.currentPage + 1})" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed" ${window.currentPage === totalPages ? "disabled" : ""}><i class="fa-solid fa-chevron-right"></i></button>`;
+
+              paginationButtons.innerHTML = buttonsHtml;
+            } else {
+              paginationButtons.innerHTML = "";
+              paginationButtons.classList.add("hidden");
             }
-
-            // Next button
-            buttonsHtml += `<button onclick="window.goToPage(${window.currentPage + 1})" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed" ${window.currentPage === totalPages ? "disabled" : ""}><i class="fa-solid fa-chevron-right"></i></button>`;
-
-            paginationButtons.innerHTML = buttonsHtml;
           } else {
             paginationControls.classList.add("hidden");
           }
@@ -14272,14 +14312,18 @@ Belém-PA, [DATA_ATUAL].
                     </div>
                 `;
 
-          let rowClass =
-            "border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition";
+          let rowClass = "border-b dark:border-gray-700 transition";
+          const isUnder12 = (getAge(s.dob) !== null ? getAge(s.dob) < 12 : isStudentKid(s));
+          if (isUnder12) {
+            rowClass += " bg-sky-100 dark:bg-sky-950 hover:bg-sky-200/80 dark:hover:bg-sky-900";
+          } else if (isDependent) {
+            rowClass += ` bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 dependent-of-${titularId}`;
+          } else {
+            rowClass += " hover:bg-gray-50 dark:hover:bg-gray-700";
+          }
           if (isNewStudent) {
             rowClass +=
               " border-l-2 border-l-brand-red bg-red-50/10 dark:bg-red-900/10";
-          }
-          if (isDependent) {
-            rowClass += ` bg-gray-50/50 dark:bg-gray-800/50 dependent-of-${titularId}`;
           }
 
           let paddingLeft = isDependent ? "pl-8" : "p-3";
@@ -16619,21 +16663,27 @@ Belém-PA, [DATA_ATUAL].
         window.financeTab = tab;
         const historyBtn = document.getElementById("finance-tab-history");
         const projectionBtn = document.getElementById("finance-tab-projection");
+        const lateBtn = document.getElementById("finance-tab-late");
         const tableHeader = document.getElementById("finance-table-header");
 
+        const resetBtn = (btn) => {
+          if (!btn) return;
+          btn.classList.remove("border-green-500", "text-green-600", "dark:text-green-400");
+          btn.classList.add("border-transparent", "text-gray-500");
+        };
+
+        const activeBtn = (btn) => {
+          if (!btn) return;
+          btn.classList.add("border-green-500", "text-green-600", "dark:text-green-400");
+          btn.classList.remove("border-transparent", "text-gray-500");
+        };
+
+        resetBtn(historyBtn);
+        resetBtn(projectionBtn);
+        resetBtn(lateBtn);
+
         if (tab === "history") {
-          historyBtn.classList.add(
-            "border-green-500",
-            "text-green-600",
-            "dark:text-green-400",
-          );
-          historyBtn.classList.remove("border-transparent", "text-gray-500");
-          projectionBtn.classList.remove(
-            "border-green-500",
-            "text-green-600",
-            "dark:text-green-400",
-          );
-          projectionBtn.classList.add("border-transparent", "text-gray-500");
+          activeBtn(historyBtn);
 
           document.getElementById("finance-title-text").innerHTML =
             '<i class="fa-solid fa-money-bill-trend-up mr-2 text-green-500"></i> Relatório de Receita Detalhado';
@@ -16662,19 +16712,8 @@ Belém-PA, [DATA_ATUAL].
                     <th class="px-4 py-3 text-right">Desconto</th>
                     <th class="px-4 py-3 text-right">Valor Pago</th>
                 `;
-        } else {
-          projectionBtn.classList.add(
-            "border-green-500",
-            "text-green-600",
-            "dark:text-green-400",
-          );
-          projectionBtn.classList.remove("border-transparent", "text-gray-500");
-          historyBtn.classList.remove(
-            "border-green-500",
-            "text-green-600",
-            "dark:text-green-400",
-          );
-          historyBtn.classList.add("border-transparent", "text-gray-500");
+        } else if (tab === "projection") {
+          activeBtn(projectionBtn);
 
           document.getElementById("finance-title-text").innerHTML =
             '<i class="fa-solid fa-chart-line mr-2 text-green-500"></i> Projeção Financeira Realista';
@@ -16702,6 +16741,32 @@ Belém-PA, [DATA_ATUAL].
                     <th class="px-4 py-3 text-right">Valor Plano</th>
                     <th class="px-4 py-3 text-right">Projeção</th>
                 `;
+        } else if (tab === "late") {
+          activeBtn(lateBtn);
+
+          document.getElementById("finance-title-text").innerHTML =
+            '<i class="fa-solid fa-user-xmark mr-2 text-red-500"></i> Relatório de Alunos Inadimplentes';
+          document.getElementById("finance-desc-text").innerText =
+            "Alunos ativos com mensalidades ou pendências financeiras atualmente em atraso.";
+
+          document.getElementById("label-stat-1").innerText = "Total Inadimplentes";
+          document.getElementById("desc-stat-1").innerText =
+            "Alunos ativos atualmente em atraso";
+          document.getElementById("label-stat-2").innerText = "Estimativa Devida";
+          document.getElementById("desc-stat-2").innerText =
+            "Soma aproximada dos valores devidos";
+          document.getElementById("label-stat-3").innerText = "Taxa de Inadimplência";
+          document.getElementById("desc-stat-3").innerText =
+            "Percentual em relação ao total de alunos ativos";
+
+          tableHeader.innerHTML = `
+                    <th class="px-4 py-3">Aluno</th>
+                    <th class="px-4 py-3">Vencimento Original</th>
+                    <th class="px-4 py-3">Plano / Valor</th>
+                    <th class="px-4 py-3">Contato / Responsável</th>
+                    <th class="px-4 py-3">Atraso</th>
+                    <th class="px-4 py-3 text-right">Estimativa Devida</th>
+                `;
         }
         window.renderFinanceReport();
       };
@@ -16711,16 +16776,91 @@ Belém-PA, [DATA_ATUAL].
         const tbody = document.getElementById("finance-report-body");
         const noData = document.getElementById("finance-no-data");
         const isProjection = window.financeTab === "projection";
+        const isLateTab = window.financeTab === "late";
 
         if (!tbody || !period) return;
         tbody.innerHTML = "";
 
-        let stat1 = 0; // Gross or Total Projection
-        let stat2 = 0; // Discount or Count students
-        let stat3 = 0; // Net or Ticket Medio
+        let stat1 = 0; // Gross or Total Projection or Late count
+        let stat2 = 0; // Discount or Count students or Total Late value
+        let stat3 = 0; // Net or Ticket Medio or Late rate %
         let list = [];
 
-        if (!isProjection) {
+        if (isLateTab) {
+          const activeStudents = window.students.filter(
+            (s) => !s.archived && s.enrollmentStatus !== "Inativo"
+          );
+          const totalActiveCount = activeStudents.length;
+
+          activeStudents.forEach((student) => {
+            const planInfo = window.getPlanInfo(student.plan);
+            const isAdministrative =
+              planInfo &&
+              (String(planInfo.short).toLowerCase().includes("administrativo") ||
+                String(planInfo.short).toLowerCase().includes("administração") ||
+                String(student.plan).toLowerCase().includes("administracao"));
+            if (isAdministrative) return;
+
+            const isDelinquent = student.paymentStatus === "Pendente" || isPaymentLate(student);
+            if (isDelinquent) {
+              let delayDays = 0;
+              let dueDateStr = student.nextDueDate || "";
+              if (dueDateStr) {
+                const nextDueObj = getAdjustedNextDueDate(student);
+                if (nextDueObj && !isNaN(nextDueObj.getTime())) {
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const diffTime = today - nextDueObj;
+                  delayDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+                  dueDateStr = nextDueObj.toISOString().split("T")[0];
+                }
+              }
+
+              const planValue =
+                student.planValue !== undefined
+                  ? student.planValue
+                  : planInfo
+                  ? planInfo.price || 0
+                  : 0;
+
+              // Estimate months late
+              let monthsLate = 1;
+              if (student.nextDueDate) {
+                const nextDueObj = getAdjustedNextDueDate(student);
+                if (nextDueObj && !isNaN(nextDueObj.getTime())) {
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  let tempDue = new Date(nextDueObj.getTime());
+                  let count = 0;
+                  while (tempDue < today) {
+                    count++;
+                    tempDue.setMonth(tempDue.getMonth() + 1);
+                  }
+                  monthsLate = Math.max(1, count);
+                }
+              }
+              const estimatedDebt = planValue * monthsLate;
+
+              list.push({
+                studentId: student.id,
+                studentName: student.name,
+                planName: planInfo ? planInfo.short : "Não informado",
+                dueDate: dueDateStr,
+                phone: student.phone || student.responsavelCelular || "Não cadastrado",
+                responsavel: student.responsavelNome || "",
+                delayDays,
+                planValue,
+                estimatedDebt,
+              });
+
+              stat1++; // Count of late students
+              stat2 += estimatedDebt; // Estimated total late value
+            }
+          });
+
+          stat3 = totalActiveCount > 0 ? (stat1 / totalActiveCount) * 100 : 0; // Late rate %
+          list.sort((a, b) => b.delayDays - a.delayDays); // Sort by highest delay
+        } else if (!isProjection) {
           window.students.forEach((student) => {
             const planInfo = window.getPlanInfo(student.plan);
             const isAdministrative =
@@ -16866,7 +17006,12 @@ Belém-PA, [DATA_ATUAL].
           list.sort((a, b) => new Date(a.date) - new Date(b.date));
         }
 
-        if (!isProjection) {
+        if (isLateTab) {
+          document.getElementById("finance-stat-gross").innerText = `${stat1} Alunos`;
+          document.getElementById("finance-stat-discounts").innerText =
+            `R$ ${stat2.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+          document.getElementById("finance-stat-net").innerText = `${stat3.toFixed(1)}%`;
+        } else if (!isProjection) {
           document.getElementById("finance-stat-gross").innerText =
             `R$ ${stat1.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
           document.getElementById("finance-stat-discounts").innerText =
@@ -16890,7 +17035,31 @@ Belém-PA, [DATA_ATUAL].
 
         let html = "";
         list.forEach((item) => {
-          if (!isProjection) {
+          if (isLateTab) {
+            const formattedDate = item.dueDate
+              ? item.dueDate.split("-").reverse().join("/")
+              : "Sem data";
+            const contactInfo = item.responsavel
+              ? `<div class="font-bold text-gray-800 dark:text-gray-200">${item.responsavel}</div><div class="text-[10px] text-gray-500">${item.phone}</div>`
+              : `<div class="font-bold text-gray-800 dark:text-gray-200">${item.phone}</div>`;
+            html += `
+                        <tr class="hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-colors">
+                            <td class="px-4 py-3"><span class="capitalize font-bold text-gray-800 dark:text-gray-100">${item.studentName}</span></td>
+                            <td class="px-4 py-3 text-red-600 dark:text-red-400 font-bold">${formattedDate}</td>
+                            <td class="px-4 py-3 text-xs text-gray-500 font-medium">
+                              <div class="font-bold text-gray-700 dark:text-gray-300">${item.planName}</div>
+                              <div>R$ ${item.planValue.toFixed(2)} / mês</div>
+                            </td>
+                            <td class="px-4 py-3 text-xs">${contactInfo}</td>
+                            <td class="px-4 py-3">
+                              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                                ${item.delayDays} dias
+                              </span>
+                            </td>
+                            <td class="px-4 py-3 text-right font-black text-red-600 dark:text-red-400">R$ ${item.estimatedDebt.toFixed(2)}</td>
+                        </tr>
+                    `;
+          } else if (!isProjection) {
             html += `
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                             <td class="px-4 py-3">${formatDate(item.date)}</td>
@@ -16931,6 +17100,7 @@ Belém-PA, [DATA_ATUAL].
       window.printFinanceReport = () => {
         const period = document.getElementById("finance-month-filter").value;
         const isProjection = window.financeTab === "projection";
+        const isLateTab = window.financeTab === "late";
         if (!period) return;
 
         const [year, month] = period.split("-");
@@ -16950,19 +17120,30 @@ Belém-PA, [DATA_ATUAL].
         ];
         const periodStr = `${monthNames[parseInt(month) - 1]} / ${year}`;
 
-        const title = isProjection
-          ? "Projeção Financeira Realista"
-          : "Relatório de Receita Detalhado";
+        let title = "Relatório de Receita Detalhado";
+        if (isProjection) {
+          title = "Projeção Financeira Realista";
+        } else if (isLateTab) {
+          title = "Relatório de Alunos Inadimplentes";
+        }
+
         document.querySelector("#printable-finance h2").innerText = title;
         document.getElementById("print-finance-period").innerText = periodStr;
         document.getElementById("print-finance-timestamp").innerText =
           new Date().toLocaleString("pt-BR");
 
-        const label1 = isProjection
-          ? "Expectativa de Receita"
-          : "Receita Bruta";
-        const label2 = isProjection ? "Alunos Pagantes" : "Total Descontos";
-        const label3 = isProjection ? "Ticket Médio" : "Receita Líquida";
+        let label1 = "Receita Bruta";
+        let label2 = "Total Descontos";
+        let label3 = "Receita Líquida";
+        if (isProjection) {
+          label1 = "Expectativa de Receita";
+          label2 = "Alunos Pagantes";
+          label3 = "Ticket Médio";
+        } else if (isLateTab) {
+          label1 = "Total Inadimplentes";
+          label2 = "Estimativa Devida";
+          label3 = "Taxa de Inadimplência";
+        }
 
         const statBlocks = document.querySelectorAll(
           "#printable-finance .grid > div",
@@ -16983,7 +17164,16 @@ Belém-PA, [DATA_ATUAL].
         const printHeader = document.querySelector(
           "#printable-finance thead tr",
         );
-        if (isProjection) {
+        if (isLateTab) {
+          printHeader.innerHTML = `
+                    <th class="p-2 border-r border-black">Aluno</th>
+                    <th class="p-2 border-r border-black">Vencimento Original</th>
+                    <th class="p-2 border-r border-black">Plano / Valor</th>
+                    <th class="p-2 border-r border-black">Contato / Responsável</th>
+                    <th class="p-2 border-r border-black">Atraso</th>
+                    <th class="p-2 text-right font-bold">Estimativa Devida</th>
+                `;
+        } else if (isProjection) {
           printHeader.innerHTML = `
                     <th class="p-2 border-r border-black">Vencimento</th>
                     <th class="p-2 border-r border-black">Aluno</th>
@@ -17306,99 +17496,160 @@ Belém-PA, [DATA_ATUAL].
       };
 
       window.printExperimentalReport = () => {
-        document.getElementById("print-exp-date").innerText =
-          new Date().toLocaleDateString("pt-BR") +
-          " às " +
-          new Date().toLocaleTimeString("pt-BR");
-        const tbody = document.getElementById("print-exp-table-body");
-        tbody.innerHTML = "";
+        const selectedChks = document.querySelectorAll(
+          ".select-experimental-row:checked",
+        );
 
-        const nameFilter = document
-          .getElementById("filter-exp-name")
-          .value.toLowerCase();
-        const statusFilter = document.getElementById("filter-exp-status").value;
-        const categoryFilter = document.getElementById(
-          "filter-exp-category",
-        ).value;
-        const dateFilter = document.getElementById("filter-exp-date").value;
-        const timeFilter = document.getElementById("filter-exp-time").value;
+        let listToPrint = [];
 
-        const filteredList = window.experimentalList.filter((exp) => {
-          let categoryText = exp.category || "--";
-          if (exp.dob) {
-            const age = getAge(exp.dob);
-            if (age !== null) {
-              if (age < 12) categoryText = `Infantil`;
-              else categoryText = `Adulto`;
-            }
-          }
-
-          if (nameFilter && !exp.name.toLowerCase().includes(nameFilter))
-            return false;
-          if (statusFilter !== "all" && exp.status !== statusFilter)
-            return false;
-          if (
-            categoryFilter !== "all" &&
-            !categoryText.includes(categoryFilter)
+        if (selectedChks.length > 0) {
+          selectedChks.forEach((chk) => {
+            const id = chk.getAttribute("data-exp-id");
+            const exp = (window.experimentalList || []).find((e) => e.id === id);
+            if (exp) listToPrint.push(exp);
+          });
+        } else {
+          const nameFilter = (
+            document.getElementById("filter-exp-name")?.value || ""
           )
-            return false;
-          if (dateFilter && exp.date !== dateFilter) return false;
-          if (timeFilter && exp.time !== timeFilter) return false;
-          return true;
+            .toLowerCase()
+            .trim();
+          const statusFilter =
+            document.getElementById("filter-exp-status")?.value || "all";
+          const categoryFilter =
+            document.getElementById("filter-exp-category")?.value || "all";
+          const dateFilter =
+            document.getElementById("filter-exp-date")?.value || "";
+          const timeFilter =
+            document.getElementById("filter-exp-time")?.value || "";
+
+          listToPrint = (window.experimentalList || []).filter((exp) => {
+            let categoryText = exp.category || "--";
+            if (exp.dob) {
+              const age = getAge(exp.dob);
+              if (age !== null && !isNaN(age)) {
+                if (age < 12) categoryText = `Infantil (${age} anos)`;
+                else categoryText = `Jovem/Adulto (${age} anos)`;
+              }
+            }
+
+            if (
+              nameFilter &&
+              !(exp.name || "").toLowerCase().includes(nameFilter)
+            )
+              return false;
+            if (
+              statusFilter !== "all" &&
+              (exp.status || "Pendente") !== statusFilter
+            )
+              return false;
+            if (
+              categoryFilter !== "all" &&
+              !categoryText.toLowerCase().includes(categoryFilter.toLowerCase())
+            )
+              return false;
+            if (dateFilter && exp.date !== dateFilter) return false;
+
+            if (timeFilter) {
+              const fVal = String(timeFilter).toLowerCase().trim();
+              const rVal = String(exp.time || "").toLowerCase().trim();
+              if (
+                rVal !== fVal &&
+                !fVal.includes(rVal) &&
+                !rVal.includes(fVal)
+              )
+                return false;
+            }
+
+            return true;
+          });
+        }
+
+        // Sort by date, then time, then name
+        listToPrint.sort((a, b) => {
+          if (a.date !== b.date)
+            return String(a.date || "").localeCompare(String(b.date || ""));
+          if (a.time !== b.time)
+            return String(a.time || "").localeCompare(String(b.time || ""));
+          return String(a.name || "").localeCompare(String(b.name || ""));
         });
 
-        if (filteredList.length === 0) {
-          tbody.innerHTML =
-            '<tr><td colspan="5" class="p-4 text-center text-gray-500 border border-gray-300">Nenhum agendamento encontrado.</td></tr>';
+        const nowStr =
+          new Date().toLocaleDateString("pt-BR") +
+          " às " +
+          new Date().toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+
+        let rowsHtml = "";
+        if (listToPrint.length === 0) {
+          rowsHtml =
+            '<tr><td colspan="5" style="padding: 12px; text-align: center; color: #666; border: 1px solid #ddd;">Nenhum agendamento encontrado.</td></tr>';
         } else {
-          filteredList.forEach((exp) => {
+          listToPrint.forEach((exp) => {
             const dateStr = formatDate(exp.date);
             let categoryHtml = exp.category || "--";
             let guardianHtml = "";
 
             if (exp.dob) {
               const age = getAge(exp.dob);
-              if (age !== null) {
+              if (age !== null && !isNaN(age)) {
                 if (age < 12) {
                   categoryHtml = `Infantil (${age} anos)`;
                   if (exp.guardian)
-                    guardianHtml = `<br><span class="text-xs text-gray-500">Resp: ${exp.guardian}</span>`;
+                    guardianHtml = `<br><span style="font-size: 10px; color: #555;">Resp: ${exp.guardian}</span>`;
                 } else {
                   categoryHtml = `Jovem/Adulto (${age} anos)`;
                   if (age < 18 && exp.guardian)
-                    guardianHtml = `<br><span class="text-xs text-gray-500">Resp: ${exp.guardian}</span>`;
+                    guardianHtml = `<br><span style="font-size: 10px; color: #555;">Resp: ${exp.guardian}</span>`;
                 }
               }
             }
 
-            tbody.innerHTML += `
-                        <tr>
-                            <td class="p-2 border border-gray-300 font-bold">${exp.name}${guardianHtml}</td>
-                            <td class="p-2 border border-gray-300">${exp.phone || "-"}</td>
-                            <td class="p-2 border border-gray-300">${dateStr} às ${exp.time || "--"}</td>
-                            <td class="p-2 border border-gray-300">${categoryHtml}</td>
-                            <td class="p-2 border border-gray-300">${exp.status || "Pendente"}</td>
-                        </tr>
-                    `;
+            const phoneStr = exp.phone || "-";
+            const timeStr = exp.time || "--:--";
+
+            rowsHtml += `
+              <tr>
+                <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${exp.name || "Sem nome"}${guardianHtml}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${phoneStr}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${dateStr} às ${timeStr}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${categoryHtml}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${exp.status || "Pendente"}</td>
+              </tr>
+            `;
           });
         }
 
-        // Hide other printables
-        if (document.getElementById("printable-progress"))
-          document.getElementById("printable-progress").classList.add("hidden");
-        document
-          .getElementById("printable-experimental")
-          .classList.remove("hidden");
+        const reportHtml = `
+          <div style="font-family: Arial, sans-serif; padding: 10px; color: #000;">
+            <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px;">
+              <h1 style="margin: 0; font-size: 20px; font-weight: bold; text-transform: uppercase;">Tanque Team BJJ</h1>
+              <h2 style="margin: 6px 0 0 0; font-size: 15px; font-weight: bold; text-transform: uppercase; color: #333;">Relatório de Aulas Experimentais</h2>
+              <p style="margin: 4px 0 0 0; font-size: 11px; color: #666;">Gerado em ${nowStr} • Total de registros: ${listToPrint.length}</p>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+              <thead>
+                <tr style="background-color: #f3f3f3;">
+                  <th style="border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">Nome do Aluno</th>
+                  <th style="border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">Telefone / Contato</th>
+                  <th style="border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">Data e Horário</th>
+                  <th style="border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">Categoria</th>
+                  <th style="border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+        `;
 
-        document.body.classList.add("printing-experimental");
-        window.print();
-
-        setTimeout(() => {
-          document.body.classList.remove("printing-experimental");
-          document
-            .getElementById("printable-experimental")
-            .classList.add("hidden");
-        }, 500);
+        window.printHtmlContent(
+          reportHtml,
+          `Relatorio_Aulas_Experimentais_${new Date().toISOString().split("T")[0]}`,
+        );
       };
 
       window.printProgressReport = () => {
