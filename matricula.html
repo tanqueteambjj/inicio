@@ -340,7 +340,7 @@
                     <p class="text-xs text-gray-400">Os valores abaixo correspondem aos planos oficiais vigentes do Tanque Team BJJ.</p>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="plans-selector-grid">
+                <div class="space-y-6" id="plans-selector-grid">
                     <!-- Loaded dynamically via JS -->
                 </div>
                 
@@ -431,7 +431,7 @@
                         </div>
                     </div>
 
-                    <!-- CHECKBOXES -->
+                    <!-- CHECKBOXES & TERMO DE COBRANÇA -->
                     <div class="border-t border-gray-800/80 pt-4 space-y-3">
                         <div class="p-3 bg-brand-red/10 border border-brand-red/30 rounded-xl flex items-start gap-3">
                             <input type="checkbox" id="reg-card-recurring" checked class="accent-brand-red w-5 h-5 rounded cursor-pointer mt-0.5 shrink-0">
@@ -440,10 +440,25 @@
                             </label>
                         </div>
 
+                        <!-- Termo de Cobrança Scrollable Text -->
+                        <div class="text-left space-y-1 pt-2 border-t border-gray-800/80">
+                            <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-invoice-dollar text-brand-red"></i> Termo de Cobrança em Cartão de Crédito <span class="text-brand-red font-bold">*</span>
+                            </label>
+                            <div class="h-32 overflow-y-auto bg-gray-950 border border-gray-850 rounded-xl p-3 text-[10.5px] text-gray-400 space-y-2 leading-relaxed scrollbar-thin scrollbar-thumb-gray-800">
+                                <p class="font-bold text-brand-red uppercase text-xs border-b border-gray-850 pb-1">TERMO DE AUTORIZAÇÃO DE COBRANÇA RECORRENTE E PAGAMENTO VIA CARTÃO</p>
+                                <p><strong>1. AUTORIZAÇÃO DE DÉBITO:</strong> O titular do cartão autoriza expressamente a ACADEMIA TANQUE TEAM BJJ a processar as cobranças relativas às mensalidades e taxas do plano contratado diretamente no cartão de crédito informado nesta ficha.</p>
+                                <p><strong>2. RECORRÊNCIA E DESCONTO:</strong> Para os planos com opção de desconto recorrente, a mensalidade será cobrada automaticamente a cada ciclo de faturamento. A manutenção do valor promocional depende da vigência ativa e autorizada das cobranças no cartão.</p>
+                                <p><strong>3. VALIDADE E ATUALIZAÇÃO DOS DADOS:</strong> É de responsabilidade do aluno/titular manter os dados do cartão de crédito atualizados. Em caso de recusa, vencimento, bloqueio ou cancelamento do cartão, o aluno deverá informar um novo cartão válido no prazo máximo de 5 (cinco) dias úteis.</p>
+                                <p><strong>4. SEGURANÇA E PRIVACIDADE:</strong> As informações do cartão de crédito são transmitidas de forma criptografada e mantidas sob estrito sigilo e segurança para uso exclusivo do setor financeiro da Tanque Team BJJ no processamento das mensalidades.</p>
+                                <p><strong>5. CANCELAMENTO E REGRAS DA ACADEMIA:</strong> A interrupção ou alteração das cobranças no cartão de crédito obedece às regras e prazos de cancelamento/rescisão definidos no Contrato de Adesão oficial da academia.</p>
+                            </div>
+                        </div>
+
                         <div class="flex items-start gap-3 pt-1">
                             <input type="checkbox" id="reg-card-terms" class="accent-brand-red w-5 h-5 rounded cursor-pointer mt-0.5 shrink-0">
                             <label for="reg-card-terms" class="text-xs text-gray-300 cursor-pointer select-none">
-                                Li e aceito o <strong class="text-white">Termo de Cobrança em Cartão de Crédito</strong> e confirmo a veracidade dos dados informados. <span class="text-brand-red font-bold">*</span>
+                                Li e aceito o <strong class="text-white">Termo de Cobrança em Cartão de Crédito</strong> acima e confirmo a veracidade dos dados informados. <span class="text-brand-red font-bold">*</span>
                             </label>
                         </div>
                     </div>
@@ -897,20 +912,79 @@
             
             selectedPlansCache = plans;
             
+            const categories = {
+                adulto: {
+                    title: 'Planos Adulto',
+                    icon: 'fa-user',
+                    badgeColor: 'text-brand-red border-brand-red/30 bg-brand-red/10',
+                    plans: []
+                },
+                infantil: {
+                    title: 'Planos Infantil',
+                    icon: 'fa-child',
+                    badgeColor: 'text-blue-400 border-blue-400/30 bg-blue-500/10',
+                    plans: []
+                },
+                outros: {
+                    title: 'Outros Planos / Personalizado',
+                    icon: 'fa-star',
+                    badgeColor: 'text-amber-400 border-amber-400/30 bg-amber-500/10',
+                    plans: []
+                }
+            };
+
             for (const [key, plan] of Object.entries(plans)) {
                 // Ignore isento/dependente for direct registration
                 if (key === 'dependente' || key === 'isento' || key === 'administracao') continue;
-                
-                grid.innerHTML += `
-                    <label class="relative flex flex-col justify-between p-5 bg-gray-900 border border-gray-800 rounded-xl cursor-pointer hover:border-brand-red transition-all select-none group" id="plan-card-${key}">
-                        <input type="radio" name="plan_type_select" value="${key}" class="absolute top-4 right-4 accent-brand-red w-4 h-4" onchange="window.selectPlanKey('${key}')">
-                        <div class="py-2">
-                            <span class="text-[10px] font-black tracking-widest uppercase text-brand-red">PLANO TANQUE TEAM</span>
-                            <h4 class="font-black font-display text-white text-base tracking-wide uppercase mt-1 group-hover:text-brand-red transition-colors">${plan.long || plan.name || key}</h4>
-                        </div>
-                    </label>
-                `;
+
+                const lowerKey = key.toLowerCase();
+                const lowerName = ((plan.long || plan.short || plan.name || '') + '').toLowerCase();
+
+                if (lowerKey.includes('infantil') || lowerName.includes('infantil')) {
+                    categories.infantil.plans.push({ key, plan });
+                } else if (lowerKey.includes('adulto') || lowerName.includes('adulto')) {
+                    categories.adulto.plans.push({ key, plan });
+                } else {
+                    categories.outros.plans.push({ key, plan });
+                }
             }
+
+            // Render each category
+            Object.values(categories).forEach(cat => {
+                if (cat.plans.length === 0) return;
+
+                let categoryHtml = `
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                            <span class="px-3 py-1 rounded-xl border text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${cat.badgeColor}">
+                                <i class="fa-solid ${cat.icon}"></i> ${cat.title}
+                            </span>
+                            <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">${cat.plans.length} ${cat.plans.length === 1 ? 'Opção' : 'Opções'}</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                `;
+
+                cat.plans.forEach(({ key, plan }) => {
+                    const priceFormatted = plan.price ? `R$ ${Number(plan.price).toFixed(2).replace('.', ',')}` : '';
+                    categoryHtml += `
+                        <label class="relative flex flex-col justify-between p-4 bg-gray-900 border border-gray-800 rounded-2xl cursor-pointer hover:border-brand-red transition-all select-none group" id="plan-card-${key}">
+                            <input type="radio" name="plan_type_select" value="${key}" class="absolute top-4 right-4 accent-brand-red w-4 h-4" onchange="window.selectPlanKey('${key}')">
+                            <div class="space-y-1 pr-6">
+                                <span class="text-[9px] font-black tracking-widest uppercase text-brand-red">PLANO TANQUE TEAM</span>
+                                <h4 class="font-black font-display text-white text-base tracking-wide uppercase group-hover:text-brand-red transition-colors">${plan.long || plan.short || plan.name || key}</h4>
+                                ${priceFormatted ? `<div class="text-xs font-bold text-emerald-400 font-mono pt-1">${priceFormatted} <span class="text-[10px] text-gray-400 font-normal">/mês</span></div>` : ''}
+                            </div>
+                        </label>
+                    `;
+                });
+
+                categoryHtml += `
+                        </div>
+                    </div>
+                `;
+
+                grid.innerHTML += categoryHtml;
+            });
         };
 
         window.selectPlanKey = (key) => {
@@ -1656,8 +1730,9 @@ DADOS RESUMIDOS DO ALUNO:
                 document.getElementById('step-progressbar-container').classList.add('hidden');
                 document.getElementById('wizard-buttons-container').classList.add('hidden');
                 
-                // Set custom text inside whatsapp success link
-                const waUrl = `https://wa.me/5591984533817?text=Olá! Acabei de preencher a minha ficha de pré-matrícula no sistema de vocês como ${name}. Aguardo a confirmação do meu plano para treinar!`;
+                // Set custom text inside whatsapp success link with animated summary & emojis
+                const waMessage = `Olá, equipe Tanque Team BJJ! 🥋🔥\n\nAcabei de enviar a minha ficha de pré-matrícula pelo sistema! 🚀✨\n\n📋 *RESUMO DA MATRÍCULA:*\n👤 *Aluno:* ${name}\n🥋 *Plano:* ${planDisplay}${formattedPrice}\n💳 *Forma de Pagamento:* ${formattedPay}\n\nAguardando a confirmação para iniciar os treinos no tatame! Oss! 👊🏼💥`;
+                const waUrl = `https://wa.me/5591984533817?text=${encodeURIComponent(waMessage)}`;
                 document.getElementById('whatsapp-success-btn').href = waUrl;
                 
             } catch (e) {
