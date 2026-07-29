@@ -556,6 +556,25 @@
                     Sua pré-matrícula foi enviada diretamente para o painel de aprovação da administração da <strong class="text-white">Tanque Team BJJ</strong>.
                 </p>
 
+                <!-- Resumo da Matrícula -->
+                <div class="bg-gray-900 border border-brand-red/40 p-5 rounded-3xl max-w-sm mx-auto text-left space-y-2.5 shadow-xl">
+                    <p class="text-xs font-black text-brand-red uppercase tracking-wider text-center border-b border-gray-800 pb-2 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-receipt"></i> Resumo da Matrícula
+                    </p>
+                    <div class="text-xs flex justify-between items-center gap-2">
+                        <span class="text-gray-400 font-medium">Aluno:</span>
+                        <span id="success-summary-name" class="text-white font-bold uppercase text-right truncate"></span>
+                    </div>
+                    <div class="text-xs flex justify-between items-center gap-2">
+                        <span class="text-gray-400 font-medium">Plano:</span>
+                        <span id="success-summary-plan" class="text-brand-red font-bold text-right"></span>
+                    </div>
+                    <div class="text-xs flex justify-between items-center gap-2">
+                        <span class="text-gray-400 font-medium">Forma de Pagamento:</span>
+                        <span id="success-summary-payment" class="text-emerald-400 font-bold text-right"></span>
+                    </div>
+                </div>
+
                 <div class="bg-gray-900 border border-gray-800 p-5 rounded-3xl max-w-sm mx-auto text-left space-y-3">
                     <p class="text-xs text-gray-400 font-bold uppercase tracking-wider text-center border-b border-gray-800 pb-2">O que fazer agora?</p>
                     <div class="flex gap-2 text-xs">
@@ -1613,6 +1632,24 @@ DADOS RESUMIDOS DO ALUNO:
                     console.error("Erro no envio dos e-mails de confirmação:", emailError);
                 }
                 
+                // Populate enrollment summary block
+                const payLabels = {
+                    'credit': 'Cartão de Crédito',
+                    'pix': 'Pix',
+                    'pay_later': 'Pagar na Academia'
+                };
+                const formattedPay = payLabels[paymentMethod] || paymentMethod;
+                const formattedPrice = planInfo.price ? ` - R$ ${planInfo.price.toFixed(2).replace('.', ',')}` : '';
+                const planDisplay = planInfo.short || planKey;
+
+                const nameSummaryEl = document.getElementById('success-summary-name');
+                const planSummaryEl = document.getElementById('success-summary-plan');
+                const paymentSummaryEl = document.getElementById('success-summary-payment');
+
+                if (nameSummaryEl) nameSummaryEl.innerText = name;
+                if (planSummaryEl) planSummaryEl.innerText = `${planDisplay}${formattedPrice}`;
+                if (paymentSummaryEl) paymentSummaryEl.innerText = formattedPay;
+
                 // Track success visual state
                 document.getElementById('step-5').classList.add('hidden');
                 document.getElementById('step-success').classList.remove('hidden');
