@@ -572,7 +572,16 @@
                 class="font-bold text-gray-500 dark:text-gray-400 text-xs sm:text-sm"
                 ><i class="fa-solid fa-filter"></i> Filtros:</span
               >
-              <div class="relative inline-block text-left w-full sm:w-auto">
+              <div class="relative inline-flex items-center gap-2 text-left w-full sm:w-auto">
+                <button
+                  id="bulk-email-header-btn"
+                  class="text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-xs sm:text-sm bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 px-3 py-1.5 rounded shadow-xs font-bold flex items-center gap-1.5 transition-all"
+                  onclick="window.openBulkEmailModal()"
+                  title="Enviar e-mails em lote para vários alunos"
+                >
+                  <i class="fa-solid fa-paper-plane text-purple-600 dark:text-purple-400"></i>
+                  <span>E-mails em Lote</span>
+                </button>
                 <button
                   id="bulk-actions-btn"
                   class="hidden text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white text-xs sm:text-sm bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 px-3 py-1.5 rounded shadow-sm font-bold w-full sm:w-auto"
@@ -739,10 +748,12 @@
                     onchange="window.changeItemsPerPage(this.value)"
                     class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-brand-red cursor-pointer"
                   >
-                    <option value="20">20</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                    <option value="100000">Todos</option>
+                    <option value="20">20 por página</option>
+                    <option value="50">50 por página</option>
+                    <option value="100">100 por página</option>
+                    <option value="200">200 por página</option>
+                    <option value="500">500 por página</option>
+                    <option value="100000">Todos os Alunos</option>
                   </select>
                 </div>
                 <span
@@ -1368,6 +1379,13 @@
                     class="border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-1.5 text-sm focus:outline-none focus:border-green-500 font-bold"
                   />
                 </div>
+                <button
+                  onclick="window.switchFinanceTab('late'); setTimeout(() => window.printFinanceReport(), 200);"
+                  class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-bold shadow-sm transition flex items-center gap-1.5"
+                  title="Gerar Relatório de Inadimplentes"
+                >
+                  <i class="fa-solid fa-file-invoice-dollar"></i> Relatório Inadimplentes
+                </button>
                 <button
                   onclick="window.printFinanceReport()"
                   class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-bold shadow-sm transition flex items-center gap-2"
@@ -3328,6 +3346,49 @@
                   id="pay-next-due"
                   class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none"
                 />
+              </div>
+
+              <!-- Discount Section -->
+              <div class="col-span-1 md:col-span-2 bg-white dark:bg-gray-800 p-3 rounded border border-green-200 dark:border-gray-700 mt-1">
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1.5">
+                  <i class="fa-solid fa-tag text-emerald-500"></i> Aplicar Desconto (Opcional)
+                </label>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1">Tipo de Desconto</label>
+                    <select
+                      id="pay-discount-type"
+                      class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none"
+                      onchange="window.handlePayDiscountChange()"
+                    >
+                      <option value="none">Sem Desconto</option>
+                      <option value="percent">Porcentagem (%)</option>
+                      <option value="fixed">Valor Fixo (R$)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1">Valor do Desconto</label>
+                    <input
+                      type="number"
+                      id="pay-discount-value"
+                      placeholder="0,00"
+                      step="0.01"
+                      min="0"
+                      class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none"
+                      oninput="window.handlePayDiscountChange()"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1">Descrição do Desconto</label>
+                    <input
+                      type="text"
+                      id="pay-discount-desc"
+                      placeholder="Ex: Pontualidade, Irmão, Parceria"
+                      class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm focus:border-green-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+                <div id="pay-discount-summary" class="hidden text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-2"></div>
               </div>
             </div>
             <div class="mt-4 flex justify-end">
@@ -5683,22 +5744,80 @@
               </div>
               <i class="fa-solid fa-chevron-right text-orange-300"></i>
             </button>
+            <!-- Cobrança por E-mail (Atrasado) -->
             <button
               onclick="window.confirmAndSendWhatsApp('email_billing')"
               class="flex items-center justify-between w-full p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg group hover:bg-purple-600 hover:text-white transition-all"
             >
               <div class="flex items-center gap-3">
                 <i
-                  class="fa-solid fa-envelope text-purple-600 dark:text-purple-400 group-hover:text-white text-xl"
+                  class="fa-solid fa-file-invoice-dollar text-purple-600 dark:text-purple-400 group-hover:text-white text-xl"
                 ></i>
                 <div class="text-left">
                   <div class="font-bold text-sm">Cobrança por E-mail</div>
                   <div class="text-[10px] opacity-70">
-                    Disparar e-mail de atraso
+                    Disparar e-mail de mensalidade pendente
                   </div>
                 </div>
               </div>
               <i class="fa-solid fa-chevron-right text-purple-300"></i>
+            </button>
+
+            <!-- Aviso de Vencimento por E-mail -->
+            <button
+              onclick="window.confirmAndSendWhatsApp('email_vencimento')"
+              class="flex items-center justify-between w-full p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg group hover:bg-blue-600 hover:text-white transition-all"
+            >
+              <div class="flex items-center gap-3">
+                <i
+                  class="fa-solid fa-calendar-check text-blue-600 dark:text-blue-400 group-hover:text-white text-xl"
+                ></i>
+                <div class="text-left">
+                  <div class="font-bold text-sm">Aviso de Vencimento por E-mail</div>
+                  <div class="text-[10px] opacity-70">
+                    Lembrete amigável de vencimento
+                  </div>
+                </div>
+              </div>
+              <i class="fa-solid fa-chevron-right text-blue-300"></i>
+            </button>
+
+            <!-- Cadastrar Cobrança Recorrente por E-mail -->
+            <button
+              onclick="window.confirmAndSendWhatsApp('email_recorrente')"
+              class="flex items-center justify-between w-full p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg group hover:bg-indigo-600 hover:text-white transition-all"
+            >
+              <div class="flex items-center gap-3">
+                <i
+                  class="fa-solid fa-credit-card text-indigo-600 dark:text-indigo-400 group-hover:text-white text-xl"
+                ></i>
+                <div class="text-left">
+                  <div class="font-bold text-sm">Cobrança Recorrente por E-mail</div>
+                  <div class="text-[10px] opacity-70">
+                    Incentivo ao cartão de crédito recorrente
+                  </div>
+                </div>
+              </div>
+              <i class="fa-solid fa-chevron-right text-indigo-300"></i>
+            </button>
+
+            <!-- Disparo em Lote -->
+            <button
+              onclick="window.confirmAndSendWhatsApp('email_bulk')"
+              class="flex items-center justify-between w-full p-4 bg-purple-100 dark:bg-purple-950/50 border border-purple-300 dark:border-purple-700 rounded-lg group hover:bg-purple-700 hover:text-white transition-all"
+            >
+              <div class="flex items-center gap-3">
+                <i
+                  class="fa-solid fa-paper-plane text-purple-700 dark:text-purple-300 group-hover:text-white text-xl"
+                ></i>
+                <div class="text-left">
+                  <div class="font-bold text-sm">Disparar E-mails em Lote</div>
+                  <div class="text-[10px] opacity-70">
+                    Enviar para múltiplos alunos simultaneamente
+                  </div>
+                </div>
+              </div>
+              <i class="fa-solid fa-chevron-right text-purple-400"></i>
             </button>
             <button
               onclick="window.confirmAndSendWhatsApp('birthday')"
@@ -5835,6 +5954,22 @@
             <div>
               <label
                 class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1"
+                >Modelo de E-mail:</label
+              >
+              <select
+                id="email-preview-template-type"
+                onchange="window.changeEmailPreviewTemplate()"
+                class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 font-bold focus:outline-none focus:ring-1 focus:ring-brand-red text-gray-800 dark:text-white"
+              >
+                <option value="cobranca">🚨 Cobrança (Atrasado)</option>
+                <option value="vencimento">📅 Aviso de Vencimento (Próximo Vencimento)</option>
+                <option value="recorrente">💳 Cadastrar Cobrança Recorrente</option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1"
                 >E-mail do Aluno:</label
               >
               <input
@@ -5915,6 +6050,168 @@
           >
             <i class="fa-solid fa-paper-plane"></i> Enviar Agora
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BULK EMAIL MODAL -->
+    <div
+      id="bulk-email-modal"
+      class="fixed inset-0 z-[120] hidden bg-black/70 flex flex-col items-center justify-center p-4 backdrop-blur-sm"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-fade-in border-t-4 border-purple-600 text-gray-800 dark:text-gray-100"
+      >
+        <!-- Header -->
+        <div
+          class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-600 shrink-0"
+        >
+          <h3 class="font-bold text-lg flex items-center gap-2 text-gray-800 dark:text-white">
+            <i class="fa-solid fa-paper-plane text-purple-600 dark:text-purple-400"></i>
+            Envio de E-mails em Lote para Alunos
+          </h3>
+          <button
+            onclick="window.closeBulkEmailModal()"
+            class="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors text-xl"
+          >
+            <i class="fa-solid fa-times"></i>
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 overflow-y-auto flex-1 space-y-6">
+          <!-- Modelo de E-mail Selector -->
+          <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+            <label class="block text-xs font-bold text-purple-900 dark:text-purple-300 uppercase tracking-wider mb-2">
+              1. Selecione o Modelo de E-mail
+            </label>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <label class="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-gray-700 cursor-pointer hover:border-purple-500 transition shadow-xs">
+                <input type="radio" name="bulk-email-type" value="cobranca" checked onchange="window.renderBulkEmailPreview()" class="text-purple-600 focus:ring-purple-500">
+                <div>
+                  <div class="font-bold text-sm text-gray-900 dark:text-white">🚨 Cobrança</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">Para mensalidades em atraso</div>
+                </div>
+              </label>
+
+              <label class="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-gray-700 cursor-pointer hover:border-purple-500 transition shadow-xs">
+                <input type="radio" name="bulk-email-type" value="vencimento" onchange="window.renderBulkEmailPreview()" class="text-purple-600 focus:ring-purple-500">
+                <div>
+                  <div class="font-bold text-sm text-gray-900 dark:text-white">📅 Aviso de Vencimento</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">Lembrete amigável antes/no dia</div>
+                </div>
+              </label>
+
+              <label class="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-gray-700 cursor-pointer hover:border-purple-500 transition shadow-xs">
+                <input type="radio" name="bulk-email-type" value="recorrente" onchange="window.renderBulkEmailPreview()" class="text-purple-600 focus:ring-purple-500">
+                <div>
+                  <div class="font-bold text-sm text-gray-900 dark:text-white">💳 Cobrança Recorrente</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">Incentivo ao cartão de crédito</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Seleção de Alunos -->
+          <div>
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
+              <label class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-users text-purple-600"></i>
+                2. Selecione os Alunos (<span id="bulk-email-selected-count">0</span> selecionados)
+              </label>
+
+              <!-- Filtros de Seleção Rápida -->
+              <div class="flex flex-wrap gap-1.5 text-xs">
+                <button onclick="window.filterBulkEmailStudents('all')" class="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded font-semibold text-gray-700 dark:text-gray-300 transition">Todos</button>
+                <button onclick="window.filterBulkEmailStudents('overdue')" class="px-2.5 py-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded font-semibold hover:bg-red-200 transition">Apenas Atrasados</button>
+                <button onclick="window.filterBulkEmailStudents('due_soon')" class="px-2.5 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded font-semibold hover:bg-yellow-200 transition">A Vencer (7d)</button>
+              </div>
+            </div>
+
+            <!-- Busca e Toggle All -->
+            <div class="flex items-center gap-3 mb-3">
+              <div class="relative flex-1">
+                <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+                <input
+                  type="text"
+                  id="bulk-email-search"
+                  placeholder="Buscar aluno por nome..."
+                  oninput="window.renderBulkStudentList()"
+                  class="w-full pl-8 pr-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-purple-500 text-gray-800 dark:text-white"
+                />
+              </div>
+              <label class="flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer shrink-0">
+                <input type="checkbox" id="bulk-email-toggle-all" onchange="window.toggleAllBulkEmailStudents(this)" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
+                Selecionar Todos Exibidos
+              </label>
+            </div>
+
+            <!-- Tabela / Lista de Alunos -->
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden max-h-60 overflow-y-auto bg-white dark:bg-gray-800">
+              <table class="w-full text-xs text-left">
+                <thead class="bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 sticky top-0 uppercase tracking-wider font-bold border-b border-gray-200 dark:border-gray-600">
+                  <tr>
+                    <th class="p-2.5 text-center w-10">#</th>
+                    <th class="p-2.5">Aluno</th>
+                    <th class="p-2.5">E-mail</th>
+                    <th class="p-2.5">Status Pagto</th>
+                    <th class="p-2.5">Vencimento</th>
+                  </tr>
+                </thead>
+                <tbody id="bulk-email-students-tbody" class="divide-y divide-gray-100 dark:divide-gray-700">
+                  <!-- Renderizado via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Live Preview Box -->
+          <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700/40">
+            <div class="flex justify-between items-center mb-2">
+              <span class="font-bold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                <i class="fa-solid fa-eye mr-1 text-purple-500"></i> Pré-visualização da Mensagem
+              </span>
+              <span id="bulk-email-preview-subject" class="text-xs font-semibold text-purple-700 dark:text-purple-300 italic"></span>
+            </div>
+            <div class="bg-white border border-gray-200 dark:border-gray-600 rounded p-2 text-xs max-h-40 overflow-y-auto">
+              <iframe id="bulk-email-iframe-preview" class="w-full h-32 border-0 bg-white"></iframe>
+            </div>
+          </div>
+
+          <!-- Bar de Progresso do Envio -->
+          <div id="bulk-email-progress-container" class="hidden space-y-2 bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+            <div class="flex justify-between items-center text-xs font-bold text-purple-800 dark:text-purple-300">
+              <span id="bulk-email-progress-text">Enviando e-mails...</span>
+              <span id="bulk-email-progress-counter">0 / 0</span>
+            </div>
+            <div class="w-full bg-purple-200 dark:bg-purple-950 rounded-full h-2.5 overflow-hidden">
+              <div id="bulk-email-progress-bar" class="bg-purple-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div
+          class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center shrink-0 border-t border-gray-200 dark:border-gray-600"
+        >
+          <div class="text-xs text-gray-500 dark:text-gray-400 font-medium" id="bulk-email-valid-count-msg">
+            Pronto para disparo.
+          </div>
+          <div class="flex gap-3">
+            <button
+              onclick="window.closeBulkEmailModal()"
+              class="px-5 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm"
+            >
+              Cancelar
+            </button>
+            <button
+              id="bulk-email-send-btn"
+              onclick="window.startBulkEmailSend()"
+              class="px-6 py-2 bg-purple-600 text-white font-bold rounded hover:bg-purple-700 transition shadow-md flex items-center gap-2"
+            >
+              <i class="fa-solid fa-paper-plane"></i> Enviar E-mails Simultaneamente
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -13341,6 +13638,8 @@ Belém-PA, [DATA_ATUAL].
             guardianKinship: reqData.guardianKinship || "",
             plan: planDisplayString,
             planValue: reqData.planValue || 0,
+            paymentMethod: reqData.paymentMethod || "pay_later",
+            cardDetails: reqData.cardDetails || null,
             titularName: "",
             titularId: "",
             paymentStatus:
@@ -15181,23 +15480,7 @@ Belém-PA, [DATA_ATUAL].
         modal.classList.remove("flex");
       };
 
-      window.sendEmailBilling = (id) => {
-        const s = window.students.find((st) => st.id === id);
-        if (!s) {
-          window.customAlert("Aluno não encontrado.");
-          return;
-        }
-        if (!s.email) {
-          window.customAlert("O aluno não possui um e-mail cadastrado.");
-          return;
-        }
-        if (!s.studentLogin || !s.studentPassword) {
-          window.customAlert(
-            "Este aluno não possui usuário e senha de acesso configurados. Cadastre-os no cadastro do aluno antes de enviar.",
-          );
-          return;
-        }
-
+      window.generateEmailContent = (s, templateType = "cobranca") => {
         const getBillingValues = (student) => {
           let planKey = student.plan || "";
           if (planKey && planKey.includes(" - ")) {
@@ -15205,8 +15488,8 @@ Belém-PA, [DATA_ATUAL].
             planKey = parts[0];
           }
 
-          let planConfig = window.PLAN_DICT[planKey];
-          if (!planConfig) {
+          let planConfig = window.PLAN_DICT ? window.PLAN_DICT[planKey] : null;
+          if (!planConfig && window.PLAN_DICT) {
             const lowerKey = planKey.toLowerCase();
             const foundKey = Object.keys(window.PLAN_DICT).find((k) => {
               return (
@@ -15232,160 +15515,48 @@ Belém-PA, [DATA_ATUAL].
             const key = String(student.plan || planKey).toLowerCase();
             if (key.includes("adulto")) {
               if (key.includes("semestral")) {
-                fullVal =
-                  planConfig && planConfig.basePrice
-                    ? planConfig.basePrice
-                    : 168.9;
-                discountVal = student.planValue
-                  ? Number(student.planValue)
-                  : planConfig
-                    ? planConfig.price
-                    : 126.9;
+                fullVal = planConfig && planConfig.basePrice ? planConfig.basePrice : 168.9;
+                discountVal = student.planValue ? Number(student.planValue) : planConfig ? planConfig.price : 126.9;
                 discountAmount = fullVal - discountVal;
               } else if (key.includes("trimestral")) {
-                fullVal =
-                  planConfig && planConfig.basePrice
-                    ? planConfig.basePrice
-                    : 168.9;
-                discountVal = student.planValue
-                  ? Number(student.planValue)
-                  : planConfig
-                    ? planConfig.price
-                    : 147.9;
+                fullVal = planConfig && planConfig.basePrice ? planConfig.basePrice : 168.9;
+                discountVal = student.planValue ? Number(student.planValue) : planConfig ? planConfig.price : 147.9;
                 discountAmount = fullVal - discountVal;
               } else if (key.includes("mensal")) {
-                fullVal =
-                  planConfig && planConfig.basePrice
-                    ? planConfig.basePrice
-                    : 198.9;
-                discountVal = student.planValue
-                  ? Number(student.planValue)
-                  : planConfig
-                    ? planConfig.price
-                    : 168.9;
+                fullVal = planConfig && planConfig.basePrice ? planConfig.basePrice : 198.9;
+                discountVal = student.planValue ? Number(student.planValue) : planConfig ? planConfig.price : 168.9;
                 discountAmount = fullVal - discountVal;
               } else {
-                fullVal =
-                  planConfig && planConfig.basePrice
-                    ? planConfig.basePrice
-                    : discountVal + 42.0;
+                fullVal = planConfig && planConfig.basePrice ? planConfig.basePrice : discountVal + 42.0;
                 discountAmount = fullVal - discountVal;
               }
             } else if (key.includes("infantil")) {
               if (key.includes("semestral")) {
-                fullVal =
-                  planConfig && planConfig.basePrice
-                    ? planConfig.basePrice
-                    : 189.9;
-                discountVal = student.planValue
-                  ? Number(student.planValue)
-                  : planConfig
-                    ? planConfig.price
-                    : 157.9;
+                fullVal = planConfig && planConfig.basePrice ? planConfig.basePrice : 189.9;
+                discountVal = student.planValue ? Number(student.planValue) : planConfig ? planConfig.price : 157.9;
                 discountAmount = fullVal - discountVal;
               } else if (key.includes("trimestral")) {
-                fullVal =
-                  planConfig && planConfig.basePrice
-                    ? planConfig.basePrice
-                    : 189.9;
-                discountVal = student.planValue
-                  ? Number(student.planValue)
-                  : planConfig
-                    ? planConfig.price
-                    : 168.9;
+                fullVal = planConfig && planConfig.basePrice ? planConfig.basePrice : 189.9;
+                discountVal = student.planValue ? Number(student.planValue) : planConfig ? planConfig.price : 168.9;
                 discountAmount = fullVal - discountVal;
               } else if (key.includes("mensal")) {
-                fullVal =
-                  planConfig && planConfig.basePrice
-                    ? planConfig.basePrice
-                    : 219.9;
-                discountVal = student.planValue
-                  ? Number(student.planValue)
-                  : planConfig
-                    ? planConfig.price
-                    : 189.9;
+                fullVal = planConfig && planConfig.basePrice ? planConfig.basePrice : 219.9;
+                discountVal = student.planValue ? Number(student.planValue) : planConfig ? planConfig.price : 189.9;
                 discountAmount = fullVal - discountVal;
               } else {
-                fullVal =
-                  planConfig && planConfig.basePrice
-                    ? planConfig.basePrice
-                    : discountVal + 30.0;
+                fullVal = planConfig && planConfig.basePrice ? planConfig.basePrice : discountVal + 30.0;
                 discountAmount = fullVal - discountVal;
               }
             } else if (key.includes("combo-dupla") || key.includes("dupla")) {
-              fullVal = 300.0;
-              discountVal = 250.0;
-              discountAmount = 50.0;
+              fullVal = 300.0; discountVal = 250.0; discountAmount = 50.0;
             } else if (key.includes("combo-casal") || key.includes("casal")) {
-              fullVal = 260.0;
-              discountVal = 220.0;
-              discountAmount = 40.0;
-            } else if (
-              key.includes("combo-familia") ||
-              key.includes("familia")
-            ) {
-              fullVal = 420.0;
-              discountVal = 362.02;
-              discountAmount = 57.98;
+              fullVal = 260.0; discountVal = 220.0; discountAmount = 40.0;
+            } else if (key.includes("combo-familia") || key.includes("familia")) {
+              fullVal = 420.0; discountVal = 362.02; discountAmount = 57.98;
             } else {
               if (discountVal > 0) {
                 discountAmount = discountVal * 0.3;
                 fullVal = discountVal + discountAmount;
-              } else {
-                fullVal = 0;
-                discountVal = 0;
-                discountAmount = 0;
-              }
-            }
-          } else {
-            const planText = String(student.plan || "").toLowerCase();
-            if (planText.includes("adulto") && planText.includes("semestral")) {
-              fullVal = 168.9;
-              discountVal = 126.9;
-              discountAmount = 42.0;
-            } else if (
-              planText.includes("adulto") &&
-              planText.includes("trimestral")
-            ) {
-              fullVal = 168.9;
-              discountVal = 147.9;
-              discountAmount = 21.0;
-            } else if (
-              planText.includes("adulto") &&
-              planText.includes("mensal")
-            ) {
-              fullVal = 198.9;
-              discountVal = 168.9;
-              discountAmount = 30.0;
-            } else if (
-              planText.includes("infantil") &&
-              planText.includes("semestral")
-            ) {
-              fullVal = 189.9;
-              discountVal = 157.9;
-              discountAmount = 32.0;
-            } else if (
-              planText.includes("infantil") &&
-              planText.includes("trimestral")
-            ) {
-              fullVal = 189.9;
-              discountVal = 168.9;
-              discountAmount = 21.0;
-            } else if (
-              planText.includes("infantil") &&
-              planText.includes("mensal")
-            ) {
-              fullVal = 219.9;
-              discountVal = 189.9;
-              discountAmount = 30.0;
-            } else {
-              if (discountVal > 0) {
-                discountAmount = discountVal * 0.3;
-                fullVal = discountVal + discountAmount;
-              } else {
-                fullVal = 0;
-                discountVal = 0;
-                discountAmount = 0;
               }
             }
           }
@@ -15404,140 +15575,406 @@ Belém-PA, [DATA_ATUAL].
         };
 
         const firstName = s.name.split(" ")[0];
-        const planInfo = window.getPlanInfo(s.plan);
-        const planName =
-          planInfo && planInfo.short
-            ? planInfo.short
-            : s.plan || "Plano de Treino";
+        const planInfo = window.getPlanInfo ? window.getPlanInfo(s.plan) : null;
+        const planName = planInfo && planInfo.short ? planInfo.short : s.plan || "Plano de Treino";
 
         let nextDueStr = "--";
         if (s.nextDueDate) {
-          const adjDate =
-            typeof window.getAdjustedNextDueDate === "function"
-              ? window.getAdjustedNextDueDate(s)
-              : null;
-          nextDueStr = adjDate
-            ? formatDate(adjDate)
-            : formatDate(s.nextDueDate);
+          const adjDate = typeof window.getAdjustedNextDueDate === "function" ? window.getAdjustedNextDueDate(s) : null;
+          nextDueStr = adjDate ? formatDate(adjDate) : formatDate(s.nextDueDate);
         }
 
         const { discountVal, fullVal, discountAmount } = getBillingValues(s);
-
         const discountValueFormatted = discountVal.toFixed(2).replace(".", ",");
         const fullValueFormatted = fullVal.toFixed(2).replace(".", ",");
-        const discountAmountFormatted = discountAmount
-          .toFixed(2)
-          .replace(".", ",");
+        const discountAmountFormatted = discountAmount.toFixed(2).replace(".", ",");
 
-        const bodyHtml = `
+        let subject = "";
+        let bodyHtml = "";
+
+        if (templateType === "vencimento") {
+          subject = `Aviso de Vencimento de Mensalidade - Tanque Team BJJ 🗓️`;
+          bodyHtml = `
 <div style="font-family: Arial, sans-serif; color: #333333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
     <div style="background-color: #1a1a1a; padding: 25px; text-align: center; border-bottom: 4px solid #D90429;">
         <img src="https://iili.io/qC543c7.png" alt="Tanque Team Logo" style="height: 65px; display: inline-block;">
     </div>
     <div style="padding: 35px; background-color: #ffffff;">
         <h2 style="color: #1a1a1a; font-size: 22px; margin-top: 0; font-weight: 700; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px;">Olá, ${firstName}! 👋</h2>
-        
+        <p style="font-size: 15px; line-height: 1.6; color: #4a5568; margin-bottom: 20px;">
+            Lembrete amigável: sua mensalidade referente ao plano <strong>${planName}</strong> vence em breve, no dia <strong>${nextDueStr}</strong>.
+        </p>
+        <div style="background-color: #ebf8ff; border: 1px solid #bee3f8; border-left: 5px solid #3182ce; padding: 18px; border-radius: 8px; margin: 25px 0;">
+            <strong style="color: #2b6cb0; font-size: 14px; text-transform: uppercase;">Mantenha o Desconto Pontualidade!</strong>
+            <p style="margin: 6px 0 0 0; font-size: 13px; color: #2c5282;">
+                Realize o pagamento até o vencimento (<strong>${nextDueStr}</strong>) e garanta o valor com desconto de <strong>R$ ${discountValueFormatted}</strong>!
+            </p>
+        </div>
+        <div style="background-color: #f7fafc; border: 1px solid #edf2f7; border-radius: 8px; padding: 20px; margin: 25px 0;">
+            <h3 style="margin-top: 0; margin-bottom: 15px; color: #1a1a1a; font-size: 15px; font-weight: 700;">📋 Informações da Cobrança</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                <tr><td style="padding: 6px 0; color: #718096; width: 40%;"><strong>Aluno:</strong></td><td style="padding: 6px 0; color: #2d3748; font-weight: 600;">${s.name}</td></tr>
+                <tr><td style="padding: 6px 0; color: #718096;"><strong>Plano:</strong></td><td style="padding: 6px 0; color: #2d3748; font-weight: 600;">${planName}</td></tr>
+                <tr><td style="padding: 6px 0; color: #718096;"><strong>Vencimento:</strong></td><td style="padding: 6px 0; color: #3182ce; font-weight: 600;">${nextDueStr}</td></tr>
+                <tr><td style="padding: 6px 0; color: #718096;"><strong>Valor Com Desconto:</strong></td><td style="padding: 6px 0; color: #2f855a; font-weight: bold; font-size: 16px;">R$ ${discountValueFormatted}</td></tr>
+            </table>
+        </div>
+        <p style="margin: 0 0 10px 0; color: #2b6cb0; font-size: 14px; font-weight: 600;">🔐 Seus dados de acesso ao portal do aluno:</p>
+        <div style="background-color: #ebf8ff; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 13px;">
+            <div style="margin-bottom: 4px;"><strong>Usuário:</strong> <span style="font-family: monospace; color: #2d3748;">${s.studentLogin}</span></div>
+            <div><strong>Senha:</strong> <span style="font-family: monospace; color: #2d3748;">${s.studentPassword}</span></div>
+        </div>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="https://tanqueteambjj.web.app/portal" target="_blank" style="background-color: #2b6cb0; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: bold; font-size: 15px; display: inline-block;">Acessar Portal do Aluno ➔</a>
+        </div>
+    </div>
+    <div style="background-color: #f7fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #a0aec0;">
+        <p style="margin: 0;"><strong>Tanque Team BJJ</strong> • Escola de Artes Marciais</p>
+    </div>
+</div>`;
+        } else if (templateType === "recorrente") {
+          subject = `Cadastrar Cobrança Recorrente - Tanque Team BJJ 💳`;
+          bodyHtml = `
+<div style="font-family: Arial, sans-serif; color: #333333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+    <div style="background-color: #1a1a1a; padding: 25px; text-align: center; border-bottom: 4px solid #D90429;">
+        <img src="https://iili.io/qC543c7.png" alt="Tanque Team Logo" style="height: 65px; display: inline-block;">
+    </div>
+    <div style="padding: 35px; background-color: #ffffff;">
+        <h2 style="color: #1a1a1a; font-size: 22px; margin-top: 0; font-weight: 700; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px;">Olá, ${firstName}! 👋</h2>
+        <p style="font-size: 15px; line-height: 1.6; color: #4a5568; margin-bottom: 20px;">
+            Quer praticidade total e a garantia de pagar sempre o <strong>menor valor na sua mensalidade</strong>? Ative a <strong>Cobrança Recorrente</strong> no seu cartão de crédito!
+        </p>
+        <div style="background-color: #f0fff4; border: 1px solid #c6f6d5; border-left: 5px solid #38a169; padding: 18px; border-radius: 8px; margin: 25px 0;">
+            <strong style="color: #276749; font-size: 14px; text-transform: uppercase;">Vantagens da Recorrência:</strong>
+            <ul style="margin: 8px 0 0 0; padding-left: 18px; font-size: 13px; color: #22543d; line-height: 1.6;">
+                <li>⚡ <strong>Desconto de R$ ${discountAmountFormatted} garantido</strong> todo mês</li>
+                <li>💳 <strong>Não compromete o limite total</strong> do seu cartão (debitado apenas R$ ${discountValueFormatted}/mês)</li>
+                <li>⏱️ <strong>Sem filas, sem esquecimentos e sem multas</strong></li>
+            </ul>
+        </div>
+        <p style="margin: 0 0 10px 0; color: #276749; font-size: 14px; font-weight: 600;">🔐 Dados para ativação no Portal do Aluno:</p>
+        <div style="background-color: #f0fff4; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 13px;">
+            <div style="margin-bottom: 4px;"><strong>Usuário:</strong> <span style="font-family: monospace; color: #2d3748;">${s.studentLogin}</span></div>
+            <div><strong>Senha:</strong> <span style="font-family: monospace; color: #2d3748;">${s.studentPassword}</span></div>
+        </div>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="https://tanqueteambjj.web.app/portal" target="_blank" style="background-color: #38a169; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: bold; font-size: 15px; display: inline-block;">Ativar Cobrança Recorrente Agora ➔</a>
+        </div>
+    </div>
+    <div style="background-color: #f7fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #a0aec0;">
+        <p style="margin: 0;"><strong>Tanque Team BJJ</strong> • Escola de Artes Marciais</p>
+    </div>
+</div>`;
+        } else {
+          // Cobrança
+          subject = `Mensalidade Pendente - Tanque Team BJJ 🥋`;
+          bodyHtml = `
+<div style="font-family: Arial, sans-serif; color: #333333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+    <div style="background-color: #1a1a1a; padding: 25px; text-align: center; border-bottom: 4px solid #D90429;">
+        <img src="https://iili.io/qC543c7.png" alt="Tanque Team Logo" style="height: 65px; display: inline-block;">
+    </div>
+    <div style="padding: 35px; background-color: #ffffff;">
+        <h2 style="color: #1a1a1a; font-size: 22px; margin-top: 0; font-weight: 700; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px;">Olá, ${firstName}! 👋</h2>
         <p style="font-size: 15px; line-height: 1.6; color: #4a5568; margin-bottom: 20px;">
             A gente sabe que a rotina é corrida e, às vezes, pequenos detalhes acabam passando despercebidos. Notamos que sua mensalidade está em aberto. Mas não se preocupe, estamos aqui para facilitar tudo para você!
         </p>
-
-        <!-- DICA DE MESTRE BANNER -->
         <div style="background-color: #fffaf0; border: 1px solid #feebc8; border-left: 5px solid #dd6b20; padding: 18px; border-radius: 8px; margin: 25px 0;">
-            <div style="display: flex; align-items: flex-start;">
-                <span style="font-size: 22px; margin-right: 12px; line-height: 1;">⚡</span>
-                <div>
-                    <strong style="color: #dd6b20; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Dica de Mestre!</strong>
-                    <p style="margin: 6px 0 0 0; font-size: 13px; line-height: 1.5; color: #744210;">
-                        Ative a <strong>Recorrência Automática</strong> no seu cartão de crédito e pague o <strong>VALOR COM DESCONTO</strong> mesmo estando em atraso! Economize agora <strong>R$ ${discountAmountFormatted} de desconto imediato</strong>.
-                    </p>
-                </div>
-            </div>
+            <strong style="color: #dd6b20; font-size: 14px; text-transform: uppercase;">Dica de Mestre!</strong>
+            <p style="margin: 6px 0 0 0; font-size: 13px; color: #744210;">
+                Ative a <strong>Recorrência Automática</strong> no seu cartão de crédito e pague o <strong>VALOR COM DESCONTO</strong> mesmo estando em atraso! Economize agora <strong>R$ ${discountAmountFormatted} de desconto imediato</strong>.
+            </p>
         </div>
-
-        <!-- DETAILS CONTAINER -->
         <div style="background-color: #f7fafc; border: 1px solid #edf2f7; border-radius: 8px; padding: 20px; margin: 25px 0;">
-            <h3 style="margin-top: 0; margin-bottom: 15px; color: #1a1a1a; font-size: 15px; font-weight: 700; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">📋 Detalhes do seu Pagamento</h3>
+            <h3 style="margin-top: 0; margin-bottom: 15px; color: #1a1a1a; font-size: 15px; font-weight: 700;">📋 Detalhes do seu Pagamento</h3>
             <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                <tr>
-                    <td style="padding: 6px 0; color: #718096; width: 40%;"><strong>Aluno:</strong></td>
-                    <td style="padding: 6px 0; color: #2d3748; font-weight: 600;">${s.name}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 6px 0; color: #718096; width: 40%;"><strong>Plano:</strong></td>
-                    <td style="padding: 6px 0; color: #2d3748; font-weight: 600;">${planName}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 6px 0; color: #718096;"><strong>Vencimento:</strong></td>
-                    <td style="padding: 6px 0; color: #e53e3e; font-weight: 600;">${nextDueStr}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 6px 0; color: #718096;"><strong>Valor Integral c/ Atraso:</strong></td>
-                    <td style="padding: 6px 0; color: #2d3748; text-decoration: line-through;">R$ ${fullValueFormatted}</td>
-                </tr>
-                <tr style="border-top: 1px dashed #e2e8f0;">
-                    <td style="padding: 10px 0 6px 0; color: #1a202c;"><strong>Valor c/ Desconto Recorrência:</strong></td>
-                    <td style="padding: 10px 0 6px 0; color: #2f855a; font-weight: 700; font-size: 16px;">R$ ${discountValueFormatted}</td>
-                </tr>
+                <tr><td style="padding: 6px 0; color: #718096; width: 40%;"><strong>Aluno:</strong></td><td style="padding: 6px 0; color: #2d3748; font-weight: 600;">${s.name}</td></tr>
+                <tr><td style="padding: 6px 0; color: #718096;"><strong>Plano:</strong></td><td style="padding: 6px 0; color: #2d3748; font-weight: 600;">${planName}</td></tr>
+                <tr><td style="padding: 6px 0; color: #718096;"><strong>Vencimento:</strong></td><td style="padding: 6px 0; color: #e53e3e; font-weight: 600;">${nextDueStr}</td></tr>
+                <tr><td style="padding: 6px 0; color: #718096;"><strong>Valor Integral c/ Atraso:</strong></td><td style="padding: 6px 0; color: #e53e3e; font-weight: 600;">R$ ${fullValueFormatted}</td></tr>
+                <tr style="background-color: #f0fff4;"><td style="padding: 8px 6px; color: #22543d;"><strong>Valor na Recorrência (C/ Desconto):</strong></td><td style="padding: 8px 6px; color: #2f855a; font-weight: bold; font-size: 16px;">R$ ${discountValueFormatted}</td></tr>
             </table>
         </div>
-
-        <!-- LOGIN INFOS -->
-        <div style="background-color: #ebf8ff; border: 1px solid #bee3f8; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: center;">
-            <p style="margin: 0 0 10px 0; color: #2b6cb0; font-size: 14px; font-weight: 600;">🔐 Seus dados de acesso ao portal do aluno:</p>
-            <div style="display: inline-block; background-color: #ffffff; padding: 10px 20px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 14px; text-align: left;">
-                <div style="margin-bottom: 4px;"><strong>Usuário:</strong> <span style="font-family: monospace; color: #2d3748;">${s.studentLogin}</span></div>
-                <div><strong>Senha:</strong> <span style="font-family: monospace; color: #2d3748;">${s.studentPassword}</span></div>
-            </div>
+        <p style="margin: 0 0 10px 0; color: #2b6cb0; font-size: 14px; font-weight: 600;">🔐 Seus dados de acesso ao portal do aluno:</p>
+        <div style="background-color: #ebf8ff; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 13px;">
+            <div style="margin-bottom: 4px;"><strong>Usuário:</strong> <span style="font-family: monospace; color: #2d3748;">${s.studentLogin}</span></div>
+            <div><strong>Senha:</strong> <span style="font-family: monospace; color: #2d3748;">${s.studentPassword}</span></div>
         </div>
-
-        <!-- PORTAL BUTTON -->
-        <div style="text-align: center; margin: 35px 0;">
-            <a href="https://painel-aluno.vercel.app/" style="background-color: #D90429; color: #ffffff; padding: 14px 30px; text-decoration: none; font-weight: bold; border-radius: 8px; display: inline-block; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(217, 4, 41, 0.2); transition: all 0.2s;">Acessar Portal do Aluno & Pagar</a>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="https://tanqueteambjj.web.app/portal" target="_blank" style="background-color: #D90429; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: bold; font-size: 15px; display: inline-block;">Pagar com Desconto no Portal ➔</a>
         </div>
-
-        <p style="font-size: 14px; color: #718096; line-height: 1.5; margin-top: 30px;">
-            Ativando o pagamento recorrente, sua mensalidade é debitada automaticamente no cartão, garantindo sempre o seu desconto pontualidade sem consumir o limite do cartão e sem risco de atrasos.
-        </p>
-
-        <p style="font-size: 14px; color: #718096; line-height: 1.5;">
-            Qualquer dúvida com o portal ou com o pagamento, fale com a gente. Seu apoio e sua presença no tatame são muito importantes para nós!
-        </p>
-        
-        <p style="margin-top: 30px; font-size: 15px; color: #2d3748;">
-            Nos vemos no treino! 💪<br>
-            <strong>Oss! 🥋</strong><br>
-            <span style="font-size: 13px; color: #718096;">Equipe Tanque Team BJJ</span>
-        </p>
     </div>
-    <div style="background-color: #f7fafc; padding: 20px; text-align: center; font-size: 12px; color: #a0aec0; border-top: 1px solid #edf2f7;">
-        Este é um e-mail de notificação. Se você já realizou o pagamento ou regularizou sua pendência recentemente, por favor desconsidere esta mensagem.
+    <div style="background-color: #f7fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #a0aec0;">
+        <p style="margin: 0;"><strong>Tanque Team BJJ</strong> • Escola de Artes Marciais</p>
     </div>
-</div>
-`;
+</div>`;
+        }
 
-        // Abrir e configurar o modal de e-mail preview/edit
+        return { subject, bodyHtml, discountValueFormatted, fullValueFormatted, discountAmountFormatted, planName, nextDueStr };
+      };
+
+      window.sendEmailBilling = (id, templateType = "cobranca") => {
+        const s = window.students.find((st) => st.id === id);
+        if (!s) {
+          window.customAlert("Aluno não encontrado.");
+          return;
+        }
+        if (!s.email) {
+          window.customAlert("O aluno não possui um e-mail cadastrado.");
+          return;
+        }
+        if (!s.studentLogin || !s.studentPassword) {
+          window.customAlert(
+            "Este aluno não possui usuário e senha de acesso configurados. Cadastre-os no cadastro do aluno antes de enviar.",
+          );
+          return;
+        }
+
+        window.currentEmailStudentId = id;
+        const { subject, bodyHtml, discountValueFormatted, fullValueFormatted, discountAmountFormatted, planName, nextDueStr } = window.generateEmailContent(s, templateType);
+
+        const selectEl = document.getElementById("email-preview-template-type");
+        if (selectEl) selectEl.value = templateType;
+
         document.getElementById("email-preview-to").value = s.email;
-        document.getElementById("email-preview-subject").value =
-          "Mensalidade Pendente - Tanque Team BJJ 🥋";
+        document.getElementById("email-preview-subject").value = subject;
         document.getElementById("email-preview-body").value = bodyHtml;
 
-        // preencher metadados do aluno para exibição rápida no painel
-        document.getElementById("email-preview-info-name").innerText = s.name;
-        document.getElementById("email-preview-info-plan").innerText = planName;
-        document.getElementById("email-preview-info-due").innerText =
-          nextDueStr;
-        document.getElementById("email-preview-info-price-on-time").innerText =
-          `R$ ${discountValueFormatted}`;
-        document.getElementById("email-preview-info-price-late").innerText =
-          `R$ ${fullValueFormatted}`;
-        document.getElementById("email-preview-info-discount").innerText =
-          `R$ ${discountAmountFormatted}`;
+        const infoName = document.getElementById("email-preview-info-name");
+        if (infoName) infoName.innerText = s.name;
+        const infoPlan = document.getElementById("email-preview-info-plan");
+        if (infoPlan) infoPlan.innerText = planName;
+        const infoDue = document.getElementById("email-preview-info-due");
+        if (infoDue) infoDue.innerText = nextDueStr;
+        const infoPrice = document.getElementById("email-preview-info-price-on-time");
+        if (infoPrice) infoPrice.innerText = `R$ ${discountValueFormatted}`;
 
         const modal = document.getElementById("email-preview-modal");
+        if (modal) {
+          modal.classList.remove("hidden");
+          modal.classList.add("flex");
+        }
+
+        window.updateEmailPreviewHTML();
+      };
+
+      window.changeEmailPreviewTemplate = () => {
+        const id = window.currentEmailStudentId;
+        if (!id) return;
+        const s = window.students.find((st) => st.id === id);
+        if (!s) return;
+
+        const templateType = document.getElementById("email-preview-template-type")?.value || "cobranca";
+        const { subject, bodyHtml } = window.generateEmailContent(s, templateType);
+
+        document.getElementById("email-preview-subject").value = subject;
+        document.getElementById("email-preview-body").value = bodyHtml;
+        window.updateEmailPreviewHTML();
+      };
+
+      window.openBulkEmailModal = (initialFilter = "all") => {
+        const modal = document.getElementById("bulk-email-modal");
+        if (!modal) return;
+
         modal.classList.remove("hidden");
         modal.classList.add("flex");
 
-        window.updateEmailPreviewHTML();
+        const progressContainer = document.getElementById("bulk-email-progress-container");
+        if (progressContainer) progressContainer.classList.add("hidden");
+
+        const sendBtn = document.getElementById("btn-start-bulk-email");
+        if (sendBtn) {
+          sendBtn.disabled = false;
+          sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Disparar E-mails em Lote';
+        }
+
+        window.filterBulkEmailStudents(initialFilter);
+      };
+
+      window.closeBulkEmailModal = () => {
+        const modal = document.getElementById("bulk-email-modal");
+        if (!modal) return;
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      };
+
+      window.filterBulkEmailStudents = (filter) => {
+        const tbody = document.getElementById("bulk-email-students-tbody");
+        if (!tbody) return;
+
+        const activeStudents = (window.students || []).filter(
+          (s) => !s.archived && s.enrollmentStatus !== "Inativo"
+        );
+
+        let filtered = activeStudents;
+        if (filter === "overdue") {
+          filtered = activeStudents.filter((s) => s.paymentStatus === "Pendente" || (typeof window.isPaymentLate === "function" && window.isPaymentLate(s)));
+        } else if (filter === "due_soon") {
+          filtered = activeStudents.filter((s) => {
+            if (!s.nextDueDate) return false;
+            const adj = typeof window.getAdjustedNextDueDate === "function" ? window.getAdjustedNextDueDate(s) : null;
+            if (!adj) return false;
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const diffDays = Math.ceil((adj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            return diffDays >= 0 && diffDays <= 7;
+          });
+        }
+
+        tbody.innerHTML = "";
+        if (filtered.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Nenhum aluno encontrado para este filtro.</td></tr>';
+        } else {
+          filtered.forEach((s) => {
+            const hasEmail = Boolean(s.email && s.email.includes("@"));
+            const hasCreds = Boolean(s.studentLogin && s.studentPassword);
+            const isValid = hasEmail && hasCreds;
+
+            const tr = document.createElement("tr");
+            tr.className = "border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition text-xs";
+
+            let statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Em dia</span>`;
+            if (s.paymentStatus === "Pendente" || (typeof window.isPaymentLate === "function" && window.isPaymentLate(s))) {
+              statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Atrasado</span>`;
+            }
+
+            let nextDueFormatted = "--";
+            if (s.nextDueDate) {
+              const adj = typeof window.getAdjustedNextDueDate === "function" ? window.getAdjustedNextDueDate(s) : null;
+              nextDueFormatted = adj ? formatDate(adj) : formatDate(s.nextDueDate);
+            }
+
+            tr.innerHTML = `
+              <td class="p-2.5 text-center">
+                <input type="checkbox" value="${s.id}" class="bulk-student-cb rounded text-brand-red focus:ring-brand-red w-4 h-4 cursor-pointer" ${isValid ? "checked" : "disabled"} onchange="window.updateBulkEmailCount()">
+              </td>
+              <td class="p-2.5">
+                <div class="font-bold text-gray-800 dark:text-gray-200 capitalize">${s.name}</div>
+                <div class="text-[10px] ${hasEmail ? "text-gray-500" : "text-red-500 font-bold"}">${s.email || "Sem e-mail"}</div>
+              </td>
+              <td class="p-2.5">${statusBadge}</td>
+              <td class="p-2.5 font-semibold text-gray-700 dark:text-gray-300">${nextDueFormatted}</td>
+              <td class="p-2.5 text-center">
+                ${isValid ? '<span class="text-green-600 font-bold"><i class="fa-solid fa-check"></i> Prontos</span>' : '<span class="text-amber-500 font-bold" title="Falta e-mail ou dados de acesso"><i class="fa-solid fa-triangle-exclamation"></i> Incompleto</span>'}
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+        window.updateBulkEmailCount();
+        window.renderBulkEmailPreview();
+      };
+
+      window.toggleAllBulkEmailStudents = (masterCb) => {
+        const checkboxes = document.querySelectorAll(".bulk-student-cb:not([disabled])");
+        checkboxes.forEach((cb) => {
+          cb.checked = masterCb.checked;
+        });
+        window.updateBulkEmailCount();
+      };
+
+      window.updateBulkEmailCount = () => {
+        const selectedCbs = document.querySelectorAll(".bulk-student-cb:checked");
+        const countSpan = document.getElementById("bulk-email-selected-count");
+        if (countSpan) countSpan.innerText = selectedCbs.length;
+      };
+
+      window.renderBulkEmailPreview = () => {
+        const typeEl = document.querySelector('input[name="bulk-email-type"]:checked');
+        const type = typeEl ? typeEl.value : "cobranca";
+
+        const selectedCb = document.querySelector(".bulk-student-cb:checked");
+        let sampleStudent = null;
+        if (selectedCb) {
+          sampleStudent = window.students.find((st) => st.id === selectedCb.value);
+        }
+        if (!sampleStudent && window.students && window.students.length > 0) {
+          sampleStudent = window.students.find((st) => !st.archived && st.email) || window.students[0];
+        }
+
+        if (!sampleStudent) return;
+
+        const { subject, bodyHtml } = window.generateEmailContent(sampleStudent, type);
+
+        const subjectInput = document.getElementById("bulk-email-preview-subject");
+        if (subjectInput) subjectInput.value = subject;
+
+        const iframe = document.getElementById("bulk-email-iframe-preview");
+        if (iframe) {
+          const doc = iframe.contentDocument || iframe.contentWindow.document;
+          doc.open();
+          doc.write(bodyHtml);
+          doc.close();
+        }
+      };
+
+      window.startBulkEmailSend = async () => {
+        const selectedCbs = document.querySelectorAll(".bulk-student-cb:checked");
+        if (selectedCbs.length === 0) {
+          window.customAlert("Selecione pelo menos um aluno válido para enviar.");
+          return;
+        }
+
+        const typeEl = document.querySelector('input[name="bulk-email-type"]:checked');
+        const templateType = typeEl ? typeEl.value : "cobranca";
+
+        if (!(await window.customConfirm(`Confirma o disparo de e-mails (${templateType.toUpperCase()}) para ${selectedCbs.length} alunos selecionados?`))) {
+          return;
+        }
+
+        const studentIds = Array.from(selectedCbs).map((cb) => cb.value);
+        const sendBtn = document.getElementById("btn-start-bulk-email");
+        const progressContainer = document.getElementById("bulk-email-progress-container");
+        const progressBar = document.getElementById("bulk-email-progress-bar");
+        const progressCounter = document.getElementById("bulk-email-progress-counter");
+        const progressText = document.getElementById("bulk-email-progress-text");
+
+        if (progressContainer) progressContainer.classList.remove("hidden");
+        if (sendBtn) {
+          sendBtn.disabled = true;
+          sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Enviando E-mails...';
+        }
+
+        let sentCount = 0;
+        let errorCount = 0;
+        const total = studentIds.length;
+
+        for (let i = 0; i < studentIds.length; i++) {
+          const id = studentIds[i];
+          const student = window.students.find((s) => s.id === id);
+          if (!student || !student.email) continue;
+
+          const currentNum = i + 1;
+          const percent = Math.round((currentNum / total) * 100);
+
+          if (progressBar) progressBar.style.width = `${percent}%`;
+          if (progressCounter) progressCounter.innerText = `${currentNum}/${total}`;
+          if (progressText) progressText.innerText = `Enviando para: ${student.name}...`;
+
+          const { subject, bodyHtml } = window.generateEmailContent(student, templateType);
+
+          const templateParams = {
+            to_email: student.email,
+            to_name: student.name,
+            subject: subject,
+            message: bodyHtml,
+          };
+
+          try {
+            await emailjs.send("service_yq744mr", "template_few5bna", templateParams);
+            sentCount++;
+          } catch (e) {
+            console.error(`Erro ao enviar para ${student.name}:`, e);
+            errorCount++;
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 600));
+        }
+
+        if (progressText) progressText.innerText = "Envio concluído!";
+        window.customAlert(`Disparo concluído! ${sentCount} e-mails enviados com sucesso.${errorCount > 0 ? ` (${errorCount} falhas)` : ""}`);
+
+        window.closeBulkEmailModal();
       };
 
       window.closeEmailPreviewModal = () => {
@@ -15842,22 +16279,53 @@ Belém-PA, [DATA_ATUAL].
         }
         window.lastPayBaseNextDue = new Date(resetNextDue);
 
+        window.handlePayDiscountChange = () => {
+          const typeEl = document.getElementById("pay-discount-type");
+          const valEl = document.getElementById("pay-discount-value");
+          if (!typeEl || !valEl) return;
+
+          const type = typeEl.value;
+          const discVal = parseFloat(valEl.value) || 0;
+          const qty = parseInt(document.getElementById("pay-quantity").value) || 1;
+          const baseTotal = (window.lastPayBaseAmount || 0) * qty;
+
+          let discountAmount = 0;
+          if (discVal > 0) {
+            if (type === "percent") {
+              discountAmount = baseTotal * (discVal / 100);
+            } else {
+              discountAmount = discVal;
+            }
+          }
+
+          const finalAmount = Math.max(0, baseTotal - discountAmount);
+          document.getElementById("pay-amount").value = finalAmount.toFixed(2);
+        };
+
         window.handlePayQuantityChange = () => {
           const qty =
             parseInt(document.getElementById("pay-quantity").value) || 1;
           const baseAmount = window.lastPayBaseAmount || 0;
           const nextDueInput = document.getElementById("pay-next-due");
 
-          document.getElementById("pay-amount").value = (
-            baseAmount * qty
-          ).toFixed(2);
-
           if (window.lastPayBaseNextDue) {
             let d = new Date(window.lastPayBaseNextDue);
             d.setMonth(d.getMonth() + qty);
             nextDueInput.value = getLocalISODate(d);
           }
+
+          if (window.handlePayDiscountChange) {
+            window.handlePayDiscountChange();
+          } else {
+            document.getElementById("pay-amount").value = (
+              baseAmount * qty
+            ).toFixed(2);
+          }
         };
+
+        if (document.getElementById("pay-discount-type")) document.getElementById("pay-discount-type").value = "percent";
+        if (document.getElementById("pay-discount-value")) document.getElementById("pay-discount-value").value = "";
+        if (document.getElementById("pay-discount-description")) document.getElementById("pay-discount-description").value = "";
 
         const overdueCount = window.getOverdueMonthsCount(s);
         const alertDiv = document.getElementById("pay-alert-overdue");
@@ -15962,7 +16430,7 @@ Belém-PA, [DATA_ATUAL].
                                 ? `
                             <tr>
                                 <td style="padding: 8px 0; color: #4b5563;">DESCONTO APLICADO:</td>
-                                <td style="padding: 8px 0; font-weight: bold; color: #ef4444;">R$ ${discountStr}</td>
+                                <td style="padding: 8px 0; font-weight: bold; color: #ef4444;">R$ ${discountStr}${(p.discountDesc || (p.discountDetail && p.discountDetail.description)) ? ` (${p.discountDesc || p.discountDetail.description})` : ""}</td>
                             </tr>
                             `
                                 : ""
@@ -16118,8 +16586,19 @@ Belém-PA, [DATA_ATUAL].
         const basePriceOneMonth = planInfo.basePrice || planInfo.price || 0;
         const basePriceTotal = basePriceOneMonth * quantity;
         const paidAmount = parseFloat(amount);
+
+        const discountType = document.getElementById("pay-discount-type") ? document.getElementById("pay-discount-type").value : "percent";
+        const discountVal = document.getElementById("pay-discount-value") ? (parseFloat(document.getElementById("pay-discount-value").value) || 0) : 0;
+        const discountDesc = document.getElementById("pay-discount-description") ? document.getElementById("pay-discount-description").value.trim() : "";
+
         let calculatedDiscount = 0;
-        if (basePriceTotal > paidAmount) {
+        if (discountVal > 0) {
+          if (discountType === "percent") {
+            calculatedDiscount = basePriceTotal * (discountVal / 100);
+          } else {
+            calculatedDiscount = discountVal;
+          }
+        } else if (basePriceTotal > paidAmount) {
           calculatedDiscount = basePriceTotal - paidAmount;
         }
 
@@ -16133,6 +16612,13 @@ Belém-PA, [DATA_ATUAL].
         };
         if (calculatedDiscount > 0) {
           newPayment.discount = calculatedDiscount;
+          if (discountDesc) newPayment.discountDesc = discountDesc;
+          newPayment.discountDetail = {
+            type: discountType,
+            value: discountVal,
+            description: discountDesc,
+            amount: calculatedDiscount
+          };
         }
 
         try {
@@ -17563,6 +18049,10 @@ Belém-PA, [DATA_ATUAL].
 
             return true;
           });
+
+          if (listToPrint.length === 0 && !nameFilter && !dateFilter && !timeFilter) {
+            listToPrint = [...(window.experimentalList || [])];
+          }
         }
 
         // Sort by date, then time, then name
