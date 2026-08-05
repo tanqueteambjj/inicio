@@ -1045,15 +1045,21 @@
         window.hasSignatureDrawn = false;
 
         window.initSignaturePad = () => {
-            signatureCanvas = document.getElementById('signature-pad');
-            if (!signatureCanvas) return;
-            signatureCtx = signatureCanvas.getContext('2d');
-            
-            const rect = signatureCanvas.getBoundingClientRect();
-            if (rect.width > 0) {
-                signatureCanvas.width = rect.width;
-                signatureCanvas.height = 150;
+            const canvasEl = document.getElementById('signature-pad');
+            if (!canvasEl) return;
+
+            // Clone canvas to clear old listeners if re-initialized
+            const newCanvas = canvasEl.cloneNode(true);
+            if (canvasEl.parentNode) {
+                canvasEl.parentNode.replaceChild(newCanvas, canvasEl);
             }
+            signatureCanvas = newCanvas;
+            signatureCtx = signatureCanvas.getContext('2d');
+
+            const rect = signatureCanvas.getBoundingClientRect();
+            signatureCanvas.width = Math.round(rect.width > 0 ? rect.width : 600);
+            signatureCanvas.height = 150;
+            signatureCanvas.style.touchAction = 'none';
 
             signatureCtx.lineWidth = 3;
             signatureCtx.lineCap = 'round';
@@ -1068,10 +1074,15 @@
                 const r = signatureCanvas.getBoundingClientRect();
                 let clientX = e.clientX;
                 let clientY = e.clientY;
+
                 if (e.touches && e.touches.length > 0) {
                     clientX = e.touches[0].clientX;
                     clientY = e.touches[0].clientY;
+                } else if (e.changedTouches && e.changedTouches.length > 0) {
+                    clientX = e.changedTouches[0].clientX;
+                    clientY = e.changedTouches[0].clientY;
                 }
+
                 return {
                     x: (clientX - r.left) * (signatureCanvas.width / (r.width || 1)),
                     y: (clientY - r.top) * (signatureCanvas.height / (r.height || 1))
@@ -1100,19 +1111,28 @@
                 window.hasSignatureDrawn = true;
             };
 
-            const stopDrawing = () => {
+            const stopDrawing = (e) => {
+                if (isDrawing && e && e.cancelable) e.preventDefault();
                 isDrawing = false;
             };
 
-            signatureCanvas.onmousedown = startDrawing;
-            signatureCanvas.onmousemove = draw;
-            signatureCanvas.onmouseup = stopDrawing;
-            signatureCanvas.onmouseleave = stopDrawing;
+            // Mouse Events
+            signatureCanvas.addEventListener('mousedown', startDrawing);
+            signatureCanvas.addEventListener('mousemove', draw);
+            signatureCanvas.addEventListener('mouseup', stopDrawing);
+            signatureCanvas.addEventListener('mouseleave', stopDrawing);
 
-            signatureCanvas.ontouchstart = startDrawing;
-            signatureCanvas.ontouchmove = draw;
-            signatureCanvas.ontouchend = stopDrawing;
-            signatureCanvas.ontouchcancel = stopDrawing;
+            // Touch Events with passive: false so preventDefault works on mobile
+            signatureCanvas.addEventListener('touchstart', startDrawing, { passive: false });
+            signatureCanvas.addEventListener('touchmove', draw, { passive: false });
+            signatureCanvas.addEventListener('touchend', stopDrawing, { passive: false });
+            signatureCanvas.addEventListener('touchcancel', stopDrawing, { passive: false });
+
+            // Pointer Events for modern browsers / touch screens / stylus
+            signatureCanvas.addEventListener('pointerdown', startDrawing);
+            signatureCanvas.addEventListener('pointermove', draw);
+            signatureCanvas.addEventListener('pointerup', stopDrawing);
+            signatureCanvas.addEventListener('pointercancel', stopDrawing);
         };
 
         window.clearSignatureCanvas = () => {
@@ -1123,80 +1143,80 @@
         };
 
         window.buildFullContractText = () => {
-            const contractBox = document.getElementById('reg-full-contract-box');
-            if (!contractBox) return;
+            try {
+                const contractBox = document.getElementById('reg-full-contract-box');
+                if (!contractBox) return;
 
-            const name = (document.getElementById('reg-name')?.value || '').trim();
-            const dob = document.getElementById('reg-dob')?.value || '';
-            const cpf = (document.getElementById('reg-cpf')?.value || '').trim();
-            const email = (document.getElementById('reg-email')?.value || '').trim();
-            const phone = (document.getElementById('reg-phone')?.value || '').trim();
-            const cep = (document.getElementById('reg-cep')?.value || '').trim();
-            const addressMain = (document.getElementById('reg-address')?.value || '').trim();
-            const numVal = (document.getElementById('reg-number')?.value || '').trim();
-            const bairroVal = (document.getElementById('reg-bairro')?.value || '').trim();
-            const fullAddress = `${addressMain}${numVal ? ', ' + numVal : ''}${bairroVal ? ' - ' + bairroVal : ''}${cep ? ' (CEP: ' + cep + ')' : ''}`;
+                const name = (document.getElementById('reg-name')?.value || '').trim();
+                const dob = document.getElementById('reg-dob')?.value || '';
+                const cpf = (document.getElementById('reg-cpf')?.value || '').trim();
+                const email = (document.getElementById('reg-email')?.value || '').trim();
+                const phone = (document.getElementById('reg-phone')?.value || '').trim();
+                const cep = (document.getElementById('reg-cep')?.value || '').trim();
+                const addressMain = (document.getElementById('reg-address')?.value || '').trim();
+                const numVal = (document.getElementById('reg-number')?.value || '').trim();
+                const bairroVal = (document.getElementById('reg-bairro')?.value || '').trim();
+                const fullAddress = `${addressMain}${numVal ? ', ' + numVal : ''}${bairroVal ? ' - ' + bairroVal : ''}${cep ? ' (CEP: ' + cep + ')' : ''}`;
 
-            const enrollment_type = document.querySelector('input[name="enrollment_type"]:checked')?.value || 'individual';
-            const guardian = (document.getElementById('reg-guardian')?.value || '').trim();
-            const guardianCpf = (document.getElementById('reg-guardian-cpf')?.value || '').trim();
+                const enrollment_type = document.querySelector('input[name="enrollment_type"]:checked')?.value || 'adult';
+                const guardian = (document.getElementById('reg-guardian')?.value || '').trim();
+                const guardianCpf = (document.getElementById('reg-guardian-cpf')?.value || '').trim();
 
-            let contratante = name;
-            let contratanteCpf = cpf;
-            if (enrollment_type === 'minor' || guardian) {
-                contratante = guardian || name;
-                contratanteCpf = guardianCpf || cpf;
-            }
-
-            let alunosText = '';
-            if (enrollment_type === 'minor') {
-                alunosText = `- ALUNO (MENOR): ${name.toUpperCase()} (CPF: ${cpf || 'Não informado'}, Nasc: ${dob || 'Não informado'})\n  Responsável Legal: ${guardian.toUpperCase() || contratante.toUpperCase()} (CPF: ${guardianCpf || 'Não informado'})`;
-            } else {
-                alunosText = `- ALUNO TITULAR: ${name.toUpperCase()} (CPF: ${cpf || 'Não informado'}, Nasc: ${dob || 'Não informado'})`;
-            }
-
-            const minorsContainer = document.getElementById('minors-container') || document.getElementById('dependents-list');
-            if (minorsContainer) {
-                const dependentRows = minorsContainer.querySelectorAll('.minor-row, > div');
-                dependentRows.forEach((row, idx) => {
-                    const depName = row.querySelector('.dep-name, .extra-dep-name')?.value?.trim();
-                    const depCpf = row.querySelector('.dep-cpf, .extra-dep-cpf')?.value?.trim();
-                    const depDob = row.querySelector('.dep-dob, .extra-dep-dob')?.value;
-                    if (depName) {
-                        alunosText += `\n- DEPENDENTE ${idx + 1}: ${depName.toUpperCase()} (CPF: ${depCpf || 'Não informado'}, Nasc: ${depDob || 'Não informado'})`;
-                    }
-                });
-            }
-
-            const planKey = document.getElementById('selected-plan-key')?.value || 'adulto-mensal';
-            
-            let planInfo = (window.selectedPlansCache && window.selectedPlansCache[planKey]) ||
-                           (window.PLAN_DICT && window.PLAN_DICT[planKey]) ||
-                           (typeof PLAN_DICT !== 'undefined' && PLAN_DICT[planKey]);
-
-            if (!planInfo) {
-                if (planKey === 'infantil-mensal') {
-                    planInfo = { short: 'Infantil Mensal', price: 160.00, periodDays: 30 };
-                } else if (planKey === 'outro') {
-                    planInfo = { short: 'Outro', price: 0.00, periodDays: 30 };
-                } else {
-                    planInfo = { short: 'Adulto Mensal', price: 130.00, periodDays: 30 };
+                let contratante = name;
+                let contratanteCpf = cpf;
+                if (enrollment_type === 'minor' || guardian) {
+                    contratante = guardian || name;
+                    contratanteCpf = guardianCpf || cpf;
                 }
-            }
 
-            const valorFormatted = `R$ ${(planInfo.price || 0).toFixed(2).replace('.', ',')}`;
+                let alunosText = '';
+                if (enrollment_type === 'minor') {
+                    alunosText = `- ALUNO (MENOR): ${name.toUpperCase()} (CPF: ${cpf || 'Não informado'}, Nasc: ${dob || 'Não informado'})\n  Responsável Legal: ${guardian.toUpperCase() || contratante.toUpperCase()} (CPF: ${guardianCpf || 'Não informado'})`;
+                } else {
+                    alunosText = `- ALUNO TITULAR: ${name.toUpperCase()} (CPF: ${cpf || 'Não informado'}, Nasc: ${dob || 'Não informado'})`;
+                }
 
-            const now = new Date();
-            const dataInicioStr = now.toLocaleDateString('pt-BR');
-            const endDate = new Date(now);
-            endDate.setDate(endDate.getDate() + (planInfo.periodDays || 30));
-            const dataFimStr = endDate.toLocaleDateString('pt-BR');
+                const dependentsList = document.getElementById('dependents-list');
+                if (dependentsList && dependentsList.children.length > 0) {
+                    Array.from(dependentsList.children).forEach((row, idx) => {
+                        const depName = row.querySelector('.dep-name, .extra-dep-name')?.value?.trim();
+                        const depCpf = row.querySelector('.dep-cpf, .extra-dep-cpf')?.value?.trim();
+                        const depDob = row.querySelector('.dep-dob, .extra-dep-dob')?.value;
+                        if (depName) {
+                            alunosText += `\n- DEPENDENTE ${idx + 1}: ${depName.toUpperCase()} (CPF: ${depCpf || 'Não informado'}, Nasc: ${depDob || 'Não informado'})`;
+                        }
+                    });
+                }
 
-            const clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E DO PAGAMENTO\n\n2.1. O CONTRATANTE opta pelo plano ${(planInfo.short || planKey).toUpperCase()} no valor de ${valorFormatted}/mês, a ser pago conforme a modalidade escolhida.\n\n2.2. O vencimento ocorrerá no dia em que for efetuada a confirmação do pagamento inicial do ciclo contratado.`;
-            
-            const clausulaCancelamento = `CLÁUSULA 3ª - DO CANCELAMENTO\n\n3.1. O cancelamento deste contrato poderá ser solicitado a qualquer momento com aviso prévio mínimo de 30 (trinta) dias.`;
+                const planKey = document.getElementById('selected-plan-key')?.value || 'adulto-mensal';
+                
+                let planInfo = (window.selectedPlansCache && window.selectedPlansCache[planKey]) ||
+                               (window.PLAN_DICT && window.PLAN_DICT[planKey]) ||
+                               (typeof PLAN_DICT !== 'undefined' && PLAN_DICT[planKey]);
 
-            const contractTemplate = `1. CONTRATADA: TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA, CNPJ: 65.678.191/0001-90.
+                if (!planInfo) {
+                    if (planKey === 'infantil-mensal') {
+                        planInfo = { short: 'Infantil Mensal', price: 160.00, periodDays: 30 };
+                    } else if (planKey === 'outro') {
+                        planInfo = { short: 'Outro', price: 0.00, periodDays: 30 };
+                    } else {
+                        planInfo = { short: 'Adulto Mensal', price: 130.00, periodDays: 30 };
+                    }
+                }
+
+                const valorFormatted = `R$ ${(planInfo.price || 0).toFixed(2).replace('.', ',')}`;
+
+                const now = new Date();
+                const dataInicioStr = now.toLocaleDateString('pt-BR');
+                const endDate = new Date(now);
+                endDate.setDate(endDate.getDate() + (planInfo.periodDays || 30));
+                const dataFimStr = endDate.toLocaleDateString('pt-BR');
+
+                const clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E DO PAGAMENTO\n\n2.1. O CONTRATANTE opta pelo plano ${(planInfo.short || planKey).toUpperCase()} no valor de ${valorFormatted}/mês, a ser pago conforme a modalidade escolhida.\n\n2.2. O vencimento ocorrerá no dia em que for efetuada a confirmação do pagamento inicial do ciclo contratado.`;
+                
+                const clausulaCancelamento = `CLÁUSULA 3ª - DO CANCELAMENTO\n\n3.1. O cancelamento deste contrato poderá ser solicitado a qualquer momento com aviso prévio mínimo de 30 (trinta) dias.`;
+
+                const contractTemplate = `1. CONTRATADA: TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA, CNPJ: 65.678.191/0001-90.
 
 2. CONTRATANTE: ${(contratante || 'Não informado').toUpperCase()}, CPF: ${contratanteCpf || 'Não informado'}, Endereço: ${fullAddress || 'Não informado'}, Tel: ${phone || 'Não informado'}, E-mail: ${email || 'Não informado'}.
 
@@ -1239,7 +1259,20 @@ E, por estar ciente e de acordo, o CONTRATANTE assina digitalmente este instrume
 
 Belém-PA, ${dataInicioStr}.`;
 
-            contractBox.innerText = contractTemplate;
+                contractBox.innerText = contractTemplate;
+            } catch (err) {
+                console.error("Erro ao gerar o contrato:", err);
+            }
+        };
+
+        window.scrollToTopStep = () => {
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+            const topEl = document.getElementById('enrollment-wizard-form') || document.body;
+            if (topEl && topEl.scrollIntoView) {
+                topEl.scrollIntoView({ behavior: 'instant', block: 'start' });
+            }
         };
 
         // NAVIGATION LOGICS
@@ -1249,7 +1282,7 @@ Belém-PA, ${dataInicioStr}.`;
                 currentStep--;
                 document.getElementById(`step-${currentStep}`).classList.remove('hidden');
                 window.updateWizardProgress();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.scrollToTopStep();
             }
         };
 
@@ -1261,7 +1294,7 @@ Belém-PA, ${dataInicioStr}.`;
                 currentStep++;
                 document.getElementById(`step-${currentStep}`).classList.remove('hidden');
                 window.updateWizardProgress();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.scrollToTopStep();
 
                 if (currentStep === 4) {
                     window.buildFullContractText();
