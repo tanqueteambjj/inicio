@@ -646,11 +646,12 @@
         }
 
         // FALLBACK PLANS DICT
-        const PLAN_DICT = {
-            'adulto-mensal': { price: 130.00, short: 'Adulto Mensal', long: 'ADULTO MENSAL' },
-            'infantil-mensal': { price: 160.00, short: 'Infantil Mensal', long: 'INFANTIL MENSAL' },
-            'outro': { price: 0.00, short: 'Outro', long: 'OUTRO' }
+        window.PLAN_DICT = {
+            'adulto-mensal': { price: 130.00, short: 'Adulto Mensal', long: 'ADULTO MENSAL', periodDays: 30 },
+            'infantil-mensal': { price: 160.00, short: 'Infantil Mensal', long: 'INFANTIL MENSAL', periodDays: 30 },
+            'outro': { price: 0.00, short: 'Outro', long: 'OUTRO', periodDays: 30 }
         };
+        const PLAN_DICT = window.PLAN_DICT;
 
         let currentStep = 1;
         let selectedPlansCache = {};
@@ -1054,7 +1055,7 @@
                 signatureCanvas.height = 150;
             }
 
-            signatureCtx.lineWidth = 2.5;
+            signatureCtx.lineWidth = 3;
             signatureCtx.lineCap = 'round';
             signatureCtx.lineJoin = 'round';
             signatureCtx.strokeStyle = '#0f172a';
@@ -1072,12 +1073,13 @@
                     clientY = e.touches[0].clientY;
                 }
                 return {
-                    x: clientX - r.left,
-                    y: clientY - r.top
+                    x: (clientX - r.left) * (signatureCanvas.width / (r.width || 1)),
+                    y: (clientY - r.top) * (signatureCanvas.height / (r.height || 1))
                 };
             };
 
             const startDrawing = (e) => {
+                if (e.cancelable) e.preventDefault();
                 isDrawing = true;
                 const pos = getPos(e);
                 lastX = pos.x;
@@ -1107,13 +1109,10 @@
             signatureCanvas.onmouseup = stopDrawing;
             signatureCanvas.onmouseleave = stopDrawing;
 
-            signatureCanvas.ontouchstart = (e) => {
-                startDrawing(e);
-            };
-            signatureCanvas.ontouchmove = (e) => {
-                draw(e);
-            };
+            signatureCanvas.ontouchstart = startDrawing;
+            signatureCanvas.ontouchmove = draw;
             signatureCanvas.ontouchend = stopDrawing;
+            signatureCanvas.ontouchcancel = stopDrawing;
         };
 
         window.clearSignatureCanvas = () => {
@@ -1156,22 +1155,36 @@
                 alunosText = `- ALUNO TITULAR: ${name.toUpperCase()} (CPF: ${cpf || 'Não informado'}, Nasc: ${dob || 'Não informado'})`;
             }
 
-            const minorsContainer = document.getElementById('minors-container');
+            const minorsContainer = document.getElementById('minors-container') || document.getElementById('dependents-list');
             if (minorsContainer) {
-                const dependentRows = minorsContainer.querySelectorAll('.minor-row');
+                const dependentRows = minorsContainer.querySelectorAll('.minor-row, > div');
                 dependentRows.forEach((row, idx) => {
-                    const depName = row.querySelector('.dep-name')?.value?.trim();
-                    const depCpf = row.querySelector('.dep-cpf')?.value?.trim();
-                    const depDob = row.querySelector('.dep-dob')?.value;
+                    const depName = row.querySelector('.dep-name, .extra-dep-name')?.value?.trim();
+                    const depCpf = row.querySelector('.dep-cpf, .extra-dep-cpf')?.value?.trim();
+                    const depDob = row.querySelector('.dep-dob, .extra-dep-dob')?.value;
                     if (depName) {
                         alunosText += `\n- DEPENDENTE ${idx + 1}: ${depName.toUpperCase()} (CPF: ${depCpf || 'Não informado'}, Nasc: ${depDob || 'Não informado'})`;
                     }
                 });
             }
 
-            const planKey = document.getElementById('reg-plan')?.value || 'adulto_mensal';
-            const planInfo = window.PLAN_DICT[planKey] || { short: 'Mensal Adulto', price: 130, periodDays: 30 };
-            const valorFormatted = `R$ ${planInfo.price.toFixed(2).replace('.', ',')}`;
+            const planKey = document.getElementById('selected-plan-key')?.value || 'adulto-mensal';
+            
+            let planInfo = (window.selectedPlansCache && window.selectedPlansCache[planKey]) ||
+                           (window.PLAN_DICT && window.PLAN_DICT[planKey]) ||
+                           (typeof PLAN_DICT !== 'undefined' && PLAN_DICT[planKey]);
+
+            if (!planInfo) {
+                if (planKey === 'infantil-mensal') {
+                    planInfo = { short: 'Infantil Mensal', price: 160.00, periodDays: 30 };
+                } else if (planKey === 'outro') {
+                    planInfo = { short: 'Outro', price: 0.00, periodDays: 30 };
+                } else {
+                    planInfo = { short: 'Adulto Mensal', price: 130.00, periodDays: 30 };
+                }
+            }
+
+            const valorFormatted = `R$ ${(planInfo.price || 0).toFixed(2).replace('.', ',')}`;
 
             const now = new Date();
             const dataInicioStr = now.toLocaleDateString('pt-BR');
@@ -1179,13 +1192,13 @@
             endDate.setDate(endDate.getDate() + (planInfo.periodDays || 30));
             const dataFimStr = endDate.toLocaleDateString('pt-BR');
 
-            const clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E DO PAGAMENTO\n\n2.1. O CONTRATANTE opta pelo plano ${planInfo.short.toUpperCase()} no valor de ${valorFormatted}/mês, a ser pago conforme a modalidade escolhida.\n\n2.2. O vencimento ocorrerá no dia em que for efetuada a confirmação do pagamento inicial do ciclo contratado.`;
+            const clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E DO PAGAMENTO\n\n2.1. O CONTRATANTE opta pelo plano ${(planInfo.short || planKey).toUpperCase()} no valor de ${valorFormatted}/mês, a ser pago conforme a modalidade escolhida.\n\n2.2. O vencimento ocorrerá no dia em que for efetuada a confirmação do pagamento inicial do ciclo contratado.`;
             
             const clausulaCancelamento = `CLÁUSULA 3ª - DO CANCELAMENTO\n\n3.1. O cancelamento deste contrato poderá ser solicitado a qualquer momento com aviso prévio mínimo de 30 (trinta) dias.`;
 
             const contractTemplate = `1. CONTRATADA: TANQUE TEAM ESCOLA DE ARTES MARCIAIS LTDA, CNPJ: 65.678.191/0001-90.
 
-2. CONTRATANTE: ${contratante.toUpperCase()}, CPF: ${contratanteCpf || 'Não informado'}, Endereço: ${fullAddress || 'Não informado'}, Tel: ${phone || 'Não informado'}, E-mail: ${email || 'Não informado'}.
+2. CONTRATANTE: ${(contratante || 'Não informado').toUpperCase()}, CPF: ${contratanteCpf || 'Não informado'}, Endereço: ${fullAddress || 'Não informado'}, Tel: ${phone || 'Não informado'}, E-mail: ${email || 'Não informado'}.
 
 3. ALUNO(S):
 ${alunosText}
@@ -1204,7 +1217,7 @@ O atraso superior a 30 (trinta) dias no pagamento da mensalidade poderá acarret
 
 CLÁUSULA 5ª - DOS RISCOS DA ATIVIDADE E ASSISTÊNCIA EMERGENCIAL
 
-O CONTRATANTE declara estar ciente de que a prática de Jiu-Jitsu é uma atividade física de contato e declara participar por sua livre e spontaneous vontade, isentando a CONTRATADA de responsabilidade por lesões decorrentes de situações que não resultem de dolo ou culpa grave por parte da mesma.
+O CONTRATANTE declara estar ciente de que a prática de Jiu-Jitsu é uma atividade física de contato e declara participar por sua livre e espontânea vontade, isentando a CONTRATADA de responsabilidade por lesões decorrentes de situações que não resultem de dolo ou culpa grave por parte da mesma.
 
 CLÁUSULA 6ª - DAS REGRAS DE CONDUTA (DOJO KUN)
 
@@ -1236,6 +1249,7 @@ Belém-PA, ${dataInicioStr}.`;
                 currentStep--;
                 document.getElementById(`step-${currentStep}`).classList.remove('hidden');
                 window.updateWizardProgress();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         };
 
@@ -1247,12 +1261,13 @@ Belém-PA, ${dataInicioStr}.`;
                 currentStep++;
                 document.getElementById(`step-${currentStep}`).classList.remove('hidden');
                 window.updateWizardProgress();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
 
                 if (currentStep === 4) {
                     window.buildFullContractText();
                     setTimeout(() => {
                         window.initSignaturePad();
-                    }, 100);
+                    }, 150);
                 }
             } else {
                 window.submitPreRegistration();
