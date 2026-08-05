@@ -841,12 +841,12 @@
                   class="font-bold text-gray-500 dark:text-gray-400 text-xs sm:text-sm flex items-center gap-1"
                   ><i class="fa-solid fa-filter text-xs"></i> Filtros:</span
                 >
-                <div class="flex flex-wrap items-center gap-1">
+                <div class="flex flex-wrap items-center gap-1.5">
                   <button
                     type="button"
                     onclick="window.navigateExpDate(-1)"
-                    class="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition font-bold text-xs"
-                    title="Dia Anterior"
+                    class="px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition font-bold text-xs flex items-center gap-1"
+                    title="Dia Anterior (Voltar 1 dia)"
                   >
                     <i class="fa-solid fa-chevron-left"></i>
                   </button>
@@ -854,33 +854,36 @@
                     type="date"
                     id="filter-exp-date"
                     onchange="window.filterExperimentalTable()"
-                    class="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 text-xs sm:text-sm bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red font-semibold"
-                    title="Data Agendamento"
+                    class="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 text-xs sm:text-sm bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-red font-semibold cursor-pointer"
+                    title="Selecione uma data no calendário"
                   />
                   <button
                     type="button"
                     onclick="window.navigateExpDate(1)"
-                    class="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition font-bold text-xs"
-                    title="Próximo Dia"
+                    class="px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition font-bold text-xs flex items-center gap-1"
+                    title="Próximo Dia (Avançar 1 dia)"
                   >
                     <i class="fa-solid fa-chevron-right"></i>
                   </button>
                   <button
                     type="button"
                     onclick="window.setExpDateToday()"
-                    class="px-2 py-1.5 border border-blue-300 dark:border-blue-700 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 transition font-bold text-xs"
-                    title="Ir para Hoje"
+                    class="px-2.5 py-1.5 border border-amber-300 dark:border-amber-700 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-200 hover:bg-amber-200 transition font-extrabold text-xs flex items-center gap-1"
+                    title="Ir para a data de Hoje"
                   >
-                    Hoje
+                    <i class="fa-solid fa-star text-amber-500 text-[10px]"></i> Hoje
                   </button>
                   <button
                     type="button"
                     onclick="window.clearExpDate()"
-                    class="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 transition font-bold text-xs"
-                    title="Todas as Datas"
+                    class="px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 transition font-bold text-xs"
+                    title="Exibir todas as datas"
                   >
                     Todas
                   </button>
+                  <span id="exp-date-label" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 ml-1">
+                    Exibindo Todas as Datas
+                  </span>
                 </div>
                 <select
                   id="filter-exp-time"
@@ -10806,17 +10809,23 @@ Belém-PA, [DATA_ATUAL].
               diffAmount > 0 ? formatCurrencyWords(diffAmount) : "";
 
             let clausulaSegunda = "CLÁUSULA 2ª - DO PLANO E VALORES\n\n";
-            clausulaSegunda += `2.1. O CONTRATANTE opta pelo plano esportivo ${planName.toUpperCase()}, comprometendo-se ao pagamento da mensalidade no valor total de R$ ${basePriceStr} (${basePriceWords}).\n\n`;
+            const isOutroPlanAdmin = (s.plan === 'outro') || (planName && planName.toLowerCase().includes('outro')) || (basePriceObj === 0 && discountPriceObj === 0 && s.plan !== 'free');
 
-            if (diffAmount > 0) {
-              clausulaSegunda += `2.2. Fica acordado que, pagando até a data de vencimento (dia ${vencimentoDia} de cada mês), o CONTRATANTE pagará o valor com desconto de R$ ${discountPriceStr} (${discountPriceWords}), correspondente a um desconto de R$ ${diffAmountStr} (${diffAmountWords}). Após o vencimento, será cobrado o valor total de R$ ${basePriceStr} (${basePriceWords}).\n\n`;
+            if (isOutroPlanAdmin) {
+              clausulaSegunda += `2.1. O CONTRATANTE opta pela modalidade PLANO PERSONALIZADO / DIVERSO, cujos valores, condições de pagamento e periodicidade foram ajustados e acordados diretamente com a administração da CONTRATADA.\n\n`;
+              clausulaSegunda += `2.2. O vencimento e as demais condições financeiras seguirão estritamente o termo individual ou o registro financeiro acordado na recepção/administração.\n\n`;
+              clausulaSegunda += `2.3. Reajuste de Valores: Os valores das mensalidades previstos neste contrato poderão ser reajustados anualmente, a cada 12 (doze) meses a contar da data de início da vigência, com base na variação do Índice Geral de Preços do Mercado (IGP-M) ou outro índice que venha a substituí-lo, ou, na sua ausência, por acordo entre as partes.`;
             } else {
-              clausulaSegunda += `2.2. O pagamento das mensalidades deverá ser realizado até a data de vencimento (dia ${vencimentoDia} de cada mês) no valor de R$ ${basePriceStr} (${basePriceWords}).\n\n`;
-            }
+              clausulaSegunda += `2.1. O CONTRATANTE opta pelo plano esportivo ${planName.toUpperCase()}, comprometendo-se ao pagamento da mensalidade no valor total de R$ ${basePriceStr} (${basePriceWords}).\n\n`;
 
-            // Add standard observation item assuming some users might type it, we leave placeholder space or omit.
-            // For now, mapping directly to 2.3 for the Reajuste.
-            clausulaSegunda += `2.3. Reajuste de Valores: Os valores das mensalidades previstos neste contrato poderão ser reajustados anualmente, a cada 12 (doze) meses a contar da data de início da vigência, com base na variação do Índice Geral de Preços do Mercado (IGP-M) ou outro índice que venha a substituí-lo, ou, na sua ausência, por acordo entre as partes.`;
+              if (diffAmount > 0) {
+                clausulaSegunda += `2.2. Fica acordado que, pagando até a data de vencimento (dia ${vencimentoDia} de cada mês), o CONTRATANTE pagará o valor com desconto de R$ ${discountPriceStr} (${discountPriceWords}), correspondente a um desconto de R$ ${diffAmountStr} (${diffAmountWords}). Após o vencimento, será cobrado o valor total de R$ ${basePriceStr} (${basePriceWords}).\n\n`;
+              } else {
+                clausulaSegunda += `2.2. O pagamento das mensalidades deverá ser realizado até a data de vencimento (dia ${vencimentoDia} de cada mês) no valor de R$ ${basePriceStr} (${basePriceWords}).\n\n`;
+              }
+
+              clausulaSegunda += `2.3. Reajuste de Valores: Os valores das mensalidades previstos neste contrato poderão ser reajustados anualmente, a cada 12 (doze) meses a contar da data de início da vigência, com base na variação do Índice Geral de Preços do Mercado (IGP-M) ou outro índice que venha a substituí-lo, ou, na sua ausência, por acordo entre as partes.`;
+            }
 
             contractText = contractText.replace(
               /\[CLAUSULA_SEGUNDA\]/g,
@@ -12819,7 +12828,7 @@ Belém-PA, [DATA_ATUAL].
             const count = window.experimentalList.filter(
               (e) =>
                 (!e.status || e.status === "Pendente" || e.status === "Agendada") &&
-                e.date >= todayISO,
+                e.date === todayISO,
             ).length;
             const badge = document.getElementById("badge-experimental-count");
             if (badge) {
@@ -12840,6 +12849,39 @@ Belém-PA, [DATA_ATUAL].
           if (tbody)
             tbody.innerHTML =
               '<tr><td colspan="8" class="p-4 text-center text-red-500">Erro ao carregar dados. Tente novamente.</td></tr>';
+        }
+      };
+
+      window.updateExpDateLabel = () => {
+        const dateVal = document.getElementById("filter-exp-date")?.value;
+        const labelEl = document.getElementById("exp-date-label");
+        if (!labelEl) return;
+        if (!dateVal) {
+          labelEl.innerHTML = '<i class="fa-solid fa-calendar-days text-indigo-500 mr-1"></i> Exibindo Todas as Datas';
+          labelEl.className = "text-xs font-bold px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600";
+          return;
+        }
+        const now = new Date();
+        const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+        
+        const [yyyy, mm, dd] = dateVal.split("-");
+        const dateObj = new Date(parseInt(yyyy), parseInt(mm) - 1, parseInt(dd));
+        const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+        const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        
+        const dayName = dayNames[dateObj.getDay()];
+        const monthName = monthNames[dateObj.getMonth()];
+        const formatted = `${dayName}, ${dd}/${mm}/${yyyy}`;
+        
+        if (dateVal === todayISO) {
+          labelEl.innerHTML = `<i class="fa-solid fa-star text-amber-500 mr-1"></i> HOJE (${formatted})`;
+          labelEl.className = "text-xs font-black px-2.5 py-1 rounded-lg bg-amber-100 text-amber-950 dark:bg-amber-900/80 dark:text-amber-200 border border-amber-300 dark:border-amber-700 shadow-xs";
+        } else if (dateVal > todayISO) {
+          labelEl.innerHTML = `<i class="fa-solid fa-clock text-emerald-500 mr-1"></i> FUTURA (${formatted})`;
+          labelEl.className = "text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-950 dark:bg-emerald-900/80 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700";
+        } else {
+          labelEl.innerHTML = `<i class="fa-solid fa-clock-rotate-left text-slate-500 mr-1"></i> PASSADA (${formatted})`;
+          labelEl.className = "text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600";
         }
       };
 
@@ -12873,6 +12915,7 @@ Belém-PA, [DATA_ATUAL].
       };
 
       window.filterExperimentalTable = () => {
+        if (window.updateExpDateLabel) window.updateExpDateLabel();
         const nameFilter = document
           .getElementById("filter-exp-name")
           .value.toLowerCase()
@@ -12947,14 +12990,14 @@ Belém-PA, [DATA_ATUAL].
           let rowColorClass = "";
 
           if (exp.date === todayISO) {
-            dateRelativeBadge = `<span class="inline-flex items-center gap-1 bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ml-1.5"><i class="fa-solid fa-calendar-day"></i> Hoje</span>`;
-            rowColorClass = `bg-blue-50/70 dark:bg-blue-950/30 border-l-4 border-l-blue-500`;
+            dateRelativeBadge = `<span class="inline-flex items-center gap-1 bg-amber-100 text-amber-950 dark:bg-amber-900/80 dark:text-amber-100 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ml-1.5 border border-amber-300 dark:border-amber-700 shadow-xs"><i class="fa-solid fa-star text-amber-500"></i> HOJE</span>`;
+            rowColorClass = `bg-amber-50/90 dark:bg-amber-950/40 border-l-4 border-l-amber-500 hover:bg-amber-100/80 transition-colors`;
           } else if (exp.date > todayISO) {
-            dateRelativeBadge = `<span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ml-1.5"><i class="fa-solid fa-clock"></i> Futura</span>`;
-            rowColorClass = `bg-emerald-50/40 dark:bg-emerald-950/20 border-l-4 border-l-emerald-500`;
+            dateRelativeBadge = `<span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-900 dark:bg-emerald-900/80 dark:text-emerald-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ml-1.5 border border-emerald-300 dark:border-emerald-700"><i class="fa-solid fa-clock"></i> FUTURA</span>`;
+            rowColorClass = `bg-emerald-50/60 dark:bg-emerald-950/20 border-l-4 border-l-emerald-500 hover:bg-emerald-100/60 transition-colors`;
           } else if (exp.date < todayISO) {
-            dateRelativeBadge = `<span class="inline-flex items-center gap-1 bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ml-1.5"><i class="fa-solid fa-history"></i> Passada</span>`;
-            rowColorClass = `bg-gray-50/60 dark:bg-gray-800/40 border-l-4 border-l-gray-400 opacity-90`;
+            dateRelativeBadge = `<span class="inline-flex items-center gap-1 bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-300 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ml-1.5 border border-slate-300 dark:border-slate-600"><i class="fa-solid fa-clock-rotate-left"></i> PASSADA</span>`;
+            rowColorClass = `bg-slate-100/80 dark:bg-slate-800/50 border-l-4 border-l-slate-400 text-gray-600 dark:text-gray-400 opacity-80 hover:opacity-100 transition-opacity`;
           }
 
           let phoneHtml = "-";
