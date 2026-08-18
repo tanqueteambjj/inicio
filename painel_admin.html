@@ -5757,20 +5757,23 @@
           </div>
           <div class="grid grid-cols-1 gap-3">
             <input type="hidden" id="whatsapp-student-id" />
+            <!-- Envio de Acesso por WhatsApp -->
             <button
-              onclick="window.confirmAndSendWhatsApp('reminder')"
-              class="flex items-center justify-between w-full p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg group hover:bg-green-600 hover:text-white transition-all"
+              onclick="window.confirmAndSendWhatsApp('access')"
+              class="flex items-center justify-between w-full p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg group hover:bg-emerald-600 hover:text-white transition-all"
             >
               <div class="flex items-center gap-3">
                 <i
-                  class="fa-solid fa-clock text-green-600 dark:text-green-400 group-hover:text-white text-xl"
+                  class="fa-solid fa-key text-emerald-600 dark:text-emerald-400 group-hover:text-white text-xl"
                 ></i>
                 <div class="text-left">
-                  <div class="font-bold text-sm">Lembrar Mensalidade</div>
-                  <div class="text-[10px] opacity-70">Aviso de vencimento</div>
+                  <div class="font-bold text-sm">Enviar Acesso por WhatsApp</div>
+                  <div class="text-[10px] opacity-70">
+                    Login, senha e link do portal do atleta
+                  </div>
                 </div>
               </div>
-              <i class="fa-solid fa-chevron-right text-green-300"></i>
+              <i class="fa-solid fa-chevron-right text-emerald-300"></i>
             </button>
             <button
               onclick="window.confirmAndSendWhatsApp('charge')"
@@ -5821,44 +5824,6 @@
               <i class="fa-solid fa-chevron-right text-purple-300"></i>
             </button>
 
-            <!-- Aviso de Vencimento por E-mail -->
-            <button
-              onclick="window.confirmAndSendWhatsApp('email_vencimento')"
-              class="flex items-center justify-between w-full p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg group hover:bg-blue-600 hover:text-white transition-all"
-            >
-              <div class="flex items-center gap-3">
-                <i
-                  class="fa-solid fa-calendar-check text-blue-600 dark:text-blue-400 group-hover:text-white text-xl"
-                ></i>
-                <div class="text-left">
-                  <div class="font-bold text-sm">Aviso de Vencimento por E-mail</div>
-                  <div class="text-[10px] opacity-70">
-                    Lembrete amigável de vencimento
-                  </div>
-                </div>
-              </div>
-              <i class="fa-solid fa-chevron-right text-blue-300"></i>
-            </button>
-
-            <!-- Cadastrar Cobrança Recorrente por E-mail -->
-            <button
-              onclick="window.confirmAndSendWhatsApp('email_recorrente')"
-              class="flex items-center justify-between w-full p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg group hover:bg-indigo-600 hover:text-white transition-all"
-            >
-              <div class="flex items-center gap-3">
-                <i
-                  class="fa-solid fa-credit-card text-indigo-600 dark:text-indigo-400 group-hover:text-white text-xl"
-                ></i>
-                <div class="text-left">
-                  <div class="font-bold text-sm">Cobrança Recorrente por E-mail</div>
-                  <div class="text-[10px] opacity-70">
-                    Incentivo ao cartão de crédito recorrente
-                  </div>
-                </div>
-              </div>
-              <i class="fa-solid fa-chevron-right text-indigo-300"></i>
-            </button>
-
             <!-- Disparo em Lote -->
             <button
               onclick="window.confirmAndSendWhatsApp('email_bulk')"
@@ -5879,18 +5844,18 @@
             </button>
             <button
               onclick="window.confirmAndSendWhatsApp('birthday')"
-              class="flex items-center justify-between w-full p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg group hover:bg-emerald-600 hover:text-white transition-all"
+              class="flex items-center justify-between w-full p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg group hover:bg-blue-600 hover:text-white transition-all"
             >
               <div class="flex items-center gap-3">
                 <i
-                  class="fa-solid fa-cake-candles text-emerald-600 dark:text-emerald-400 group-hover:text-white text-xl"
+                  class="fa-solid fa-cake-candles text-blue-600 dark:text-blue-400 group-hover:text-white text-xl"
                 ></i>
                 <div class="text-left">
                   <div class="font-bold text-sm">Feliz Aniversário</div>
                   <div class="text-[10px] opacity-70">Parabenizar aluno</div>
                 </div>
               </div>
-              <i class="fa-solid fa-chevron-right text-emerald-300"></i>
+              <i class="fa-solid fa-chevron-right text-blue-300"></i>
             </button>
           </div>
         </div>
@@ -15615,6 +15580,33 @@ Belém-PA, [DATA_ATUAL].
         window.open(url, "_blank");
       };
 
+      window.sendWhatsAppAccess = (id) => {
+        const s = window.students.find((st) => st.id === id);
+        if (!s || !s.phone) {
+          window.customAlert("Aluno não encontrado ou sem telefone cadastrado.");
+          return;
+        }
+
+        const login = s.studentLogin || "";
+        const pass = s.studentPassword || "";
+
+        if (!login || !pass) {
+          window.customAlert(
+            "O aluno não possui login e senha configurados. Por favor, acesse o botão 'Editar' do aluno para cadastrar o login e a senha de acesso antes de enviar.",
+          );
+          return;
+        }
+
+        let phone = s.phone.replace(/\D/g, "");
+        if (phone.length === 11) phone = "55" + phone;
+
+        const firstName = s.name.split(" ")[0];
+        const message = `Olá, ${firstName}! 👋🥋\n\nSeja muito bem-vindo(a) ao *Portal do Atleta Tanque Team BJJ*!\n\nAqui estão os seus dados de acesso exclusivos para acompanhar sua evolução, frequência, graduação e financeiro:\n\n🔗 *Link do Portal:* https://www.tanqueteambjj.com.br/login.html\n👤 *Login:* ${login}\n🔑 *Senha:* ${pass}\n\nAo acessar o portal, você também pode registrar sua presença no tatame.\n\nQualquer dúvida, estamos à disposição! Oss! 🥋🔥`;
+
+        const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+        window.open(url, "_blank");
+      };
+
       window.sendWhatsAppAbsence = (id) => {
         const s = window.students.find((st) => st.id === id);
         if (!s || !s.phone) {
@@ -16239,11 +16231,17 @@ Belém-PA, [DATA_ATUAL].
         const id = document.getElementById("whatsapp-student-id").value;
         window.closeWhatsAppActionsModal();
         if (type === "welcome") window.sendWhatsAppWelcome(id);
+        else if (type === "access") window.sendWhatsAppAccess(id);
         else if (type === "reminder") window.sendWhatsAppReminder(id);
         else if (type === "charge") window.sendWhatsAppCharge(id);
         else if (type === "absence") window.sendWhatsAppAbsence(id);
         else if (type === "birthday") window.shareBirthdayWhatsApp(id);
         else if (type === "email_billing") window.sendEmailBilling(id);
+        else if (type === "email_bulk") {
+          if (typeof window.openBulkEmailModal === "function") {
+            window.openBulkEmailModal();
+          }
+        }
       };
 
       window.informPayment = async (id) => {
