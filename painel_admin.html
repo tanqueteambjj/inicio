@@ -2501,6 +2501,82 @@
             </div>
           </div>
 
+          <!-- Programa de Indicação (Amigo Indica Amigo) -->
+          <div class="mb-8">
+            <div class="flex justify-between items-center mb-4">
+              <h4
+                class="font-bold text-lg text-gray-800 dark:text-white border-b pb-2 w-full flex items-center justify-between"
+              >
+                <span class="flex items-center">
+                  <i class="fa-solid fa-gift mr-2 text-amber-500"></i> Programa de Indicação (Amigo Indica Amigo)
+                </span>
+                <span id="settings-referral-status-badge" class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                  50% ATUAL
+                </span>
+              </h4>
+            </div>
+            <div
+              class="bg-gradient-to-r from-amber-50/60 to-orange-50/40 dark:from-gray-700/60 dark:to-gray-700/30 p-4 rounded-lg border border-amber-200 dark:border-amber-900/50"
+            >
+              <p class="text-xs text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
+                Configure a porcentagem de desconto concedida automaticamente para quem indica e para o novo aluno que utiliza o cupom de indicação na pré-matrícula.
+              </p>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end mb-4">
+                <div>
+                  <label
+                    class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase"
+                    >% Desconto na Mensalidade</label
+                  >
+                  <div class="relative">
+                    <input
+                      type="number"
+                      id="settings-referral-discount"
+                      min="1"
+                      max="100"
+                      step="1"
+                      value="50"
+                      placeholder="Ex: 50"
+                      class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm font-bold focus:border-amber-500 focus:outline-none pr-8 font-mono"
+                    />
+                    <span class="absolute right-3 top-2.5 text-xs font-bold text-gray-400">%</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase"
+                    >Status do Programa</label
+                  >
+                  <select
+                    id="settings-referral-active"
+                    class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm font-medium focus:border-amber-500 focus:outline-none"
+                  >
+                    <option value="true">Ativo (Permitir Descontos)</option>
+                    <option value="false">Desativado</option>
+                  </select>
+                </div>
+
+                <div>
+                  <button
+                    id="save-referral-settings-btn"
+                    onclick="window.saveReferralConfig()"
+                    class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded text-sm transition-all shadow-md flex items-center justify-center gap-1.5"
+                  >
+                    <i class="fa-solid fa-floppy-disk"></i> Salvar Desconto
+                  </button>
+                </div>
+              </div>
+
+              <div class="bg-amber-100/60 dark:bg-amber-950/30 p-2.5 rounded text-[11px] text-amber-900 dark:text-amber-300 flex items-start gap-2 border border-amber-200 dark:border-amber-900/40">
+                <i class="fa-solid fa-circle-info text-amber-600 dark:text-amber-400 mt-0.5 shrink-0"></i>
+                <div>
+                  <strong>Regra de Negócio:</strong> Se um aluno indicar múltiplos amigos, os descontos são acumulados mês a mês (1 desconto por mensalidade, sem acumular 2 descontos no mesmo mês).
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Inteligência Artificial -->
           <div class="mb-8">
             <div class="flex justify-between items-center mb-4">
@@ -3423,6 +3499,24 @@
 
               <!-- Discount Section -->
               <div class="col-span-1 md:col-span-2 bg-white dark:bg-gray-800 p-3 rounded border border-green-200 dark:border-gray-700 mt-1">
+                <!-- Referral Automatic Discount Banner -->
+                <div id="pay-referral-discount-banner" class="hidden bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 p-3 rounded-lg text-xs text-amber-900 dark:text-amber-200 mb-3 items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center text-sm shrink-0 shadow-sm">
+                      <i class="fa-solid fa-gift"></i>
+                    </div>
+                    <div>
+                      <div class="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                        <span>Desconto de Indicação Ativo (50% OFF)</span>
+                        <span class="text-[10px] bg-amber-200 text-amber-900 px-1.5 py-0.2 rounded font-black">AUTOMÁTICO</span>
+                      </div>
+                      <div id="pay-referral-discount-msg" class="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">
+                        --
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1.5">
                   <i class="fa-solid fa-tag text-emerald-500"></i> Aplicar Desconto (Opcional)
                 </label>
@@ -4685,6 +4779,18 @@
                     class="w-full border border-blue-200 dark:border-blue-800 dark:bg-gray-800 dark:text-white rounded p-2 focus:outline-none"
                   />
                 </div>
+                <div class="md:col-span-2">
+                  <label
+                    class="block text-xs font-bold text-amber-600 dark:text-amber-400 mb-1 flex items-center gap-1"
+                    ><i class="fa-solid fa-gift"></i> Código Promocional de Indicação (50% OFF)</label
+                  ><input
+                    type="text"
+                    id="edit-referral-code"
+                    placeholder="Ex: CARLOS1234"
+                    class="w-full border border-amber-300 dark:border-amber-700 dark:bg-gray-800 dark:text-white rounded p-2 font-mono font-bold uppercase focus:border-amber-500 focus:outline-none"
+                  />
+                  <p class="text-[10px] text-gray-400 mt-0.5">Código exclusivo que o aluno compartilha com amigos para ganhar 50% de desconto na mensalidade.</p>
+                </div>
               </div>
               <div class="mt-3">
                 <button
@@ -5076,6 +5182,76 @@
               id="detail-family-box"
               class="hidden mt-3 bg-purple-50 dark:bg-purple-900/30 p-3 rounded border border-purple-200 dark:border-purple-800"
             ></div>
+
+            <!-- Programa de Indicação & Cupom de Amigo -->
+            <div
+              class="bg-amber-50 dark:bg-amber-950/30 p-3.5 rounded-lg border border-amber-200 dark:border-amber-800/60 mt-3"
+            >
+              <div class="flex items-center justify-between mb-2">
+                <h4
+                  class="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase flex items-center gap-1.5"
+                >
+                  <i class="fa-solid fa-gift text-amber-500"></i> Programa de Indicação (50% OFF)
+                </h4>
+                <button
+                  type="button"
+                  id="detail-share-referral-btn"
+                  onclick="window.sendWhatsAppReferral(document.getElementById('detail-student-id').value)"
+                  class="text-[11px] font-bold text-amber-700 dark:text-amber-300 hover:text-amber-900 bg-amber-100 dark:bg-amber-900/50 px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 flex items-center gap-1 transition"
+                >
+                  <i class="fa-brands fa-whatsapp text-green-600"></i> Enviar Cupom
+                </button>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mb-2">
+                <div class="bg-white dark:bg-gray-800 p-2 rounded border border-amber-200 dark:border-amber-900 flex items-center justify-between">
+                  <div>
+                    <span class="text-[10px] text-gray-500 dark:text-gray-400 block font-bold">CÓDIGO DE INDICAÇÃO</span>
+                    <span id="detail-referral-code" class="font-mono font-bold text-sm text-amber-900 dark:text-amber-300">--</span>
+                  </div>
+                  <button
+                    type="button"
+                    onclick="window.copyReferralCode(document.getElementById('detail-referral-code').innerText)"
+                    class="text-gray-400 hover:text-amber-600 p-1 text-sm transition"
+                    title="Copiar Código"
+                  >
+                    <i class="fa-regular fa-copy"></i>
+                  </button>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-2 rounded border border-amber-200 dark:border-amber-900 flex items-center justify-between">
+                  <div>
+                    <span class="text-[10px] text-gray-500 dark:text-gray-400 block font-bold">DESCONTOS DISPONÍVEIS</span>
+                    <span id="detail-referral-balance" class="font-bold text-xs text-emerald-600 dark:text-emerald-400">0 meses (50% OFF)</span>
+                  </div>
+                  <i class="fa-solid fa-tags text-amber-400 text-lg"></i>
+                </div>
+              </div>
+              <div id="detail-referral-list-container" class="mt-2 text-xs">
+                <!-- Referral list dynamically injected -->
+              </div>
+            </div>
+
+            <!-- Cartão de Crédito Recorrente -->
+            <div
+              class="bg-indigo-50 dark:bg-indigo-950/30 p-3.5 rounded-lg border border-indigo-200 dark:border-indigo-800/60 mt-3"
+            >
+              <div class="flex items-center justify-between mb-2">
+                <h4
+                  class="text-xs font-bold text-indigo-800 dark:text-indigo-400 uppercase flex items-center gap-1.5"
+                >
+                  <i class="fa-solid fa-credit-card text-indigo-500"></i> Cartão de Crédito Recorrente
+                </h4>
+                <button
+                  type="button"
+                  onclick="window.sendWhatsAppCardLink(document.getElementById('detail-student-id').value)"
+                  class="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 bg-indigo-100 dark:bg-indigo-900/50 px-2 py-0.5 rounded border border-indigo-300 dark:border-indigo-700 flex items-center gap-1 transition"
+                >
+                  <i class="fa-brands fa-whatsapp text-green-600"></i> Enviar Link de Cadastro
+                </button>
+              </div>
+              <div id="detail-card-status-box" class="text-xs text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 p-2.5 rounded border border-indigo-200 dark:border-indigo-900">
+                <!-- Status dynamically rendered -->
+              </div>
+            </div>
           </div>
         </div>
         <div
@@ -5774,6 +5950,44 @@
                 </div>
               </div>
               <i class="fa-solid fa-chevron-right text-emerald-300"></i>
+            </button>
+
+            <!-- Envio de Link para Cadastro de Cartão de Crédito -->
+            <button
+              onclick="window.confirmAndSendWhatsApp('card_link')"
+              class="flex items-center justify-between w-full p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg group hover:bg-indigo-600 hover:text-white transition-all"
+            >
+              <div class="flex items-center gap-3">
+                <i
+                  class="fa-solid fa-credit-card text-indigo-600 dark:text-indigo-400 group-hover:text-white text-xl"
+                ></i>
+                <div class="text-left">
+                  <div class="font-bold text-sm">Enviar Cadastro de Cartão</div>
+                  <div class="text-[10px] opacity-70">
+                    Link seguro para o aluno cadastrar cartão
+                  </div>
+                </div>
+              </div>
+              <i class="fa-solid fa-chevron-right text-indigo-300"></i>
+            </button>
+
+            <!-- Envio de Cupom de Indicação -->
+            <button
+              onclick="window.confirmAndSendWhatsApp('referral_share')"
+              class="flex items-center justify-between w-full p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg group hover:bg-amber-600 hover:text-white transition-all"
+            >
+              <div class="flex items-center gap-3">
+                <i
+                  class="fa-solid fa-gift text-amber-600 dark:text-amber-400 group-hover:text-white text-xl"
+                ></i>
+                <div class="text-left">
+                  <div class="font-bold text-sm">Enviar Cupom de Indicação</div>
+                  <div class="text-[10px] opacity-70">
+                    Código de 50% OFF para indicar amigos
+                  </div>
+                </div>
+              </div>
+              <i class="fa-solid fa-chevron-right text-amber-300"></i>
             </button>
             <button
               onclick="window.confirmAndSendWhatsApp('charge')"
@@ -9454,6 +9668,7 @@
           }
           await window.loadPlans();
           await window.loadSchedules();
+          await window.loadReferralConfig();
           await window.loadData();
           await window.loadNotices();
           await window.loadExperimentalData();
@@ -10037,6 +10252,31 @@
         setText("stat-absent", absentCount);
       }
 
+      // HELPER: CÓDIGO PROMOCIONAL DE INDICAÇÃO
+      window.generateStudentReferralCode = (s) => {
+        if (!s) return "BJJ" + Math.floor(1000 + Math.random() * 9000);
+        if (s.referralCode) return String(s.referralCode).toUpperCase();
+        const cleanFirst = (s.name || "ALUNO")
+          .trim()
+          .split(" ")[0]
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-zA-Z]/g, "")
+          .toUpperCase();
+        const cleanCpf = String(s.cpf || "").replace(/\D/g, "");
+        const suffix = cleanCpf.length >= 4 ? cleanCpf.slice(-4) : String(Math.floor(1000 + Math.random() * 9000));
+        return `${cleanFirst || "BJJ"}${suffix}`;
+      };
+
+      window.copyReferralCode = (code) => {
+        if (!code || code === "--") return;
+        navigator.clipboard.writeText(code).then(() => {
+          window.customAlert(`Código promocional "${code}" copiado com sucesso!`);
+        }).catch(() => {
+          window.customAlert(`Código de Indicação: ${code}`);
+        });
+      };
+
       // DETALHES, PROGRESSO E EDIÇÃO
       window.viewStudentDetails = (id) => {
         try {
@@ -10151,6 +10391,86 @@
               contractStatusEl.innerHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 text-[10px] font-bold uppercase"><i class="fa-solid fa-file-circle-check"></i> ASSINADO</span>`;
             } else {
               contractStatusEl.innerHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 text-[10px] font-bold uppercase"><i class="fa-solid fa-file-circle-xmark"></i> PENDENTE</span>`;
+            }
+          }
+
+          // REFERRAL PROGRAM DETAILS
+          const currentConfiguredPct = window.referralConfig?.discountPercent || 50;
+          const studentRefCode = s.referralCode || window.generateStudentReferralCode(s);
+          const refCodeEl = document.getElementById("detail-referral-code");
+          if (refCodeEl) refCodeEl.innerText = studentRefCode;
+
+          const allDiscounts = s.referralDiscounts || [];
+          const availDiscounts = allDiscounts.filter((d) => d.status === "disponivel");
+
+          const refBalanceEl = document.getElementById("detail-referral-balance");
+          if (refBalanceEl) {
+            refBalanceEl.innerText = `${availDiscounts.length} ${availDiscounts.length === 1 ? "mês" : "meses"} (${currentConfiguredPct}% OFF)`;
+          }
+
+          const refListContainer = document.getElementById("detail-referral-list-container");
+          if (refListContainer) {
+            if (allDiscounts.length === 0) {
+              refListContainer.innerHTML = `
+                <div class="p-2 bg-amber-100/50 dark:bg-amber-950/20 rounded text-[11px] text-amber-800 dark:text-amber-300 flex items-center justify-between">
+                  <span>Nenhum amigo utilizou este cupom ainda.</span>
+                  <span class="text-[10px] opacity-70">${currentConfiguredPct}% por indicação</span>
+                </div>`;
+            } else {
+              let listHtml = `<div class="space-y-1.5 max-h-36 overflow-y-auto pr-1">`;
+              allDiscounts.forEach((disc) => {
+                const isAvail = disc.status === "disponivel";
+                const discPct = disc.discountPercent || currentConfiguredPct;
+                const badgeHtml = isAvail
+                  ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">DISPONÍVEL (PRÓX. MÊS)</span>`
+                  : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">UTILIZADO (${disc.usedInMonth || "Passado"})</span>`;
+
+                listHtml += `
+                  <div class="flex items-center justify-between p-2 rounded bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-900 text-xs">
+                    <div>
+                      <span class="font-bold text-gray-800 dark:text-gray-200">${disc.referredStudentName || "Amigo Indicado"}</span>
+                      <span class="text-[10px] text-gray-500 block">${disc.createdAt ? formatDate(disc.createdAt) : ""} • ${discPct}% de desconto</span>
+                    </div>
+                    <div>${badgeHtml}</div>
+                  </div>`;
+              });
+              listHtml += `</div>`;
+              refListContainer.innerHTML = listHtml;
+            }
+          }
+
+          // CREDIT CARD RECURRENT DETAILS
+          const cardBox = document.getElementById("detail-card-status-box");
+          if (cardBox) {
+            if (s.cardDetails && (s.cardDetails.cardNumber || s.cardDetails.last4)) {
+              const last4 = s.cardDetails.last4 || (s.cardDetails.cardNumber ? String(s.cardDetails.cardNumber).replace(/\s/g, "").slice(-4) : "****");
+              const brand = s.cardDetails.brand || "Crédito";
+              const exp = s.cardDetails.expiry || s.cardDetails.cardExpiry || "--/--";
+              cardBox.innerHTML = `
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 flex items-center justify-center text-sm">
+                      <i class="fa-solid fa-credit-card"></i>
+                    </div>
+                    <div>
+                      <div class="font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                        <span>Cartão Cadastrado (${brand})</span>
+                        <i class="fa-solid fa-shield-halved text-emerald-500 text-xs"></i>
+                      </div>
+                      <div class="text-[11px] text-gray-500 font-mono">Final ${last4} • Vencimento ${exp}</div>
+                    </div>
+                  </div>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 uppercase">Ativo</span>
+                </div>`;
+            } else {
+              cardBox.innerHTML = `
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                    <i class="fa-regular fa-credit-card text-base"></i>
+                    <span class="text-xs">Nenhum cartão de crédito cadastrado ainda.</span>
+                  </div>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 uppercase">Pendente</span>
+                </div>`;
             }
           }
 
@@ -10483,6 +10803,10 @@ Belém-PA, [DATA_ATUAL].
           document.getElementById("edit-login").value = s.studentLogin || "";
           document.getElementById("edit-password").value =
             s.studentPassword || "";
+          const editRefCodeInput = document.getElementById("edit-referral-code");
+          if (editRefCodeInput) {
+            editRefCodeInput.value = s.referralCode || window.generateStudentReferralCode(s);
+          }
           if (document.getElementById("edit-enrollment-status"))
             document.getElementById("edit-enrollment-status").value =
               s.enrollmentStatus || "Ativo";
@@ -11455,6 +11779,10 @@ Belém-PA, [DATA_ATUAL].
             if (saveBtnText) saveBtnText.innerText = "Salvando...";
           }
 
+          const editRefCodeVal = document.getElementById("edit-referral-code")
+            ? document.getElementById("edit-referral-code").value.trim().toUpperCase()
+            : "";
+
           const updateData = {
             name: name,
             dob: dobIso,
@@ -11473,6 +11801,10 @@ Belém-PA, [DATA_ATUAL].
             contractSigned: document.getElementById("edit-contract-signed")
               .checked,
           };
+
+          if (editRefCodeVal) {
+            updateData.referralCode = editRefCodeVal;
+          }
 
           if (photoBase64) {
             console.log("Upload da foto...");
@@ -13754,6 +14086,12 @@ Belém-PA, [DATA_ATUAL].
               .toFixed(2)
               .replace(".", ",");
 
+          const currentReferralPct =
+            window.referralConfig &&
+            typeof window.referralConfig.discountPercent === "number"
+              ? window.referralConfig.discountPercent
+              : 50;
+
           const studentData = {
             name: String(reqData.name).toUpperCase(),
             dob: toISODate(reqData.dob),
@@ -13789,10 +14127,32 @@ Belém-PA, [DATA_ATUAL].
             signatureBase64: reqData.signatureBase64 || "",
             contractSignedAt: reqData.contractSignedAt || null,
             photoBase64: reqData.photoBase64 || "",
+            referralCode: window.generateStudentReferralCode({
+              name: reqData.name,
+              cpf: reqData.cpf,
+            }),
+            referralCodeUsed: reqData.referralCodeUsed || null,
+            referredByStudentId: reqData.referredByStudentId || null,
+            referredByStudentName: reqData.referredByStudentName || null,
+            referralDiscounts: reqData.referralCodeUsed
+              ? [
+                  {
+                    id: "ref_init_" + Date.now(),
+                    status: "disponivel",
+                    referredStudentName: reqData.referredByStudentName
+                      ? `Indicação de ${reqData.referredByStudentName}`
+                      : "Cupom de Boas-vindas",
+                    discountPercent: currentReferralPct,
+                    createdAt: regDate.toISOString(),
+                  },
+                ]
+              : [],
             progressLog: [
               {
                 type: "info",
-                text: "Matrícula realizada via pré-cadastro aprovado pelo administrador.",
+                text: reqData.referralCodeUsed
+                  ? `Matrícula realizada via pré-cadastro (com ${currentReferralPct}% OFF por indicação de ${reqData.referredByStudentName || "amigo"}).`
+                  : "Matrícula realizada via pré-cadastro aprovado pelo administrador.",
                 date: regDate.toISOString(),
               },
             ],
@@ -13810,6 +14170,57 @@ Belém-PA, [DATA_ATUAL].
             ),
             studentData,
           );
+
+          // If a referral code/student was used, grant discount reward to the referrer student!
+          if (reqData.referredByStudentId || reqData.referralCodeUsed) {
+            try {
+              let referrerId = reqData.referredByStudentId;
+
+              // If ID wasn't directly passed, search by referral code in window.students
+              if (!referrerId && reqData.referralCodeUsed) {
+                const targetCode = String(reqData.referralCodeUsed).trim().toUpperCase();
+                const matchedStudent = (window.students || []).find((st) => {
+                  const sCode = (st.referralCode || window.generateStudentReferralCode(st)).toUpperCase();
+                  return sCode === targetCode;
+                });
+                if (matchedStudent) referrerId = matchedStudent.id;
+              }
+
+              if (referrerId) {
+                const newReferralReward = {
+                  id: "ref_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+                  status: "disponivel",
+                  referredStudentId: titularDocRef.id,
+                  referredStudentName: String(reqData.name).toUpperCase(),
+                  discountPercent: currentReferralPct,
+                  createdAt: new Date().toISOString(),
+                };
+
+                await updateDoc(
+                  doc(
+                    window.db,
+                    "artifacts",
+                    APP_ID,
+                    "public",
+                    "data",
+                    "students",
+                    referrerId,
+                  ),
+                  {
+                    referralDiscounts: arrayUnion(newReferralReward),
+                    progressLog: arrayUnion({
+                      type: "info",
+                      text: `Ganhou ${currentReferralPct}% de desconto pela indicação de ${String(reqData.name).toUpperCase()} (guardado para a próxima mensalidade disponível).`,
+                      date: new Date().toISOString(),
+                    }),
+                  },
+                );
+                console.log(`Recompensa de ${currentReferralPct}% creditada ao aluno indicador ID:`, referrerId);
+              }
+            } catch (refErr) {
+              console.error("Erro ao creditar desconto ao aluno indicador:", refErr);
+            }
+          }
 
           // Save dependents if combo
           if (
@@ -15607,6 +16018,51 @@ Belém-PA, [DATA_ATUAL].
         window.open(url, "_blank");
       };
 
+      window.sendWhatsAppCardLink = (id) => {
+        const s = window.students.find((st) => st.id === id);
+        if (!s || !s.phone) {
+          window.customAlert("Aluno não encontrado ou sem telefone cadastrado.");
+          return;
+        }
+
+        let phone = s.phone.replace(/\D/g, "");
+        if (phone.length === 11) phone = "55" + phone;
+
+        const firstName = s.name.split(" ")[0];
+        const cleanCpf = (s.cpf || "").replace(/\D/g, "");
+        const queryParam = cleanCpf ? `?cpf=${cleanCpf}` : `?id=${s.id}`;
+        const cardUrl = `https://www.tanqueteambjj.com.br/cartao.html${queryParam}`;
+
+        const message = `Olá, ${firstName}! 👋🥋\n\nPara sua maior comodidade e segurança, você pode cadastrar seu *Cartão de Crédito* para o pagamento recorrente das suas mensalidades da *Tanque Team BJJ* sem ocupar o limite total do plano!\n\n💳 *Acesse o link seguro abaixo para cadastrar seu cartão:*\n${cardUrl}\n\n🔒 *Ambiente com criptografia 256-bit e total sigilo bancário.*\n\nQualquer dúvida, estamos à disposição na recepção! Oss! 🥋🔥`;
+
+        const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+        window.open(url, "_blank");
+      };
+
+      window.sendWhatsAppReferral = (id) => {
+        const s = window.students.find((st) => st.id === id);
+        if (!s || !s.phone) {
+          window.customAlert("Aluno não encontrado ou sem telefone cadastrado.");
+          return;
+        }
+
+        let phone = s.phone.replace(/\D/g, "");
+        if (phone.length === 11) phone = "55" + phone;
+
+        const firstName = s.name.split(" ")[0];
+        const referralCode = s.referralCode || window.generateStudentReferralCode(s);
+        const referralUrl = `https://www.tanqueteambjj.com.br/matricula.html?cupom=${encodeURIComponent(referralCode)}`;
+        const pct =
+          window.referralConfig && typeof window.referralConfig.discountPercent === "number"
+            ? window.referralConfig.discountPercent
+            : 50;
+
+        const message = `Olá, ${firstName}! 👋🥋\n\nSabia que você tem um *Cupom de Indicação Exclusivo* na Tanque Team BJJ? 🎁\n\nIndique um amigo para treinar com a gente! Quando seu amigo fizer a pré-matrícula usando o seu cupom, você ganha *${pct}% DE DESCONTO* na sua próxima mensalidade!\n\n🎟️ *SEU CÓDIGO:* *${referralCode}*\n🔗 *LINK DIRETO COM DESCONTO:*\n${referralUrl}\n\n*Como funciona:*\n1. Envie o código ou link para seus amigos;\n2. Cada amigo matriculado garante ${pct}% de desconto em 1 mensalidade;\n3. Se você indicar mais de um amigo, os descontos são acumulados para os meses seguintes (1 desconto por mês).\n\nTraga seus amigos para o tatame! Oss! 🥋🔥`;
+
+        const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+        window.open(url, "_blank");
+      };
+
       window.sendWhatsAppAbsence = (id) => {
         const s = window.students.find((st) => st.id === id);
         if (!s || !s.phone) {
@@ -16236,6 +16692,8 @@ Belém-PA, [DATA_ATUAL].
         else if (type === "charge") window.sendWhatsAppCharge(id);
         else if (type === "absence") window.sendWhatsAppAbsence(id);
         else if (type === "birthday") window.shareBirthdayWhatsApp(id);
+        else if (type === "card_link") window.sendWhatsAppCardLink(id);
+        else if (type === "referral_share") window.sendWhatsAppReferral(id);
         else if (type === "email_billing") window.sendEmailBilling(id);
         else if (type === "email_bulk") {
           if (typeof window.openBulkEmailModal === "function") {
@@ -16488,9 +16946,55 @@ Belém-PA, [DATA_ATUAL].
           }
         };
 
-        if (document.getElementById("pay-discount-type")) document.getElementById("pay-discount-type").value = "percent";
-        if (document.getElementById("pay-discount-value")) document.getElementById("pay-discount-value").value = "";
-        if (document.getElementById("pay-discount-description")) document.getElementById("pay-discount-description").value = "";
+        // REFERRAL DISCOUNT CHECK & QUEUE HANDLING
+        const refBanner = document.getElementById("pay-referral-discount-banner");
+        const refMsg = document.getElementById("pay-referral-discount-msg");
+        const availableRefDiscounts = (s.referralDiscounts || []).filter(
+          (d) => d.status === "disponivel",
+        );
+
+        if (availableRefDiscounts.length > 0) {
+          const nextRefDiscount = availableRefDiscounts[0];
+          const discPct =
+            nextRefDiscount.discountPercent ||
+            (window.referralConfig &&
+              typeof window.referralConfig.discountPercent === "number"
+              ? window.referralConfig.discountPercent
+              : 50);
+
+          if (refBanner && refMsg) {
+            let msg = `Aluno possui <strong>${discPct}% de desconto</strong> pela indicação de <strong>${nextRefDiscount.referredStudentName || "um amigo"}</strong>.`;
+            if (availableRefDiscounts.length > 1) {
+              msg += ` <span class="block mt-1 font-semibold text-amber-900 dark:text-amber-300">📦 Total de indicações acumuladas: ${availableRefDiscounts.length} (${availableRefDiscounts.length - 1} guardada(s) para os meses seguintes - 1 desconto por mês).</span>`;
+            }
+            refMsg.innerHTML = msg;
+            refBanner.classList.remove("hidden");
+            refBanner.classList.add("flex");
+          }
+
+          if (document.getElementById("pay-discount-type"))
+            document.getElementById("pay-discount-type").value = "percent";
+          if (document.getElementById("pay-discount-value"))
+            document.getElementById("pay-discount-value").value = String(discPct);
+          const descInput =
+            document.getElementById("pay-discount-desc") ||
+            document.getElementById("pay-discount-description");
+          if (descInput)
+            descInput.value = `Indicação: ${nextRefDiscount.referredStudentName || "Amigo"} (${discPct}% OFF)`;
+        } else {
+          if (refBanner) {
+            refBanner.classList.add("hidden");
+            refBanner.classList.remove("flex");
+          }
+          if (document.getElementById("pay-discount-type"))
+            document.getElementById("pay-discount-type").value = "percent";
+          if (document.getElementById("pay-discount-value"))
+            document.getElementById("pay-discount-value").value = "";
+          const descInput =
+            document.getElementById("pay-discount-desc") ||
+            document.getElementById("pay-discount-description");
+          if (descInput) descInput.value = "";
+        }
 
         const overdueCount = window.getOverdueMonthsCount(s);
         const alertDiv = document.getElementById("pay-alert-overdue");
@@ -16793,6 +17297,36 @@ Belém-PA, [DATA_ATUAL].
           };
           if (nextDue) {
             updateData.nextDueDate = toISODate(nextDue);
+          }
+
+          // Referral Discount Consumption (Only 1 per payment/month, remaining stays queued)
+          const availableRefDiscounts = (s.referralDiscounts || []).filter(
+            (d) => d.status === "disponivel",
+          );
+
+          if (availableRefDiscounts.length > 0) {
+            const isReferralDiscountApplied =
+              discountVal === 50 ||
+              (discountDesc && discountDesc.toLowerCase().includes("indica")) ||
+              (discountType === "percent" && discountVal > 0);
+
+            if (isReferralDiscountApplied) {
+              const firstAvailable = availableRefDiscounts[0];
+              const updatedReferralDiscounts = (s.referralDiscounts || []).map(
+                (item) => {
+                  if (item.id === firstAvailable.id) {
+                    return {
+                      ...item,
+                      status: "utilizado",
+                      usedInMonth: refMonth,
+                      usedAt: paymentDateIso,
+                    };
+                  }
+                  return item;
+                },
+              );
+              updateData.referralDiscounts = updatedReferralDiscounts;
+            }
           }
 
           // If paying multiple months, we should also advance the contract next due if it was set
@@ -17897,6 +18431,115 @@ Belém-PA, [DATA_ATUAL].
         }
       };
 
+      window.referralConfig = { discountPercent: 50, active: true };
+
+      window.loadReferralConfig = async () => {
+        try {
+          if (!window.db) return;
+          const refDoc = await getDoc(
+            doc(
+              window.db,
+              "artifacts",
+              APP_ID,
+              "public",
+              "data",
+              "settings",
+              "referral_config",
+            ),
+          );
+          if (refDoc.exists()) {
+            const data = refDoc.data();
+            const pct = typeof data.discountPercent === "number" ? data.discountPercent : parseFloat(data.discountPercent);
+            window.referralConfig = {
+              discountPercent: isNaN(pct) ? 50 : pct,
+              active: data.active !== undefined ? !!data.active : true,
+            };
+          }
+        } catch (e) {
+          console.warn("Erro ao carregar configurações de indicação:", e);
+        }
+
+        // Update UI in settings modal if present
+        const discInput = document.getElementById("settings-referral-discount");
+        if (discInput) discInput.value = window.referralConfig.discountPercent;
+        const activeSelect = document.getElementById("settings-referral-active");
+        if (activeSelect) activeSelect.value = window.referralConfig.active ? "true" : "false";
+        const badge = document.getElementById("settings-referral-status-badge");
+        if (badge) {
+          badge.innerText = window.referralConfig.active
+            ? `${window.referralConfig.discountPercent}% ATUAL`
+            : "DESATIVADO";
+          if (window.referralConfig.active) {
+            badge.className =
+              "text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300";
+          } else {
+            badge.className =
+              "text-xs px-2.5 py-0.5 rounded-full font-bold bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
+          }
+        }
+      };
+
+      window.saveReferralConfig = async () => {
+        const discInput = document.getElementById("settings-referral-discount");
+        const activeSelect = document.getElementById("settings-referral-active");
+        const saveBtn = document.getElementById("save-referral-settings-btn");
+
+        const discountPercent = parseFloat(discInput ? discInput.value : 50);
+        const active = activeSelect ? activeSelect.value === "true" : true;
+
+        if (isNaN(discountPercent) || discountPercent < 1 || discountPercent > 100) {
+          window.customAlert("Por favor, insira uma porcentagem válida entre 1% e 100%.");
+          return;
+        }
+
+        const originalText = saveBtn ? saveBtn.innerHTML : "";
+        if (saveBtn) {
+          saveBtn.disabled = true;
+          saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Salvando...';
+        }
+
+        try {
+          const configData = {
+            discountPercent: discountPercent,
+            active: active,
+            updatedAt: new Date().toISOString(),
+          };
+
+          await setDoc(
+            doc(
+              window.db,
+              "artifacts",
+              APP_ID,
+              "public",
+              "data",
+              "settings",
+              "referral_config",
+            ),
+            configData,
+            { merge: true },
+          );
+
+          window.referralConfig = configData;
+          const badge = document.getElementById("settings-referral-status-badge");
+          if (badge) {
+            badge.innerText = active ? `${discountPercent}% ATUAL` : "DESATIVADO";
+            badge.className = active
+              ? "text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+              : "text-xs px-2.5 py-0.5 rounded-full font-bold bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
+          }
+
+          window.customAlert(`Configuração salva com sucesso! Desconto por indicação atualizado para ${discountPercent}%.`);
+        } catch (e) {
+          console.error("Erro ao salvar configuração de indicação:", e);
+          window.customAlert("Erro ao salvar no Firestore: " + (e.message || "Tente novamente."));
+        } finally {
+          if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+          }
+        }
+      };
+
       window.openSettingsModal = () => {
         const user = JSON.parse(
           localStorage.getItem("tanque_user_session") || "{}",
@@ -17909,6 +18552,7 @@ Belém-PA, [DATA_ATUAL].
         document.getElementById("settings-modal").classList.add("flex");
         window.renderSettingsPlans();
         window.renderSettingsSchedules();
+        window.loadReferralConfig();
 
         // Carregar chave salva se existir
         const savedKey = localStorage.getItem("gemini_api_key");
