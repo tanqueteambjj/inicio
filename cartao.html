@@ -132,6 +132,25 @@
                         Ao cadastrar seu cartão de crédito, suas próximas mensalidades serão debitadas automaticamente na data de vencimento, evitando filas, cobranças manuais ou esquecimentos.
                     </div>
                 </div>
+
+                <!-- CARTÃO JÁ CADASTRADO COM OPÇÃO DE EXCLUIR -->
+                <div id="existing-card-banner" class="hidden mt-4 p-4 bg-gray-950/90 border border-amber-500/40 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in shadow-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center text-xl shrink-0">
+                            <i class="fa-solid fa-credit-card"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-white uppercase" id="existing-card-title">Cartão Ativo Cadastrado</span>
+                                <span class="text-[10px] font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 px-2 py-0.5 rounded-full">Recorrência Ativa</span>
+                            </div>
+                            <p class="text-xs text-gray-300 font-mono mt-0.5" id="existing-card-desc">•••• •••• •••• ----</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="window.confirmDeleteCurrentCard()" class="w-full sm:w-auto px-4 py-2.5 bg-red-950 hover:bg-red-900 border border-red-700/80 text-red-200 hover:text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shrink-0 shadow">
+                        <i class="fa-solid fa-trash-can"></i> Excluir Cartão
+                    </button>
+                </div>
             </div>
 
             <!-- VIRTUAL CARD PREVIEW & FORM -->
@@ -303,6 +322,29 @@
         </div>
 
     </main>
+
+    <!-- CONFIRM DELETE CARD MODAL -->
+    <div id="confirm-delete-modal" class="fixed inset-0 z-50 hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+        <div class="bg-gray-900 border border-red-800/80 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5 text-center">
+            <div class="w-16 h-16 bg-red-950/80 border-2 border-red-600 rounded-full flex items-center justify-center mx-auto text-red-400 text-2xl shadow-[0_0_20px_rgba(220,38,38,0.3)]">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-xl font-bold font-display uppercase tracking-wide text-white">Excluir Cartão de Crédito?</h3>
+                <p id="confirm-delete-message" class="text-xs text-gray-300 leading-relaxed">
+                    Deseja realmente remover o cartão de crédito cadastrado? A cobrança recorrente automática das suas próximas mensalidades será cancelada.
+                </p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                <button type="button" onclick="window.closeDeleteModal()" class="flex-1 px-4 py-3 bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold text-xs uppercase rounded-xl transition">
+                    Cancelar
+                </button>
+                <button type="button" id="btn-confirm-delete-card" onclick="window.executeDeleteCurrentCard()" class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-trash-can"></i> Sim, Excluir
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- FOOTER -->
     <footer class="bg-gray-900 border-t border-gray-800 py-6 px-4 text-center text-xs text-gray-500">
@@ -577,6 +619,104 @@
                     formattedCpf = `${c.slice(0,3)}.${c.slice(3,6)}.${c.slice(6,9)}-${c.slice(9,11)}`;
                 }
                 document.getElementById("card-holder-cpf").value = formattedCpf;
+            }
+
+            // Check if student already has a card
+            const existingBanner = document.getElementById("existing-card-banner");
+            if (existingBanner) {
+                if (student.cardDetails && (student.cardDetails.cardNumber || student.cardDetails.last4)) {
+                    const cBrand = student.cardDetails.brand || "Cartão";
+                    const cLast4 = student.cardDetails.last4 || (student.cardDetails.cardNumber ? String(student.cardDetails.cardNumber).replace(/\s/g, "").slice(-4) : "****");
+                    const cHolder = student.cardDetails.holderName || student.name || "Titular";
+                    document.getElementById("existing-card-title").innerText = `Cartão Cadastrado (${cBrand})`;
+                    document.getElementById("existing-card-desc").innerText = `•••• •••• •••• ${cLast4} • Titular: ${cHolder.toUpperCase()}`;
+                    existingBanner.classList.remove("hidden");
+                } else {
+                    existingBanner.classList.add("hidden");
+                }
+            }
+        };
+
+        // Open Delete Modal
+        window.confirmDeleteCurrentCard = () => {
+            if (!window.currentStudent) return;
+            const cBrand = window.currentStudent.cardDetails?.brand || "Cartão";
+            const cLast4 = window.currentStudent.cardDetails?.last4 || (window.currentStudent.cardDetails?.cardNumber ? String(window.currentStudent.cardDetails.cardNumber).replace(/\s/g, "").slice(-4) : "");
+            const cardDesc = cLast4 ? `${cBrand} final ${cLast4}` : "o cartão de crédito";
+
+            const msgEl = document.getElementById("confirm-delete-message");
+            if (msgEl) {
+                msgEl.innerHTML = `Deseja realmente remover o cartão <strong>${cardDesc}</strong> cadastrado para <strong>${window.currentStudent.name}</strong>?<br><br><span class="text-amber-400">A cobrança recorrente automática das suas próximas mensalidades será desativada.</span>`;
+            }
+
+            const modal = document.getElementById("confirm-delete-modal");
+            if (modal) {
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+            }
+        };
+
+        window.closeDeleteModal = () => {
+            const modal = document.getElementById("confirm-delete-modal");
+            if (modal) {
+                modal.classList.add("hidden");
+                modal.classList.remove("flex");
+            }
+        };
+
+        // Execute Delete in Firestore
+        window.executeDeleteCurrentCard = async () => {
+            if (!window.currentStudent) return;
+            const btn = document.getElementById("btn-confirm-delete-card");
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Excluindo...';
+            }
+
+            const cBrand = window.currentStudent.cardDetails?.brand || "Cartão";
+            const cLast4 = window.currentStudent.cardDetails?.last4 || "";
+
+            try {
+                const docRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'students', window.currentStudent.id);
+                await updateDoc(docRef, {
+                    cardDetails: null,
+                    recurrentPaymentActive: false,
+                    progressLog: arrayUnion({
+                        type: 'aviso',
+                        text: `Cartão de crédito (${cBrand} final ${cLast4 || '---'}) excluído pelo próprio aluno através do portal de cartão.`,
+                        date: new Date().toISOString()
+                    })
+                });
+
+                window.currentStudent.cardDetails = null;
+                window.currentStudent.recurrentPaymentActive = false;
+
+                window.closeDeleteModal();
+
+                const existingBanner = document.getElementById("existing-card-banner");
+                if (existingBanner) existingBanner.classList.add("hidden");
+
+                // Reset form inputs
+                const numEl = document.getElementById("card-number");
+                const expEl = document.getElementById("card-expiry");
+                const cvvEl = document.getElementById("card-cvv");
+                const termsEl = document.getElementById("card-accept-terms");
+                if (numEl) numEl.value = "";
+                if (expEl) expEl.value = "";
+                if (cvvEl) cvvEl.value = "";
+                if (termsEl) termsEl.checked = false;
+                window.updateCardPreview();
+
+                alert("Cartão de crédito excluído com sucesso! A cobrança recorrente foi desativada.");
+
+            } catch (err) {
+                console.error("Erro ao excluir cartão:", err);
+                alert("Erro ao excluir o cartão. Por favor, tente novamente ou entre em contato com a recepção.");
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> Sim, Excluir';
+                }
             }
         };
 
