@@ -369,7 +369,7 @@
                     
                     <div class="flex gap-2">
                         <div class="relative flex-1">
-                            <input type="text" id="referral-code-input" placeholder="Ex: CARLOS-7842" class="w-full bg-gray-950 border border-gray-800 pl-4 pr-10 py-3 rounded-xl focus:border-amber-500 focus:outline-none uppercase font-mono font-bold text-white text-sm tracking-wider">
+                            <input type="text" id="referral-code-input" placeholder="Ex: CARLOS-7842" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); window.validateReferralCode(); }" onblur="if(this.value.trim() && !document.getElementById('applied-referral-code').value){ window.validateReferralCode(); }" class="w-full bg-gray-950 border border-gray-800 pl-4 pr-10 py-3 rounded-xl focus:border-amber-500 focus:outline-none uppercase font-mono font-bold text-white text-sm tracking-wider">
                             <i class="fa-solid fa-ticket absolute right-3.5 top-3.5 text-gray-500"></i>
                         </div>
                         <button type="button" id="btn-validate-referral" onclick="window.validateReferralCode()" class="bg-amber-500 hover:bg-amber-600 text-gray-950 font-bold px-4 py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-md flex items-center gap-1.5 shrink-0">
@@ -670,7 +670,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const APP_ID = "tanqueteam-bjj";
+        const APP_ID = typeof __app_id !== "undefined" ? __app_id : "tanqueteam-bjj";
 
         if (window.emailjs) {
             window.emailjs.init("joP6USyQXdqGI3GN5");
@@ -1959,10 +1959,21 @@ DADOS RESUMIDOS DO ALUNO:
                 const signatureBase64 = sigCanvas ? sigCanvas.toDataURL('image/png') : null;
                 const contractText = document.getElementById('reg-full-contract-box')?.innerText || '';
 
-                const referralCodeUsed = document.getElementById('applied-referral-code')?.value || null;
-                const referredByStudentId = document.getElementById('applied-referral-student-id')?.value || null;
-                const referredByStudentName = document.getElementById('applied-referral-student-name')?.value || null;
-                const referralDiscountPercent = referralCodeUsed ? 50 : 0;
+                // Se o usuário digitou no campo de indicação mas não clicou em validar, tenta validar agora
+                const rawRefInput = (document.getElementById('referral-code-input')?.value || '').trim();
+                let referralCodeUsed = document.getElementById('applied-referral-code')?.value || null;
+                let referredByStudentId = document.getElementById('applied-referral-student-id')?.value || null;
+                let referredByStudentName = document.getElementById('applied-referral-student-name')?.value || null;
+
+                if (rawRefInput && !referralCodeUsed) {
+                    await window.validateReferralCode();
+                    referralCodeUsed = document.getElementById('applied-referral-code')?.value || null;
+                    referredByStudentId = document.getElementById('applied-referral-student-id')?.value || null;
+                    referredByStudentName = document.getElementById('applied-referral-student-name')?.value || null;
+                }
+
+                const currentDiscountPercent = Number(window.referralConfig?.discountPercent) || 50;
+                const referralDiscountPercent = referralCodeUsed ? currentDiscountPercent : 0;
 
                 const data = {
                     enrollment_type,
@@ -2132,13 +2143,25 @@ DADOS RESUMIDOS DO ALUNO:
         };
         init();
 
+        // NORMALIZADOR PARA COMPARAÇÃO DE CUPOM / INDICAÇÃO
+        const normalizeReferralString = (str) => {
+            if (!str) return '';
+            return String(str)
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-zA-Z0-9]/g, "")
+                .toUpperCase()
+                .trim();
+        };
+
         // VALIDATE REFERRAL CODE
         window.validateReferralCode = async () => {
             const input = document.getElementById('referral-code-input');
             const feedbackBox = document.getElementById('referral-feedback-box');
-            const codeVal = (input?.value || '').trim().toUpperCase();
+            const rawVal = (input?.value || '').trim();
+            const cleanInput = normalizeReferralString(rawVal);
 
-            if (!codeVal) {
+            if (!cleanInput) {
                 if (feedbackBox) {
                     feedbackBox.className = "text-xs p-3 rounded-xl flex items-center gap-2 bg-amber-950/30 border border-amber-800 text-amber-300";
                     feedbackBox.innerHTML = `<i class="fa-solid fa-circle-exclamation shrink-0"></i> Digite o código de indicação do seu amigo.`;
@@ -2159,18 +2182,60 @@ DADOS RESUMIDOS DO ALUNO:
                 let referrerFound = null;
 
                 querySnapshot.forEach(docSnap => {
+                    if (referrerFound) return;
                     const data = docSnap.data();
-                    const studentCode = (data.referralCode || '').trim().toUpperCase();
-                    
-                    // Generate fallback code to compare if not explicitly stored
-                    const firstName = String(data.name || '').trim().split(' ')[0].toUpperCase().replace(/[^A-Z]/g, '');
-                    let suffix = '';
-                    if (data.cpf) suffix = String(data.cpf).replace(/\D/g, '').slice(-4);
-                    if (!suffix || suffix.length < 4) suffix = String(docSnap.id || '').replace(/\D/g, '').slice(-4);
-                    const generatedCode = `${firstName}-${suffix}`;
+                    if (!data) return;
 
-                    if (studentCode === codeVal || generatedCode === codeVal || (data.studentLogin && data.studentLogin.toUpperCase() === codeVal)) {
-                        referrerFound = { id: docSnap.id, name: data.name, code: studentCode || generatedCode };
+                    const studentName = String(data.name || '').trim();
+                    const cleanFirst = studentName
+                        .split(' ')[0]
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "")
+                        .replace(/[^a-zA-Z]/g, "")
+                        .toUpperCase() || "BJJ";
+
+                    const cleanCpf = String(data.cpf || '').replace(/\D/g, '');
+                    const cleanId = String(docSnap.id || '').replace(/\D/g, '');
+                    const cleanLogin = String(data.studentLogin || '').replace(/\D/g, '');
+
+                    let suffix = '';
+                    if (cleanCpf.length >= 4) {
+                        suffix = cleanCpf.slice(-4);
+                    } else if (cleanId.length >= 4) {
+                        suffix = cleanId.slice(-4);
+                    } else if (cleanLogin.length >= 4) {
+                        suffix = cleanLogin.slice(-4);
+                    } else {
+                        let hash = 0;
+                        for (let i = 0; i < docSnap.id.length; i++) {
+                            hash = (hash * 31 + docSnap.id.charCodeAt(i)) % 9000;
+                        }
+                        suffix = String(1000 + Math.abs(hash));
+                    }
+
+                    const standardCode = `${cleanFirst}-${suffix}`;
+                    const customCode = data.referralCode ? String(data.referralCode).trim().toUpperCase() : '';
+
+                    // Candidate keys to match
+                    const candidates = [
+                        normalizeReferralString(customCode),
+                        normalizeReferralString(standardCode),
+                        normalizeReferralString(cleanFirst + suffix),
+                        normalizeReferralString(data.studentLogin),
+                        normalizeReferralString(data.email),
+                        cleanCpf.length >= 4 ? cleanCpf.slice(-4) : '',
+                        cleanCpf
+                    ];
+
+                    const isMatch = candidates.some(c => c && c === cleanInput);
+                    const nameMatch = cleanFirst.length >= 3 && (cleanInput === cleanFirst || cleanInput === normalizeReferralString(studentName));
+
+                    if (isMatch || nameMatch) {
+                        referrerFound = {
+                            id: docSnap.id,
+                            name: studentName || "Aluno Tanque Team",
+                            code: customCode || standardCode
+                        };
                     }
                 });
 
@@ -2179,10 +2244,14 @@ DADOS RESUMIDOS DO ALUNO:
                     document.getElementById('applied-referral-student-id').value = referrerFound.id;
                     document.getElementById('applied-referral-student-name').value = referrerFound.name;
 
+                    if (input) {
+                        input.value = referrerFound.code;
+                    }
+
                     const pct = window.referralConfig?.discountPercent || 50;
                     if (feedbackBox) {
                         feedbackBox.className = "text-xs p-3 rounded-xl flex items-center gap-2 bg-emerald-950/40 border border-emerald-500/50 text-emerald-200 animate-fade-in";
-                        feedbackBox.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 text-base shrink-0"></i> <div><strong class="text-white block font-bold">Cupom Válido! (Indicação de ${referrerFound.name})</strong>Você ganhou ${pct}% de desconto na mensalidade e seu amigo também ganhará ${pct}% na dele!</div>`;
+                        feedbackBox.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 text-base shrink-0"></i> <div><strong class="text-white block font-bold">Cupom Válido! (Indicação de ${referrerFound.name})</strong>Você ganhou ${pct}% de desconto na mensalidade e seu amigo também receberá o desconto na dele!</div>`;
                         feedbackBox.classList.remove('hidden');
                     }
                 } else {
@@ -2192,7 +2261,7 @@ DADOS RESUMIDOS DO ALUNO:
 
                     if (feedbackBox) {
                         feedbackBox.className = "text-xs p-3 rounded-xl flex items-center gap-2 bg-red-950/40 border border-red-800 text-red-300 animate-fade-in";
-                        feedbackBox.innerHTML = `<i class="fa-solid fa-circle-xmark text-red-400 text-base shrink-0"></i> Código de indicação não encontrado. Verifique com seu amigo e tente novamente.`;
+                        feedbackBox.innerHTML = `<i class="fa-solid fa-circle-xmark text-red-400 text-base shrink-0"></i> Código de indicação "${rawVal}" não encontrado. Verifique o código com seu amigo e tente novamente.`;
                         feedbackBox.classList.remove('hidden');
                     }
                 }
@@ -2200,7 +2269,7 @@ DADOS RESUMIDOS DO ALUNO:
                 console.error("Erro ao validar código de indicação:", err);
                 if (feedbackBox) {
                     feedbackBox.className = "text-xs p-3 rounded-xl flex items-center gap-2 bg-red-950/40 border border-red-800 text-red-300";
-                    feedbackBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-400 shrink-0"></i> Erro ao validar cupom. Tente novamente.`;
+                    feedbackBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-400 shrink-0"></i> Erro ao consultar banco de dados. Tente novamente em instantes.`;
                     feedbackBox.classList.remove('hidden');
                 }
             } finally {
