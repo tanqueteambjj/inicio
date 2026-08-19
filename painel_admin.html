@@ -10253,19 +10253,38 @@
       }
 
       // HELPER: CÓDIGO PROMOCIONAL DE INDICAÇÃO
-      window.generateStudentReferralCode = (s) => {
-        if (!s) return "BJJ" + Math.floor(1000 + Math.random() * 9000);
-        if (s.referralCode) return String(s.referralCode).toUpperCase();
-        const cleanFirst = (s.name || "ALUNO")
-          .trim()
-          .split(" ")[0]
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .replace(/[^a-zA-Z]/g, "")
-          .toUpperCase();
+      window.generateStudentReferralCode = (s, fallbackId = "") => {
+        if (!s) return "BJJ-7842";
+        if (s.referralCode && String(s.referralCode).trim()) {
+          return String(s.referralCode).trim().toUpperCase();
+        }
+        const cleanFirst =
+          String(s.name || "ALUNO")
+            .trim()
+            .split(" ")[0]
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-zA-Z]/g, "")
+            .toUpperCase() || "BJJ";
+
         const cleanCpf = String(s.cpf || "").replace(/\D/g, "");
-        const suffix = cleanCpf.length >= 4 ? cleanCpf.slice(-4) : String(Math.floor(1000 + Math.random() * 9000));
-        return `${cleanFirst || "BJJ"}${suffix}`;
+        let suffix = "";
+        if (cleanCpf.length >= 4) {
+          suffix = cleanCpf.slice(-4);
+        } else {
+          const idSource = String(s.id || fallbackId || s.studentLogin || "BJJ");
+          const digits = idSource.replace(/\D/g, "");
+          if (digits.length >= 4) {
+            suffix = digits.slice(-4);
+          } else {
+            let hash = 0;
+            for (let i = 0; i < idSource.length; i++) {
+              hash = (hash * 31 + idSource.charCodeAt(i)) % 9000;
+            }
+            suffix = String(1000 + Math.abs(hash));
+          }
+        }
+        return `${cleanFirst}-${suffix}`;
       };
 
       window.copyReferralCode = (code) => {
