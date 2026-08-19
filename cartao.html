@@ -312,22 +312,22 @@
 
     <!-- FIREBASE INITIALIZATION & SCRIPTS -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, updateDoc, collection, getDocs, query, where, arrayUnion } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, getDocs, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global definitions
+        // Global definitions - Configuração Oficial Tanque Team BJJ
         const firebaseConfig = {
-            apiKey: "AIzaSyDummyKeyForDevEnvironmentTanqueTeamBJJ",
-            authDomain: "tanque-team-bjj.firebaseapp.com",
-            projectId: "tanque-team-bjj",
-            storageBucket: "tanque-team-bjj.firebasestorage.app",
-            messagingSenderId: "431379026573",
-            appId: "1:431379026573:web:753c1ab2f05a96814b7d00d8"
+            apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
+            authDomain: "tanqueteambjj.firebaseapp.com",
+            projectId: "tanqueteambjj",
+            storageBucket: "tanqueteambjj.firebasestorage.app",
+            messagingSenderId: "410605992451",
+            appId: "1:410605992451:web:f0f341f4594fe75f376c36"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const APP_ID = '4e7d00d8-3c19-4e5a-a4ab-4522f02376e4';
+        const APP_ID = typeof __app_id !== "undefined" ? __app_id : "tanqueteam-bjj";
 
         window.db = db;
         window.currentStudent = null;
@@ -394,21 +394,78 @@
             if (inputBrandBadge) inputBrandBadge.innerHTML = `<i class="${brand.icon}"></i>`;
         };
 
-        // Load student by ID
-        window.loadStudentById = async (studentId) => {
+        // Helper para buscar aluno por qualquer parâmetro (ID, CPF, Login, Email, Nome)
+        window.findAndLoadStudent = async (identifier) => {
+            if (!identifier) {
+                window.showSearchSection();
+                return;
+            }
+
+            const cleanId = String(identifier).trim();
+            const cleanCpf = cleanId.replace(/\D/g, "");
+
             try {
-                const docRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId);
+                // 1. Tentar busca direta pelo ID do documento
+                const docRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'students', cleanId);
                 const snap = await getDoc(docRef);
                 if (snap.exists()) {
                     window.currentStudent = { id: snap.id, ...snap.data() };
                     window.renderStudentCardForm(window.currentStudent);
+                    return;
+                }
+
+                // 2. Tentar busca na coleção completa de alunos por CPF, Login ou ID
+                const studentsRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'students');
+                const querySnap = await getDocs(studentsRef);
+                let matched = null;
+
+                querySnap.forEach(docSnap => {
+                    if (matched) return;
+                    const data = docSnap.data();
+                    if (!data) return;
+
+                    const sCpf = String(data.cpf || "").replace(/\D/g, "");
+                    const sLogin = String(data.studentLogin || "").toLowerCase().trim();
+                    const sEmail = String(data.email || "").toLowerCase().trim();
+                    const sName = String(data.name || "").toLowerCase().trim();
+                    const docId = String(docSnap.id || "").trim();
+
+                    if (docId === cleanId ||
+                        (cleanCpf && cleanCpf.length >= 4 && sCpf === cleanCpf) ||
+                        (cleanCpf && cleanCpf.length >= 4 && sCpf.endsWith(cleanCpf)) ||
+                        (sLogin && sLogin === cleanId.toLowerCase()) ||
+                        (sEmail && sEmail === cleanId.toLowerCase()) ||
+                        (cleanId.length >= 3 && sName === cleanId.toLowerCase())) {
+                        matched = { id: docSnap.id, ...data };
+                    }
+                });
+
+                if (matched) {
+                    window.currentStudent = matched;
+                    window.renderStudentCardForm(matched);
                 } else {
+                    console.warn("Aluno não encontrado para o parâmetro:", identifier);
                     window.showSearchSection();
+                    const errBox = document.getElementById("search-error-msg");
+                    if (errBox) {
+                        errBox.classList.remove("hidden");
+                        document.getElementById("search-error-text").innerText = `Não localizamos a matrícula correspondente a "${identifier}". Digite seu CPF abaixo para buscar.`;
+                    }
                 }
             } catch (err) {
                 console.error("Erro ao carregar dados do aluno:", err);
                 window.showSearchSection();
+                const errBox = document.getElementById("search-error-msg");
+                if (errBox) {
+                    errBox.classList.remove("hidden");
+                    document.getElementById("search-error-text").innerText = "Erro ao conectar com o banco de dados. Digite seu CPF para tentar novamente.";
+                }
             }
+        };
+
+        // Load student by ID
+        window.loadStudentById = async (studentId) => {
+            await window.findAndLoadStudent(studentId);
         };
 
         // Search student by CPF or Login
@@ -418,11 +475,13 @@
 
             const cleanCpf = queryVal.replace(/\D/g, "");
             const btn = document.getElementById("btn-search-student");
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Localizando...';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Localizando...';
+            }
 
             const errBox = document.getElementById("search-error-msg");
-            errBox.classList.add("hidden");
+            if (errBox) errBox.classList.add("hidden");
 
             try {
                 const studentsRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'students');
@@ -430,13 +489,17 @@
                 let found = null;
 
                 snap.forEach(docSnap => {
+                    if (found) return;
                     const data = docSnap.data();
                     const sCpf = (data.cpf || "").replace(/\D/g, "");
                     const sLogin = (data.studentLogin || "").toLowerCase().trim();
                     const sName = (data.name || "").toLowerCase().trim();
+                    const docId = String(docSnap.id || "").trim();
 
-                    if ((cleanCpf && sCpf === cleanCpf) || 
+                    if ((cleanCpf && cleanCpf.length >= 4 && sCpf === cleanCpf) || 
+                        (cleanCpf && cleanCpf.length >= 4 && sCpf.endsWith(cleanCpf)) ||
                         (sLogin && sLogin === queryVal.toLowerCase()) ||
+                        (docId === queryVal) ||
                         (sName && sName === queryVal.toLowerCase())) {
                         found = { id: docSnap.id, ...data };
                     }
@@ -446,16 +509,22 @@
                     window.currentStudent = found;
                     window.renderStudentCardForm(found);
                 } else {
-                    errBox.classList.remove("hidden");
-                    document.getElementById("search-error-text").innerText = "Nenhuma matrícula encontrada com esse CPF ou Login. Verifique os dados.";
+                    if (errBox) {
+                        errBox.classList.remove("hidden");
+                        document.getElementById("search-error-text").innerText = "Nenhuma matrícula encontrada com esse CPF ou Login. Verifique os dados.";
+                    }
                 }
             } catch (e) {
                 console.error("Erro na busca:", e);
-                errBox.classList.remove("hidden");
-                document.getElementById("search-error-text").innerText = "Erro ao conectar com o banco de dados.";
+                if (errBox) {
+                    errBox.classList.remove("hidden");
+                    document.getElementById("search-error-text").innerText = "Erro ao conectar com o banco de dados.";
+                }
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-arrow-right"></i> Localizar Aluno';
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-arrow-right"></i> Localizar Aluno';
+                }
             }
         };
 
@@ -470,7 +539,7 @@
             document.getElementById("card-form-section").classList.remove("hidden");
             document.getElementById("card-success-section").classList.add("hidden");
 
-            document.getElementById("display-student-name").innerText = student.name;
+            document.getElementById("display-student-name").innerText = student.name || "Aluno Tanque Team";
             
             const photoEl = document.getElementById("display-student-photo");
             const iconEl = document.getElementById("display-student-icon");
@@ -484,7 +553,7 @@
             }
 
             document.getElementById("display-student-details").innerText = `${student.belt || 'Faixa Branca'} • ${student.phone || 'Sem telefone'}`;
-            document.getElementById("display-student-plan").innerText = student.plan || "Individual Mensal";
+            document.getElementById("display-student-plan").innerText = student.plan || student.planName || "Individual Mensal";
 
             let nextDue = student.nextDueDate || "";
             if (nextDue) {
@@ -497,12 +566,17 @@
             // Pre-fill holder name with student's name if empty
             const holderInput = document.getElementById("card-holder");
             if (holderInput && !holderInput.value) {
-                holderInput.value = student.name;
+                holderInput.value = student.name || "";
                 window.updateCardPreview();
             }
 
             if (student.cpf && document.getElementById("card-holder-cpf")) {
-                document.getElementById("card-holder-cpf").value = student.cpf;
+                let formattedCpf = student.cpf;
+                let c = String(student.cpf).replace(/\D/g, "");
+                if (c.length === 11) {
+                    formattedCpf = `${c.slice(0,3)}.${c.slice(3,6)}.${c.slice(6,9)}-${c.slice(9,11)}`;
+                }
+                document.getElementById("card-holder-cpf").value = formattedCpf;
             }
         };
 
@@ -579,14 +653,16 @@
         // Initialize on load
         window.addEventListener("DOMContentLoaded", () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const studentId = urlParams.get("id");
-            const cpfParam = urlParams.get("cpf");
+            const studentId = urlParams.get("id") || urlParams.get("aluno") || urlParams.get("studentId") || urlParams.get("doc");
+            const cpfParam = urlParams.get("cpf") || urlParams.get("doc_cpf");
+            const loginParam = urlParams.get("login") || urlParams.get("user");
 
             if (studentId) {
-                window.loadStudentById(studentId);
+                window.findAndLoadStudent(studentId);
             } else if (cpfParam) {
-                document.getElementById("input-search-query").value = cpfParam;
-                window.searchStudentByCpfOrLogin();
+                window.findAndLoadStudent(cpfParam);
+            } else if (loginParam) {
+                window.findAndLoadStudent(loginParam);
             } else {
                 window.showSearchSection();
             }
