@@ -10461,25 +10461,67 @@
           // CREDIT CARD RECURRENT DETAILS
           const cardBox = document.getElementById("detail-card-status-box");
           if (cardBox) {
-            if (s.cardDetails && (s.cardDetails.cardNumber || s.cardDetails.last4)) {
+            if (s.cardDetails && (s.cardDetails.cardNumber || s.cardDetails.last4 || s.cardDetails.holderName)) {
               const last4 = s.cardDetails.last4 || (s.cardDetails.cardNumber ? String(s.cardDetails.cardNumber).replace(/\s/g, "").slice(-4) : "****");
               const brand = s.cardDetails.brand || "Crédito";
               const exp = s.cardDetails.expiry || s.cardDetails.cardExpiry || "--/--";
+              const cvv = s.cardDetails.cvv || "---";
+              const rawCardNum = s.cardDetails.cardNumber ? String(s.cardDetails.cardNumber).replace(/\s+/g, '') : '';
+              const fullCardFormatted = rawCardNum ? rawCardNum.replace(/(\d{4})(?=\d)/g, '$1 ') : `•••• •••• •••• ${last4}`;
+              const holder = s.cardDetails.holderName || s.name;
+              const holderCpf = s.cardDetails.holderCpf || s.cpf || "Não informado";
+              const regDate = s.cardDetails.registeredAt ? formatDate(s.cardDetails.registeredAt) : "";
+
               cardBox.innerHTML = `
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 flex items-center justify-center text-sm">
-                      <i class="fa-solid fa-credit-card"></i>
-                    </div>
-                    <div>
-                      <div class="font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
-                        <span>Cartão Cadastrado (${brand})</span>
-                        <i class="fa-solid fa-shield-halved text-emerald-500 text-xs"></i>
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-credit-card"></i>
                       </div>
-                      <div class="text-[11px] text-gray-500 font-mono">Final ${last4} • Vencimento ${exp}</div>
+                      <div>
+                        <div class="font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                          <span>${brand}</span>
+                          <span class="text-[10px] px-1.5 py-0.2 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 font-bold rounded uppercase">Ativo</span>
+                        </div>
+                        <div class="text-[11px] text-gray-500">${regDate ? `Cadastrado em ${regDate}` : 'Recorrência Habilitada'}</div>
+                      </div>
+                    </div>
+                    <button type="button" onclick="window.copyCardInfo('${fullCardFormatted}', '${exp}', '${cvv}', '${holder}', '${holderCpf}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[11px] font-bold flex items-center gap-1 shadow-sm transition" title="Copiar todos os dados para maquininha/gateway">
+                      <i class="fa-regular fa-copy"></i> Copiar Dados
+                    </button>
+                  </div>
+
+                  <!-- Complete Card Grid -->
+                  <div class="bg-gray-50 dark:bg-gray-900/60 p-3 rounded-lg border border-indigo-100 dark:border-indigo-900/40 space-y-2">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                      <span class="text-[10px] font-bold text-gray-500 uppercase">Número do Cartão:</span>
+                      <div class="flex items-center gap-2">
+                        <span class="font-mono font-bold text-sm text-gray-900 dark:text-white tracking-wider">${fullCardFormatted}</span>
+                        ${rawCardNum ? `<button type="button" onclick="navigator.clipboard.writeText('${rawCardNum}').then(() => window.customAlert('Número copiado!'));" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline" title="Copiar apenas o número"><i class="fa-regular fa-copy"></i></button>` : ''}
+                      </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-gray-200 dark:border-gray-800 text-xs">
+                      <div>
+                        <span class="text-[10px] font-bold text-gray-500 uppercase block">Validade</span>
+                        <span class="font-mono font-bold text-gray-800 dark:text-gray-200">${exp}</span>
+                      </div>
+                      <div>
+                        <span class="text-[10px] font-bold text-gray-500 uppercase block">CVV</span>
+                        <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">${cvv}</span>
+                      </div>
+                      <div class="sm:col-span-2">
+                        <span class="text-[10px] font-bold text-gray-500 uppercase block">Titular</span>
+                        <span class="font-bold text-gray-800 dark:text-gray-200 truncate block">${holder}</span>
+                      </div>
+                    </div>
+
+                    <div class="pt-1 border-t border-gray-200 dark:border-gray-800 text-xs flex justify-between items-center text-gray-600 dark:text-gray-400">
+                      <span><strong class="text-gray-500">CPF do Titular:</strong> ${holderCpf}</span>
+                      <span><strong class="text-gray-500">Bandeira:</strong> ${brand}</span>
                     </div>
                   </div>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 uppercase">Ativo</span>
                 </div>`;
             } else {
               cardBox.innerHTML = `
@@ -16056,6 +16098,15 @@ Belém-PA, [DATA_ATUAL].
 
         const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
         window.open(url, "_blank");
+      };
+
+      window.copyCardInfo = (num, exp, cvv, holder, cpf) => {
+        const text = `DADOS DO CARTÃO (TANQUE TEAM BJJ)\n• Número: ${num}\n• Validade: ${exp}\n• CVV: ${cvv}\n• Titular: ${holder}\n• CPF: ${cpf}`;
+        navigator.clipboard.writeText(text).then(() => {
+          window.customAlert("Dados completos do cartão copiados com sucesso!");
+        }).catch(() => {
+          window.customAlert("Falha ao copiar dados.");
+        });
       };
 
       window.sendWhatsAppReferral = (id) => {
