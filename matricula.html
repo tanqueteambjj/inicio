@@ -353,6 +353,37 @@
                     <p class="text-xs text-gray-400">Confirme o cadastro do cartão e aceite os termos para enviar sua pré-matrícula.</p>
                 </div>
 
+                <!-- CÓDIGO PROMOCIONAL DE INDICAÇÃO (AMIGO INDICA AMIGO) -->
+                <div class="space-y-3 bg-gradient-to-r from-amber-950/40 via-gray-900 to-gray-900 border border-amber-500/40 p-5 rounded-2xl shadow-lg">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                        <label id="referral-label-text" class="block text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-gift text-amber-400"></i> Código de Indicação de Amigo (50% OFF)
+                        </label>
+                        <span class="text-[10px] font-bold text-amber-300 bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-700/60">
+                            Cupom Especial
+                        </span>
+                    </div>
+                    <p id="referral-promo-desc" class="text-[11px] text-gray-300 leading-relaxed">
+                        Foi indicado por um aluno da <strong class="text-white">Tanque Team BJJ</strong>? Insira o código promocional dele abaixo para garantir <strong class="text-amber-400 font-bold">50% de desconto</strong> na sua mensalidade!
+                    </p>
+                    
+                    <div class="flex gap-2">
+                        <div class="relative flex-1">
+                            <input type="text" id="referral-code-input" placeholder="Ex: CARLOS-7842" class="w-full bg-gray-950 border border-gray-800 pl-4 pr-10 py-3 rounded-xl focus:border-amber-500 focus:outline-none uppercase font-mono font-bold text-white text-sm tracking-wider">
+                            <i class="fa-solid fa-ticket absolute right-3.5 top-3.5 text-gray-500"></i>
+                        </div>
+                        <button type="button" id="btn-validate-referral" onclick="window.validateReferralCode()" class="bg-amber-500 hover:bg-amber-600 text-gray-950 font-bold px-4 py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-md flex items-center gap-1.5 shrink-0">
+                            <i class="fa-solid fa-check"></i> Validar Cupom
+                        </button>
+                    </div>
+
+                    <!-- Feedback status -->
+                    <div id="referral-feedback-box" class="hidden text-xs p-3 rounded-xl flex items-center gap-2"></div>
+                    <input type="hidden" id="applied-referral-code" value="">
+                    <input type="hidden" id="applied-referral-student-id" value="">
+                    <input type="hidden" id="applied-referral-student-name" value="">
+                </div>
+
                 <!-- OPÇÃO DE CADASTRAR OU NÃO O CARTÃO DE CRÉDITO -->
                 <div class="space-y-4 bg-gray-900 border border-gray-800 p-5 rounded-2xl">
                     <div class="text-left space-y-1 border-b border-gray-800 pb-3">
@@ -626,7 +657,7 @@
     <!-- Firebase SDK Modules -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCWlrrfNn6q4GhhL2H7goHjQMd3MsprxOE",
@@ -1928,6 +1959,11 @@ DADOS RESUMIDOS DO ALUNO:
                 const signatureBase64 = sigCanvas ? sigCanvas.toDataURL('image/png') : null;
                 const contractText = document.getElementById('reg-full-contract-box')?.innerText || '';
 
+                const referralCodeUsed = document.getElementById('applied-referral-code')?.value || null;
+                const referredByStudentId = document.getElementById('applied-referral-student-id')?.value || null;
+                const referredByStudentName = document.getElementById('applied-referral-student-name')?.value || null;
+                const referralDiscountPercent = referralCodeUsed ? 50 : 0;
+
                 const data = {
                     enrollment_type,
                     name,
@@ -1943,7 +1979,11 @@ DADOS RESUMIDOS DO ALUNO:
                     planKey,
                     planName: planInfo.short || planKey,
                     planValue: planInfo.price || 0,
-                    origin,
+                    origin: referralCodeUsed ? 'Indicação de amigo' : origin,
+                    referralCodeUsed,
+                    referredByStudentId,
+                    referredByStudentName,
+                    referralDiscountPercent,
                     dependents,
                     belt,
                     paymentMethod,
@@ -2003,8 +2043,35 @@ DADOS RESUMIDOS DO ALUNO:
         };
 
         // AUTO-INIT COMPONENT LOADING
+        window.referralConfig = { discountPercent: 50, active: true };
+
+        const loadReferralConfig = async () => {
+            try {
+                const refDoc = await getDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'settings', 'referral_config'));
+                if (refDoc.exists()) {
+                    const data = refDoc.data();
+                    const pct = typeof data.discountPercent === 'number' ? data.discountPercent : parseFloat(data.discountPercent);
+                    window.referralConfig = {
+                        discountPercent: isNaN(pct) ? 50 : pct,
+                        active: data.active !== undefined ? !!data.active : true
+                    };
+                }
+            } catch (e) {
+                console.warn("Não foi possível carregar configuração de indicação, usando padrão de 50%:", e);
+            }
+
+            const pct = window.referralConfig.discountPercent;
+            const labelEl = document.getElementById('referral-label-text');
+            if (labelEl) labelEl.innerHTML = `<i class="fa-solid fa-gift text-amber-400"></i> Código de Indicação de Amigo (${pct}% OFF)`;
+            const promoDescEl = document.getElementById('referral-promo-desc');
+            if (promoDescEl) {
+                promoDescEl.innerHTML = `Foi indicado por um aluno da <strong class="text-white">Tanque Team BJJ</strong>? Insira o código promocional dele abaixo para garantir <strong class="text-amber-400 font-bold">${pct}% de desconto</strong> na sua mensalidade!`;
+            }
+        };
+
         const init = async () => {
             window.handleTypeChange();
+            await loadReferralConfig();
             
             // Try load plans from firestore to match admin updates
             try {
@@ -2047,8 +2114,102 @@ DADOS RESUMIDOS DO ALUNO:
                 console.error("Firestore loading error, using fallback plans:", e);
                 window.renderPlansList(PLAN_DICT);
             }
+
+            // Check URL parameters for referral code
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const cupom = urlParams.get('cupom') || urlParams.get('indicacao') || urlParams.get('ref');
+                if (cupom) {
+                    const input = document.getElementById('referral-code-input');
+                    if (input) {
+                        input.value = cupom.trim().toUpperCase();
+                        window.validateReferralCode();
+                    }
+                }
+            } catch (err) {
+                console.error("Erro ao verificar parâmetro de cupom:", err);
+            }
         };
         init();
+
+        // VALIDATE REFERRAL CODE
+        window.validateReferralCode = async () => {
+            const input = document.getElementById('referral-code-input');
+            const feedbackBox = document.getElementById('referral-feedback-box');
+            const codeVal = (input?.value || '').trim().toUpperCase();
+
+            if (!codeVal) {
+                if (feedbackBox) {
+                    feedbackBox.className = "text-xs p-3 rounded-xl flex items-center gap-2 bg-amber-950/30 border border-amber-800 text-amber-300";
+                    feedbackBox.innerHTML = `<i class="fa-solid fa-circle-exclamation shrink-0"></i> Digite o código de indicação do seu amigo.`;
+                    feedbackBox.classList.remove('hidden');
+                }
+                return;
+            }
+
+            const btn = document.getElementById('btn-validate-referral');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Validando...`;
+            }
+
+            try {
+                const coll = collection(db, 'artifacts', APP_ID, 'public', 'data', 'students');
+                const querySnapshot = await getDocs(coll);
+                let referrerFound = null;
+
+                querySnapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const studentCode = (data.referralCode || '').trim().toUpperCase();
+                    
+                    // Generate fallback code to compare if not explicitly stored
+                    const firstName = String(data.name || '').trim().split(' ')[0].toUpperCase().replace(/[^A-Z]/g, '');
+                    let suffix = '';
+                    if (data.cpf) suffix = String(data.cpf).replace(/\D/g, '').slice(-4);
+                    if (!suffix || suffix.length < 4) suffix = String(docSnap.id || '').replace(/\D/g, '').slice(-4);
+                    const generatedCode = `${firstName}-${suffix}`;
+
+                    if (studentCode === codeVal || generatedCode === codeVal || (data.studentLogin && data.studentLogin.toUpperCase() === codeVal)) {
+                        referrerFound = { id: docSnap.id, name: data.name, code: studentCode || generatedCode };
+                    }
+                });
+
+                if (referrerFound) {
+                    document.getElementById('applied-referral-code').value = referrerFound.code;
+                    document.getElementById('applied-referral-student-id').value = referrerFound.id;
+                    document.getElementById('applied-referral-student-name').value = referrerFound.name;
+
+                    const pct = window.referralConfig?.discountPercent || 50;
+                    if (feedbackBox) {
+                        feedbackBox.className = "text-xs p-3 rounded-xl flex items-center gap-2 bg-emerald-950/40 border border-emerald-500/50 text-emerald-200 animate-fade-in";
+                        feedbackBox.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 text-base shrink-0"></i> <div><strong class="text-white block font-bold">Cupom Válido! (Indicação de ${referrerFound.name})</strong>Você ganhou ${pct}% de desconto na mensalidade e seu amigo também ganhará ${pct}% na dele!</div>`;
+                        feedbackBox.classList.remove('hidden');
+                    }
+                } else {
+                    document.getElementById('applied-referral-code').value = "";
+                    document.getElementById('applied-referral-student-id').value = "";
+                    document.getElementById('applied-referral-student-name').value = "";
+
+                    if (feedbackBox) {
+                        feedbackBox.className = "text-xs p-3 rounded-xl flex items-center gap-2 bg-red-950/40 border border-red-800 text-red-300 animate-fade-in";
+                        feedbackBox.innerHTML = `<i class="fa-solid fa-circle-xmark text-red-400 text-base shrink-0"></i> Código de indicação não encontrado. Verifique com seu amigo e tente novamente.`;
+                        feedbackBox.classList.remove('hidden');
+                    }
+                }
+            } catch (err) {
+                console.error("Erro ao validar código de indicação:", err);
+                if (feedbackBox) {
+                    feedbackBox.className = "text-xs p-3 rounded-xl flex items-center gap-2 bg-red-950/40 border border-red-800 text-red-300";
+                    feedbackBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-400 shrink-0"></i> Erro ao validar cupom. Tente novamente.`;
+                    feedbackBox.classList.remove('hidden');
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-check"></i> Validar Cupom`;
+                }
+            }
+        };
 
         window.facialPhotoBase64 = null;
         let activeMediaStream = null;
