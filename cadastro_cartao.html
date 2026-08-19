@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tanque Team BJJ | Cadastro Seguro de Cartão de Crédito</title>
+    
+    <link rel="icon" href="https://iili.io/qC543c7.png" type="image/png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            red: '#D90429',
+                            darkred: '#EF233C',
+                            dark: '#111111',
+                            gray: '#2B2D42',
+                            light: '#8D99AE',
+                            card: '#18181B'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Roboto', 'sans-serif'],
+                        display: ['Oswald', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col justify-between font-sans selection:bg-brand-red selection:text-white">
+
+    <!-- HEADER / BRAND -->
+    <header class="bg-gray-900/90 backdrop-blur-md border-b border-gray-800 sticky top-0 z-50 py-4 px-6 shadow-lg">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img src="https://iili.io/qC543c7.png" alt="Tanque Team BJJ" class="w-10 h-10 object-contain drop-shadow-[0_0_8px_rgba(217,4,41,0.5)]">
+                <div>
+                    <h1 class="font-display font-black text-xl tracking-wider text-white uppercase leading-none">Tanque Team BJJ</h1>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Portal de Pagamento Recorrente Seguro</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-950/60 border border-emerald-800/80 px-3 py-1.5 rounded-full font-bold">
+                <i class="fa-solid fa-lock text-sm"></i>
+                <span class="hidden sm:inline">Ambiente Criptografado 256-bit</span>
+                <span class="sm:hidden">Seguro</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 max-w-3xl w-full mx-auto px-4 py-8 sm:py-12">
+
+        <!-- SEARCH STUDENT (If accessed without ID) -->
+        <div id="search-student-section" class="hidden bg-gray-900 border border-gray-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 animate-fade-in">
+            <div class="text-center space-y-2">
+                <div class="w-14 h-14 bg-brand-red/10 border border-brand-red/30 rounded-2xl flex items-center justify-center mx-auto text-brand-red text-2xl">
+                    <i class="fa-solid fa-credit-card"></i>
+                </div>
+                <h2 class="text-2xl font-bold font-display uppercase tracking-wide text-white">Cadastre seu Cartão de Crédito</h2>
+                <p class="text-xs sm:text-sm text-gray-400 max-w-md mx-auto">
+                    Informe seu CPF ou Login cadastrado para localizar sua matrícula na Tanque Team BJJ.
+                </p>
+            </div>
+
+            <form onsubmit="event.preventDefault(); window.searchStudentByCpfOrLogin();" class="space-y-4 max-w-md mx-auto">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">CPF ou Login do Aluno</label>
+                    <div class="relative">
+                        <input type="text" id="input-search-query" required placeholder="Digite seu CPF ou Login" class="w-full bg-gray-950 border border-gray-800 pl-11 pr-4 py-3.5 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm font-bold font-mono">
+                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-4 text-gray-500"></i>
+                    </div>
+                </div>
+                <button type="submit" id="btn-search-student" class="w-full bg-brand-red hover:bg-red-700 text-white font-bold uppercase tracking-wider text-sm py-3.5 rounded-xl transition duration-200 shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-arrow-right"></i> Localizar Aluno
+                </button>
+            </form>
+
+            <div id="search-error-msg" class="hidden max-w-md mx-auto p-3 bg-red-950/40 border border-red-800 rounded-xl text-xs text-red-300 flex items-center gap-2">
+                <i class="fa-solid fa-circle-exclamation shrink-0"></i>
+                <span id="search-error-text">Aluno não encontrado. Verifique seu CPF ou Login.</span>
+            </div>
+        </div>
+
+        <!-- MAIN CARD REGISTRATION FORM -->
+        <div id="card-form-section" class="space-y-6">
+            
+            <!-- STUDENT INFO HEADER CARD -->
+            <div class="bg-gray-900/90 border border-gray-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 opacity-5 text-9xl text-white font-black pointer-events-none">
+                    <i class="fa-solid fa-credit-card"></i>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-800/80 pb-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-gray-800 border border-gray-700 flex items-center justify-center overflow-hidden shrink-0 shadow-md">
+                            <img id="display-student-photo" src="" alt="Foto" class="w-full h-full object-cover hidden">
+                            <i id="display-student-icon" class="fa-solid fa-user-ninja text-2xl text-gray-500"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-brand-red bg-brand-red/10 px-2.5 py-0.5 rounded-full border border-brand-red/20">
+                                Aluno(a) Tanque Team BJJ
+                            </span>
+                            <h2 id="display-student-name" class="text-xl sm:text-2xl font-bold font-display uppercase tracking-wide text-white mt-1">
+                                Carregando...
+                            </h2>
+                            <p class="text-xs text-gray-400" id="display-student-details">--</p>
+                        </div>
+                    </div>
+
+                    <div class="text-left sm:text-right bg-gray-950/80 sm:bg-transparent p-3 sm:p-0 rounded-xl border border-gray-800 sm:border-0 w-full sm:w-auto">
+                        <span class="text-[10px] uppercase font-bold text-gray-500 block">Plano Atual</span>
+                        <span id="display-student-plan" class="text-sm font-bold text-emerald-400 block font-mono">--</span>
+                        <span id="display-student-due" class="text-[11px] text-gray-400 block mt-0.5">Vencimento: --</span>
+                    </div>
+                </div>
+
+                <!-- ALERTA DE BENEFÍCIO RECORRENTE -->
+                <div class="mt-4 p-3.5 bg-emerald-950/30 border border-emerald-500/30 rounded-2xl flex items-start gap-3 text-xs text-emerald-200">
+                    <div class="p-2 bg-emerald-500/20 rounded-xl text-emerald-400 shrink-0 mt-0.5">
+                        <i class="fa-solid fa-shield-check text-base"></i>
+                    </div>
+                    <div>
+                        <strong class="text-white block font-bold text-sm">Praticidade e Segurança na sua Mensalidade:</strong>
+                        Ao cadastrar seu cartão de crédito, suas próximas mensalidades serão debitadas automaticamente na data de vencimento, evitando filas, cobranças manuais ou esquecimentos.
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIRTUAL CARD PREVIEW & FORM -->
+            <div class="bg-gray-900 border border-gray-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+                
+                <!-- VIRTUAL CARD UI -->
+                <div class="flex justify-center py-2">
+                    <div class="relative w-full max-w-sm h-48 sm:h-52 rounded-2xl bg-gradient-to-tr from-gray-950 via-gray-900 to-red-950 p-6 shadow-2xl border border-gray-700/80 flex flex-col justify-between select-none overflow-hidden group">
+                        <!-- Background glow effect -->
+                        <div class="absolute -right-8 -bottom-8 w-40 h-40 bg-brand-red/20 rounded-full blur-2xl pointer-events-none"></div>
+                        <div class="absolute -left-8 -top-8 w-40 h-40 bg-blue-900/20 rounded-full blur-2xl pointer-events-none"></div>
+
+                        <!-- Top row -->
+                        <div class="flex justify-between items-center z-10">
+                            <div class="flex items-center gap-2">
+                                <img src="https://iili.io/qC543c7.png" class="w-7 h-7 object-contain opacity-90" alt="">
+                                <span class="font-display font-bold text-xs uppercase tracking-wider text-gray-300">Tanque Team BJJ</span>
+                            </div>
+                            <div id="card-brand-icon" class="text-2xl text-gray-400">
+                                <i class="fa-solid fa-credit-card"></i>
+                            </div>
+                        </div>
+
+                        <!-- Chip -->
+                        <div class="z-10 flex items-center gap-3">
+                            <div class="w-10 h-8 rounded bg-gradient-to-br from-amber-200 to-amber-500 border border-amber-600/50 shadow-inner flex items-center justify-center">
+                                <div class="w-7 h-5 border border-amber-700/40 rounded-xs"></div>
+                            </div>
+                            <i class="fa-solid fa-wifi text-gray-400 text-sm rotate-90"></i>
+                        </div>
+
+                        <!-- Card Number -->
+                        <div class="z-10">
+                            <div id="preview-card-number" class="font-mono text-base sm:text-lg tracking-widest text-white font-bold drop-shadow">
+                                •••• •••• •••• ••••
+                            </div>
+                        </div>
+
+                        <!-- Bottom row -->
+                        <div class="flex justify-between items-end z-10 text-[10px] sm:text-xs uppercase tracking-wider">
+                            <div>
+                                <span class="text-gray-400 block text-[8px] font-bold">Titular</span>
+                                <span id="preview-card-holder" class="font-bold text-gray-200 truncate max-w-[170px] block">
+                                    NOME DO TITULAR
+                                </span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-gray-400 block text-[8px] font-bold">Validade</span>
+                                <span id="preview-card-expiry" class="font-mono font-bold text-gray-200">
+                                    MM/AA
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD FORM -->
+                <form id="card-form" onsubmit="event.preventDefault(); window.submitCreditCard();" class="space-y-4">
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">
+                            Nome Impresso no Cartão <span class="text-brand-red">*</span>
+                        </label>
+                        <input type="text" id="card-holder" required placeholder="EX: CARLOS ALBERTO SILVA" class="w-full bg-gray-950 border border-gray-800 px-4 py-3.5 rounded-xl focus:border-brand-red focus:outline-none uppercase text-white font-bold text-sm tracking-wide" oninput="window.updateCardPreview()">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">
+                                CPF do Titular do Cartão <span class="text-brand-red">*</span>
+                            </label>
+                            <input type="text" id="card-holder-cpf" required placeholder="000.000.000-00" maxlength="14" class="w-full bg-gray-950 border border-gray-800 px-4 py-3.5 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm font-mono" oninput="window.maskCPF(this)">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">
+                                Número do Cartão <span class="text-brand-red">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="text" id="card-number" required placeholder="0000 0000 0000 0000" maxlength="19" class="w-full bg-gray-950 border border-gray-800 pl-4 pr-11 py-3.5 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm font-mono tracking-wider" oninput="window.maskCardNumber(this); window.updateCardPreview()">
+                                <div id="input-brand-badge" class="absolute right-3.5 top-3.5 text-gray-500 text-lg">
+                                    <i class="fa-solid fa-credit-card"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">
+                                Validade (Mês/Ano) <span class="text-brand-red">*</span>
+                            </label>
+                            <input type="text" id="card-expiry" required placeholder="MM/AA" maxlength="5" class="w-full bg-gray-950 border border-gray-800 px-4 py-3.5 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm font-mono text-center" oninput="window.maskCardExpiry(this); window.updateCardPreview()">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">
+                                Código de Segurança (CVV) <span class="text-brand-red">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="password" id="card-cvv" required placeholder="123" maxlength="4" class="w-full bg-gray-950 border border-gray-800 px-4 py-3.5 rounded-xl focus:border-brand-red focus:outline-none text-white text-sm font-mono text-center tracking-widest" oninput="window.maskCVV(this)">
+                                <span class="absolute right-3.5 top-3.5 text-[10px] text-gray-500 font-bold uppercase">3 ou 4 dígitos</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TERMO DE RECORRÊNCIA -->
+                    <div class="pt-4 border-t border-gray-800 space-y-3">
+                        <div class="h-28 overflow-y-auto bg-gray-950 border border-gray-850 rounded-xl p-3 text-[10.5px] text-gray-400 space-y-2 leading-relaxed scrollbar-thin scrollbar-thumb-gray-800">
+                            <p class="font-bold text-brand-red uppercase text-xs">TERMO DE AUTORIZAÇÃO DE DÉBITO RECORRENTE</p>
+                            <p><strong>1. AUTORIZAÇÃO:</strong> Autorizo a ACADEMIA TANQUE TEAM BJJ a debitar mensalmente neste cartão de crédito os valores correspondentes às mensalidades e renovações do meu plano de treino de Jiu-Jitsu.</p>
+                            <p><strong>2. CANCELAMENTO:</strong> O cancelamento da cobrança recorrente pode ser solicitado a qualquer momento diretamente na recepção ou via canais de atendimento oficiais, conforme os prazos contratuais.</p>
+                            <p><strong>3. SEGURANÇA:</strong> Os dados do cartão são criptografados com padrões bancários e utilizados exclusivamente para as cobranças autorizadas.</p>
+                        </div>
+
+                        <div class="flex items-start gap-3 pt-1">
+                            <input type="checkbox" id="card-accept-terms" required class="accent-brand-red w-5 h-5 rounded cursor-pointer mt-0.5 shrink-0">
+                            <label for="card-accept-terms" class="text-xs text-gray-300 cursor-pointer select-none">
+                                Li e aceito o <strong class="text-white">Termo de Débito Recorrente</strong> e confirmo que sou o titular ou autorizado a utilizar este cartão. <span class="text-brand-red font-bold">*</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- SUBMIT BUTTON -->
+                    <div class="pt-3">
+                        <button type="submit" id="btn-save-card" class="w-full bg-brand-red hover:bg-red-700 text-white font-bold uppercase tracking-wider text-sm sm:text-base py-4 rounded-xl transition duration-200 shadow-xl flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-lock"></i> Salvar e Ativar Recorrência
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- SUCCESS SCREEN -->
+        <div id="card-success-section" class="hidden bg-gray-900 border border-emerald-500/40 rounded-3xl p-6 sm:p-10 shadow-2xl text-center space-y-6 animate-fade-in">
+            <div class="w-20 h-20 bg-emerald-500/20 border-2 border-emerald-500 rounded-full flex items-center justify-center mx-auto text-emerald-400 text-4xl shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+                <i class="fa-solid fa-circle-check animate-bounce"></i>
+            </div>
+            
+            <div class="space-y-2">
+                <h2 class="text-2xl sm:text-3xl font-bold font-display uppercase tracking-wide text-white">Cartão Cadastrado com Sucesso!</h2>
+                <p class="text-xs sm:text-sm text-gray-300 max-w-md mx-auto">
+                    Seu cartão de crédito foi registrado e vinculado à sua matrícula. O pagamento recorrente já está ativo para as suas próximas mensalidades na <strong class="text-white">Tanque Team BJJ</strong>.
+                </p>
+            </div>
+
+            <div class="p-4 bg-gray-950 border border-gray-800 rounded-2xl max-w-md mx-auto text-left space-y-2 text-xs">
+                <div class="flex justify-between border-b border-gray-800/80 pb-2">
+                    <span class="text-gray-400">Aluno(a):</span>
+                    <strong id="success-student-name" class="text-white uppercase">--</strong>
+                </div>
+                <div class="flex justify-between border-b border-gray-800/80 pb-2">
+                    <span class="text-gray-400">Cartão:</span>
+                    <strong id="success-card-masked" class="text-emerald-400 font-mono">•••• 1234 (Visa)</strong>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Status da Recorrência:</span>
+                    <strong class="text-emerald-400 uppercase font-bold flex items-center gap-1">
+                        <i class="fa-solid fa-circle text-[8px]"></i> Ativa
+                    </strong>
+                </div>
+            </div>
+
+            <div class="pt-4 flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
+                <a href="https://wa.me/5591981084200" target="_blank" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase py-3.5 px-4 rounded-xl transition flex items-center justify-center gap-2">
+                    <i class="fa-brands fa-whatsapp text-base"></i> Falar com a Recepção
+                </a>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-gray-900 border-t border-gray-800 py-6 px-4 text-center text-xs text-gray-500">
+        <p>© 2026 Tanque Team BJJ • Todos os direitos reservados.</p>
+        <p class="mt-1 text-[11px] text-gray-600">Sistema Seguro de Gestão & Pagamento</p>
+    </footer>
+
+    <!-- FIREBASE INITIALIZATION & SCRIPTS -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, getDocs, query, where, arrayUnion } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        // Global definitions
+        const firebaseConfig = {
+            apiKey: "AIzaSyDummyKeyForDevEnvironmentTanqueTeamBJJ",
+            authDomain: "tanque-team-bjj.firebaseapp.com",
+            projectId: "tanque-team-bjj",
+            storageBucket: "tanque-team-bjj.firebasestorage.app",
+            messagingSenderId: "431379026573",
+            appId: "1:431379026573:web:753c1ab2f05a96814b7d00d8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const APP_ID = '4e7d00d8-3c19-4e5a-a4ab-4522f02376e4';
+
+        window.db = db;
+        window.currentStudent = null;
+
+        // Mask helpers
+        window.maskCPF = (input) => {
+            let v = input.value.replace(/\D/g, "");
+            v = v.replace(/(\d{3})(\d)/, "$1.$2");
+            v = v.replace(/(\d{3})(\d)/, "$1.$2");
+            v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+            input.value = v;
+        };
+
+        window.maskCardNumber = (input) => {
+            let v = input.value.replace(/\D/g, "");
+            v = v.replace(/(\d{4})(\d)/, "$1 $2");
+            v = v.replace(/(\d{4})(\d)/, "$1 $2");
+            v = v.replace(/(\d{4})(\d{1,4})$/, "$1 $2");
+            input.value = v;
+        };
+
+        window.maskCardExpiry = (input) => {
+            let v = input.value.replace(/\D/g, "");
+            if (v.length > 2) {
+                v = v.substring(0, 2) + "/" + v.substring(2, 4);
+            }
+            input.value = v;
+        };
+
+        window.maskCVV = (input) => {
+            input.value = input.value.replace(/\D/g, "").substring(0, 4);
+        };
+
+        // Detect card brand
+        window.detectCardBrand = (number) => {
+            const clean = number.replace(/\D/g, "");
+            if (/^4/.test(clean)) return { name: "Visa", icon: "fa-brands fa-cc-visa text-blue-500" };
+            if (/^(5[1-5]|2[2-7])/.test(clean)) return { name: "Mastercard", icon: "fa-brands fa-cc-mastercard text-orange-500" };
+            if (/^(4011|4389|4514|4576|5041|5066|5067|5090|6277|6362|6363|6504|6505|6516)/.test(clean)) return { name: "Elo", icon: "fa-brands fa-cc-elo text-yellow-500" };
+            if (/^3[47]/.test(clean)) return { name: "Amex", icon: "fa-brands fa-cc-amex text-blue-400" };
+            if (/^(606282|3841)/.test(clean)) return { name: "Hipercard", icon: "fa-solid fa-credit-card text-red-500" };
+            return { name: "Cartão", icon: "fa-solid fa-credit-card text-gray-400" };
+        };
+
+        // Update card preview live
+        window.updateCardPreview = () => {
+            const numEl = document.getElementById("card-number");
+            const holderEl = document.getElementById("card-holder");
+            const expiryEl = document.getElementById("card-expiry");
+
+            const num = numEl ? numEl.value : "";
+            const holder = holderEl ? holderEl.value : "";
+            const expiry = expiryEl ? expiryEl.value : "";
+
+            const brand = window.detectCardBrand(num);
+
+            document.getElementById("preview-card-number").innerText = num || "•••• •••• •••• ••••";
+            document.getElementById("preview-card-holder").innerText = (holder || "NOME DO TITULAR").toUpperCase();
+            document.getElementById("preview-card-expiry").innerText = expiry || "MM/AA";
+
+            const brandIcon = document.getElementById("card-brand-icon");
+            const inputBrandBadge = document.getElementById("input-brand-badge");
+            if (brandIcon) brandIcon.innerHTML = `<i class="${brand.icon}"></i>`;
+            if (inputBrandBadge) inputBrandBadge.innerHTML = `<i class="${brand.icon}"></i>`;
+        };
+
+        // Load student by ID
+        window.loadStudentById = async (studentId) => {
+            try {
+                const docRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'students', studentId);
+                const snap = await getDoc(docRef);
+                if (snap.exists()) {
+                    window.currentStudent = { id: snap.id, ...snap.data() };
+                    window.renderStudentCardForm(window.currentStudent);
+                } else {
+                    window.showSearchSection();
+                }
+            } catch (err) {
+                console.error("Erro ao carregar dados do aluno:", err);
+                window.showSearchSection();
+            }
+        };
+
+        // Search student by CPF or Login
+        window.searchStudentByCpfOrLogin = async () => {
+            const queryVal = (document.getElementById("input-search-query")?.value || "").trim();
+            if (!queryVal) return;
+
+            const cleanCpf = queryVal.replace(/\D/g, "");
+            const btn = document.getElementById("btn-search-student");
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Localizando...';
+
+            const errBox = document.getElementById("search-error-msg");
+            errBox.classList.add("hidden");
+
+            try {
+                const studentsRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'students');
+                const snap = await getDocs(studentsRef);
+                let found = null;
+
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const sCpf = (data.cpf || "").replace(/\D/g, "");
+                    const sLogin = (data.studentLogin || "").toLowerCase().trim();
+                    const sName = (data.name || "").toLowerCase().trim();
+
+                    if ((cleanCpf && sCpf === cleanCpf) || 
+                        (sLogin && sLogin === queryVal.toLowerCase()) ||
+                        (sName && sName === queryVal.toLowerCase())) {
+                        found = { id: docSnap.id, ...data };
+                    }
+                });
+
+                if (found) {
+                    window.currentStudent = found;
+                    window.renderStudentCardForm(found);
+                } else {
+                    errBox.classList.remove("hidden");
+                    document.getElementById("search-error-text").innerText = "Nenhuma matrícula encontrada com esse CPF ou Login. Verifique os dados.";
+                }
+            } catch (e) {
+                console.error("Erro na busca:", e);
+                errBox.classList.remove("hidden");
+                document.getElementById("search-error-text").innerText = "Erro ao conectar com o banco de dados.";
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-arrow-right"></i> Localizar Aluno';
+            }
+        };
+
+        window.showSearchSection = () => {
+            document.getElementById("search-student-section").classList.remove("hidden");
+            document.getElementById("card-form-section").classList.add("hidden");
+            document.getElementById("card-success-section").classList.add("hidden");
+        };
+
+        window.renderStudentCardForm = (student) => {
+            document.getElementById("search-student-section").classList.add("hidden");
+            document.getElementById("card-form-section").classList.remove("hidden");
+            document.getElementById("card-success-section").classList.add("hidden");
+
+            document.getElementById("display-student-name").innerText = student.name;
+            
+            const photoEl = document.getElementById("display-student-photo");
+            const iconEl = document.getElementById("display-student-icon");
+            if (student.photoURL || student.photoBase64) {
+                photoEl.src = student.photoURL || student.photoBase64;
+                photoEl.classList.remove("hidden");
+                iconEl.classList.add("hidden");
+            } else {
+                photoEl.classList.add("hidden");
+                iconEl.classList.remove("hidden");
+            }
+
+            document.getElementById("display-student-details").innerText = `${student.belt || 'Faixa Branca'} • ${student.phone || 'Sem telefone'}`;
+            document.getElementById("display-student-plan").innerText = student.plan || "Individual Mensal";
+
+            let nextDue = student.nextDueDate || "";
+            if (nextDue) {
+                if (nextDue.includes("T")) nextDue = nextDue.split("T")[0];
+                const parts = nextDue.split("-");
+                if (parts.length === 3) nextDue = `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            document.getElementById("display-student-due").innerText = `Próximo Vencimento: ${nextDue || '--'}`;
+
+            // Pre-fill holder name with student's name if empty
+            const holderInput = document.getElementById("card-holder");
+            if (holderInput && !holderInput.value) {
+                holderInput.value = student.name;
+                window.updateCardPreview();
+            }
+
+            if (student.cpf && document.getElementById("card-holder-cpf")) {
+                document.getElementById("card-holder-cpf").value = student.cpf;
+            }
+        };
+
+        // Submit Credit Card
+        window.submitCreditCard = async () => {
+            if (!window.currentStudent) {
+                alert("Nenhum aluno selecionado.");
+                return;
+            }
+
+            const holder = (document.getElementById("card-holder")?.value || "").trim().toUpperCase();
+            const holderCpf = (document.getElementById("card-holder-cpf")?.value || "").trim();
+            const numberRaw = (document.getElementById("card-number")?.value || "").replace(/\s+/g, "");
+            const expiry = (document.getElementById("card-expiry")?.value || "").trim();
+            const cvv = (document.getElementById("card-cvv")?.value || "").trim();
+            const acceptTerms = document.getElementById("card-accept-terms")?.checked;
+
+            if (!holder || !holderCpf || numberRaw.length < 13 || expiry.length < 5 || cvv.length < 3) {
+                alert("Por favor, preencha todos os campos do cartão de crédito corretamente.");
+                return;
+            }
+
+            if (!acceptTerms) {
+                alert("É necessário aceitar o Termo de Débito Recorrente para continuar.");
+                return;
+            }
+
+            const btn = document.getElementById("btn-save-card");
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando Cartão...';
+
+            const brand = window.detectCardBrand(numberRaw);
+            const last4 = numberRaw.slice(-4);
+
+            const cardData = {
+                holderName: holder,
+                holderCpf: holderCpf,
+                brand: brand.name,
+                last4: last4,
+                expiry: expiry,
+                registeredAt: new Date().toISOString(),
+                status: "Ativo",
+                recurring: true,
+                maskedNumber: `•••• •••• •••• ${last4}`
+            };
+
+            try {
+                const docRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'students', window.currentStudent.id);
+                await updateDoc(docRef, {
+                    cardDetails: cardData,
+                    paymentMethod: 'credit',
+                    recurrentPaymentActive: true,
+                    progressLog: arrayUnion({
+                        type: 'info',
+                        text: `Cartão de crédito (${brand.name} final ${last4}) cadastrado pelo aluno para pagamento recorrente.`,
+                        date: new Date().toISOString()
+                    })
+                });
+
+                // Show success screen
+                document.getElementById("card-form-section").classList.add("hidden");
+                document.getElementById("card-success-section").classList.remove("hidden");
+                document.getElementById("success-student-name").innerText = window.currentStudent.name;
+                document.getElementById("success-card-masked").innerText = `•••• ${last4} (${brand.name})`;
+
+            } catch (err) {
+                console.error("Erro ao salvar cartão:", err);
+                alert("Ocorreu um erro ao salvar os dados do cartão. Por favor, tente novamente.");
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-lock"></i> Salvar e Ativar Recorrência';
+            }
+        };
+
+        // Initialize on load
+        window.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const studentId = urlParams.get("id");
+            const cpfParam = urlParams.get("cpf");
+
+            if (studentId) {
+                window.loadStudentById(studentId);
+            } else if (cpfParam) {
+                document.getElementById("input-search-query").value = cpfParam;
+                window.searchStudentByCpfOrLogin();
+            } else {
+                window.showSearchSection();
+            }
+        });
+    </script>
+</body>
+</html>
