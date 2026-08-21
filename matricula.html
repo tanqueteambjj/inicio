@@ -678,9 +678,14 @@
 
         // FALLBACK PLANS DICT
         window.PLAN_DICT = {
-            'adulto-mensal': { price: 130.00, short: 'Adulto Mensal', long: 'ADULTO MENSAL', periodDays: 30 },
-            'infantil-mensal': { price: 160.00, short: 'Infantil Mensal', long: 'INFANTIL MENSAL', periodDays: 30 },
-            'outro': { price: 0.00, short: 'Outro', long: 'OUTRO', periodDays: 30 }
+            'infantil': { price: 160.00, short: 'Infantil', long: 'INFANTIL', periodDays: 30, desc: 'Treinamento completo para crianças e jovens (disciplina, técnica e coordenação).' },
+            'adulto': { price: 130.00, short: 'Adulto', long: 'ADULTO', periodDays: 30, desc: 'Treinamento completo de Jiu-Jitsu para adultos em todos os níveis e horários.' },
+            'personalizado': { price: 0.00, short: 'Personalizado', long: 'PERSONALIZADO', periodDays: 30, desc: 'Condições, valores ou combinações ajustados com a recepção/administração.' },
+            // Aliases de compatibilidade
+            'infantil-mensal': { price: 160.00, short: 'Infantil', long: 'INFANTIL', periodDays: 30, desc: 'Treinamento completo para crianças e jovens.' },
+            'adulto-mensal': { price: 130.00, short: 'Adulto', long: 'ADULTO', periodDays: 30, desc: 'Treinamento completo de Jiu-Jitsu para adultos.' },
+            'outro': { price: 0.00, short: 'Personalizado', long: 'PERSONALIZADO', periodDays: 30, desc: 'Condições ou valores ajustados com a administração.' },
+            'outros': { price: 0.00, short: 'Personalizado', long: 'PERSONALIZADO', periodDays: 30, desc: 'Condições ou valores ajustados com a administração.' }
         };
         const PLAN_DICT = window.PLAN_DICT;
 
@@ -930,89 +935,112 @@
             
             selectedPlansCache = plans;
             
-            const categories = {
-                adulto: {
-                    title: 'Planos Adulto',
-                    icon: 'fa-user',
-                    badgeColor: 'text-brand-red border-brand-red/30 bg-brand-red/10',
-                    plans: []
-                },
-                infantil: {
-                    title: 'Planos Infantil',
+            // Garantir estritamente os 3 planos solicitados: INFANTIL, ADULTO, PERSONALIZADO
+            const fixedOrder = [
+                {
+                    key: 'infantil',
+                    title: 'INFANTIL',
+                    short: 'Infantil',
                     icon: 'fa-child',
-                    badgeColor: 'text-blue-400 border-blue-400/30 bg-blue-500/10',
-                    plans: []
+                    badge: 'Infantil',
+                    badgeStyle: 'text-blue-400 border-blue-500/30 bg-blue-500/10',
+                    desc: 'Treinamento completo para crianças e jovens (disciplina, técnica e coordenação motora).'
                 },
-                outros: {
-                    title: 'Outros Planos / Personalizado',
-                    icon: 'fa-star',
-                    badgeColor: 'text-amber-400 border-amber-400/30 bg-amber-500/10',
-                    plans: []
+                {
+                    key: 'adulto',
+                    title: 'ADULTO',
+                    short: 'Adulto',
+                    icon: 'fa-user',
+                    badge: 'Adulto',
+                    badgeStyle: 'text-brand-red border-brand-red/30 bg-brand-red/10',
+                    desc: 'Treinamento completo de Jiu-Jitsu para adultos em todos os níveis, do iniciante ao avançado.'
+                },
+                {
+                    key: 'personalizado',
+                    title: 'PERSONALIZADO',
+                    short: 'Personalizado',
+                    icon: 'fa-sliders',
+                    badge: 'Personalizado',
+                    badgeStyle: 'text-amber-400 border-amber-500/30 bg-amber-500/10',
+                    desc: 'Condições especiais, planos familiares/duplos ou valores acordados com a academia.'
                 }
-            };
+            ];
 
-            for (const [key, plan] of Object.entries(plans)) {
-                // Ignore isento/dependente for direct registration
-                if (key === 'dependente' || key === 'isento' || key === 'administracao') continue;
+            let cardsHtml = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            `;
 
-                const lowerKey = key.toLowerCase();
-                const lowerName = ((plan.long || plan.short || plan.name || '') + '').toLowerCase();
+            fixedOrder.forEach(item => {
+                const planData = plans[item.key] || plans[item.key + '-mensal'] || (item.key === 'personalizado' ? (plans['outro'] || plans['outros']) : null) || PLAN_DICT[item.key] || {};
+                const price = planData.price !== undefined ? planData.price : (PLAN_DICT[item.key]?.price || 0);
+                const priceFormatted = price > 0 ? `R$ ${price.toFixed(2).replace('.', ',')}` : 'Sob Consulta';
 
-                if (lowerKey.includes('infantil') || lowerName.includes('infantil')) {
-                    categories.infantil.plans.push({ key, plan });
-                } else if (lowerKey.includes('adulto') || lowerName.includes('adulto')) {
-                    categories.adulto.plans.push({ key, plan });
-                } else {
-                    categories.outros.plans.push({ key, plan });
-                }
-            }
-
-            // Render each category
-            Object.values(categories).forEach(cat => {
-                if (cat.plans.length === 0) return;
-
-                let categoryHtml = `
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between border-b border-gray-800 pb-2">
-                            <span class="px-3 py-1 rounded-xl border text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${cat.badgeColor}">
-                                <i class="fa-solid ${cat.icon}"></i> ${cat.title}
-                            </span>
-                            <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">${cat.plans.length} ${cat.plans.length === 1 ? 'Opção' : 'Opções'}</span>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                `;
-
-                cat.plans.forEach(({ key, plan }) => {
-                    categoryHtml += `
-                        <label class="relative flex flex-col justify-between p-4 bg-gray-900 border border-gray-800 rounded-2xl cursor-pointer hover:border-brand-red transition-all select-none group" id="plan-card-${key}">
-                            <input type="radio" name="plan_type_select" value="${key}" class="absolute top-4 right-4 accent-brand-red w-4 h-4" onchange="window.selectPlanKey('${key}')">
-                            <div class="space-y-1 pr-6">
-                                <span class="text-[9px] font-black tracking-widest uppercase text-brand-red">PLANO TANQUE TEAM</span>
-                                <h4 class="font-black font-display text-white text-base tracking-wide uppercase group-hover:text-brand-red transition-colors">${plan.long || plan.short || plan.name || key}</h4>
+                cardsHtml += `
+                    <label class="relative flex flex-col justify-between p-5 bg-gray-900/90 border-2 border-gray-800 rounded-2xl cursor-pointer hover:border-brand-red transition-all duration-200 select-none group shadow-lg" id="plan-card-${item.key}" onclick="window.selectPlanKey('${item.key}')">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 border ${item.badgeStyle}">
+                                    <i class="fa-solid ${item.icon}"></i> ${item.badge}
+                                </span>
+                                <input type="radio" name="plan_type_select" value="${item.key}" class="accent-brand-red w-4 h-4 cursor-pointer" onchange="window.selectPlanKey('${item.key}')">
                             </div>
-                        </label>
-                    `;
-                });
+                            
+                            <div>
+                                <span class="text-[9px] font-black tracking-widest uppercase text-gray-500 block mb-0.5">Plano Oficial</span>
+                                <h4 class="font-black font-display text-white text-xl tracking-wide uppercase group-hover:text-brand-red transition-colors">${item.title}</h4>
+                            </div>
 
-                categoryHtml += `
+                            <p class="text-xs text-gray-400 leading-relaxed min-h-[38px]">
+                                ${planData.desc || item.desc}
+                            </p>
                         </div>
-                    </div>
-                `;
 
-                grid.innerHTML += categoryHtml;
+                        <div class="pt-4 mt-3 border-t border-gray-800 flex items-baseline justify-between">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Valor:</span>
+                            <div class="text-right">
+                                <span class="text-lg font-black text-white group-hover:text-brand-red transition-colors font-mono">${priceFormatted}</span>
+                            </div>
+                        </div>
+                    </label>
+                `;
             });
+
+            cardsHtml += `</div>`;
+            grid.innerHTML = cardsHtml;
+
+            // Se já havia um plano selecionado ou auto-seleciona 'adulto' por padrão
+            const currentSelected = document.getElementById('selected-plan-key')?.value;
+            if (currentSelected && document.getElementById(`plan-card-${currentSelected}`)) {
+                window.selectPlanKey(currentSelected);
+            } else {
+                window.selectPlanKey('adulto');
+            }
         };
 
         window.selectPlanKey = (key) => {
-            document.getElementById('selected-plan-key').value = key;
+            // Normalizar chaves antigas se necessário
+            let normalizedKey = key;
+            if (key === 'adulto-mensal') normalizedKey = 'adulto';
+            if (key === 'infantil-mensal') normalizedKey = 'infantil';
+            if (key === 'outro' || key === 'outros') normalizedKey = 'personalizado';
+
+            document.getElementById('selected-plan-key').value = normalizedKey;
             
+            // Radio button check
+            const radios = document.querySelectorAll('input[name="plan_type_select"]');
+            radios.forEach(r => {
+                r.checked = (r.value === normalizedKey || r.value === key);
+            });
+
             // Visual highlights
             document.querySelectorAll('[id^="plan-card-"]').forEach(el => {
-                el.classList.remove('border-brand-red', 'bg-red-950/5');
+                el.classList.remove('border-brand-red', 'bg-red-950/20', 'ring-2', 'ring-brand-red/30');
+                el.classList.add('border-gray-800');
             });
-            const selectedEl = document.getElementById(`plan-card-${key}`);
+            const selectedEl = document.getElementById(`plan-card-${normalizedKey}`) || document.getElementById(`plan-card-${key}`);
             if (selectedEl) {
-                selectedEl.classList.add('border-brand-red', 'bg-red-950/5');
+                selectedEl.classList.remove('border-gray-800');
+                selectedEl.classList.add('border-brand-red', 'bg-red-950/20', 'ring-2', 'ring-brand-red/30');
             }
         };
 
@@ -1217,19 +1245,19 @@
                     });
                 }
 
-                const planKey = document.getElementById('selected-plan-key')?.value || 'adulto-mensal';
+                const planKey = document.getElementById('selected-plan-key')?.value || 'adulto';
                 
                 let planInfo = (window.selectedPlansCache && window.selectedPlansCache[planKey]) ||
                                (window.PLAN_DICT && window.PLAN_DICT[planKey]) ||
                                (typeof PLAN_DICT !== 'undefined' && PLAN_DICT[planKey]);
 
                 if (!planInfo) {
-                    if (planKey === 'infantil-mensal') {
-                        planInfo = { short: 'Infantil Mensal', price: 160.00, periodDays: 30 };
-                    } else if (planKey === 'outro') {
-                        planInfo = { short: 'Outro', price: 0.00, periodDays: 30 };
+                    if (planKey === 'infantil' || planKey === 'infantil-mensal') {
+                        planInfo = { short: 'Infantil', long: 'INFANTIL', price: 160.00, periodDays: 30 };
+                    } else if (planKey === 'personalizado' || planKey === 'outro' || planKey === 'outros') {
+                        planInfo = { short: 'Personalizado', long: 'PERSONALIZADO', price: 0.00, periodDays: 30 };
                     } else {
-                        planInfo = { short: 'Adulto Mensal', price: 130.00, periodDays: 30 };
+                        planInfo = { short: 'Adulto', long: 'ADULTO', price: 130.00, periodDays: 30 };
                     }
                 }
 
@@ -1241,13 +1269,13 @@
                 endDate.setDate(endDate.getDate() + (planInfo.periodDays || 30));
                 const dataFimStr = endDate.toLocaleDateString('pt-BR');
 
-                const isOutroPlan = planKey === 'outro' || (planInfo && planInfo.short && planInfo.short.toLowerCase() === 'outro') || (planInfo && planInfo.price === 0 && planKey !== 'free');
+                const isPersonalizadoPlan = planKey === 'personalizado' || planKey === 'outro' || planKey === 'outros' || (planInfo && planInfo.short && (planInfo.short.toLowerCase().includes('personalizado') || planInfo.short.toLowerCase().includes('outro'))) || (planInfo && planInfo.price === 0 && planKey !== 'free');
 
                 let clausulaSegunda = '';
-                if (isOutroPlan) {
-                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E DO PAGAMENTO\n\n2.1. O CONTRATANTE opta pela modalidade PLANO PERSONALIZADO / DIVERSO, cujos valores, condições de pagamento e vigência foram ajustados e acordados diretamente com a administração da CONTRATADA.\n\n2.2. O vencimento e as demais condições financeiras seguirão estritamente o termo individual ou o registro financeiro acordado na recepção/administração.`;
+                if (isPersonalizadoPlan) {
+                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO PERSONALIZADO E DO VALOR ACORDADO ENTRE AS PARTES\n\n2.1. O CONTRATANTE opta pela modalidade PLANO PERSONALIZADO, declarando expressamente que o valor da mensalidade, a periodicidade e as condições de pagamento foram ajustados e pactuados de comum acordo diretamente com a administração da CONTRATADA.\n\n2.2. O montante financeiro da mensalidade e a respectiva data de vencimento corresponderão estritamente ao valor e ao dia convencionados entre as partes no ato da confirmação do plano, ficando formalmente registrados no sistema financeiro da academia e discriminados nos comprovantes de pagamento.\n\n2.3. As partes reconhecem a plena liquidez, certeza e exigibilidade das obrigações decorrentes do valor acordado, aplicando-se integralmente as normas de pontualidade, vigência e regras de conduta estabelecidas neste instrumento.`;
                 } else {
-                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E DO PAGAMENTO\n\n2.1. O CONTRATANTE opta pelo plano ${(planInfo.short || planKey).toUpperCase()} no valor de ${valorFormatted}/mês, a ser pago conforme a modalidade escolhida.\n\n2.2. O vencimento ocorrerá no dia em que for efetuada a confirmação do pagamento inicial do ciclo contratado.`;
+                    clausulaSegunda = `CLÁUSULA 2ª - DO PLANO E DO PAGAMENTO\n\n2.1. O CONTRATANTE opta pelo plano ${(planInfo.long || planInfo.short || planKey).toUpperCase()} no valor de ${valorFormatted}/mês, a ser pago conforme a modalidade escolhida.\n\n2.2. O vencimento ocorrerá no dia em que for efetuada a confirmação do pagamento inicial do ciclo contratado.`;
                 }
                 
                 const clausulaCancelamento = `CLÁUSULA 3ª - DO CANCELAMENTO\n\n3.1. O cancelamento deste contrato poderá ser solicitado a qualquer momento com aviso prévio mínimo de 30 (trinta) dias.`;
@@ -2094,30 +2122,58 @@ DADOS RESUMIDOS DO ALUNO:
                     loadedPlans[doc.id] = data;
                 });
                 
-                // Allowed keys according to instructions
-                const ALLOWED_KEYS = [
-                    'adulto-mensal',
-                    'infantil-mensal',
-                    'outro'
+                // Allowed keys according to instructions: Apenas INFANTIL, ADULTO e PERSONALIZADO
+                const ALLOWED_CONFIG = [
+                    { 
+                        key: 'infantil', 
+                        aliases: ['infantil', 'infantil-mensal'], 
+                        defaultName: 'INFANTIL', 
+                        defaultShort: 'Infantil', 
+                        defaultPrice: 160.00,
+                        desc: 'Treinamento completo para crianças e jovens (disciplina, técnica e coordenação motora).'
+                    },
+                    { 
+                        key: 'adulto', 
+                        aliases: ['adulto', 'adulto-mensal'], 
+                        defaultName: 'ADULTO', 
+                        defaultShort: 'Adulto', 
+                        defaultPrice: 130.00,
+                        desc: 'Treinamento completo de Jiu-Jitsu para adultos em todos os níveis, do iniciante ao avançado.'
+                    },
+                    { 
+                        key: 'personalizado', 
+                        aliases: ['personalizado', 'outro', 'outros'], 
+                        defaultName: 'PERSONALIZADO', 
+                        defaultShort: 'Personalizado', 
+                        defaultPrice: 0.00,
+                        desc: 'Condições especiais, planos familiares/duplos ou valores acordados com a academia.'
+                    }
                 ];
                 
                 let finalPlans = {};
-                ALLOWED_KEYS.forEach(key => {
-                    let p = loadedPlans[key];
-                    // Fallback to "outros" if they named it "outros" in admin
-                    if (!p && key === 'outro' && loadedPlans['outros']) {
-                        p = loadedPlans['outros'];
+                ALLOWED_CONFIG.forEach(item => {
+                    let p = loadedPlans[item.key];
+                    if (!p) {
+                        for (const alias of item.aliases) {
+                            if (loadedPlans[alias]) {
+                                p = loadedPlans[alias];
+                                break;
+                            }
+                        }
                     }
                     
+                    let price = item.defaultPrice;
                     if (p && !p.deleted) {
-                        finalPlans[key] = {
-                            price: p.price !== undefined ? p.price : (p.basePrice || 0),
-                            short: p.name || p.short || key,
-                            long: p.name || p.long || key
-                        };
-                    } else {
-                        finalPlans[key] = PLAN_DICT[key];
+                        price = p.price !== undefined ? p.price : (p.basePrice !== undefined ? p.basePrice : item.defaultPrice);
                     }
+                    
+                    finalPlans[item.key] = {
+                        key: item.key,
+                        price: price,
+                        short: item.defaultShort,
+                        long: item.defaultName,
+                        desc: item.desc
+                    };
                 });
                 
                 window.renderPlansList(finalPlans);
