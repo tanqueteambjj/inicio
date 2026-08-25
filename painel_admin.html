@@ -428,6 +428,7 @@
                 <i class="fa-solid fa-user-slash"></i>
               </div>
               <p
+                id="label-stat-absent"
                 class="text-gray-400 dark:text-gray-400 text-[10px] sm:text-[11px] md:text-xs font-bold uppercase tracking-wider mb-1"
               >
                 Ausentes (7d+)
@@ -2572,6 +2573,68 @@
                 <i class="fa-solid fa-circle-info text-amber-600 dark:text-amber-400 mt-0.5 shrink-0"></i>
                 <div>
                   <strong>Regra de Negócio:</strong> Se um aluno indicar múltiplos amigos, os descontos são acumulados mês a mês (1 desconto por mensalidade, sem acumular 2 descontos no mesmo mês).
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Controle de Ausência de Alunos -->
+          <div class="mb-8" id="settings-absence-section">
+            <div class="flex justify-between items-center mb-4">
+              <h4
+                class="font-bold text-lg text-gray-800 dark:text-white border-b pb-2 w-full flex items-center justify-between"
+              >
+                <span class="flex items-center">
+                  <i class="fa-solid fa-user-clock mr-2 text-orange-500"></i> Critério de Ausência de Alunos
+                </span>
+                <span id="settings-absence-status-badge" class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300">
+                  7 DIAS ATUAL
+                </span>
+              </h4>
+            </div>
+            <div
+              class="bg-gradient-to-r from-orange-50/60 to-red-50/40 dark:from-gray-700/60 dark:to-gray-700/30 p-4 rounded-lg border border-orange-200 dark:border-orange-900/50"
+            >
+              <p class="text-xs text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
+                Defina a quantidade de dias consecutivos sem presença/check-in para que o aluno seja automaticamente classificado como <strong>Ausente</strong> no painel, relatórios e filtros de disparo de mensagens.
+              </p>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end mb-4">
+                <div class="sm:col-span-2">
+                  <label
+                    class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase"
+                    >Quantidade de Dias sem Check-in</label
+                  >
+                  <div class="relative">
+                    <input
+                      type="number"
+                      id="settings-absence-days"
+                      min="1"
+                      max="365"
+                      step="1"
+                      value="7"
+                      placeholder="Ex: 7"
+                      class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded p-2 text-sm font-bold focus:border-orange-500 focus:outline-none pr-14 font-mono"
+                    />
+                    <span class="absolute right-3 top-2.5 text-xs font-bold text-gray-400">dias</span>
+                  </div>
+                </div>
+
+                <div>
+                  <button
+                    id="save-absence-settings-btn"
+                    onclick="window.saveAbsenceConfig()"
+                    class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded text-sm transition-all shadow-md flex items-center justify-center gap-1.5"
+                  >
+                    <i class="fa-solid fa-floppy-disk"></i> Salvar Critério
+                  </button>
+                </div>
+              </div>
+
+              <div class="bg-orange-100/60 dark:bg-orange-950/30 p-2.5 rounded text-[11px] text-orange-900 dark:text-orange-300 flex items-start gap-2 border border-orange-200 dark:border-orange-900/40">
+                <i class="fa-solid fa-circle-info text-orange-600 dark:text-orange-400 mt-0.5 shrink-0"></i>
+                <div>
+                  <strong>Como funciona:</strong> Alunos cujo último check-in (ou data de matrícula) for igual ou superior a esta quantidade de dias serão contabilizados no card "Ausentes" e selecionados nos filtros rápidos de contato de resgate.
                 </div>
               </div>
             </div>
@@ -6555,7 +6618,7 @@
               <!-- Filtros de Seleção Rápida -->
               <div class="flex flex-wrap gap-1.5 text-xs">
                 <button onclick="window.filterBulkEmailStudents('all')" class="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded font-semibold text-gray-700 dark:text-gray-300 transition">Todos</button>
-                <button onclick="window.filterBulkEmailStudents('absent')" class="px-2.5 py-1 bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 rounded font-semibold hover:bg-orange-200 transition">Ausentes (+7d)</button>
+                <button id="bulk-email-btn-absent" onclick="window.filterBulkEmailStudents('absent')" class="px-2.5 py-1 bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 rounded font-semibold hover:bg-orange-200 transition">Ausentes (+7d)</button>
                 <button onclick="window.filterBulkEmailStudents('overdue')" class="px-2.5 py-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded font-semibold hover:bg-red-200 transition">Apenas Atrasados</button>
                 <button onclick="window.filterBulkEmailStudents('due_soon')" class="px-2.5 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded font-semibold hover:bg-yellow-200 transition">A Vencer (7d)</button>
               </div>
@@ -9865,6 +9928,7 @@
           await window.loadPlans();
           await window.loadSchedules();
           await window.loadReferralConfig();
+          await window.loadAbsenceConfig();
           await window.loadData();
           await window.loadNotices();
           await window.loadExperimentalData();
@@ -10179,7 +10243,8 @@
       }
 
       function isStudentAbsent(s) {
-        if (s.archived) return false;
+        if (!s || s.archived || s.enrollmentStatus === "Inativo") return false;
+        const thresholdDays = typeof window.getAbsenceDays === "function" ? window.getAbsenceDays() : (window.absenceConfig?.days || 7);
         if (s.attendance && s.attendance.length > 0) {
           const lastCheckinStr = s.attendance[s.attendance.length - 1];
           let lastCheckinDate;
@@ -10196,7 +10261,7 @@
           const daysSinceLastCheckin = Math.floor(
             (new Date() - lastCheckinDate) / (1000 * 60 * 60 * 24),
           );
-          return daysSinceLastCheckin >= 7;
+          return daysSinceLastCheckin >= thresholdDays;
         } else {
           const regDate = s.registrationDate
             ? new Date(s.registrationDate)
@@ -10204,7 +10269,7 @@
           const daysSinceRegistration = Math.floor(
             (new Date() - regDate) / (1000 * 60 * 60 * 24),
           );
-          return daysSinceRegistration >= 7;
+          return daysSinceRegistration >= thresholdDays;
         }
       }
       window.isStudentAbsent = isStudentAbsent;
@@ -16258,10 +16323,10 @@ Belém-PA, [DATA_ATUAL].
         }
 
         const formattedTotal = `R$ ${totalValue.toFixed(2).replace(".", ",")}`;
-        const periodStr = count > 1 ? `referente a *${count} mensalidades pendentes*` : `referente à mensalidade`;
+        const periodStr = count > 1 ? `referente a *${count} mensalidades*` : `referente à sua mensalidade`;
 
         const firstName = s.name.split(" ")[0];
-        const message = `Olá ${firstName}! Esperamos que esteja tudo bem. 🥋\n\nPassando para formalizar a cobrança do seu plano *${planInfo.long || planInfo.short}* ${periodStr} no valor total de *${formattedTotal}* (vencimento original: ${nextDueStr}).${discountMsg}\n📌 *DADOS PARA PAGAMENTO VIA PIX:*\n• *Chave PIX (CNPJ):* 65678191000190\n• *Beneficiário:* Carlos e N Pinheiro da Silva e Lucas R Garcia LTDA\n• *Banco:* Nubank\n\n💳 *PAGAMENTO NO CARTÃO:*\nEm caso de pagamento no cartão, favor solicitar no WhatsApp *(91) 98453-3817* ou solicite seu link de pagamento recorrente.\n\nSe você já realizou o pagamento, favor desconsiderar. Oss! 🥋🔥`;
+        const message = `Olá, ${firstName}! Esperamos que você e sua família estejam muito bem. 🥋✨\n\nPassando de forma amigável para enviar as informações da sua mensalidade do plano *${planInfo.long || planInfo.short}* ${periodStr} no valor de *${formattedTotal}* (vencimento: ${nextDueStr}).${discountMsg}\n\n📌 *DADOS PARA PAGAMENTO VIA PIX:*\n• *Chave PIX (CNPJ):* 65678191000190\n• *Beneficiário:* Carlos e N Pinheiro da Silva e Lucas R Garcia LTDA\n• *Banco:* Nubank\n\n💳 *OUTRAS FORMAS OU DÚVIDAS:*\nCaso precise pagar no cartão ou tenha qualquer dúvida, estamos à disposição no WhatsApp *(91) 98453-3817* ou na recepção.\n\nSe o pagamento já foi realizado, por favor desconsidere esta mensagem. Muito obrigado por fazer parte da Família Tanque Team! Oss! 🥋🔥`;
 
         const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
         window.open(url, "_blank");
@@ -16443,8 +16508,34 @@ Belém-PA, [DATA_ATUAL].
         let phone = s.phone.replace(/\D/g, "");
         if (phone.length === 11) phone = "55" + phone;
 
+        let daysAbsent = 0;
+        let lastSeenText = "alguns dias";
+        if (s.attendance && s.attendance.length > 0) {
+          const lastCheckinStr = s.attendance[s.attendance.length - 1];
+          let lastCheckinDate;
+          if (lastCheckinStr.includes("T")) {
+            lastCheckinDate = new Date(lastCheckinStr);
+          } else {
+            const parts = lastCheckinStr.split("-");
+            if (parts.length === 3) {
+              lastCheckinDate = new Date(parts[0], parts[1] - 1, parts[2]);
+            } else {
+              lastCheckinDate = new Date(lastCheckinStr);
+            }
+          }
+          daysAbsent = Math.floor((new Date() - lastCheckinDate) / (1000 * 60 * 60 * 24));
+          if (daysAbsent > 0) {
+            lastSeenText = `${daysAbsent} ${daysAbsent === 1 ? "dia" : "dias"}`;
+          }
+        } else if (s.registrationDate) {
+          daysAbsent = Math.floor((new Date() - new Date(s.registrationDate)) / (1000 * 60 * 60 * 24));
+          if (daysAbsent > 0) {
+            lastSeenText = `${daysAbsent} ${daysAbsent === 1 ? "dia" : "dias"}`;
+          }
+        }
+
         const firstName = s.name.split(" ")[0];
-        const message = `Olá ${firstName}! Notamos que você está sumido dos treinos há alguns dias. Está tudo bem? Sentimos sua falta no tatame! Se precisar de algo ou se tiver algum problema, nos avise. Esperamos te ver em breve! Oss! 🥋🥊`;
+        const message = `Olá, ${firstName}! Tudo bem? 🥋✨\n\nSentimos sua falta nos treinos da Tanque Team BJJ! Notamos que você está ausente há cerca de ${lastSeenText}. Está tudo bem por aí?\n\nSua presença no tatame faz toda a diferença para o time e para a sua evolução. Se precisar de ajuda ou de algum ajuste de horário, estamos à disposição!\n\nEsperamos te ver no próximo treino! Oss! 🥋🥊`;
 
         const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
         window.open(url, "_blank");
@@ -16755,34 +16846,36 @@ Belém-PA, [DATA_ATUAL].
         <img src="https://iili.io/qC543c7.png" alt="Tanque Team Logo" style="height: 65px; display: inline-block;">
     </div>
     <div style="padding: 35px; background-color: #ffffff;">
-        <h2 style="color: #1a1a1a; font-size: 22px; margin-top: 0; font-weight: 700; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px;">Olá, ${firstName}! 👋</h2>
+        <h2 style="color: #1a1a1a; font-size: 22px; margin-top: 0; font-weight: 700; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px;">Olá, ${firstName}! 👋🥋</h2>
         <p style="font-size: 15px; line-height: 1.6; color: #4a5568; margin-bottom: 20px;">
-            A gente sabe que a rotina é corrida e, às vezes, pequenos detalhes acabam passando despercebidos. Notamos que sua mensalidade está em aberto. Mas não se preocupe, estamos aqui para facilitar tudo para você!
+            Esperamos que você e sua família estejam muito bem! Sabemos que a rotina é corrida e às vezes pequenos detalhes acabam passando despercebidos. Estamos passando para compartilhar de forma rápida e amigável as informações da sua mensalidade em aberto.
         </p>
-        <div style="background-color: #fffaf0; border: 1px solid #feebc8; border-left: 5px solid #dd6b20; padding: 18px; border-radius: 8px; margin: 25px 0;">
-            <strong style="color: #dd6b20; font-size: 14px; text-transform: uppercase;">Dica de Mestre!</strong>
-            <p style="margin: 6px 0 0 0; font-size: 13px; color: #744210;">
-                Ative a <strong>Recorrência Automática</strong> no seu cartão de crédito e pague o <strong>VALOR COM DESCONTO</strong> mesmo estando em atraso! Economize agora <strong>R$ ${discountAmountFormatted} de desconto imediato</strong>.
-            </p>
-        </div>
         <div style="background-color: #f7fafc; border: 1px solid #edf2f7; border-radius: 8px; padding: 20px; margin: 25px 0;">
-            <h3 style="margin-top: 0; margin-bottom: 15px; color: #1a1a1a; font-size: 15px; font-weight: 700;">📋 Detalhes do seu Pagamento</h3>
+            <h3 style="margin-top: 0; margin-bottom: 15px; color: #1a1a1a; font-size: 15px; font-weight: 700;">📋 Detalhes da sua Mensalidade</h3>
             <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                <tr><td style="padding: 6px 0; color: #718096; width: 40%;"><strong>Aluno:</strong></td><td style="padding: 6px 0; color: #2d3748; font-weight: 600;">${s.name}</td></tr>
+                <tr><td style="padding: 6px 0; color: #718096; width: 40%;"><strong>Aluno(a):</strong></td><td style="padding: 6px 0; color: #2d3748; font-weight: 600;">${s.name}</td></tr>
                 <tr><td style="padding: 6px 0; color: #718096;"><strong>Plano:</strong></td><td style="padding: 6px 0; color: #2d3748; font-weight: 600;">${planName}</td></tr>
                 <tr><td style="padding: 6px 0; color: #718096;"><strong>Vencimento:</strong></td><td style="padding: 6px 0; color: #e53e3e; font-weight: 600;">${nextDueStr}</td></tr>
-                <tr><td style="padding: 6px 0; color: #718096;"><strong>Valor Integral c/ Atraso:</strong></td><td style="padding: 6px 0; color: #e53e3e; font-weight: 600;">R$ ${fullValueFormatted}</td></tr>
-                <tr style="background-color: #f0fff4;"><td style="padding: 8px 6px; color: #22543d;"><strong>Valor na Recorrência (C/ Desconto):</strong></td><td style="padding: 8px 6px; color: #2f855a; font-weight: bold; font-size: 16px;">R$ ${discountValueFormatted}</td></tr>
+                <tr style="background-color: #f0fff4;"><td style="padding: 8px 6px; color: #22543d;"><strong>Valor da Mensalidade:</strong></td><td style="padding: 8px 6px; color: #2f855a; font-weight: bold; font-size: 16px;">R$ ${discountValueFormatted}</td></tr>
             </table>
         </div>
-        <p style="margin: 0 0 10px 0; color: #2b6cb0; font-size: 14px; font-weight: 600;">🔐 Seus dados de acesso ao Portal do Atleta:</p>
+        <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-left: 5px solid #16a34a; padding: 15px; border-radius: 8px; margin: 20px 0; font-size: 13px; color: #166534;">
+            <strong>📌 Pagamento Rápido via PIX:</strong><br>
+            • Chave PIX (CNPJ): <strong>65678191000190</strong> (Nubank)<br>
+            • Favorecido: Carlos e N Pinheiro da Silva e Lucas R Garcia LTDA
+        </div>
+        ${(s.studentLogin && s.studentPassword) ? `
+        <p style="margin: 0 0 10px 0; color: #2b6cb0; font-size: 14px; font-weight: 600;">🔐 Acesso ao Portal do Atleta:</p>
         <div style="background-color: #ebf8ff; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 13px;">
             <div style="margin-bottom: 4px;"><strong>Usuário:</strong> <span style="font-family: monospace; color: #2d3748;">${s.studentLogin}</span></div>
             <div><strong>Senha:</strong> <span style="font-family: monospace; color: #2d3748;">${s.studentPassword}</span></div>
         </div>
-        <div style="text-align: center; margin: 30px 0;">
-            <a href="https://tanqueteambjj.web.app/portal" target="_blank" style="background-color: #D90429; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: bold; font-size: 15px; display: inline-block;">Pagar com Desconto no Portal ➔</a>
-        </div>
+        <div style="text-align: center; margin: 25px 0;">
+            <a href="https://tanqueteambjj.web.app/portal" target="_blank" style="background-color: #D90429; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: bold; font-size: 15px; display: inline-block;">Acessar Portal do Atleta ➔</a>
+        </div>` : ''}
+        <p style="font-size: 12px; color: #718096; text-align: center; margin-top: 20px;">
+            Caso já tenha efetuado o pagamento ou tenha alguma dúvida, fale conosco pelo WhatsApp <strong>(91) 98453-3817</strong> ou diretamente na recepção. Muito obrigado por treinar conosco! Oss!
+        </p>
     </div>
     <div style="background-color: #f7fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #a0aec0;">
         <p style="margin: 0;"><strong>Tanque Team BJJ</strong> • Escola de Artes Marciais</p>
@@ -19179,6 +19272,134 @@ Belém-PA, [DATA_ATUAL].
         }
       };
 
+      window.absenceConfig = { days: 7 };
+
+      window.getAbsenceDays = () => {
+        const local = localStorage.getItem("tanque_absence_threshold_days");
+        const fromLocal = local ? parseInt(local, 10) : null;
+        if (fromLocal && !isNaN(fromLocal) && fromLocal > 0) return fromLocal;
+        if (window.absenceConfig && window.absenceConfig.days) return Number(window.absenceConfig.days);
+        return 7;
+      };
+
+      window.updateAbsenceUI = () => {
+        const days = window.getAbsenceDays();
+        const badge = document.getElementById("settings-absence-status-badge");
+        if (badge) badge.innerText = `${days} DIAS ATUAL`;
+        const input = document.getElementById("settings-absence-days");
+        if (input && document.activeElement !== input) input.value = days;
+
+        const labelStat = document.getElementById("label-stat-absent");
+        if (labelStat) labelStat.innerText = `Ausentes (${days}d+)`;
+
+        const bulkBtn = document.getElementById("bulk-email-btn-absent");
+        if (bulkBtn) bulkBtn.innerText = `Ausentes (+${days}d)`;
+
+        if (typeof window.calculateKPIs === "function") {
+          window.calculateKPIs();
+        } else if (window.students) {
+          let count = 0;
+          window.students.forEach((st) => {
+            if (window.isStudentAbsent(st)) count++;
+          });
+          const statEl = document.getElementById("stat-absent");
+          if (statEl) statEl.innerText = count;
+        }
+
+        if (window.currentTab === "absent" && typeof window.renderTable === "function") {
+          window.renderTable();
+        }
+      };
+
+      window.loadAbsenceConfig = async () => {
+        try {
+          const local = localStorage.getItem("tanque_absence_threshold_days");
+          if (local) {
+            const parsed = parseInt(local, 10);
+            if (!isNaN(parsed) && parsed > 0) {
+              window.absenceConfig = { days: parsed };
+              window.updateAbsenceUI();
+            }
+          }
+          if (!window.db) return;
+          const absDoc = await getDoc(
+            doc(
+              window.db,
+              "artifacts",
+              APP_ID,
+              "public",
+              "data",
+              "settings",
+              "absence_config",
+            ),
+          );
+          if (absDoc.exists()) {
+            const data = absDoc.data();
+            if (data && data.days) {
+              window.absenceConfig = { days: Number(data.days) };
+              localStorage.setItem("tanque_absence_threshold_days", String(data.days));
+              window.updateAbsenceUI();
+            }
+          }
+        } catch (e) {
+          console.error("Erro ao carregar configuração de ausência:", e);
+        }
+      };
+
+      window.saveAbsenceConfig = async () => {
+        const daysInput = document.getElementById("settings-absence-days");
+        const saveBtn = document.getElementById("save-absence-settings-btn");
+        const days = parseInt(daysInput ? daysInput.value : 7, 10);
+
+        if (isNaN(days) || days < 1 || days > 365) {
+          window.customAlert("Por favor, insira uma quantidade de dias válida (entre 1 e 365 dias).");
+          return;
+        }
+
+        const originalText = saveBtn ? saveBtn.innerHTML : "";
+        if (saveBtn) {
+          saveBtn.disabled = true;
+          saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Salvando...';
+        }
+
+        try {
+          const configData = {
+            days: days,
+            updatedAt: new Date().toISOString(),
+          };
+
+          if (window.db) {
+            await setDoc(
+              doc(
+                window.db,
+                "artifacts",
+                APP_ID,
+                "public",
+                "data",
+                "settings",
+                "absence_config",
+              ),
+              configData,
+              { merge: true },
+            );
+          }
+
+          window.absenceConfig = configData;
+          localStorage.setItem("tanque_absence_threshold_days", String(days));
+          window.updateAbsenceUI();
+
+          window.customAlert(`Configuração salva com sucesso! O critério de ausência foi atualizado para ${days} dias.`);
+        } catch (e) {
+          console.error("Erro ao salvar configuração de ausência:", e);
+          window.customAlert("Erro ao salvar no Firestore: " + (e.message || "Tente novamente."));
+        } finally {
+          if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+          }
+        }
+      };
+
       window.openSettingsModal = () => {
         const user = JSON.parse(
           localStorage.getItem("tanque_user_session") || "{}",
@@ -19192,6 +19413,7 @@ Belém-PA, [DATA_ATUAL].
         window.renderSettingsPlans();
         window.renderSettingsSchedules();
         window.loadReferralConfig();
+        window.loadAbsenceConfig();
 
         // Carregar chave salva se existir
         const savedKey = localStorage.getItem("gemini_api_key");
