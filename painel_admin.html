@@ -4973,17 +4973,42 @@
                     class="w-full border border-blue-200 dark:border-blue-800 dark:bg-gray-800 dark:text-white rounded p-2 focus:outline-none"
                   />
                 </div>
-                <div class="md:col-span-2">
-                  <label
-                    class="block text-xs font-bold text-amber-600 dark:text-amber-400 mb-1 flex items-center gap-1"
-                    ><i class="fa-solid fa-gift"></i> Código Promocional de Indicação (50% OFF)</label
-                  ><input
-                    type="text"
-                    id="edit-referral-code"
-                    placeholder="Ex: CARLOS1234"
-                    class="w-full border border-amber-300 dark:border-amber-700 dark:bg-gray-800 dark:text-white rounded p-2 font-mono font-bold uppercase focus:border-amber-500 focus:outline-none"
-                  />
-                  <p class="text-[10px] text-gray-400 mt-0.5">Código exclusivo que o aluno compartilha com amigos para ganhar 50% de desconto na mensalidade.</p>
+                <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3 bg-amber-50/50 dark:bg-amber-950/20 p-3 rounded-lg border border-amber-200 dark:border-amber-900/50">
+                  <div>
+                    <label
+                      class="block text-xs font-bold text-amber-700 dark:text-amber-400 mb-1 flex items-center gap-1"
+                      ><i class="fa-solid fa-gift"></i> Código de Indicação Próprio</label
+                    ><input
+                      type="text"
+                      id="edit-referral-code"
+                      placeholder="Ex: CARLOS1234"
+                      class="w-full border border-amber-300 dark:border-amber-700 dark:bg-gray-800 dark:text-white rounded p-2 font-mono font-bold uppercase focus:border-amber-500 focus:outline-none text-xs"
+                    />
+                    <p class="text-[10px] text-gray-400 mt-0.5">Cupom do aluno para convidar amigos.</p>
+                  </div>
+                  <div>
+                    <label
+                      class="block text-xs font-bold text-amber-700 dark:text-amber-400 mb-1 flex items-center gap-1"
+                      ><i class="fa-solid fa-user-tag"></i> Indicado por (Nome ou Cupom)</label
+                    >
+                    <div class="flex items-center gap-1">
+                      <input
+                        type="text"
+                        id="edit-referred-by-name"
+                        placeholder="Nome de quem indicou ou cupom"
+                        class="w-full border border-amber-300 dark:border-amber-700 dark:bg-gray-800 dark:text-white rounded p-2 text-xs focus:border-amber-500 focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onclick="document.getElementById('edit-referred-by-name').value = ''"
+                        class="px-2 py-2 bg-gray-100 dark:bg-gray-700 text-gray-500 hover:text-red-600 rounded border border-gray-300 dark:border-gray-600 text-xs shrink-0"
+                        title="Remover indicador"
+                      >
+                        <i class="fa-solid fa-times"></i>
+                      </button>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-0.5">Deixe em branco para remover a indicação.</p>
+                  </div>
                 </div>
               </div>
               <div class="mt-3">
@@ -5387,17 +5412,43 @@
               class="hidden mt-3 bg-purple-50 dark:bg-purple-900/30 p-3 rounded border border-purple-200 dark:border-purple-800"
             ></div>
 
+            <!-- Quem Indicou este Aluno -->
+            <div
+              id="detail-referred-by-container"
+              class="bg-amber-50/70 dark:bg-amber-950/20 p-3 rounded-lg border border-amber-200 dark:border-amber-900/60 mt-3"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-[10px] text-gray-500 dark:text-gray-400 block font-bold uppercase tracking-wider flex items-center gap-1">
+                    <i class="fa-solid fa-user-tag text-amber-500"></i> Quem Indicou este Aluno
+                  </span>
+                  <span id="detail-referred-by-name" class="font-bold text-xs text-gray-800 dark:text-gray-200">Nenhum</span>
+                </div>
+                <div id="detail-referred-by-actions" class="flex items-center gap-1">
+                  <!-- Injected dynamically -->
+                </div>
+              </div>
+            </div>
+
             <!-- Programa de Indicação & Cupom de Amigo -->
             <div
               class="bg-amber-50 dark:bg-amber-950/30 p-3.5 rounded-lg border border-amber-200 dark:border-amber-800/60 mt-3"
             >
-              <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center justify-between mb-2 flex-wrap gap-1.5">
                 <h4
                   class="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase flex items-center gap-1.5"
                 >
-                  <i class="fa-solid fa-gift text-amber-500"></i> Programa de Indicação (50% OFF)
+                  <i class="fa-solid fa-gift text-amber-500"></i> Programa de Indicação (Amigos Indicados)
                 </h4>
-                <div class="flex items-center gap-1.5">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onclick="window.addManualReferralDiscount(document.getElementById('detail-student-id').value)"
+                    class="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-700 flex items-center gap-1 transition"
+                    title="Adicionar indicação manual para este aluno"
+                  >
+                    <i class="fa-solid fa-plus text-emerald-600"></i> + Indicação
+                  </button>
                   <button
                     type="button"
                     id="detail-share-referral-btn"
@@ -10674,6 +10725,35 @@
             }
           }
 
+          // WHO REFERRED THIS STUDENT (QUEM INDICOU)
+          const referredByNameEl = document.getElementById("detail-referred-by-name");
+          const referredByActionsEl = document.getElementById("detail-referred-by-actions");
+          const hasReferrer = !!(s.referredByStudentName || s.referralCodeUsed || s.referredByStudentId);
+
+          if (referredByNameEl) {
+            if (hasReferrer) {
+              const refDesc = s.referredByStudentName || `Cupom: ${s.referralCodeUsed}`;
+              const cupomUsed = s.referralCodeUsed ? ` (Cupom: ${s.referralCodeUsed})` : "";
+              referredByNameEl.innerHTML = `<span class="text-amber-900 dark:text-amber-200 font-bold">${refDesc}</span><span class="text-[10px] text-gray-500 block font-normal">${cupomUsed}</span>`;
+            } else {
+              referredByNameEl.innerHTML = `<span class="text-gray-400 font-normal italic">Nenhum indicador registrado</span>`;
+            }
+          }
+
+          if (referredByActionsEl) {
+            if (hasReferrer) {
+              referredByActionsEl.innerHTML = `
+                <button type="button" onclick="window.removeStudentReferrer('${s.id}')" class="text-[11px] font-bold text-red-600 dark:text-red-400 hover:text-red-800 bg-red-50 dark:bg-red-950/40 px-2 py-1 rounded border border-red-200 dark:border-red-900 flex items-center gap-1 transition shadow-xs" title="Remover Vínculo de Quem Indicou">
+                  <i class="fa-solid fa-link-slash"></i> Remover Vínculo
+                </button>`;
+            } else {
+              referredByActionsEl.innerHTML = `
+                <button type="button" onclick="window.setStudentReferrer('${s.id}')" class="text-[11px] font-bold text-amber-700 dark:text-amber-300 hover:text-amber-900 bg-amber-100 dark:bg-amber-900/40 px-2 py-1 rounded border border-amber-300 dark:border-amber-700 flex items-center gap-1 transition shadow-xs" title="Vincular Indicador Manualmente">
+                  <i class="fa-solid fa-plus"></i> Vincular Indicador
+                </button>`;
+            }
+          }
+
           // REFERRAL PROGRAM DETAILS
           const currentConfiguredPct = window.referralConfig?.discountPercent || 50;
           const studentRefCode = s.referralCode || window.generateStudentReferralCode(s);
@@ -10692,29 +10772,44 @@
           if (refListContainer) {
             if (allDiscounts.length === 0) {
               refListContainer.innerHTML = `
-                <div class="p-2 bg-amber-100/50 dark:bg-amber-950/20 rounded text-[11px] text-amber-800 dark:text-amber-300 flex items-center justify-between">
-                  <span>Nenhum amigo utilizou este cupom ainda.</span>
+                <div class="p-2.5 bg-amber-100/50 dark:bg-amber-950/20 rounded text-[11px] text-amber-800 dark:text-amber-300 flex items-center justify-between border border-amber-200/60 dark:border-amber-900/40">
+                  <span>Nenhum amigo indicado registrado no momento.</span>
                   <span class="text-[10px] opacity-70">${currentConfiguredPct}% por indicação</span>
                 </div>`;
             } else {
-              let listHtml = `<div class="space-y-1.5 max-h-36 overflow-y-auto pr-1">`;
+              let listHtml = `<div class="space-y-1.5 max-h-44 overflow-y-auto pr-1">`;
               allDiscounts.forEach((disc) => {
                 const isAvail = disc.status === "disponivel";
                 const discPct = disc.discountPercent || currentConfiguredPct;
                 const badgeHtml = isAvail
-                  ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">DISPONÍVEL (PRÓX. MÊS)</span>`
+                  ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1"><i class="fa-solid fa-check"></i> DISPONÍVEL</span>`
                   : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">UTILIZADO (${disc.usedInMonth || "Passado"})</span>`;
 
                 listHtml += `
-                  <div class="flex items-center justify-between p-2 rounded bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-900 text-xs">
-                    <div>
-                      <span class="font-bold text-gray-800 dark:text-gray-200">${disc.referredStudentName || "Amigo Indicado"}</span>
-                      <span class="text-[10px] text-gray-500 block">${disc.createdAt ? formatDate(disc.createdAt) : ""} • ${discPct}% de desconto</span>
+                  <div class="flex items-center justify-between p-2 rounded bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-900 text-xs shadow-xs">
+                    <div class="flex-1 pr-2">
+                      <div class="font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1">
+                        <i class="fa-solid fa-user-check text-emerald-500 text-[10px]"></i>
+                        <span>${disc.referredStudentName || "Amigo Indicado"}</span>
+                      </div>
+                      <span class="text-[10px] text-gray-500 block">${disc.createdAt ? formatDate(disc.createdAt) : "Cadastrado"} • <b>${discPct}% OFF</b></span>
                     </div>
-                    <div>${badgeHtml}</div>
+                    <div class="flex items-center gap-1.5">
+                      ${badgeHtml}
+                      <button type="button" onclick="window.removeReferralDiscount('${s.id}', '${disc.id}', '${disc.referredStudentName || 'Amigo Indicado'}')" class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40 transition" title="Remover esta indicação">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                      </button>
+                    </div>
                   </div>`;
               });
               listHtml += `</div>`;
+              listHtml += `
+                <div class="flex justify-between items-center pt-2 mt-2 border-t border-amber-200 dark:border-amber-900/50 text-[11px] text-gray-500">
+                  <span>Total: <b>${allDiscounts.length}</b> indicação(ões)</span>
+                  <button type="button" onclick="window.clearAllReferralDiscounts('${s.id}')" class="text-[10px] text-red-600 dark:text-red-400 hover:underline font-bold">
+                    <i class="fa-solid fa-trash"></i> Limpar todas as indicações
+                  </button>
+                </div>`;
               refListContainer.innerHTML = listHtml;
             }
           }
@@ -11133,6 +11228,10 @@ Belém-PA, [DATA_ATUAL].
           const editRefCodeInput = document.getElementById("edit-referral-code");
           if (editRefCodeInput) {
             editRefCodeInput.value = s.referralCode || window.generateStudentReferralCode(s);
+          }
+          const editReferredByInput = document.getElementById("edit-referred-by-name");
+          if (editReferredByInput) {
+            editReferredByInput.value = s.referredByStudentName || s.referralCodeUsed || "";
           }
           if (document.getElementById("edit-enrollment-status"))
             document.getElementById("edit-enrollment-status").value =
@@ -12112,6 +12211,9 @@ Belém-PA, [DATA_ATUAL].
           const editRefCodeVal = document.getElementById("edit-referral-code")
             ? document.getElementById("edit-referral-code").value.trim().toUpperCase()
             : "";
+          const editReferredByVal = document.getElementById("edit-referred-by-name")
+            ? document.getElementById("edit-referred-by-name").value.trim()
+            : undefined;
 
           const updateData = {
             name: name,
@@ -12134,6 +12236,25 @@ Belém-PA, [DATA_ATUAL].
 
           if (editRefCodeVal) {
             updateData.referralCode = editRefCodeVal;
+          }
+
+          if (editReferredByVal !== undefined) {
+            if (editReferredByVal === "") {
+              updateData.referredByStudentName = null;
+              updateData.referredByStudentId = null;
+              updateData.referralCodeUsed = null;
+            } else {
+              const matchedStudent = (window.students || []).find(
+                (st) =>
+                  st.id !== id &&
+                  (st.name.toLowerCase() === editReferredByVal.toLowerCase() ||
+                    (st.referralCode &&
+                      st.referralCode.toUpperCase() === editReferredByVal.toUpperCase())),
+              );
+              updateData.referredByStudentName = matchedStudent ? matchedStudent.name : editReferredByVal;
+              updateData.referredByStudentId = matchedStudent ? matchedStudent.id : null;
+              updateData.referralCodeUsed = matchedStudent ? (matchedStudent.referralCode || null) : editReferredByVal.toUpperCase();
+            }
           }
 
           if (photoBase64) {
@@ -15252,10 +15373,128 @@ Belém-PA, [DATA_ATUAL].
           }
         }
 
-        const listCount = document.getElementById("list-count");
-        if (listCount) listCount.innerText = filtered.length;
+        // Helper to find titular
+        const getStudentTitular = (s, allStudents) => {
+          if (!s) return null;
+          if (s.titularId) {
+            const t = allStudents.find((st) => st.id === s.titularId);
+            if (t) return t;
+          }
+          if (s.titularName && String(s.titularName).trim()) {
+            const tName = String(s.titularName).trim().toLowerCase();
+            const t = allStudents.find(
+              (st) =>
+                st.id !== s.id &&
+                st.name &&
+                st.name.trim().toLowerCase() === tName,
+            );
+            if (t) return t;
+          }
+          if (
+            window.getPlanType(s.plan) === "dependente" &&
+            s.guardian &&
+            String(s.guardian).trim()
+          ) {
+            const gName = String(s.guardian).trim().toLowerCase();
+            const t = allStudents.find(
+              (st) =>
+                st.id !== s.id &&
+                st.name &&
+                st.name.trim().toLowerCase() === gName,
+            );
+            if (t) return t;
+          }
+          return null;
+        };
 
-        if (filtered.length === 0) {
+        // Helper to find all dependents of a titular
+        const getStudentDependents = (titular, allStudents) => {
+          if (!titular) return [];
+          return allStudents.filter((st) => {
+            if (st.id === titular.id) return false;
+            if (st.titularId && st.titularId === titular.id) return true;
+            if (
+              st.titularName &&
+              String(st.titularName).trim().toLowerCase() ===
+                String(titular.name).trim().toLowerCase()
+            ) {
+              return true;
+            }
+            if (
+              window.getPlanType(st.plan) === "dependente" &&
+              st.guardian &&
+              String(st.guardian).trim().toLowerCase() ===
+                String(titular.name).trim().toLowerCase()
+            ) {
+              return true;
+            }
+            return false;
+          });
+        };
+
+        // Build hierarchical list so dependents always appear immediately below their titular
+        const hierarchicalList = [];
+        const processedIds = new Set();
+
+        filtered.forEach((s) => {
+          if (processedIds.has(s.id)) return;
+
+          const titular = getStudentTitular(s, window.students);
+          // If this student is a dependent and titular is in filtered and not yet processed, process titular and its dependents together
+          if (
+            titular &&
+            filtered.some((f) => f.id === titular.id) &&
+            !processedIds.has(titular.id)
+          ) {
+            const titularDeps = getStudentDependents(titular, window.students);
+            hierarchicalList.push({
+              student: titular,
+              isDependent: false,
+              titularId: null,
+              hasDependents: titularDeps.length > 0,
+            });
+            processedIds.add(titular.id);
+
+            titularDeps.forEach((dep) => {
+              hierarchicalList.push({
+                student: dep,
+                isDependent: true,
+                titularId: titular.id,
+                hasDependents: false,
+              });
+              processedIds.add(dep.id);
+            });
+          } else {
+            const myDeps = getStudentDependents(s, window.students);
+            const isDep = !!titular || window.getPlanType(s.plan) === "dependente";
+            hierarchicalList.push({
+              student: s,
+              isDependent: isDep && myDeps.length === 0,
+              titularId: titular ? titular.id : null,
+              hasDependents: myDeps.length > 0,
+            });
+            processedIds.add(s.id);
+
+            if (myDeps.length > 0) {
+              myDeps.forEach((dep) => {
+                if (!processedIds.has(dep.id)) {
+                  hierarchicalList.push({
+                    student: dep,
+                    isDependent: true,
+                    titularId: s.id,
+                    hasDependents: false,
+                  });
+                  processedIds.add(dep.id);
+                }
+              });
+            }
+          }
+        });
+
+        const listCount = document.getElementById("list-count");
+        if (listCount) listCount.innerText = hierarchicalList.length;
+
+        if (hierarchicalList.length === 0) {
           tbody.innerHTML =
             '<tr><td colspan="7" class="p-4 text-center text-gray-500">Nenhum aluno encontrado.</td></tr>';
           const paginationControls = document.getElementById(
@@ -15266,7 +15505,7 @@ Belém-PA, [DATA_ATUAL].
         }
 
         // Pagination logic
-        const totalItems = filtered.length;
+        const totalItems = hierarchicalList.length;
         const totalPages = Math.ceil(totalItems / window.itemsPerPage);
         if (window.currentPage > totalPages) window.currentPage = totalPages;
         if (window.currentPage < 1) window.currentPage = 1;
@@ -15274,7 +15513,7 @@ Belém-PA, [DATA_ATUAL].
         const startIndex = (window.currentPage - 1) * window.itemsPerPage;
         const endIndex = Math.min(startIndex + window.itemsPerPage, totalItems);
 
-        const paginatedFiltered = filtered.slice(startIndex, endIndex);
+        const paginatedFiltered = hierarchicalList.slice(startIndex, endIndex);
 
         // Update pagination UI
         const paginationControls = document.getElementById(
@@ -15330,7 +15569,6 @@ Belém-PA, [DATA_ATUAL].
         }
 
         let html = "";
-        const renderedIds = new Set();
 
         const renderStudentRow = (
           s,
@@ -15427,6 +15665,34 @@ Belém-PA, [DATA_ATUAL].
             subNameHtml += `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-yellow-50 text-yellow-700 border border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800/30 shadow-xs"><i class="fa-solid fa-user-shield text-[8px]"></i> Resp: ${s.guardian}</span>`;
           }
 
+          // Referral / Indicação Badges
+          if (s.referredByStudentName || s.referralCodeUsed) {
+            const refName = s.referredByStudentName || s.referralCodeUsed;
+            subNameHtml += `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900/40 shadow-xs cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/40 transition" onclick="event.stopPropagation(); window.viewStudentDetails('${s.id}')" title="Aluno indicado por: ${refName}"><i class="fa-solid fa-user-tag text-[8px] text-amber-600"></i> Ind: ${refName}</span>`;
+          }
+
+          const studentRefDiscounts = s.referralDiscounts || [];
+          const matchedIndicatedFriends = (window.students || []).filter(
+            (other) =>
+              other.id !== s.id &&
+              (other.referredByStudentId === s.id ||
+                (other.referralCodeUsed &&
+                  s.referralCode &&
+                  String(other.referralCodeUsed).trim().toUpperCase() ===
+                    String(s.referralCode).trim().toUpperCase())),
+          );
+          const totalIndicatedCount = Math.max(
+            studentRefDiscounts.length,
+            matchedIndicatedFriends.length,
+          );
+          const availDiscountsCount = studentRefDiscounts.filter(
+            (d) => d.status === "disponivel",
+          ).length;
+
+          if (totalIndicatedCount > 0) {
+            subNameHtml += `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-900/40 shadow-xs cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition" onclick="event.stopPropagation(); window.viewStudentDetails('${s.id}')" title="${totalIndicatedCount} amigo(s) indicado(s) (${availDiscountsCount} desconto(s) disponível(is))"><i class="fa-solid fa-gift text-[8px] text-emerald-600"></i> ${totalIndicatedCount} ${totalIndicatedCount === 1 ? "Indicação" : "Indicações"}${availDiscountsCount > 0 ? ` (${availDiscountsCount} disp.)` : ""}</span>`;
+          }
+
           // Check for 7 and 15 days absence
           let absenceWarning = "";
           if (s.attendance && s.attendance.length > 0) {
@@ -15474,10 +15740,12 @@ Belém-PA, [DATA_ATUAL].
 
           let rowClass = "border-b dark:border-gray-700 transition";
           const isUnder12 = (getAge(s.dob) !== null ? getAge(s.dob) < 12 : isStudentKid(s));
-          if (isUnder12) {
+          if (isDependent) {
+            rowClass += ` bg-purple-50/60 dark:bg-purple-950/25 hover:bg-purple-100/70 dark:hover:bg-purple-900/40 border-l-4 border-l-purple-500 dark:border-l-purple-600 dependent-of-${titularId || ""}`;
+          } else if (hasDependents) {
+            rowClass += ` bg-indigo-50/25 dark:bg-indigo-950/20 hover:bg-indigo-100/40 dark:hover:bg-indigo-900/30`;
+          } else if (isUnder12) {
             rowClass += " bg-sky-100 dark:bg-sky-950 hover:bg-sky-200/80 dark:hover:bg-sky-900";
-          } else if (isDependent) {
-            rowClass += ` bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 dependent-of-${titularId}`;
           } else {
             rowClass += " hover:bg-gray-50 dark:hover:bg-gray-700";
           }
@@ -15486,7 +15754,11 @@ Belém-PA, [DATA_ATUAL].
               " border-l-2 border-l-brand-red bg-red-50/10 dark:bg-red-900/10";
           }
 
-          let paddingLeft = isDependent ? "pl-8" : "p-3";
+          if (hasDependents && !(s.plan && window.getPlanType(s.plan).includes("combo"))) {
+            subNameHtml += `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-800/30 shadow-xs"><i class="fa-solid fa-users text-[8px]"></i> Titular</span>`;
+          }
+
+          let paddingLeft = isDependent ? "pl-7 sm:pl-9" : "p-3";
 
           const dragHandle =
             document.getElementById("sort-order") &&
@@ -15501,8 +15773,8 @@ Belém-PA, [DATA_ATUAL].
                             <input type="checkbox" class="student-checkbox rounded border-gray-300 text-brand-red focus:ring-brand-red" value="${s.id}" onchange="window.updateBulkActionsBtn()">
                         </td>
                         <td class="${paddingLeft} py-3 pr-3 sticky-col-1">
-                            <div class="flex items-center gap-3">
-                                ${isDependent ? '<i class="fa-solid fa-turn-up rotate-90 text-gray-300 dark:text-gray-600"></i>' : ""}
+                            <div class="flex items-center gap-2 sm:gap-3">
+                                ${isDependent ? '<div class="flex items-center text-purple-600 dark:text-purple-400 font-bold shrink-0 text-xs" title="Dependente vinculado"><i class="fa-solid fa-turn-up rotate-90"></i></div>' : ""}
                                 ${photoHtml} 
                                 <div class="flex flex-col">
                                     <div class="flex items-center gap-1.5 flex-wrap">
@@ -15529,9 +15801,7 @@ Belém-PA, [DATA_ATUAL].
 
         let lastGroup = null;
 
-        paginatedFiltered.forEach((s) => {
-          if (renderedIds.has(s.id)) return;
-
+        paginatedFiltered.forEach(({ student: s, isDependent, titularId, hasDependents }) => {
           if (window.currentTab === "admin") {
             const group = isStudentKid(s)
               ? "Infantil (até 11 anos)"
@@ -15542,49 +15812,7 @@ Belém-PA, [DATA_ATUAL].
             }
           }
 
-          if (s.plan && window.getPlanType(s.plan).includes("combo")) {
-            const myDependents = window.students.filter(
-              (d) =>
-                window.getPlanType(d.plan) === "dependente" &&
-                d.titularId === s.id,
-            );
-            html += renderStudentRow(s, false, null, myDependents.length > 0);
-            renderedIds.add(s.id);
-
-            myDependents.forEach((dep) => {
-              html += renderStudentRow(dep, true, s.id, false);
-              renderedIds.add(dep.id);
-            });
-          } else if (
-            window.getPlanType(s.plan) === "dependente" &&
-            s.titularId
-          ) {
-            const titular = filtered.find((t) => t.id === s.titularId);
-            if (titular && !renderedIds.has(titular.id)) {
-              const myDependents = window.students.filter(
-                (d) =>
-                  window.getPlanType(d.plan) === "dependente" &&
-                  d.titularId === titular.id,
-              );
-              html += renderStudentRow(
-                titular,
-                false,
-                null,
-                myDependents.length > 0,
-              );
-              renderedIds.add(titular.id);
-              myDependents.forEach((dep) => {
-                html += renderStudentRow(dep, true, titular.id, false);
-                renderedIds.add(dep.id);
-              });
-            } else if (!titular) {
-              html += renderStudentRow(s, false, null, false);
-              renderedIds.add(s.id);
-            }
-          } else {
-            html += renderStudentRow(s, false, null, false);
-            renderedIds.add(s.id);
-          }
+          html += renderStudentRow(s, isDependent, titularId, hasDependents);
         });
 
         tbody.innerHTML = html;
@@ -16459,6 +16687,232 @@ Belém-PA, [DATA_ATUAL].
         } catch (err) {
           console.error("Erro ao excluir cartão:", err);
           window.customAlert("Erro ao excluir o cartão de crédito. Tente novamente.");
+        }
+      };
+
+      // REMOVER VÍNCULO DE QUEM INDICOU O ALUNO
+      window.removeStudentReferrer = async (id) => {
+        try {
+          const s = window.students.find((st) => st.id === id);
+          if (!s) return;
+          const referrerDesc = s.referredByStudentName || s.referralCodeUsed || "indicador";
+          if (!confirm(`Deseja remover o vínculo de indicação (${referrerDesc}) deste aluno?`)) return;
+
+          if (window.db) {
+            await updateDoc(
+              doc(window.db, "artifacts", APP_ID, "public", "data", "students", id),
+              {
+                referredByStudentId: null,
+                referredByStudentName: null,
+                referralCodeUsed: null,
+                progressLog: arrayUnion({
+                  type: "aviso",
+                  text: `Vínculo de quem indicou (${referrerDesc}) foi removido pelo administrador.`,
+                  date: new Date().toISOString(),
+                }),
+              }
+            );
+          }
+
+          s.referredByStudentId = null;
+          s.referredByStudentName = null;
+          s.referralCodeUsed = null;
+          if (!s.progressLog) s.progressLog = [];
+          s.progressLog.push({
+            type: "aviso",
+            text: `Vínculo de quem indicou (${referrerDesc}) foi removido pelo administrador.`,
+            date: new Date().toISOString(),
+          });
+
+          if (typeof window.renderTable === "function") window.renderTable();
+          if (typeof window.viewStudentDetails === "function") window.viewStudentDetails(id);
+          window.customAlert("Vínculo de quem indicou foi removido com sucesso!");
+        } catch (err) {
+          console.error("Erro ao remover vínculo de indicação:", err);
+          window.customAlert("Erro ao remover vínculo de indicação.");
+        }
+      };
+
+      // VINCULAR OU EDITAR QUEM INDICOU O ALUNO
+      window.setStudentReferrer = async (id) => {
+        try {
+          const s = window.students.find((st) => st.id === id);
+          if (!s) return;
+          const currentVal = s.referredByStudentName || s.referralCodeUsed || "";
+          const newReferrer = prompt(
+            "Digite o nome do aluno que indicou ou o cupom utilizado:",
+            currentVal
+          );
+          if (newReferrer === null) return;
+          const cleanRef = newReferrer.trim();
+
+          let refId = null;
+          let refName = cleanRef;
+          if (cleanRef) {
+            const matched = (window.students || []).find(
+              (st) =>
+                st.id !== id &&
+                (st.name.toLowerCase() === cleanRef.toLowerCase() ||
+                  (st.referralCode &&
+                    st.referralCode.toUpperCase() === cleanRef.toUpperCase()))
+            );
+            if (matched) {
+              refId = matched.id;
+              refName = matched.name;
+            }
+          }
+
+          if (window.db) {
+            await updateDoc(
+              doc(window.db, "artifacts", APP_ID, "public", "data", "students", id),
+              {
+                referredByStudentId: refId || null,
+                referredByStudentName: cleanRef ? refName : null,
+                referralCodeUsed: cleanRef ? cleanRef.toUpperCase() : null,
+              }
+            );
+          }
+
+          s.referredByStudentId = refId || null;
+          s.referredByStudentName = cleanRef ? refName : null;
+          s.referralCodeUsed = cleanRef ? cleanRef.toUpperCase() : null;
+
+          if (typeof window.renderTable === "function") window.renderTable();
+          if (typeof window.viewStudentDetails === "function") window.viewStudentDetails(id);
+          window.customAlert("Indicador atualizado com sucesso!");
+        } catch (err) {
+          console.error("Erro ao definir indicador:", err);
+          window.customAlert("Erro ao atualizar indicador.");
+        }
+      };
+
+      // REMOVER UMA INDICAÇÃO / DESCONTO ESPECÍFICO
+      window.removeReferralDiscount = async (studentId, discountId, referredName = "") => {
+        try {
+          const s = window.students.find((st) => st.id === studentId);
+          if (!s) return;
+          if (!confirm(`Deseja remover a indicação / cupom de "${referredName || 'Amigo Indicado'}" da conta deste aluno?`)) return;
+
+          const currentDiscounts = s.referralDiscounts || [];
+          const updatedDiscounts = currentDiscounts.filter((d) => d.id !== discountId);
+
+          if (window.db) {
+            await updateDoc(
+              doc(window.db, "artifacts", APP_ID, "public", "data", "students", studentId),
+              {
+                referralDiscounts: updatedDiscounts,
+                progressLog: arrayUnion({
+                  type: "aviso",
+                  text: `Indicação/desconto (${referredName || 'amigo'}) removido pelo administrador.`,
+                  date: new Date().toISOString(),
+                }),
+              }
+            );
+          }
+
+          s.referralDiscounts = updatedDiscounts;
+          if (!s.progressLog) s.progressLog = [];
+          s.progressLog.push({
+            type: "aviso",
+            text: `Indicação/desconto (${referredName || 'amigo'}) removido pelo administrador.`,
+            date: new Date().toISOString(),
+          });
+
+          if (typeof window.renderTable === "function") window.renderTable();
+          if (typeof window.viewStudentDetails === "function") window.viewStudentDetails(studentId);
+          window.customAlert("Indicação removida com sucesso!");
+        } catch (err) {
+          console.error("Erro ao remover indicação:", err);
+          window.customAlert("Erro ao remover indicação.");
+        }
+      };
+
+      // ADICIONAR INDICAÇÃO MANUALMENTE
+      window.addManualReferralDiscount = async (studentId) => {
+        try {
+          const s = window.students.find((st) => st.id === studentId);
+          if (!s) return;
+          const friendName = prompt("Digite o nome do amigo indicado por este aluno:", "");
+          if (!friendName || !friendName.trim()) return;
+
+          const currentPct = window.referralConfig?.discountPercent || 50;
+          const newDiscount = {
+            id: "ref_manual_" + Date.now(),
+            referredStudentName: friendName.trim().toUpperCase(),
+            discountPercent: currentPct,
+            status: "disponivel",
+            createdAt: new Date().toISOString(),
+          };
+
+          const currentDiscounts = s.referralDiscounts || [];
+          const updatedDiscounts = [...currentDiscounts, newDiscount];
+
+          if (window.db) {
+            await updateDoc(
+              doc(window.db, "artifacts", APP_ID, "public", "data", "students", studentId),
+              {
+                referralDiscounts: updatedDiscounts,
+                progressLog: arrayUnion({
+                  type: "info",
+                  text: `Ganhou ${currentPct}% de desconto por indicação manual de ${friendName.trim().toUpperCase()} adicionada pelo administrador.`,
+                  date: new Date().toISOString(),
+                }),
+              }
+            );
+          }
+
+          s.referralDiscounts = updatedDiscounts;
+          if (!s.progressLog) s.progressLog = [];
+          s.progressLog.push({
+            type: "info",
+            text: `Ganhou ${currentPct}% de desconto por indicação manual de ${friendName.trim().toUpperCase()} adicionada pelo administrador.`,
+            date: new Date().toISOString(),
+          });
+
+          if (typeof window.renderTable === "function") window.renderTable();
+          if (typeof window.viewStudentDetails === "function") window.viewStudentDetails(studentId);
+          window.customAlert(`Indicação de ${friendName.trim().toUpperCase()} adicionada com sucesso (+1 mês com ${currentPct}% OFF)!`);
+        } catch (err) {
+          console.error("Erro ao adicionar indicação:", err);
+          window.customAlert("Erro ao adicionar indicação manual.");
+        }
+      };
+
+      // LIMPAR TODAS AS INDICAÇÕES DO ALUNO
+      window.clearAllReferralDiscounts = async (studentId) => {
+        try {
+          const s = window.students.find((st) => st.id === studentId);
+          if (!s) return;
+          if (!confirm(`Deseja remover TODAS as indicações acumuladas deste aluno (${s.name})?`)) return;
+
+          if (window.db) {
+            await updateDoc(
+              doc(window.db, "artifacts", APP_ID, "public", "data", "students", studentId),
+              {
+                referralDiscounts: [],
+                progressLog: arrayUnion({
+                  type: "aviso",
+                  text: `Todas as indicações/descontos acumulados foram limpos pelo administrador.`,
+                  date: new Date().toISOString(),
+                }),
+              }
+            );
+          }
+
+          s.referralDiscounts = [];
+          if (!s.progressLog) s.progressLog = [];
+          s.progressLog.push({
+            type: "aviso",
+            text: `Todas as indicações/descontos acumulados foram limpos pelo administrador.`,
+            date: new Date().toISOString(),
+          });
+
+          if (typeof window.renderTable === "function") window.renderTable();
+          if (typeof window.viewStudentDetails === "function") window.viewStudentDetails(studentId);
+          window.customAlert("Todas as indicações foram removidas com sucesso!");
+        } catch (err) {
+          console.error("Erro ao limpar indicações:", err);
+          window.customAlert("Erro ao limpar indicações.");
         }
       };
 
