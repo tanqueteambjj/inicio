@@ -56,7 +56,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         try {
             const manualConfig = {
@@ -96,6 +96,8 @@
                 window.collection = collection;
                 window.addDoc = addDoc;
                 window.getDocs = getDocs;
+                window.doc = doc;
+                window.updateDoc = updateDoc;
                 window.query = query;
                 window.where = where;
                 window.appId = appId;
@@ -619,7 +621,7 @@
                         <div class="absolute -top-4 right-6 bg-yellow-500 text-brand-dark font-bold px-3 py-1 rounded text-xs shadow-md uppercase tracking-wider"><i class="fa-solid fa-stopwatch mr-1"></i> Vagas Limitadas (10)</div>
                         <h3 class="text-white font-display text-2xl font-bold mb-6 text-center">Agende seu Treino</h3>
                         
-                        <form id="expForm" onsubmit="submitExperimental(event)" class="space-y-4">
+                        <form id="expForm" onsubmit="window.submitExperimental(event)" class="space-y-4">
                             <div>
                                 <label class="block text-xs font-bold mb-1 text-gray-400 uppercase">Nome Completo do Aluno</label>
                                 <input type="text" id="expName" required class="w-full bg-gray-800 border border-gray-700 text-white rounded p-3 focus:outline-none focus:border-yellow-500 transition" placeholder="Nome de quem vai treinar">
@@ -695,6 +697,12 @@
                             <button type="submit" id="btnExpSubmit" class="w-full mt-6 bg-yellow-500 hover:bg-yellow-400 text-brand-dark font-bold py-4 rounded-lg text-lg uppercase tracking-wider transition shadow-lg flex justify-center items-center gap-2 transform active:scale-95">
                                 <i class="fa-solid fa-check"></i> Confirmar Agendamento
                             </button>
+                            
+                            <div class="mt-4 text-center">
+                                <button type="button" onclick="window.openManageExpModal()" class="text-xs text-gray-500 hover:text-yellow-500 underline transition font-bold">
+                                    Já tem um agendamento e deseja cancelar ou remarcar? Clique aqui.
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -925,6 +933,84 @@
         </div>
     </div>
 
+    <!-- Manage Experimental Modal -->
+    <div id="manageExpModal" class="fixed inset-0 z-[120] hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
+        <div class="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform relative border-t-4 border-yellow-500">
+            <button onclick="window.closeManageExpModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition"><i class="fa-solid fa-times text-xl"></i></button>
+            <div class="p-6">
+                <h3 class="font-display font-bold text-xl text-white uppercase tracking-wider mb-4"><i class="fa-solid fa-calendar-check text-yellow-500 mr-2"></i> Gerir Agendamento</h3>
+
+                <!-- Step 1: Search -->
+                <div id="manage-step-1" class="space-y-4">
+                    <p class="text-sm text-gray-400">Insira o CPF utilizado no agendamento (Aluno ou Responsável) para localizar a sua marcação.</p>
+                    <div>
+                        <label class="block text-xs font-bold mb-1 text-gray-400 uppercase">CPF</label>
+                        <input type="text" id="manageExpCpf" maxlength="14" class="w-full bg-gray-800 border border-gray-700 text-white rounded p-3 focus:outline-none focus:border-yellow-500 transition" placeholder="000.000.000-00">
+                    </div>
+                    <button type="button" onclick="window.searchExpByCpf()" id="btnSearchExp" class="w-full bg-yellow-500 hover:bg-yellow-400 text-brand-dark font-bold py-3 rounded-lg uppercase tracking-wider transition shadow-md flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-search"></i> Buscar Agendamento
+                    </button>
+                </div>
+
+                <!-- Step 2: Details & Actions -->
+                <div id="manage-step-2" class="hidden space-y-4">
+                    <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                        <p class="text-xs text-gray-400 uppercase font-bold mb-1">Aluno</p>
+                        <p class="text-white font-bold mb-3" id="manage-info-name">...</p>
+
+                        <div class="flex gap-4">
+                            <div>
+                                <p class="text-xs text-gray-400 uppercase font-bold mb-1">Data</p>
+                                <p class="text-brand-red font-bold" id="manage-info-date">...</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 uppercase font-bold mb-1">Horário</p>
+                                <p class="text-brand-red font-bold" id="manage-info-time">...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-3 mt-4">
+                        <button type="button" onclick="window.showRescheduleForm()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg uppercase tracking-wider transition shadow-md flex justify-center items-center gap-2">
+                            <i class="fa-regular fa-calendar-plus"></i> Alterar Data / Hora
+                        </button>
+                        <button type="button" onclick="window.cancelScheduling()" class="w-full bg-transparent border border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-bold py-3 rounded-lg uppercase tracking-wider transition shadow-md flex justify-center items-center gap-2">
+                            <i class="fa-solid fa-ban"></i> Cancelar Agendamento
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Reschedule Form -->
+                <div id="manage-step-3" class="hidden space-y-4">
+                    <p class="text-sm text-gray-400 mb-2">Escolha a nova data e horário para a sua aula experimental.</p>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold mb-1 text-yellow-400 uppercase">Nova Data</label>
+                            <input type="date" id="manageExpDate" min="2026-04-13" class="w-full bg-gray-800 border border-gray-700 text-white rounded p-3 focus:outline-none focus:border-yellow-500 transition [color-scheme:dark]">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold mb-1 text-yellow-400 uppercase">Horário</label>
+                            <select id="manageExpTime" disabled class="w-full bg-gray-800 border border-gray-700 text-white rounded p-3 focus:outline-none focus:border-yellow-500 transition disabled:opacity-50">
+                                <option value="" disabled selected>Escolha a data...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 mt-4">
+                        <button type="button" onclick="document.getElementById('manage-step-3').classList.add('hidden'); document.getElementById('manage-step-2').classList.remove('hidden');" class="w-1/3 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-lg uppercase transition">
+                            Voltar
+                        </button>
+                        <button type="button" onclick="window.confirmReschedule()" id="btnConfirmReschedule" class="w-2/3 bg-yellow-500 hover:bg-yellow-400 text-brand-dark font-bold py-3 rounded-lg uppercase tracking-wider transition shadow-md flex justify-center items-center gap-2">
+                            <i class="fa-solid fa-check"></i> Confirmar
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <!-- Image Lightbox Modal -->
     <div id="lightbox-modal" class="fixed inset-0 z-[110] hidden bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm opacity-0 transition-opacity duration-300" onclick="window.closeLightbox()">
         <button onclick="window.closeLightbox()" class="absolute top-6 right-6 text-white hover:text-brand-red text-4xl transition focus:outline-none z-50">&times;</button>
@@ -996,6 +1082,9 @@
             btt.addEventListener('click', () => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
+            
+            // Instancia máscara de CPF para a janela de remarcação
+            applyCpfMask('manageExpCpf', null);
         });
 
         // Sistema Global de Alertas Customizados
@@ -1307,7 +1396,7 @@
                 // Kids II
                 if ([1, 3, 5].includes(dayOfWeek)) times = ['16:30'];
             } else if (age >= 12) {
-                // Adultos (Removido 12h30, Ter/Qui para 20h00)
+                // Adultos (Ter/Qui = 20:00)
                 if ([1, 3, 5].includes(dayOfWeek)) times = ['10:30', '18:00'];
                 else if ([2, 4].includes(dayOfWeek)) times = ['20:00'];
             }
@@ -1445,13 +1534,14 @@
                 
                 let isDuplicate = false;
                 snapCpf.forEach(doc => {
-                    if(doc.data().name.toLowerCase().trim() === name.toLowerCase().trim()) {
+                    const status = doc.data().status;
+                    if(doc.data().name.toLowerCase().trim() === name.toLowerCase().trim() && (status === 'Agendado' || status === 'Faltou' || status === 'Não Compareceu')) {
                         isDuplicate = true;
                     }
                 });
 
                 if (isDuplicate) {
-                    window.customAlert("Este aluno (mesmo Nome e CPF) já possui um agendamento experimental anterior. Por norma, permitimos apenas uma aula experimental gratuita por pessoa. Caso necessite remarcar, contacte-nos pelo WhatsApp.");
+                    window.customAlert("Este aluno já possui um agendamento ativo ou uma falta registrada no sistema. Por favor, utilize a opção 'Já tem um agendamento e deseja remarcar?' no final do formulário para escolher uma nova data.");
                     btn.innerHTML = originalBtnText; btn.disabled = false; return;
                 }
 
@@ -1530,6 +1620,226 @@
             document.getElementById('expSuccessModal').classList.add('hidden');
         };
 
+        // ==========================================
+        // GESTÃO DO AGENDAMENTO (CANCELAR/REMARCAR)
+        // ==========================================
+        let currentManageExpId = null;
+        let currentManageExpData = null;
+
+        window.openManageExpModal = function() {
+            document.getElementById('manage-step-1').classList.remove('hidden');
+            document.getElementById('manage-step-2').classList.add('hidden');
+            document.getElementById('manage-step-3').classList.add('hidden');
+            document.getElementById('manageExpCpf').value = '';
+            document.getElementById('manageExpModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        window.closeManageExpModal = function() {
+            document.getElementById('manageExpModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        window.searchExpByCpf = async function() {
+            const cpf = document.getElementById('manageExpCpf').value;
+            if(!isValidCPF(cpf)) return window.customAlert("CPF inválido.");
+
+            const btn = document.getElementById('btnSearchExp');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> A buscar...';
+            btn.disabled = true;
+
+            try {
+                if (!window.firebaseInitialized) throw new Error("Firebase offline.");
+
+                const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'experimental'), window.where('cpf', '==', cpf));
+                const snap = await window.getDocs(q);
+
+                let found = null;
+                let foundId = null;
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    if(d.status === 'Agendado' || d.status === 'Faltou' || d.status === 'Não Compareceu') {
+                        if (!found || d.status === 'Agendado') {
+                            found = d;
+                            foundId = doc.id;
+                        }
+                    }
+                });
+
+                if(!found) {
+                    window.customAlert("Nenhum agendamento ativo ou falta foi encontrado para o CPF informado.");
+                    return;
+                }
+
+                currentManageExpId = foundId;
+                currentManageExpData = found;
+
+                let statusBadge = '';
+                if (found.status === 'Faltou' || found.status === 'Não Compareceu') {
+                    statusBadge = `<span class="bg-red-500 text-white px-2 py-0.5 rounded text-[10px] ml-2 uppercase shadow-sm">Faltou</span>`;
+                }
+
+                document.getElementById('manage-info-name').innerHTML = `${found.name} ${statusBadge}`;
+                document.getElementById('manage-info-date').innerText = found.date.split('-').reverse().join('/');
+                document.getElementById('manage-info-time').innerText = found.time;
+
+                document.getElementById('manage-step-1').classList.add('hidden');
+                document.getElementById('manage-step-2').classList.remove('hidden');
+
+            } catch (e) {
+                console.error(e);
+                window.customAlert("Erro ao buscar o agendamento no sistema.");
+            } finally {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        }
+
+        window.cancelScheduling = async function() {
+            if(!confirm("Tem a certeza que deseja cancelar a sua aula experimental?")) return;
+            try {
+                await window.updateDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'experimental', currentManageExpId), {
+                    status: 'Cancelado'
+                });
+                window.customAlert("O seu agendamento foi cancelado com sucesso. Esperamos recebê-lo noutra altura!");
+                window.closeManageExpModal();
+            } catch(e) {
+                console.error(e);
+                window.customAlert("Erro ao cancelar o agendamento.");
+            }
+        }
+
+        window.showRescheduleForm = function() {
+            document.getElementById('manage-step-2').classList.add('hidden');
+            document.getElementById('manage-step-3').classList.remove('hidden');
+            document.getElementById('manageExpDate').value = '';
+            document.getElementById('manageExpTime').innerHTML = '<option value="" disabled selected>Escolha a data primeiro...</option>';
+        }
+
+        document.getElementById('manageExpDate').addEventListener('change', async (e) => {
+            const dateVal = e.target.value;
+            const timeSelect = document.getElementById('manageExpTime');
+
+            if (!dateVal) {
+                timeSelect.innerHTML = '<option value="" disabled selected>Escolha a data primeiro...</option>';
+                timeSelect.disabled = true;
+                return;
+            }
+
+            const age = calculateAgeFromDate(currentManageExpData.dob); 
+            const [y, m, d] = dateVal.split('-');
+            const dateObj = new Date(y, m - 1, d);
+            const dayOfWeek = dateObj.getDay();
+
+            timeSelect.innerHTML = '<option value="" disabled selected>Consultando horários...</option>';
+            timeSelect.disabled = true;
+
+            let times = [];
+
+            if (age >= 4 && age <= 7) {
+                if ([1, 3, 5].includes(dayOfWeek)) times = ['15:00'];
+            } else if (age >= 8 && age <= 11) {
+                if ([1, 3, 5].includes(dayOfWeek)) times = ['16:30'];
+            } else if (age >= 12) {
+                if ([1, 3, 5].includes(dayOfWeek)) times = ['10:30', '18:00'];
+                else if ([2, 4].includes(dayOfWeek)) times = ['20:00'];
+            }
+
+            if(times.length === 0) {
+                timeSelect.innerHTML = '<option value="" disabled selected>Sem turmas neste dia</option>';
+                return;
+            }
+
+            try {
+                timeSelect.innerHTML = '<option value="" disabled selected>Selecione o horário...</option>';
+
+                for(let t of times) {
+                    const q = window.query(
+                        window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'experimental'),
+                        window.where('date', '==', dateVal),
+                        window.where('time', '==', t),
+                        window.where('status', '==', 'Agendado')
+                    );
+                    const snap = await window.getDocs(q);
+                    let count = snap.size;
+
+                    const opt = document.createElement('option');
+                    opt.value = t;
+                    if(count >= 10) {
+                        opt.text = `${t} - LOTADO (10/10 vagas)`;
+                        opt.disabled = true;
+                    } else {
+                        opt.text = `${t} - Disponível (${10 - count} vagas)`;
+                    }
+                    timeSelect.appendChild(opt);
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                timeSelect.disabled = false;
+            }
+        });
+
+        window.confirmReschedule = async function() {
+            const newDate = document.getElementById('manageExpDate').value;
+            const newTime = document.getElementById('manageExpTime').value;
+
+            if(!newDate || !newTime) return window.customAlert("Por favor, selecione uma data e horário válidos para efetuar a remarcação.");
+
+            const btn = document.getElementById('btnConfirmReschedule');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+            btn.disabled = true;
+
+            const age = calculateAgeFromDate(currentManageExpData.dob);
+            const [y, m, d] = newDate.split('-');
+            const dayOfWeek = new Date(y, m - 1, d).getDay();
+            let allowedTimes = [];
+
+            if (age >= 4 && age <= 7) {
+                if ([1, 3, 5].includes(dayOfWeek)) allowedTimes = ['15:00'];
+            } else if (age >= 8 && age <= 11) {
+                if ([1, 3, 5].includes(dayOfWeek)) allowedTimes = ['16:30'];
+            } else if (age >= 12) {
+                if ([1, 3, 5].includes(dayOfWeek)) allowedTimes = ['10:30', '18:00'];
+                else if ([2, 4].includes(dayOfWeek)) allowedTimes = ['20:00'];
+            }
+
+            if (!allowedTimes.includes(newTime)) {
+                window.customAlert("O horário selecionado não é válido. Escolha novamente.");
+                btn.innerHTML = originalText; btn.disabled = false; return;
+            }
+
+            try {
+                const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'experimental'), window.where('date', '==', newDate), window.where('time', '==', newTime), window.where('status', '==', 'Agendado'));
+                const snap = await window.getDocs(q);
+
+                // Previne lotação, a não ser que seja a pessoa a remarcar para a mesma hora (raro mas possível)
+                let isSelf = false;
+                snap.forEach(doc => { if(doc.id === currentManageExpId) isSelf = true; });
+
+                if(snap.size >= 10 && !isSelf) {
+                    window.customAlert("Este horário esgotou as vagas. Por favor escolha outro.");
+                    btn.innerHTML = originalText; btn.disabled = false; return;
+                }
+
+                await window.updateDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'experimental', currentManageExpId), {
+                    date: newDate,
+                    time: newTime,
+                    status: 'Agendado'
+                });
+
+                window.customAlert("Remarcação efetuada com sucesso!");
+                window.closeManageExpModal();
+
+            } catch (e) {
+                console.error(e);
+                window.customAlert("Erro ao efetuar a remarcação. Tente mais tarde.");
+            } finally {
+                btn.innerHTML = originalText; btn.disabled = false;
+            }
+        }
     </script>
 </body>
 </html>
