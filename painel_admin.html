@@ -10054,6 +10054,7 @@
       // ACESSO E SEGURANÇA
       let isAdminUnlocked =
         localStorage.getItem("tanque_admin_unlocked") === "true";
+      let isValidatingPin = false;
 
       function checkAdminAccess(callback) {
         if (isAdminUnlocked) {
@@ -10094,38 +10095,62 @@
         if (titleEl) titleEl.innerText = "Acesso Administrativo";
         const descEl = document.getElementById("pin-modal-desc");
         if (descEl) descEl.innerText = "Insira o PIN Administrativo para desbloquear.";
+        const pinInput = document.getElementById("pin-input");
+        if (pinInput) pinInput.value = "";
         window.pinSuccessCallback = null;
       };
 
       window.validatePin = () => {
-        const pin = document.getElementById("pin-input").value;
+        if (isValidatingPin) return;
+        const pinInput = document.getElementById("pin-input");
+        const pin = pinInput ? pinInput.value.trim() : "";
         const correctPin = localStorage.getItem("tanque_admin_pin") || "2573";
         if (pin === correctPin) {
+          isValidatingPin = true;
           isAdminUnlocked = true;
           localStorage.setItem("tanque_admin_unlocked", "true");
-          window.closePinModal();
 
-          if (window.pinSuccessCallback) {
-            const cb = window.pinSuccessCallback;
-            window.pinSuccessCallback = null;
-            if (cb.isSettings) {
-              sessionStorage.setItem("pending_admin_action", "open_settings");
-            } else if (cb.viewId) {
-              sessionStorage.setItem("pending_admin_action", "switch_view");
-              sessionStorage.setItem(
-                "pending_admin_viewId",
-                cb.viewId,
-              );
-            }
-            cb();
-            if (cb.preventReload) {
-              return;
-            }
+          // Resgatar o callback de sucesso antes de fechar o modal
+          const cb = window.pinSuccessCallback;
+          window.pinSuccessCallback = null;
+
+          // Fechar modal do PIN sem perder o callback
+          const modal = document.getElementById("pin-modal");
+          if (modal) {
+            modal.classList.remove("flex");
+            modal.classList.add("hidden");
+          }
+          const titleEl = document.getElementById("pin-modal-title");
+          if (titleEl) titleEl.innerText = "Acesso Administrativo";
+          const descEl = document.getElementById("pin-modal-desc");
+          if (descEl) descEl.innerText = "Insira o PIN Administrativo para desbloquear.";
+          if (pinInput) pinInput.value = "";
+
+          // Atualizar interface administrativa dinamicamente sem recarregar a página
+          if (typeof window.removeRestrictedView === "function") {
+            window.removeRestrictedView();
           }
 
-          window.customAlert("Acesso Administrativo Desbloqueado!");
-          setTimeout(() => location.reload(), 1000);
+          if (cb) {
+            if (cb.isSettings) {
+              if (typeof window.openSettingsModal === "function") window.openSettingsModal();
+            } else if (cb.viewId) {
+              if (typeof window.switchMainView === "function") window.switchMainView(cb.viewId);
+            }
+            try {
+              cb();
+            } catch (err) {
+              console.error("Erro ao executar callback após PIN:", err);
+            }
+          } else {
+            window.customAlert("Acesso Administrativo Desbloqueado com sucesso!");
+          }
+
+          setTimeout(() => {
+            isValidatingPin = false;
+          }, 400);
         } else {
+          if (pinInput) pinInput.value = "";
           window.customAlert("PIN Incorreto!");
         }
       };
@@ -10276,6 +10301,29 @@
           setTimeout(() => window.switchMainView("attendance"), 100);
         }
       }
+
+      function removeRestrictedView() {
+        const unsetRestricted = (id, defaultOnClick) => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.classList.remove("opacity-60", "text-gray-400");
+            const lockIcon = el.querySelector(".fa-lock");
+            if (lockIcon) lockIcon.remove();
+            el.onclick = defaultOnClick;
+          }
+        };
+        unsetRestricted("nav-finance", () => window.switchMainView("finance"));
+        unsetRestricted("nav-settings", () => window.openSettingsModal());
+
+        const roleBadge = document.getElementById("role-badge");
+        if (roleBadge)
+          roleBadge.innerHTML =
+            '<i class="fa-solid fa-shield-halved mr-1"></i> Painel Admin';
+
+        const userAvatar = document.getElementById("user-avatar");
+        if (userAvatar) userAvatar.innerText = "A";
+      }
+      window.removeRestrictedView = removeRestrictedView;
 
       try {
         emailjs.init("joP6USyQXdqGI3GN5");
@@ -10839,7 +10887,17 @@
       };
 
       // DETALHES, PROGRESSO E EDIÇÃO
-      window.revealedCardStudents = new Set();
+      try {
+        const savedRevealed = JSON.parse(sessionStorage.getItem("tanque_revealed_cards") || "[]");
+        window.revealedCardStudents = new Set(savedRevealed);
+      } catch (e) {
+        window.revealedCardStudents = new Set();
+      }
+      window.saveRevealedCards = () => {
+        try {
+          sessionStorage.setItem("tanque_revealed_cards", JSON.stringify([...window.revealedCardStudents]));
+        } catch (e) {}
+      };
 
       window.renderStudentCardBox = (s, forceUnlocked = null) => {
         const cardBox = document.getElementById("detail-card-status-box");
@@ -11020,6 +11078,7 @@
         const onPinSuccess = () => {
           if (!window.revealedCardStudents) window.revealedCardStudents = new Set();
           window.revealedCardStudents.add(studentId);
+          if (typeof window.saveRevealedCards === "function") window.saveRevealedCards();
 
           window.renderStudentCardBox(s, true);
           if (andCopy) {
@@ -11036,6 +11095,11 @@
           }
         };
         onPinSuccess.preventReload = true;
+
+        if (isAdminUnlocked) {
+          onPinSuccess();
+          return;
+        }
 
         window.openPinModal(
           onPinSuccess,
@@ -11055,6 +11119,7 @@
         const onPinSuccess = () => {
           if (!window.revealedCardStudents) window.revealedCardStudents = new Set();
           window.revealedCardStudents.add(studentId);
+          if (typeof window.saveRevealedCards === "function") window.saveRevealedCards();
 
           const detailsModal = document.getElementById("details-modal");
           if (detailsModal && !detailsModal.classList.contains("hidden")) {
@@ -11064,6 +11129,11 @@
           window.openCardViewModal(studentId);
         };
         onPinSuccess.preventReload = true;
+
+        if (isAdminUnlocked) {
+          onPinSuccess();
+          return;
+        }
 
         window.openPinModal(
           onPinSuccess,
@@ -11152,6 +11222,7 @@
       window.lockCard = (studentId) => {
         if (window.revealedCardStudents) {
           window.revealedCardStudents.delete(studentId);
+          if (typeof window.saveRevealedCards === "function") window.saveRevealedCards();
         }
         const s = (window.students || []).find((st) => st.id === studentId);
         if (s) {
@@ -11365,7 +11436,7 @@
           }
 
           // CREDIT CARD RECURRENT DETAILS (PIN PROTECTED)
-          window.renderStudentCardBox(s, false);
+          window.renderStudentCardBox(s);
 
           document.getElementById("detail-qr-image").src =
             `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${id}`;
@@ -21614,17 +21685,20 @@ Belém-PA, [DATA_ATUAL].
           maxlength="4"
           placeholder="••••"
           class="w-full text-center text-3xl tracking-[0.5em] py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-brand-red outline-none transition mb-6 bg-gray-50 dark:bg-gray-900 dark:text-white font-mono"
-          onkeyup="if (this.value.length === 4) window.validatePin();"
+          oninput="if (this.value.length === 4) window.validatePin();"
+          onkeydown="if (event.key === 'Enter') { event.preventDefault(); window.validatePin(); }"
         />
 
         <div class="flex gap-3">
           <button
+            type="button"
             onclick="window.closePinModal()"
             class="flex-1 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-bold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition"
           >
             Cancelar
           </button>
           <button
+            type="button"
             onclick="window.validatePin()"
             class="flex-1 py-3 bg-brand-red text-white font-bold rounded-xl hover:bg-red-700 transition"
           >
