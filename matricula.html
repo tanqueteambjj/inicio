@@ -2113,6 +2113,48 @@ DADOS RESUMIDOS DO ALUNO:
                     const recurring = document.getElementById('reg-card-recurring')?.checked || false;
                     const acceptTerms = document.getElementById('reg-card-terms')?.checked || false;
 
+                    const sameAddress = document.getElementById('reg-card-same-address')?.checked ?? true;
+                    let billingAddress = null;
+                    if (sameAddress) {
+                        billingAddress = {
+                            sameAsRegistration: true,
+                            cep: cep,
+                            street: document.getElementById('reg-address')?.value.trim() || '',
+                            number: addressNumber || '',
+                            complement: '',
+                            neighborhood: '',
+                            city: '',
+                            state: '',
+                            fullAddress: address
+                        };
+                    } else {
+                        const bCep = (document.getElementById('reg-card-billing-cep')?.value || '').trim();
+                        const bStreet = (document.getElementById('reg-card-billing-street')?.value || '').trim();
+                        const bNum = (document.getElementById('reg-card-billing-number')?.value || '').trim();
+                        const bComp = (document.getElementById('reg-card-billing-complement')?.value || '').trim();
+                        const bNeigh = (document.getElementById('reg-card-billing-neighborhood')?.value || '').trim();
+                        const bCity = (document.getElementById('reg-card-billing-city')?.value || '').trim();
+                        const bState = (document.getElementById('reg-card-billing-state')?.value || '').trim();
+
+                        let fullBAddress = bStreet;
+                        if (bNum) fullBAddress += `, Nº ${bNum}`;
+                        if (bComp) fullBAddress += ` (${bComp})`;
+                        if (bNeigh) fullBAddress += ` - ${bNeigh}`;
+                        if (bCity) fullBAddress += ` - ${bCity}/${bState}`;
+
+                        billingAddress = {
+                            sameAsRegistration: false,
+                            cep: bCep,
+                            street: bStreet,
+                            number: bNum,
+                            complement: bComp,
+                            neighborhood: bNeigh,
+                            city: bCity,
+                            state: bState,
+                            fullAddress: fullBAddress
+                        };
+                    }
+
                     cardDetails = {
                         holderName: holder,
                         cardNumber: numberRaw,
@@ -2120,7 +2162,9 @@ DADOS RESUMIDOS DO ALUNO:
                         expiry: expiry,
                         cvv: cvv,
                         recurringDiscount: recurring,
-                        acceptTerms: acceptTerms
+                        acceptTerms: acceptTerms,
+                        sameAddress: sameAddress,
+                        billingAddress: billingAddress
                     };
                 }
 
@@ -3174,9 +3218,88 @@ DADOS RESUMIDOS DO ALUNO:
                         if (!data.erro) {
                             const addressInput = document.getElementById('reg-address');
                             addressInput.value = `${data.logradouro}, ${data.bairro} - ${data.localidade}/${data.uf}`;
+                            if (typeof window.updateBillingAddressFromStudent === 'function') {
+                                window.updateBillingAddressFromStudent();
+                            }
                         }
                     }
                 } catch (e) {}
+            }
+        };
+
+        window.handleSameAddressChange = (isSame) => {
+            const customFields = document.getElementById('billing-address-custom-fields');
+            const previewEl = document.getElementById('reg-card-same-address-preview');
+            if (isSame) {
+                if (customFields) customFields.classList.add('hidden');
+                window.updateBillingAddressFromStudent();
+            } else {
+                if (customFields) customFields.classList.remove('hidden');
+                if (previewEl) {
+                    previewEl.innerText = "Informe abaixo os dados do endereço da fatura deste cartão:";
+                }
+                const cepVal = document.getElementById('reg-cep')?.value.trim() || '';
+                const addrVal = document.getElementById('reg-address')?.value.trim() || '';
+                const numVal = document.getElementById('reg-number')?.value.trim() || '';
+
+                const bCep = document.getElementById('reg-card-billing-cep');
+                const bStreet = document.getElementById('reg-card-billing-street');
+                const bNum = document.getElementById('reg-card-billing-number');
+
+                if (bCep && !bCep.value && cepVal) bCep.value = cepVal;
+                if (bStreet && !bStreet.value && addrVal) bStreet.value = addrVal;
+                if (bNum && !bNum.value && numVal) bNum.value = numVal;
+            }
+        };
+
+        window.updateBillingAddressFromStudent = () => {
+            const previewEl = document.getElementById('reg-card-same-address-preview');
+            const addrVal = document.getElementById('reg-address')?.value.trim() || '';
+            const numVal = document.getElementById('reg-number')?.value.trim() || '';
+            const cepVal = document.getElementById('reg-cep')?.value.trim() || '';
+
+            let summary = "";
+            if (addrVal) {
+                summary = addrVal;
+                if (numVal) summary += `, Nº ${numVal}`;
+                if (cepVal) summary += ` (CEP: ${cepVal})`;
+            }
+            if (previewEl) {
+                previewEl.innerText = summary
+                    ? `Endereço vinculado: ${summary}`
+                    : "Os dados de cobrança serão os mesmos informados nos Dados Pessoais da matrícula.";
+            }
+        };
+
+        window.buscarCEPCobranca = async (cep) => {
+            if (!cep) return;
+            const clean = cep.replace(/\D/g, "");
+            const loader = document.getElementById('billing-cep-loader');
+            if (clean.length === 8) {
+                if (loader) loader.classList.remove('hidden');
+                try {
+                    const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (!data.erro) {
+                            const streetInput = document.getElementById('reg-card-billing-street');
+                            const neighInput = document.getElementById('reg-card-billing-neighborhood');
+                            const cityInput = document.getElementById('reg-card-billing-city');
+                            const stateInput = document.getElementById('reg-card-billing-state');
+                            const numInput = document.getElementById('reg-card-billing-number');
+
+                            if (streetInput) streetInput.value = data.logradouro || '';
+                            if (neighInput) neighInput.value = data.bairro || '';
+                            if (cityInput) cityInput.value = data.localidade || '';
+                            if (stateInput) stateInput.value = data.uf || '';
+                            if (numInput && !numInput.value) numInput.focus();
+                        }
+                    }
+                } catch (e) {
+                    console.error("Erro busca CEP cobrança:", e);
+                } finally {
+                    if (loader) loader.classList.add('hidden');
+                }
             }
         };
 
