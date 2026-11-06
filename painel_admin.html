@@ -42,7 +42,7 @@
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
     <!-- Chart.js for data visualization -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" onload="if (window.currentView === 'marketing' && typeof window.renderChurnReport === 'function') window.renderChurnReport();"></script>
 
     <link
       href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&display=swap"
@@ -322,6 +322,15 @@
         </a>
         <a
           href="#"
+          onclick="window.switchMainView('marketing')"
+          id="nav-marketing"
+          class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold"
+        >
+          <i class="fa-solid fa-chart-pie w-6"></i>
+          <span class="ml-2">Marketing & Aquisição</span>
+        </a>
+        <a
+          href="#"
           onclick="window.openSettingsModal()"
           id="nav-settings"
           class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-all font-bold"
@@ -428,62 +437,6 @@
       <main
         class="flex-1 overflow-x-hidden overflow-y-auto p-4 pb-24 md:p-6 md:pb-24 relative"
       >
-        <!-- Banner de Contingência / Status do Banco de Dados -->
-        <div
-          id="db-status-banner"
-          class="hidden mb-4 p-3.5 sm:p-4 bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-300 dark:border-amber-700/60 rounded-xl shadow-md no-print"
-        >
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200">
-            <div class="flex items-start gap-2.5">
-              <div class="w-7 h-7 rounded-lg bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 flex items-center justify-center text-sm shrink-0 mt-0.5">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-              </div>
-              <div>
-                <p id="db-status-banner-text" class="leading-relaxed">
-                  <strong>Modo de Contingência (Local):</strong> O banco de dados na nuvem (Google Firebase) está indisponível ou suspenso (<code class="bg-amber-100 dark:bg-amber-900 px-1 py-0.5 rounded font-mono text-[11px]">CONSUMER_SUSPENDED</code>). Seus dados locais estão ativos no navegador.
-                </p>
-              </div>
-            </div>
-            <div class="flex flex-wrap items-center gap-2 shrink-0 self-end md:self-center">
-              <button
-                onclick="window.openFirebaseHelpModal()"
-                class="px-2.5 py-1.5 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-amber-300 dark:border-amber-700 hover:bg-amber-100 font-bold flex items-center gap-1 shadow-sm transition"
-              >
-                <i class="fa-solid fa-circle-question text-amber-600"></i> Como Reativar
-              </button>
-              <button
-                onclick="window.exportStudentsBackup()"
-                class="px-2.5 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1 shadow-sm transition"
-                title="Salvar cópia de segurança em seu computador"
-              >
-                <i class="fa-solid fa-file-export"></i> Exportar Backup
-              </button>
-              <button
-                onclick="window.triggerImportBackup()"
-                class="px-2.5 py-1.5 rounded bg-sky-600 hover:bg-sky-700 text-white font-bold flex items-center gap-1 shadow-sm transition"
-                title="Restaurar dados a partir de arquivo .JSON"
-              >
-                <i class="fa-solid fa-file-import"></i> Importar Backup
-              </button>
-              <button
-                onclick="window.loadData()"
-                class="px-2.5 py-1.5 rounded bg-amber-600 hover:bg-amber-700 text-white font-bold flex items-center gap-1 shadow-sm transition"
-                title="Tentar sincronizar novamente com o Firebase"
-              >
-                <i class="fa-solid fa-rotate"></i> Reconectar
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <input
-          type="file"
-          id="import-backup-file-input"
-          accept=".json,application/json"
-          class="hidden"
-          onchange="window.handleBackupFileSelected(event)"
-        />
-
         <!-- VIEW: ALUNOS -->
         <div id="view-students" class="animate-fade-in">
           <div
@@ -674,22 +627,6 @@
                 >
                   <i class="fa-solid fa-plus"></i>
                   <span class="hidden sm:inline">NOVO ALUNO</span>
-                </button>
-                <button
-                  onclick="window.exportStudentsBackup()"
-                  class="text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-200 text-xs sm:text-sm bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 px-2.5 py-1.5 sm:px-3 rounded shadow-sm font-bold no-print flex items-center gap-1"
-                  title="Exportar Alunos em arquivo .JSON"
-                >
-                  <i class="fa-solid fa-file-export"></i>
-                  <span class="hidden sm:inline">BACKUP</span>
-                </button>
-                <button
-                  onclick="window.triggerImportBackup()"
-                  class="text-sky-700 dark:text-sky-400 hover:text-sky-900 dark:hover:text-sky-200 text-xs sm:text-sm bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-800 px-2.5 py-1.5 sm:px-3 rounded shadow-sm font-bold no-print flex items-center gap-1"
-                  title="Importar Alunos de arquivo .JSON"
-                >
-                  <i class="fa-solid fa-file-import"></i>
-                  <span class="hidden sm:inline">RESTAURAR</span>
                 </button>
                 <button
                   onclick="window.loadData()"
@@ -1693,6 +1630,263 @@
                 Nenhum registro encontrado para este período.
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- VIEW: MARKETING & AQUISIÇÃO -->
+        <div id="view-marketing" class="hidden animate-fade-in">
+          <div
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-t-4 border-indigo-500 max-w-6xl mx-auto border border-gray-200 dark:border-gray-700"
+          >
+            <!-- Header -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-6 border-b border-gray-100 dark:border-gray-700">
+              <div>
+                <h3 class="font-display text-xl font-bold text-gray-800 dark:text-white uppercase">
+                  <i class="fa-solid fa-chart-pie mr-2 text-indigo-500"></i>
+                  Estatísticas de Marketing & Aquisição
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  Analise as fontes de captação de alunos e métricas de conversão.
+                </p>
+              </div>
+              <button
+                onclick="window.printMarketingReport()"
+                class="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg shadow-sm transition-all focus:outline-none no-print"
+              >
+                <i class="fa-solid fa-print"></i>
+                <span>IMPRIMIR RELATÓRIO</span>
+              </button>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <!-- Total Alunos -->
+              <div class="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-indigo-100 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-500 text-xl shrink-0">
+                  <i class="fa-solid fa-user-graduate"></i>
+                </div>
+                <div>
+                  <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total de Alunos</div>
+                  <div class="text-2xl font-black text-gray-800 dark:text-white" id="mkt-kpi-alunos">0</div>
+                </div>
+              </div>
+
+              <!-- Total Pré-Matrículas -->
+              <div class="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-yellow-100 dark:bg-yellow-950/40 flex items-center justify-center text-yellow-500 text-xl shrink-0">
+                  <i class="fa-solid fa-id-card"></i>
+                </div>
+                <div>
+                  <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Pré-Matrículas</div>
+                  <div class="text-2xl font-black text-gray-800 dark:text-white" id="mkt-kpi-leads">0</div>
+                </div>
+              </div>
+
+              <!-- Alunos com Origem Identificada -->
+              <div class="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-500 text-xl shrink-0">
+                  <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div>
+                  <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Origem Mapeada</div>
+                  <div class="text-2xl font-black text-gray-800 dark:text-white" id="mkt-kpi-mapeados">0</div>
+                </div>
+              </div>
+
+              <!-- Conversion Rate -->
+              <div class="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-brand-red/10 flex items-center justify-center text-brand-red text-xl shrink-0">
+                  <i class="fa-solid fa-arrow-up-right-dots"></i>
+                </div>
+                <div>
+                  <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Mapeamento de Origem</div>
+                  <div class="text-2xl font-black text-gray-800 dark:text-white" id="mkt-kpi-conversion">0%</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Two Column Chart Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <!-- Active Students Acquisition Channels -->
+              <div class="border border-gray-100 dark:border-gray-750 rounded-xl p-5 bg-gray-50/50 dark:bg-gray-900/10">
+                <div class="flex items-center gap-2 mb-4">
+                  <span class="w-3 h-3 bg-indigo-500 rounded-full"></span>
+                  <h4 class="font-display font-bold text-gray-700 dark:text-gray-300 uppercase text-sm tracking-wider">Origem dos Alunos Cadastrados</h4>
+                </div>
+                <div class="space-y-4" id="mkt-active-channels-list">
+                  <!-- JS Populated -->
+                </div>
+              </div>
+
+              <!-- Pre-Registration Acquisition Channels -->
+              <div class="border border-gray-100 dark:border-gray-750 rounded-xl p-5 bg-gray-50/50 dark:bg-gray-900/10">
+                <div class="flex items-center gap-2 mb-4">
+                  <span class="w-3 h-3 bg-yellow-500 rounded-full"></span>
+                  <h4 class="font-display font-bold text-gray-700 dark:text-gray-300 uppercase text-sm tracking-wider">Origem das Pré-Matrículas</h4>
+                </div>
+                <div class="space-y-4" id="mkt-leads-channels-list">
+                  <!-- JS Populated -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Converted vs Lost overview -->
+            <div class="mt-8 p-5 bg-indigo-50/40 dark:bg-indigo-950/10 border border-indigo-100 dark:border-indigo-900/30 rounded-xl">
+              <h4 class="font-display font-bold text-gray-800 dark:text-gray-200 uppercase text-xs tracking-wider mb-2">Resumo de Atração Comercial</h4>
+              <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+                Este relatório compila os canais declarados pelos alunos no momento do cadastro ou da pré-matrícula pelo site. O mapeamento permite focar os investimentos de publicidade nos canais que geram o maior retorno real de alunos frequentes.
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                <div class="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                  <div class="text-[10px] text-gray-400 font-bold uppercase">Melhor Canal (Alunos)</div>
+                  <div class="text-base font-black text-indigo-600 dark:text-indigo-400 uppercase mt-1" id="mkt-best-active-channel">-</div>
+                </div>
+                <div class="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                  <div class="text-[10px] text-gray-400 font-bold uppercase">Melhor Canal (Pré-Matrículas)</div>
+                  <div class="text-base font-black text-yellow-600 dark:text-yellow-400 uppercase mt-1" id="mkt-best-lead-channel">-</div>
+                </div>
+                <div class="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                  <div class="text-[10px] text-gray-400 font-bold uppercase">Total de Interações Registradas</div>
+                  <div class="text-base font-black text-emerald-600 dark:text-emerald-400 uppercase mt-1" id="mkt-total-interactions">-</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SEÇÃO: GRÁFICO DE LINHA - TAXA DE EVASÃO MÊS A MÊS -->
+            <div class="mt-8 p-5 sm:p-6 bg-white dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm">
+              <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-700 mb-6">
+                <div>
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center text-lg shadow-xs shrink-0">
+                      <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div>
+                      <h4 class="font-display font-bold text-gray-800 dark:text-white uppercase text-base tracking-wider flex items-center gap-2 flex-wrap">
+                        Taxa de Evasão de Alunos Mês a Mês
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 font-bold uppercase">
+                          Métrica de Churn
+                        </span>
+                      </h4>
+                      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        Acompanhamento mensal da evasão calculado a partir da data de matrícula e status de arquivamento dos alunos.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Seletor de Período -->
+                <div class="flex items-center gap-1.5 self-start md:self-auto bg-gray-100 dark:bg-gray-700/60 rounded-xl p-1 text-xs font-semibold">
+                  <button
+                    type="button"
+                    id="mkt-churn-period-6"
+                    onclick="window.setChurnChartPeriod(6)"
+                    class="px-3 py-1.5 rounded-lg transition-colors text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    6 Meses
+                  </button>
+                  <button
+                    type="button"
+                    id="mkt-churn-period-12"
+                    onclick="window.setChurnChartPeriod(12)"
+                    class="px-3 py-1.5 rounded-lg transition-colors bg-white dark:bg-gray-800 text-gray-800 dark:text-white shadow-xs font-bold"
+                  >
+                    12 Meses
+                  </button>
+                  <button
+                    type="button"
+                    id="mkt-churn-period-all"
+                    onclick="window.setChurnChartPeriod('all')"
+                    class="px-3 py-1.5 rounded-lg transition-colors text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    Todo o Período
+                  </button>
+                </div>
+              </div>
+
+              <!-- KPIs de Evasão -->
+              <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                <!-- Taxa Média -->
+                <div class="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-rose-100 dark:bg-rose-950/40 flex items-center justify-center text-rose-500 text-lg shrink-0">
+                    <i class="fa-solid fa-percent"></i>
+                  </div>
+                  <div>
+                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Taxa Média de Evasão</div>
+                    <div class="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400" id="mkt-churn-kpi-avg">0.0%</div>
+                    <div class="text-[10px] text-gray-400 mt-0.5">No período selecionado</div>
+                  </div>
+                </div>
+
+                <!-- Total Evadidos -->
+                <div class="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700/60 flex items-center justify-center text-gray-600 dark:text-gray-300 text-lg shrink-0">
+                    <i class="fa-solid fa-user-xmark"></i>
+                  </div>
+                  <div>
+                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Alunos Evadidos</div>
+                    <div class="text-xl sm:text-2xl font-black text-gray-800 dark:text-white" id="mkt-churn-kpi-total-archived">0</div>
+                    <div class="text-[10px] text-gray-400 mt-0.5">Alunos arquivados</div>
+                  </div>
+                </div>
+
+                <!-- Pico de Evasão -->
+                <div class="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center text-amber-500 text-lg shrink-0">
+                    <i class="fa-solid fa-arrow-trend-up"></i>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate">Pico de Evasão</div>
+                    <div class="text-lg sm:text-xl font-black text-amber-600 dark:text-amber-400 truncate" id="mkt-churn-kpi-peak">-</div>
+                    <div class="text-[10px] text-gray-400 mt-0.5">Mês com maior evasão</div>
+                  </div>
+                </div>
+
+                <!-- Maior Retenção -->
+                <div class="bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-500 text-lg shrink-0">
+                    <i class="fa-solid fa-shield-heart"></i>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider truncate">Melhor Retenção</div>
+                    <div class="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400 truncate" id="mkt-churn-kpi-lowest">-</div>
+                    <div class="text-[10px] text-gray-400 mt-0.5">Mês com menor evasão</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Gráfico de Linha Canvas -->
+              <div class="relative w-full h-72 sm:h-80 bg-gray-50/70 dark:bg-gray-900/30 rounded-xl p-3 sm:p-4 border border-gray-100 dark:border-gray-800 mb-6">
+                <canvas id="mkt-churn-line-canvas"></canvas>
+              </div>
+
+              <!-- Tabela Detalhada Mês a Mês -->
+              <div class="border border-gray-100 dark:border-gray-750 rounded-xl overflow-hidden">
+                <div class="bg-gray-50 dark:bg-gray-800/80 px-4 py-3 border-b border-gray-100 dark:border-gray-750 flex items-center justify-between">
+                  <span class="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-table-list text-indigo-500"></i> Histórico Detalhado Mês a Mês
+                  </span>
+                  <span class="text-[11px] text-gray-500 font-medium" id="mkt-churn-cohort-count">0 meses analisados</span>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-xs">
+                    <thead>
+                      <tr class="bg-gray-100/70 dark:bg-gray-900/40 text-gray-600 dark:text-gray-400 font-bold uppercase text-[10px] tracking-wider border-b border-gray-200 dark:border-gray-700">
+                        <th class="py-2.5 px-3">Mês / Ano de Matrícula</th>
+                        <th class="py-2.5 px-3 text-center">Matrículas no Mês</th>
+                        <th class="py-2.5 px-3 text-center">Alunos Ativos</th>
+                        <th class="py-2.5 px-3 text-center">Alunos Evadidos (Arquivados)</th>
+                        <th class="py-2.5 px-3 text-right">Taxa de Evasão (%)</th>
+                        <th class="py-2.5 px-3">Nível de Alerta</th>
+                      </tr>
+                    </thead>
+                    <tbody id="mkt-churn-table-body" class="divide-y divide-gray-100 dark:divide-gray-800">
+                      <!-- JS Populated -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -4163,125 +4357,6 @@
               class="px-5 py-2 bg-yellow-500 text-brand-dark rounded text-sm font-bold hover:bg-yellow-400 shadow-md"
             >
               Salvar Alterações
-            </button>
-          </div>
-        </div>
-      </div>
-    <!-- Modal de Ajuda / Diagnóstico Firebase (CONSUMER_SUSPENDED) -->
-    <div
-      id="modal-firebase-suspension"
-      class="fixed inset-0 z-[95] hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in"
-    >
-      <div
-        class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-xl flex flex-col max-h-[90vh] overflow-hidden border-t-4 border-amber-500"
-      >
-        <!-- Modal Header -->
-        <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/60 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg">
-              <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-            <div>
-              <h3 class="font-bold text-base text-gray-800 dark:text-white leading-tight">
-                Status do Banco de Dados Google Cloud
-              </h3>
-              <p class="text-[11px] text-gray-500 dark:text-gray-400">
-                Diagnóstico de conexão Firestore & Autenticação
-              </p>
-            </div>
-          </div>
-          <button
-            onclick="window.closeFirebaseHelpModal()"
-            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-          >
-            <i class="fa-solid fa-times"></i>
-          </button>
-        </div>
-
-        <!-- Modal Body -->
-        <div class="p-6 overflow-y-auto space-y-4 text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
-          <!-- Status Banner -->
-          <div class="p-3.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl">
-            <div class="flex items-start gap-2.5">
-              <i class="fa-solid fa-circle-xmark text-red-600 dark:text-red-400 text-base mt-0.5 shrink-0"></i>
-              <div>
-                <p class="font-bold text-red-900 dark:text-red-200 text-sm mb-1">
-                  Erro Detectado: CONSUMER_SUSPENDED (HTTP 403)
-                </p>
-                <p class="text-red-800 dark:text-red-300 text-[11px]">
-                  Projeto afetado: <code class="font-mono font-bold">tanqueteambjj</code> (ID: <code>410605992451</code>). O Google Cloud suspendeu o acesso às APIs deste projeto.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Explicação -->
-          <div>
-            <h4 class="font-bold text-gray-900 dark:text-white text-sm mb-1.5 flex items-center gap-1.5">
-              <i class="fa-solid fa-circle-info text-blue-500"></i> Por que isso acontece?
-            </h4>
-            <p>
-              O status <strong>CONSUMER_SUSPENDED</strong> é emitido diretamente pelo Google Cloud quando há pendência administrativa ou financeira na conta de faturamento (Billing) vinculada ao projeto. As causas mais comuns são:
-            </p>
-            <ul class="list-disc pl-5 mt-1.5 space-y-1 text-gray-600 dark:text-gray-300 text-[11px]">
-              <li>Cartão de crédito cadastrado no Google Cloud expirou ou foi recusado pelo banco.</li>
-              <li>Fatura mensal em aberto no Google Cloud Billing.</li>
-              <li>Necessidade de confirmação de titularidade ou dados cadastrais no Google Cloud.</li>
-            </ul>
-          </div>
-
-          <!-- Passo a Passo -->
-          <div class="bg-gray-50 dark:bg-gray-700/40 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-            <h4 class="font-bold text-gray-900 dark:text-white text-sm mb-2 flex items-center gap-1.5">
-              <i class="fa-solid fa-list-check text-emerald-600"></i> Como regularizar (em 2 minutos):
-            </h4>
-            <ol class="list-decimal pl-5 space-y-1.5 text-[11px]">
-              <li>
-                Acesse o console de faturamento: 
-                <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 font-bold underline">
-                  console.cloud.google.com/billing <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
-                </a>
-              </li>
-              <li>Entre com a conta Google que gerencia a academia Tanque Team BJJ.</li>
-              <li>Selecione a conta de faturamento vinculada ao projeto <strong>tanqueteambjj</strong>.</li>
-              <li>Verifique a notificação em vermelho no topo da página e atualize a forma de pagamento (cartão de crédito).</li>
-              <li>Assim que regularizado, o Google Cloud reativa o projeto automaticamente em poucos minutos.</li>
-            </ol>
-          </div>
-
-          <!-- Proteção do Sistema -->
-          <div class="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-[11px] text-emerald-900 dark:text-emerald-200">
-            <p class="font-bold flex items-center gap-1.5 mb-1">
-              <i class="fa-solid fa-shield-halved text-emerald-600"></i> Suas operações não param:
-            </p>
-            <p>
-              O painel possui proteção de <strong>Modo Local Offline e Backup Automático</strong>. Você pode carregar alunos de emergência ou restaurar um backup JSON para continuar visualizando, matriculando e gerando relatórios normalmente.
-            </p>
-          </div>
-        </div>
-
-        <!-- Modal Footer -->
-        <div class="px-6 py-3.5 bg-gray-50 dark:bg-gray-700/60 border-t border-gray-200 dark:border-gray-700 flex flex-wrap justify-between items-center gap-2 shrink-0">
-          <a
-            href="https://console.cloud.google.com/billing"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition"
-          >
-            <i class="fa-solid fa-credit-card"></i> Abrir Google Cloud Billing
-          </a>
-          <div class="flex gap-2">
-            <button
-              onclick="window.loadData(); window.closeFirebaseHelpModal();"
-              class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition"
-            >
-              <i class="fa-solid fa-rotate"></i> Reconectar Agora
-            </button>
-            <button
-              onclick="window.closeFirebaseHelpModal()"
-              class="px-4 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 text-gray-800 dark:text-gray-200 font-bold rounded-lg text-xs transition"
-            >
-              Fechar
             </button>
           </div>
         </div>
@@ -9061,21 +9136,20 @@
       window.getPlanInfo = (planKey) => {
         if (!planKey)
           return { price: 0, short: "NÃO INFORMADO", long: "NÃO INFORMADO" };
-        if (window.PLAN_DICT && window.PLAN_DICT[planKey]) return window.PLAN_DICT[planKey];
+        if (window.PLAN_DICT[planKey]) return window.PLAN_DICT[planKey];
 
         // Fallback: search by name
         const lowerKey = String(planKey).toLowerCase();
-        if (window.PLAN_DICT && typeof window.PLAN_DICT === "object") {
-          for (const plan of Object.values(window.PLAN_DICT)) {
-            if (!plan) continue;
-            const shortLower = plan.short ? String(plan.short).toLowerCase() : "";
-            const longLower = plan.long ? String(plan.long).toLowerCase() : "";
-            if (
-              (shortLower && (lowerKey === shortLower || lowerKey.startsWith(shortLower + " - r$"))) ||
-              (longLower && (lowerKey === longLower || lowerKey.startsWith(longLower + " - r$")))
-            ) {
-              return plan;
-            }
+        for (const plan of Object.values(window.PLAN_DICT)) {
+          const shortLower = plan.short.toLowerCase();
+          const longLower = plan.long.toLowerCase();
+          if (
+            lowerKey === shortLower ||
+            lowerKey === longLower ||
+            lowerKey.startsWith(shortLower + " - r$") ||
+            lowerKey.startsWith(longLower + " - r$")
+          ) {
+            return plan;
           }
         }
 
@@ -9087,7 +9161,7 @@
         return {
           price: 0,
           short: String(planKey).toUpperCase(),
-          long: String(planKey).toUpperCase(),
+          long: "NÃO INFORMADO",
         };
       };
 
@@ -9915,15 +9989,18 @@
         });
       });
 
-      // ACESSO E SEGURANÇA (PAINEL ADMINISTRATIVO ATIVO POR PADRÃO)
-      let isAdminUnlocked = true;
-      try { localStorage.setItem("tanque_admin_unlocked", "true"); } catch (e) {}
+      // ACESSO E SEGURANÇA
+      let isAdminUnlocked =
+        localStorage.getItem("tanque_admin_unlocked") === "true";
       let isValidatingPin = false;
 
       function checkAdminAccess(callback) {
-        isAdminUnlocked = true;
-        if (callback) callback();
-        return true;
+        if (isAdminUnlocked) {
+          if (callback) callback();
+          return true;
+        }
+        window.openPinModal(callback);
+        return false;
       }
       window.checkAdminAccess = checkAdminAccess;
 
@@ -10068,40 +10145,36 @@
         const storage = getStorage(app);
         window.storage = storage;
         const initAuth = async () => {
-          if (!auth.currentUser) {
-            try {
-              if (
-                typeof __initial_auth_token !== "undefined" &&
-                __initial_auth_token
-              ) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-              } else if (typeof signInAnonymously === "function") {
-                try {
-                  await signInAnonymously(auth);
-                } catch (anonErr) {
-                  // Caso o provedor anônimo não esteja ativado no console ou haja restrição de domínio,
-                  // o app continua normalmente em modo público/local sem quebrar a execução
-                  console.warn(
-                    "Autenticação anônima não disponível no projeto (operando em modo direto):",
-                    anonErr?.code || anonErr?.message,
-                  );
-                }
-              }
-            } catch (e) {
-              console.warn("Aviso na inicialização de autenticação:", e?.code || e?.message);
-              if (
-                e?.code === "auth/requests-from-referer-blocked" ||
-                (e?.message && e.message.includes("auth/requests-from-referer-blocked"))
-              ) {
-                const currentDomain = window.location.origin;
-                window.customAlert(
-                  `ERRO DE AUTENTICAÇÃO (Firebase):\n\nO domínio atual não está autorizado.\n\nDOMÍNIO: ${currentDomain}\n\nPara corrigir:\n1. Acesse o Console do Firebase\n2. Vá em Authentication > Settings > Authorized domains\n3. Clique em "Add domain" e adicione o endereço acima.`,
-                );
-              }
+          try {
+            if (
+              typeof __initial_auth_token !== "undefined" &&
+              __initial_auth_token
+            ) {
+              await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+              await signInAnonymously(auth);
+            }
+          } catch (e) {
+            console.error("Auth error", e);
+            if (
+              e.code === "auth/requests-from-referer-blocked" ||
+              e.message.includes("auth/requests-from-referer-blocked")
+            ) {
+              const currentDomain = window.location.origin;
+              window.customAlert(
+                `ERRO DE AUTENTICAÇÃO (Firebase):\n\nO domínio atual não está autorizado.\n\nDOMÍNIO: ${currentDomain}\n\nPara corrigir:\n1. Acesse o Console do Firebase\n2. Vá em Authentication > Settings > Authorized domains\n3. Clique em "Add domain" e adicione o endereço acima.`,
+              );
             }
           }
-          if (typeof window.startApplication === "function") {
-            await window.startApplication();
+          await window.loadPlans();
+          await window.loadSchedules();
+          await window.loadAbsenceConfig?.();
+          await window.loadData();
+          await window.loadNotices();
+          await window.loadExperimentalData();
+
+          if (!isAdminUnlocked) {
+            applyRestrictedView();
           }
         };
         initAuth();
@@ -10122,7 +10195,45 @@
       }
 
       function applyRestrictedView() {
-        removeRestrictedView();
+        const setRestricted = (id, viewId = null) => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.classList.add("opacity-60", "cursor-pointer");
+            el.classList.remove("bg-brand-red", "text-white");
+            el.classList.add("text-gray-400");
+            // Usar onclick para evitar múltiplos listeners se chamado repetidamente
+            el.onclick = (e) => {
+              e.preventDefault();
+              const callback = () => {
+                if (viewId) window.switchMainView(viewId);
+                else if (id === "nav-settings") window.openSettingsModal();
+              };
+              if (viewId) callback.viewId = viewId;
+              if (id === "nav-settings") callback.isSettings = true;
+
+              checkAdminAccess(callback);
+            };
+            if (!el.querySelector(".fa-lock")) {
+              el.innerHTML +=
+                ' <i class="fa-solid fa-lock ml-auto text-[10px]"></i>';
+            }
+          }
+        };
+
+        setRestricted("nav-finance", "finance");
+        setRestricted("nav-settings");
+
+        const roleBadge = document.getElementById("role-badge");
+        if (roleBadge)
+          roleBadge.innerHTML =
+            '<i class="fa-solid fa-user-tie mr-1"></i> Painel Professor';
+
+        const userAvatar = document.getElementById("user-avatar");
+        if (userAvatar) userAvatar.innerText = "P";
+
+        if (window.currentView === "finance") {
+          setTimeout(() => window.switchMainView("attendance"), 100);
+        }
       }
 
       function removeRestrictedView() {
@@ -10534,33 +10645,26 @@
             }
           }
           if (!window.db) return;
-          try {
-            const absDoc = await getDoc(
-              doc(
-                window.db,
-                "artifacts",
-                APP_ID,
-                "public",
-                "data",
-                "settings",
-                "absence_config",
-              ),
-            );
-            if (absDoc && absDoc.exists()) {
-              const data = absDoc.data();
-              if (data && data.days) {
-                window.absenceConfig = { days: Number(data.days) };
-                localStorage.setItem("tanque_absence_threshold_days", String(data.days));
-              }
+          const absDoc = await getDoc(
+            doc(
+              window.db,
+              "artifacts",
+              APP_ID,
+              "public",
+              "data",
+              "settings",
+              "absence_config",
+            ),
+          );
+          if (absDoc.exists()) {
+            const data = absDoc.data();
+            if (data && data.days) {
+              window.absenceConfig = { days: Number(data.days) };
+              localStorage.setItem("tanque_absence_threshold_days", String(data.days));
             }
-          } catch (cloudErr) {
-            console.warn(
-              "Configuração remota de ausência indisponível (usando configuração local):",
-              cloudErr?.code || cloudErr?.message,
-            );
           }
         } catch (e) {
-          console.warn("Aviso ao carregar configuração de ausência:", e);
+          console.error("Erro ao carregar configuração de ausência:", e);
         }
       };
 
@@ -10695,565 +10799,9 @@
         }
       };
 
-      // MODAL DE AJUDA FIREBASE SUSPENSÃO
-      window.openFirebaseHelpModal = () => {
-        const m = document.getElementById("modal-firebase-suspension");
-        if (m) {
-          m.classList.remove("hidden");
-          m.classList.add("flex");
-        }
-      };
-
-      window.closeFirebaseHelpModal = () => {
-        const m = document.getElementById("modal-firebase-suspension");
-        if (m) {
-          m.classList.add("hidden");
-          m.classList.remove("flex");
-        }
-      };
-
-      // STATUS BANNER DO BANCO DE DADOS
-      window.showDbSuspendedBanner = (hasCachedData, count = 0) => {
-        const banner = document.getElementById("db-status-banner");
-        const textEl = document.getElementById("db-status-banner-text");
-        if (!banner) return;
-        banner.classList.remove("hidden");
-        if (hasCachedData) {
-          if (textEl) {
-            textEl.innerHTML = `<strong>Modo Local / Cache Ativado (${count || window.students?.length || 0} alunos carregados):</strong> O banco de dados em nuvem Google Cloud está suspenso (<code class="bg-amber-100 dark:bg-amber-900 px-1 py-0.5 rounded font-mono text-[11px]">CONSUMER_SUSPENDED</code>). Seus dados locais estão ativos no navegador e você pode continuar trabalhando.`;
-          }
-        } else {
-          if (textEl) {
-            textEl.innerHTML = `<strong>Atenção:</strong> O banco de dados em nuvem Google Cloud está suspenso (<code class="bg-amber-100 dark:bg-amber-900 px-1 py-0.5 rounded font-mono text-[11px]">CONSUMER_SUSPENDED</code>) e não há cache salvo. Ative o <strong>Modo de Emergência</strong> ou <strong>Importe um Backup</strong> para liberar o sistema imediatamente.`;
-          }
-        }
-      };
-
-      window.hideDbSuspendedBanner = () => {
-        const banner = document.getElementById("db-status-banner");
-        if (banner) banner.classList.add("hidden");
-      };
-
-      // CARD DE ERRO QUANDO NÃO HÁ NENHUM CACHE LOCAL
-      window.renderSuspendedErrorState = (err) => {
-        const tbody = document.getElementById("students-table-body");
-        if (!tbody) return;
-        const errMsg = err?.message || "CONSUMER_SUSPENDED (HTTP 403: Consumer has been suspended)";
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="9" class="p-4 sm:p-6 text-center">
-              <div class="max-w-2xl mx-auto bg-amber-50 dark:bg-gray-800 border-2 border-amber-300 dark:border-amber-600/70 rounded-2xl p-5 sm:p-6 text-left shadow-xl animate-fade-in">
-                <div class="flex items-start gap-3 sm:gap-4">
-                  <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-2xl shrink-0">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <h4 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-1">
-                      Banco de Dados Google Cloud Suspenso (CONSUMER_SUSPENDED)
-                    </h4>
-                    <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-3">
-                      O projeto Google Cloud / Firebase (<code class="font-mono bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded font-bold">tanqueteambjj</code>) foi suspenso temporariamente pela Google por pendência na conta de faturamento (Billing/cartão).
-                    </p>
-                    <div class="p-2.5 bg-white dark:bg-gray-900/60 rounded-lg border border-amber-200 dark:border-amber-800/60 mb-4 text-[11px] text-gray-600 dark:text-gray-400 break-all">
-                      <strong>Diagnóstico técnico:</strong> ${errMsg}
-                    </div>
-                    <div class="flex flex-wrap gap-2 text-xs">
-                      <button onclick="window.loadEmergencyDemoData()" class="bg-brand-red hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-sm flex items-center gap-1.5 transition transform active:scale-95">
-                        <i class="fa-solid fa-shield-halved"></i> Ativar Modo de Emergência (Carregar Alunos Modelo)
-                      </button>
-                      <button onclick="window.triggerImportBackup()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-sm flex items-center gap-1.5 transition transform active:scale-95">
-                        <i class="fa-solid fa-file-import"></i> Importar Backup (.JSON)
-                      </button>
-                      <button onclick="window.openFirebaseHelpModal()" class="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2.5 px-4 rounded-lg border dark:border-gray-600 flex items-center gap-1.5 transition">
-                        <i class="fa-solid fa-circle-question text-amber-600"></i> Como Reativar no Google Cloud
-                      </button>
-                      <button onclick="window.loadData()" class="bg-white hover:bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold py-2.5 px-3.5 rounded-lg border dark:border-gray-600 flex items-center gap-1.5 transition">
-                        <i class="fa-solid fa-rotate"></i> Tentar Novamente
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </td>
-          </tr>
-        `;
-      };
-
-      // EXPORTAR BACKUP DOS ALUNOS EM ARQUIVO JSON
-      window.exportStudentsBackup = () => {
-        const list = window.students || [];
-        if (!list.length) {
-          window.customAlert("Não há alunos carregados para exportar no momento.");
-          return;
-        }
-        try {
-          const exportData = {
-            exportDate: new Date().toISOString(),
-            app: "Tanque Team BJJ",
-            totalStudents: list.length,
-            students: list,
-          };
-          const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
-          const dlAnchor = document.createElement("a");
-          const dateStr = new Date().toISOString().slice(0, 10);
-          dlAnchor.setAttribute("href", dataStr);
-          dlAnchor.setAttribute("download", `backup_alunos_tanqueteambjj_${dateStr}.json`);
-          document.body.appendChild(dlAnchor);
-          dlAnchor.click();
-          dlAnchor.remove();
-          window.customAlert(`Backup exportado com sucesso! (${list.length} alunos salvos em arquivo .JSON)`);
-        } catch(e) {
-          console.error("Erro ao exportar backup:", e);
-          window.customAlert("Erro ao exportar backup: " + e.message);
-        }
-      };
-
-      // IMPORTAR BACKUP DE ARQUIVO JSON
-      window.triggerImportBackup = () => {
-        const input = document.getElementById("import-backup-file-input");
-        if (input) {
-          input.value = "";
-          input.click();
-        }
-      };
-
-      window.handleBackupFileSelected = (event) => {
-        const file = event.target?.files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          try {
-            const content = e.target?.result;
-            const parsed = JSON.parse(content);
-            let importedStudents = [];
-            if (Array.isArray(parsed)) {
-              importedStudents = parsed;
-            } else if (parsed && Array.isArray(parsed.students)) {
-              importedStudents = parsed.students;
-            } else {
-              throw new Error("Formato inválido. O arquivo JSON deve conter uma lista de alunos.");
-            }
-
-            if (!importedStudents.length) {
-              window.customAlert("O arquivo selecionado não contém nenhum aluno.");
-              return;
-            }
-
-            // Sanitizar dados
-            importedStudents.forEach((st, idx) => {
-              if (!st.id) st.id = "imported_" + Date.now() + "_" + idx;
-              if (st.name) st.name = String(st.name).toUpperCase();
-            });
-
-            window.students = importedStudents;
-            try {
-              localStorage.setItem("tanque_students_backup", JSON.stringify(window.students));
-            } catch(storageErr) {
-              console.warn("Aviso ao salvar backup no localStorage:", storageErr);
-            }
-
-            if (typeof window.ensureStudentMatriculas === "function") {
-              await window.ensureStudentMatriculas();
-            }
-
-            window.students.sort(
-              (a, b) =>
-                new Date(b.registrationDate || 0) -
-                new Date(a.registrationDate || 0),
-            );
-
-            window.populateTitularSelects();
-            updateStats();
-            if (window.currentView === "students") window.renderTable();
-            if (window.currentView === "attendance" && window.renderAttendanceTable) window.renderAttendanceTable();
-            if (window.renderBirthdays) window.renderBirthdays();
-
-            window.showDbSuspendedBanner(true, window.students.length);
-            window.customAlert(`Backup restaurado com sucesso! ${window.students.length} alunos carregados.`);
-          } catch(err) {
-            console.error("Erro ao importar arquivo:", err);
-            window.customAlert("Falha ao ler o arquivo JSON: " + err.message);
-          }
-        };
-        reader.readAsText(file);
-      };
-
-      // CARREGAR DADOS DE EMERGÊNCIA / DEMONSTRATIVOS REALISTAS
-      window.loadEmergencyDemoData = async () => {
-        const today = new Date();
-        const fmtDate = (daysAgo) => {
-          const d = new Date(today);
-          d.setDate(d.getDate() - daysAgo);
-          return d.toISOString();
-        };
-        const fmtFuture = (daysAhead) => {
-          const d = new Date(today);
-          d.setDate(d.getDate() + daysAhead);
-          return d.toISOString();
-        };
-
-        const demoList = [
-          {
-            id: "tanque_demo_01",
-            matricula: "A-001",
-            name: "LUCAS SILVEIRA DOS SANTOS",
-            category: "Adulto",
-            dob: "1995-04-18",
-            cpf: "215.348.912-40",
-            email: "lucas.silveira@gmail.com",
-            phone: "(11) 98124-5544",
-            address: "Av. Paulista, 1500, Apto 82, Bela Vista",
-            cep: "01310-200",
-            belt: "Faixa Roxa - 2º Grau",
-            plan: "Adulto Mensal - R$ 168,90",
-            planValue: 168.90,
-            paymentStatus: "Em dia",
-            nextDueDate: fmtFuture(20),
-            registrationDate: fmtDate(240),
-            contractEndDate: fmtFuture(120),
-            contractSigned: true,
-            orderIndex: 1,
-            attendance: [fmtDate(1), fmtDate(3), fmtDate(5), fmtDate(8), fmtDate(10)],
-            paymentHistory: [
-              { date: fmtDate(10), amount: 168.90, method: "Cartão de Crédito", status: "Pago" },
-              { date: fmtDate(40), amount: 168.90, method: "Cartão de Crédito", status: "Pago" }
-            ],
-            cardBillingAddress: {
-              street: "Av. Paulista",
-              number: "1500",
-              complement: "Apto 82",
-              neighborhood: "Bela Vista",
-              city: "São Paulo",
-              state: "SP",
-              zip: "01310-200"
-            },
-            cardBillingSameAsRegistration: true,
-            archived: false
-          },
-          {
-            id: "tanque_demo_02",
-            matricula: "K-001",
-            name: "BERNARDO ALENCAR SILVA",
-            category: "Infantil",
-            dob: "2016-07-22",
-            cpf: "512.449.108-72",
-            email: "roberto.alencar@gmail.com",
-            phone: "(11) 97133-8822",
-            address: "Rua Vergueiro, 780, Casa 2, Paraíso",
-            cep: "04101-000",
-            guardian: "ROBERTO ALENCAR",
-            guardianCpf: "189.774.225-33",
-            guardianPhone: "(11) 97133-8822",
-            guardianKinship: "Pai",
-            belt: "Faixa Cinza e Branca - 3º Grau",
-            plan: "Infantil Trimestral - R$ 168,90",
-            planValue: 168.90,
-            paymentStatus: "Em dia",
-            nextDueDate: fmtFuture(15),
-            registrationDate: fmtDate(180),
-            contractEndDate: fmtFuture(90),
-            contractSigned: true,
-            orderIndex: 2,
-            attendance: [fmtDate(2), fmtDate(4), fmtDate(7), fmtDate(9)],
-            paymentHistory: [
-              { date: fmtDate(15), amount: 168.90, method: "PIX", status: "Pago" }
-            ],
-            cardBillingAddress: {
-              street: "Rua Vergueiro",
-              number: "780",
-              complement: "Casa 2",
-              neighborhood: "Paraíso",
-              city: "São Paulo",
-              state: "SP",
-              zip: "04101-000"
-            },
-            cardBillingSameAsRegistration: true,
-            archived: false
-          },
-          {
-            id: "tanque_demo_03",
-            matricula: "A-002",
-            name: "RAFAEL MENEZES OLIVEIRA",
-            category: "Adulto",
-            dob: "1991-11-05",
-            cpf: "304.551.982-15",
-            email: "rafa.menezes@outlook.com",
-            phone: "(11) 99871-2244",
-            address: "Rua Domingos de Morais, 1240, Vila Mariana",
-            cep: "04010-100",
-            belt: "Faixa Marrom - 1º Grau",
-            plan: "Adulto Mensal - R$ 168,90",
-            planValue: 168.90,
-            paymentStatus: "Vencendo",
-            nextDueDate: fmtFuture(2),
-            registrationDate: fmtDate(320),
-            contractEndDate: fmtFuture(40),
-            contractSigned: true,
-            orderIndex: 3,
-            attendance: [fmtDate(1), fmtDate(2), fmtDate(6), fmtDate(8)],
-            cardBillingAddress: {
-              street: "Rua Domingos de Morais",
-              number: "1240",
-              complement: "",
-              neighborhood: "Vila Mariana",
-              city: "São Paulo",
-              state: "SP",
-              zip: "04010-100"
-            },
-            cardBillingSameAsRegistration: true,
-            archived: false
-          },
-          {
-            id: "tanque_demo_04",
-            matricula: "K-002",
-            name: "ENZO GABRIEL FERREIRA",
-            category: "Infantil",
-            dob: "2017-03-14",
-            cpf: "612.339.810-09",
-            email: "patricia.ferreira@hotmail.com",
-            phone: "(11) 98555-1122",
-            address: "Rua Augusta, 2100, Consolação",
-            cep: "01412-000",
-            guardian: "PATRICIA FERREIRA",
-            guardianCpf: "228.663.991-55",
-            guardianPhone: "(11) 98555-1122",
-            guardianKinship: "Mãe",
-            belt: "Faixa Branca - 2º Grau",
-            plan: "Infantil Mensal - R$ 189,90",
-            planValue: 189.90,
-            paymentStatus: "Pendente",
-            nextDueDate: fmtDate(5),
-            registrationDate: fmtDate(90),
-            contractEndDate: fmtFuture(270),
-            contractSigned: true,
-            orderIndex: 4,
-            attendance: [fmtDate(3), fmtDate(6)],
-            archived: false
-          },
-          {
-            id: "tanque_demo_05",
-            matricula: "A-003",
-            name: "CARLOS EDUARDO LIMA",
-            category: "Adulto",
-            dob: "1988-08-30",
-            cpf: "145.882.339-77",
-            email: "carlos.lima@terra.com.br",
-            phone: "(11) 99441-3377",
-            address: "Av. Brigadeiro Luís Antônio, 3400, Jardim Paulista",
-            cep: "01402-001",
-            belt: "Faixa Preta - 1º Grau",
-            plan: "Adulto Semestral - R$ 147,90",
-            planValue: 147.90,
-            paymentStatus: "Em dia",
-            nextDueDate: fmtFuture(25),
-            registrationDate: fmtDate(500),
-            contractEndDate: fmtFuture(180),
-            contractSigned: true,
-            orderIndex: 5,
-            attendance: [fmtDate(1), fmtDate(3), fmtDate(4), fmtDate(6)],
-            archived: false
-          },
-          {
-            id: "tanque_demo_06",
-            matricula: "K-003",
-            name: "SOFIA RODRIGUES COSTA",
-            category: "Infantil",
-            dob: "2015-12-02",
-            cpf: "714.228.910-33",
-            email: "juliana.costa@gmail.com",
-            phone: "(11) 97722-4411",
-            address: "Rua Pamplona, 950, Jardim Paulista",
-            cep: "01405-001",
-            guardian: "JULIANA COSTA",
-            guardianCpf: "318.552.114-88",
-            guardianPhone: "(11) 97722-4411",
-            guardianKinship: "Mãe",
-            belt: "Faixa Amarela - 1º Grau",
-            plan: "Infantil Semestral - R$ 157,90",
-            planValue: 157.90,
-            paymentStatus: "Em dia",
-            nextDueDate: fmtFuture(18),
-            registrationDate: fmtDate(210),
-            contractEndDate: fmtFuture(150),
-            contractSigned: true,
-            orderIndex: 6,
-            attendance: [fmtDate(2), fmtDate(4), fmtDate(8)],
-            archived: false
-          },
-          {
-            id: "tanque_demo_07",
-            matricula: "A-004",
-            name: "AMANDA BEATRIZ CARVALHO",
-            category: "Adulto",
-            dob: "1998-02-14",
-            cpf: "419.882.115-66",
-            email: "amanda.carvalho@gmail.com",
-            phone: "(11) 98833-9988",
-            address: "Rua Haddock Lobo, 600, Cerqueira César",
-            cep: "01414-000",
-            belt: "Faixa Azul - 3º Grau",
-            plan: "Adulto Mensal - R$ 168,90",
-            planValue: 168.90,
-            paymentStatus: "Em dia",
-            nextDueDate: fmtFuture(22),
-            registrationDate: fmtDate(150),
-            contractEndDate: fmtFuture(210),
-            contractSigned: true,
-            orderIndex: 7,
-            attendance: [fmtDate(1), fmtDate(4), fmtDate(5), fmtDate(9)],
-            archived: false
-          },
-          {
-            id: "tanque_demo_08",
-            matricula: "A-005",
-            name: "PROF. MARCELO 'TANQUE' SILVA",
-            category: "Administração",
-            dob: "1985-06-10",
-            cpf: "098.765.432-11",
-            email: "marcelo.tanque@tanqueteambjj.com",
-            phone: "(11) 99999-0001",
-            address: "Rua do Dojô Central, 100, São Paulo",
-            cep: "01300-000",
-            belt: "Faixa Preta - 3º Grau",
-            plan: "Administração / Isento - R$ 0,00",
-            planValue: 0,
-            paymentStatus: "Isento",
-            nextDueDate: null,
-            registrationDate: fmtDate(1000),
-            contractEndDate: null,
-            contractSigned: true,
-            orderIndex: 8,
-            attendance: [fmtDate(1), fmtDate(2), fmtDate(3), fmtDate(4), fmtDate(5)],
-            archived: false
-          },
-          {
-            id: "tanque_demo_09",
-            matricula: "A-006",
-            name: "RODRIGO MARTINS DIAS",
-            category: "Adulto",
-            dob: "1993-09-25",
-            cpf: "331.774.220-41",
-            email: "rodrigo.dias@yahoo.com.br",
-            phone: "(11) 97661-3322",
-            address: "Rua Bela Cintra, 1100, Consolação",
-            cep: "01415-000",
-            belt: "Faixa Branca - 3º Grau",
-            plan: "Adulto Trimestral - R$ 147,90",
-            planValue: 147.90,
-            paymentStatus: "Em dia",
-            nextDueDate: fmtFuture(12),
-            registrationDate: fmtDate(75),
-            contractEndDate: fmtFuture(285),
-            contractSigned: true,
-            orderIndex: 9,
-            attendance: [fmtDate(2), fmtDate(5), fmtDate(8)],
-            archived: false
-          },
-          {
-            id: "tanque_demo_10",
-            matricula: "K-004",
-            name: "ARTHUR HENRIQUE BARBOSA",
-            category: "Infantil",
-            dob: "2018-01-19",
-            cpf: "882.114.993-18",
-            email: "marcos.barbosa@gmail.com",
-            phone: "(11) 98112-7744",
-            address: "Rua Oscar Freire, 1400, Cerqueira César",
-            cep: "01426-000",
-            guardian: "MARCOS BARBOSA",
-            guardianCpf: "192.441.773-20",
-            guardianPhone: "(11) 98112-7744",
-            guardianKinship: "Pai",
-            belt: "Faixa Branca - 1º Grau",
-            plan: "Infantil Mensal - R$ 189,90",
-            planValue: 189.90,
-            paymentStatus: "Em dia",
-            nextDueDate: fmtFuture(14),
-            registrationDate: fmtDate(45),
-            contractEndDate: fmtFuture(315),
-            contractSigned: true,
-            orderIndex: 10,
-            attendance: [fmtDate(1), fmtDate(4)],
-            archived: false
-          },
-          {
-            id: "tanque_demo_11",
-            matricula: "A-007",
-            name: "FERNANDO ALBUQUERQUE",
-            category: "Adulto",
-            dob: "1989-10-12",
-            cpf: "284.119.552-03",
-            email: "fernando.alb@gmail.com",
-            phone: "(11) 99112-3344",
-            address: "Rua Teodoro Sampaio, 850, Pinheiros",
-            cep: "05406-000",
-            belt: "Faixa Azul - 1º Grau",
-            plan: "Adulto Mensal - R$ 168,90",
-            planValue: 168.90,
-            paymentStatus: "Em dia",
-            nextDueDate: fmtFuture(8),
-            registrationDate: fmtDate(110),
-            contractEndDate: fmtFuture(250),
-            contractSigned: true,
-            orderIndex: 11,
-            attendance: [fmtDate(3), fmtDate(7)],
-            archived: false
-          },
-          {
-            id: "tanque_demo_12",
-            matricula: "A-008",
-            name: "THIAGO MOREIRA GOMES",
-            category: "Adulto",
-            dob: "1992-03-08",
-            cpf: "349.881.002-44",
-            email: "thiago.moreira@gmail.com",
-            phone: "(11) 98442-1199",
-            address: "Rua Fradique Coutinho, 400, Pinheiros",
-            cep: "05416-000",
-            belt: "Faixa Branca - 0º Grau",
-            plan: "Adulto Mensal - R$ 168,90",
-            planValue: 168.90,
-            paymentStatus: "Pendente",
-            nextDueDate: fmtDate(2),
-            registrationDate: fmtDate(30),
-            contractEndDate: fmtFuture(330),
-            contractSigned: true,
-            orderIndex: 12,
-            attendance: [fmtDate(4)],
-            archived: false
-          }
-        ];
-
-        window.students = demoList;
-        try {
-          localStorage.setItem("tanque_students_backup", JSON.stringify(demoList));
-        } catch(e) {
-          console.warn(e);
-        }
-
-        if (typeof window.ensureStudentMatriculas === "function") {
-          await window.ensureStudentMatriculas();
-        }
-
-        window.students.sort(
-          (a, b) =>
-            new Date(b.registrationDate || 0) -
-            new Date(a.registrationDate || 0),
-        );
-
-        window.populateTitularSelects();
-        updateStats();
-        if (window.currentView === "students") window.renderTable();
-        if (window.currentView === "attendance" && window.renderAttendanceTable) window.renderAttendanceTable();
-        if (window.renderBirthdays) window.renderBirthdays();
-
-        window.showDbSuspendedBanner(true, window.students.length);
-        window.customAlert("Modo de Emergência Ativado com Sucesso!\n12 alunos modelo carregados com dados completos (Kids, Adultos, Graduações, Matrículas e Financeiro).");
-      };
-
       window.loadData = async function () {
         try {
-          if (!window.db) throw new Error("Serviço de Banco de Dados não inicializado.");
+          if (!window.db) return;
           const querySnapshot = await getDocs(
             collection(
               window.db,
@@ -11270,15 +10818,6 @@
             if (data.name) data.name = String(data.name).toUpperCase();
             window.students.push({ id: doc.id, ...data });
           });
-
-          // Se carregou com sucesso da nuvem, salvar no cache local
-          try {
-            if (window.students.length > 0) {
-              localStorage.setItem("tanque_students_backup", JSON.stringify(window.students));
-            }
-            window.hideDbSuspendedBanner();
-          } catch(e) {}
-
           // Garantir matrícula única e individual para alunos antigos
           if (typeof window.ensureStudentMatriculas === "function") {
             await window.ensureStudentMatriculas();
@@ -11329,43 +10868,7 @@
             console.error("Erro ao puxar badge nas pré-matrículas", e);
           }
         } catch (error) {
-          console.error("Erro em loadData (tentando recuperação local):", error);
-          
-          // Recuperação inteligente por cache local
-          let cached = null;
-          try {
-            const raw = localStorage.getItem("tanque_students_backup");
-            if (raw) cached = JSON.parse(raw);
-          } catch(e) {
-            console.warn("Erro ao ler cache:", e);
-          }
-
-          if (cached && Array.isArray(cached) && cached.length > 0) {
-            window.students = cached;
-            if (typeof window.ensureStudentMatriculas === "function") {
-              await window.ensureStudentMatriculas();
-            }
-            window.students.sort(
-              (a, b) =>
-                new Date(b.registrationDate || 0) -
-                new Date(a.registrationDate || 0),
-            );
-            window.populateTitularSelects();
-            updateStats();
-            if (window.currentView === "students") window.renderTable();
-            if (
-              window.currentView === "attendance" &&
-              window.renderAttendanceTable
-            )
-              window.renderAttendanceTable();
-            if (window.renderBirthdays) window.renderBirthdays();
-
-            window.showDbSuspendedBanner(true, window.students.length);
-          } else {
-            // Nenhum cache salvo: exibir interface de contingência clara e direta
-            window.showDbSuspendedBanner(false);
-            window.renderSuspendedErrorState(error);
-          }
+          console.error(error);
         }
       };
 
@@ -11419,113 +10922,16 @@
       }
 
       // DETALHES, PROGRESSO E EDIÇÃO
-      // GERADOR DE CÓDIGO DE CUPOM / INDICAÇÃO (À PROVA DE FALHAS)
-      window.generateStudentReferralCode = (student) => {
-        if (!student) return "TANQUE-AMIGO";
-        if (student.referralCode && String(student.referralCode).trim()) {
-          return String(student.referralCode).trim().toUpperCase();
-        }
-        const namePart = (student.name || "ALUNO")
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .trim()
-          .split(/\s+/)[0]
-          .toUpperCase()
-          .replace(/[^A-Z0-9]/g, "");
-        const rawMat = student.matricula || student.id || "101";
-        const suffix = String(rawMat).replace(/[^A-Za-z0-9]/g, "").slice(-4).toUpperCase();
-        return `${namePart || "TANQUE"}-${suffix || "BJJ"}`;
-      };
-
-      // FUNÇÃO GLOBAL DE CÓPIA DE CARTÃO DE CRÉDITO
-      window.copyCardInfo = (num, exp, cvv, holder, cpf, billingAddr = "") => {
-        if (!num || num.includes('••••') || exp === '--/--' || exp === '••/••' || cvv === '---' || cvv === '•••') {
-          window.customAlert("Por favor, desbloqueie os dados do cartão com o PIN para poder copiá-los.");
-          return;
-        }
-        let text = `DADOS DO CARTÃO (TANQUE TEAM BJJ)\n• Número: ${num}\n• Validade: ${exp}\n• CVV: ${cvv}\n• Titular: ${holder}\n• CPF: ${cpf}`;
-        if (billingAddr && billingAddr !== "---") {
-          text += `\n• Endereço de Cobrança: ${billingAddr}`;
-        }
-        navigator.clipboard.writeText(text).then(() => {
-          window.customAlert("Dados do cartão e cobrança copiados com sucesso!");
-        }).catch(() => {
-          window.customAlert("Falha ao copiar dados.");
-        });
-      };
-
-      // COPIAR DADOS SEGUROS DO CARTÃO E ENDEREÇO POR ID (SEM CONFLITO DE ASPAS)
-      window.copyCardInfoByStudentId = (studentId) => {
-        const s = (window.students || []).find((st) => st && (st.id === studentId || String(st.id) === String(studentId)));
-        if (!s) {
-          window.customAlert("Aluno não encontrado.");
-          return;
-        }
-        const c = s.cardDetails || s.creditCard || s.card;
-        if (!c) {
-          window.customAlert("Cartão não encontrado para este aluno.");
-          return;
-        }
-        const last4 = c.last4 || (c.cardNumber ? String(c.cardNumber).replace(/\s/g, "").slice(-4) : "****");
-        const exp = c.expiry || c.cardExpiry || "--/--";
-        const cvv = c.cvv || "---";
-        const rawCardNum = c.cardNumber ? String(c.cardNumber).replace(/\s+/g, '') : '';
-        const fullCardFormatted = rawCardNum ? rawCardNum.replace(/(\d{4})(?=\d)/g, '$1 ') : (`•••• •••• •••• ` + last4);
-        const holder = c.holderName || s.name || "Não informado";
-        const holderCpf = c.holderCpf || s.cpf || "Não informado";
-        const billing = c.billingAddress;
-        let billingAddressText = "";
-        let billingCepText = "";
-        if (billing && typeof billing === "object") {
-          billingCepText = billing.cep || "";
-          billingAddressText = billing.fullAddress || (billing.street ? `${billing.street}${billing.number ? ', Nº ' + billing.number : ''}${billing.complement ? ' (' + billing.complement + ')' : ''}${billing.neighborhood ? ' - ' + billing.neighborhood : ''}${billing.city ? ' - ' + billing.city + '/' + (billing.state || '') : ''}` : '');
-        } else if (typeof billing === "string" && billing.trim()) {
-          billingAddressText = billing.trim();
-        }
-        if (!billingAddressText && s.address) {
-          billingAddressText = s.address;
-          billingCepText = s.cep || "";
-        }
-        const fullBillingSummary = billingCepText ? `${billingAddressText} (CEP: ${billingCepText})` : (billingAddressText || "Mesmo da Matrícula");
-        window.copyCardInfo(fullCardFormatted, exp, cvv, holder, holderCpf, fullBillingSummary);
-      };
-
-      window.copyBillingAddressByStudentId = (studentId) => {
-        const s = (window.students || []).find((st) => st && (st.id === studentId || String(st.id) === String(studentId)));
-        if (!s) return;
-        const c = s.cardDetails || s.creditCard || s.card || {};
-        const billing = c.billingAddress;
-        let billingAddressText = "";
-        let billingCepText = "";
-        if (billing && typeof billing === "object") {
-          billingCepText = billing.cep || "";
-          billingAddressText = billing.fullAddress || (billing.street ? `${billing.street}${billing.number ? ', Nº ' + billing.number : ''}${billing.complement ? ' (' + billing.complement + ')' : ''}${billing.neighborhood ? ' - ' + billing.neighborhood : ''}${billing.city ? ' - ' + billing.city + '/' + (billing.state || '') : ''}` : '');
-        } else if (typeof billing === "string" && billing.trim()) {
-          billingAddressText = billing.trim();
-        }
-        if (!billingAddressText && s.address) {
-          billingAddressText = s.address;
-          billingCepText = s.cep || "";
-        }
-        const fullBillingSummary = billingCepText ? `${billingAddressText} (CEP: ${billingCepText})` : (billingAddressText || "Mesmo endereço cadastrado na matrícula");
-        navigator.clipboard.writeText(fullBillingSummary).then(() => {
-          window.customAlert("Endereço de cobrança copiado com sucesso!");
-        }).catch(() => {
-          window.customAlert("Erro ao copiar endereço.");
-        });
-      };
-
-      // SEGURANÇA: CONTROLE DE REVELAÇÃO DO CARTÃO
-      if (!window.revealedCardStudents) window.revealedCardStudents = new Set();
+      // SEGURANÇA: SOLICITE O PIN PARA VISUALIZAR OS DADOS DO CARTÃO SEMPRE
+      window.revealedCardStudents = new Set();
       window.saveRevealedCards = () => {};
+      try { sessionStorage.removeItem("tanque_revealed_cards"); } catch (e) {}
 
       window.renderStudentCardBox = (s, forceUnlocked = null) => {
         const cardBox = document.getElementById("detail-card-status-box");
         if (!cardBox) return;
 
-        if (!s) return;
-        const cardDetails = s.cardDetails || s.creditCard || s.card;
-        if (!cardDetails || (!cardDetails.cardNumber && !cardDetails.last4 && !cardDetails.holderName)) {
+        if (!s || !s.cardDetails || (!s.cardDetails.cardNumber && !s.cardDetails.last4 && !s.cardDetails.holderName)) {
           cardBox.innerHTML = `
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
@@ -11536,9 +10942,8 @@
             </div>`;
           return;
         }
-        s.cardDetails = cardDetails;
 
-        const isRevealed = forceUnlocked === true || (window.revealedCardStudents && (window.revealedCardStudents.has(s.id) || window.revealedCardStudents.has(String(s.id))));
+        const isRevealed = forceUnlocked === true;
         const last4 = s.cardDetails.last4 || (s.cardDetails.cardNumber ? String(s.cardDetails.cardNumber).replace(/\s/g, "").slice(-4) : "****");
         const brand = s.cardDetails.brand || "Crédito";
         const exp = s.cardDetails.expiry || s.cardDetails.cardExpiry || "--/--";
@@ -11682,7 +11087,7 @@
                   <button type="button" onclick="window.openCardViewModal('${s.id}')" class="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded text-[11px] font-bold flex items-center gap-1 shadow-sm transition" title="Abrir em visualizador completo de cartão">
                     <i class="fa-solid fa-credit-card"></i> Visualizar Cartão
                   </button>
-                  <button type="button" onclick="window.copyCardInfoByStudentId('${s.id}')" class="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-800 text-white rounded text-[11px] font-bold flex items-center gap-1 shadow-sm transition" title="Copiar todos os dados para maquininha/gateway">
+                  <button type="button" onclick="window.copyCardInfo('${fullCardFormatted}', '${exp}', '${cvv}', '${holder}', '${holderCpf}', '${fullBillingSummary.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-800 text-white rounded text-[11px] font-bold flex items-center gap-1 shadow-sm transition" title="Copiar todos os dados para maquininha/gateway">
                     <i class="fa-regular fa-copy"></i> Copiar Dados
                   </button>
                   <button type="button" onclick="window.lockCard('${s.id}')" class="px-2.5 py-1.5 bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white rounded text-[11px] font-bold flex items-center gap-1 shadow-sm transition" title="Ocultar os dados do cartão novamente">
@@ -11734,7 +11139,7 @@
                       <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${isSameAddress ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300'}">
                         ${isSameAddress ? 'Mesmo da Matrícula' : 'Endereço Específico'}
                       </span>
-                      <button type="button" onclick="window.copyBillingAddressByStudentId('${s.id}')" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 font-semibold ml-1" title="Copiar endereço de cobrança">
+                      <button type="button" onclick="navigator.clipboard.writeText('${fullBillingSummary.replace(/'/g, "\\'")}').then(() => window.customAlert('Endereço de cobrança copiado!'));" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 font-semibold ml-1" title="Copiar endereço de cobrança">
                         <i class="fa-regular fa-copy"></i> Copiar
                       </button>
                     </div>
@@ -11748,39 +11153,24 @@
         }
       };
 
-      // LOCALIZADOR UNIVERSAL E SEGURO DE ALUNO POR ID
-      window.findStudentById = (studentId) => {
-        if (studentId === undefined || studentId === null || studentId === "") return null;
-        const target = String(studentId).trim();
-        const list = window.students || [];
-        let s = list.find((st) => st && (st.id === studentId || String(st.id).trim() === target));
-        if (!s) {
-          try {
-            const backup = JSON.parse(localStorage.getItem("tanque_students_backup") || "[]");
-            s = backup.find((st) => st && (st.id === studentId || String(st.id).trim() === target));
-          } catch (e) {}
-        }
-        if (s) {
-          s.cardDetails = s.cardDetails || s.creditCard || s.card || null;
-        }
-        return s || null;
-      };
-
       window.unlockCardWithPin = (studentId, andCopy = false) => {
-        const s = window.findStudentById(studentId);
-        if (!s) {
-          window.customAlert("Aluno não encontrado.");
-          return;
-        }
+        const s = (window.students || []).find((st) => st.id === studentId);
+        if (!s) return;
 
         const onPinSuccess = () => {
           if (!window.revealedCardStudents) window.revealedCardStudents = new Set();
-          window.revealedCardStudents.add(s.id);
-          window.revealedCardStudents.add(String(s.id));
+          window.revealedCardStudents.add(studentId);
 
           window.renderStudentCardBox(s, true);
           if (andCopy) {
-            window.copyCardInfoByStudentId(s.id);
+            const last4 = s.cardDetails?.last4 || (s.cardDetails?.cardNumber ? String(s.cardDetails.cardNumber).replace(/\s/g, "").slice(-4) : "****");
+            const exp = s.cardDetails?.expiry || s.cardDetails?.cardExpiry || "--/--";
+            const cvv = s.cardDetails?.cvv || "---";
+            const rawCardNum = s.cardDetails?.cardNumber ? String(s.cardDetails.cardNumber).replace(/\s+/g, '') : '';
+            const fullCardFormatted = rawCardNum ? rawCardNum.replace(/(\d{4})(?=\d)/g, '$1 ') : (`•••• •••• •••• ` + last4);
+            const holder = s.cardDetails?.holderName || s.name || "Não informado";
+            const holderCpf = s.cardDetails?.holderCpf || s.cpf || "Não informado";
+            window.copyCardInfo(fullCardFormatted, exp, cvv, holder, holderCpf);
           } else {
             const statusBox = document.getElementById("detail-card-status-box");
             if (statusBox) {
@@ -11803,29 +11193,23 @@
       };
 
       window.viewCardWithPin = (studentId) => {
-        const s = window.findStudentById(studentId);
-        if (!s) {
-          window.customAlert("Aluno não encontrado.");
-          return;
-        }
-        const card = s.cardDetails || s.creditCard || s.card;
-        if (!card || (!card.cardNumber && !card.last4 && !card.holderName)) {
+        const s = (window.students || []).find((st) => st.id === studentId);
+        if (!s) return;
+        if (!s.cardDetails || (!s.cardDetails.cardNumber && !s.cardDetails.last4 && !s.cardDetails.holderName)) {
           window.customAlert("Este aluno ainda não possui cartão de crédito cadastrado.");
           return;
         }
-        s.cardDetails = card;
 
         const onPinSuccess = () => {
           if (!window.revealedCardStudents) window.revealedCardStudents = new Set();
-          window.revealedCardStudents.add(s.id);
-          window.revealedCardStudents.add(String(s.id));
+          window.revealedCardStudents.add(studentId);
 
           const detailsModal = document.getElementById("details-modal");
           if (detailsModal && !detailsModal.classList.contains("hidden")) {
             window.renderStudentCardBox(s, true);
           }
 
-          window.openCardViewModal(s.id, true);
+          window.openCardViewModal(studentId, true);
         };
         onPinSuccess.preventReload = true;
 
@@ -11838,28 +11222,22 @@
       };
 
       window.openCardViewModal = (studentId, isAuthorized = false) => {
-        const s = window.findStudentById(studentId);
-        if (!s) {
-          window.customAlert("Aluno não encontrado.");
-          return;
-        }
-        const card = s.cardDetails || s.creditCard || s.card;
-        if (!card) {
+        const s = (window.students || []).find((st) => st.id === studentId);
+        if (!s || !s.cardDetails) {
           window.customAlert("Nenhum cartão encontrado para este aluno.");
           return;
         }
-        s.cardDetails = card;
 
         // SEGURANÇA: Se não foi validado com PIN imediatamente antes, solicitar PIN
-        const isUnlocked = isAuthorized || (window.revealedCardStudents && (window.revealedCardStudents.has(s.id) || window.revealedCardStudents.has(String(s.id))));
-        if (!isUnlocked) {
-          window.viewCardWithPin(s.id);
+        if (!isAuthorized && (!window.revealedCardStudents || !window.revealedCardStudents.has(studentId))) {
+          window.viewCardWithPin(studentId);
           return;
         }
 
         const modal = document.getElementById("card-view-modal");
         if (!modal) return;
 
+        const card = s.cardDetails;
         const last4 = card.last4 || (card.cardNumber ? String(card.cardNumber).replace(/\s/g, "").slice(-4) : "****");
         const brand = card.brand || "Crédito";
         const exp = card.expiry || card.cardExpiry || "--/--";
@@ -11894,12 +11272,10 @@
         let isSameAddress = true;
         let billingAddressText = "";
         let billingCep = "";
-        if (billing && typeof billing === "object") {
+        if (billing) {
           isSameAddress = billing.sameAsRegistration !== false && card.sameAddress !== false;
           billingCep = billing.cep || "";
           billingAddressText = billing.fullAddress || (billing.street ? `${billing.street}${billing.number ? ', Nº ' + billing.number : ''}${billing.complement ? ' (' + billing.complement + ')' : ''}${billing.neighborhood ? ' - ' + billing.neighborhood : ''}${billing.city ? ' - ' + billing.city + '/' + (billing.state || '') : ''}` : '');
-        } else if (typeof billing === "string" && billing.trim()) {
-          billingAddressText = billing.trim();
         }
         if (!billingAddressText && s.address) {
           billingAddressText = s.address;
@@ -11962,6 +11338,8 @@
       };
 
       window.closeCardViewModal = () => {
+        if (window.revealedCardStudents) window.revealedCardStudents.clear();
+        try { sessionStorage.removeItem("tanque_revealed_cards"); } catch (e) {}
         const modal = document.getElementById("card-view-modal");
         if (modal) {
           modal.classList.add("hidden");
@@ -11969,384 +11347,361 @@
         }
         const detailsStudentId = document.getElementById("detail-student-id")?.value;
         if (detailsStudentId) {
-          const s = window.findStudentById(detailsStudentId);
-          if (s && window.renderStudentCardBox) {
-            const isUnlocked = Boolean(window.revealedCardStudents && (window.revealedCardStudents.has(s.id) || window.revealedCardStudents.has(String(s.id))));
-            window.renderStudentCardBox(s, isUnlocked);
-          }
+          const s = (window.students || []).find((st) => st.id === detailsStudentId);
+          if (s && window.renderStudentCardBox) window.renderStudentCardBox(s, false);
         }
       };
 
       window.lockCard = (studentId) => {
-        const s = window.findStudentById(studentId);
-        if (s && window.revealedCardStudents) {
-          window.revealedCardStudents.delete(s.id);
-          window.revealedCardStudents.delete(String(s.id));
+        if (window.revealedCardStudents) {
+          window.revealedCardStudents.delete(studentId);
         }
-        if (s && window.renderStudentCardBox) {
+        try { sessionStorage.removeItem("tanque_revealed_cards"); } catch (e) {}
+        const s = (window.students || []).find((st) => st.id === studentId);
+        if (s) {
           window.renderStudentCardBox(s, false);
         }
       };
 
-      window.viewStudentDetails = (id) => {
-        try {
-          const s = window.findStudentById(id);
-          if (!s) {
-            console.warn("Aluno não encontrado para id:", id);
-            window.customAlert("Aluno não encontrado ou dados ainda sendo sincronizados.");
-            return;
-          }
-
-          // EXIBIR O MODAL IMEDIATAMENTE PARA GARANTIR FEEDBACK VISUAL INSTANTÂNEO
-          const detailsModal = document.getElementById("details-modal");
-          if (detailsModal) {
-            detailsModal.classList.remove("hidden");
-            detailsModal.classList.add("flex");
-          }
-
-          // NOME DO ALUNO
-          try {
-            const nameEl = document.getElementById("detail-name");
-            if (nameEl) nameEl.innerText = s.name || "Aluno";
-          } catch (err) {
-            console.warn("Erro ao preencher nome:", err);
-          }
-
-          // MATRÍCULA ÚNICA E INDIVIDUAL
-          try {
-            const isKid = typeof isStudentKid === "function" ? isStudentKid(s) : false;
-            const studentMatricula = s.matricula || (typeof window.getNextMatricula === "function" ? window.getNextMatricula(isKid) : (s.id || ""));
-            const matContainer = document.getElementById("detail-matricula-badge-container");
-            if (matContainer) {
-              matContainer.innerHTML = studentMatricula
-                ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono font-black text-xs sm:text-sm border shadow-xs ${String(studentMatricula).startsWith('K') ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/70 dark:text-amber-300 dark:border-amber-800' : 'bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700'}">
-                     <i class="fa-solid fa-id-card text-brand-red text-sm"></i> Matrícula: <strong class="text-brand-red">${studentMatricula}</strong>
-                   </span>`
-                : "";
-            }
-
-            const matEl = document.getElementById("detail-matricula");
-            if (matEl) matEl.innerText = studentMatricula || "--";
-
-            const matTag = document.getElementById("detail-matricula-tag");
-            if (matTag) {
-              const isK = String(studentMatricula).startsWith('K');
-              matTag.innerText = isK ? "Aluno Kids" : "Aluno Adulto";
-              matTag.className = isK
-                ? "px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
-                : "px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700";
-            }
-          } catch (err) {
-            console.warn("Erro ao preencher matrícula:", err);
-          }
-
-          // DADOS BÁSICOS (IDADE, NASCIMENTO, FAIXA, FOTO, CABEÇALHO)
-          try {
-            const age = typeof getAge === "function" ? getAge(s.dob) : null;
-            const ageEl = document.getElementById("detail-age");
-            if (ageEl) ageEl.innerText = age !== null ? `${age} anos` : "--";
-
-            const dobEl = document.getElementById("detail-dob");
-            if (dobEl) dobEl.innerText = s.dob ? (typeof formatDate === "function" ? formatDate(s.dob) : s.dob) : "--";
-
-            const beltEl = document.getElementById("detail-belt");
-            if (beltEl) {
-              const beltImg = typeof window.getBeltImageHtml === "function" ? window.getBeltImageHtml(s.belt) : "";
-              beltEl.innerHTML = `<div class="flex items-center gap-2">${beltImg}<span>${s.belt || "Faixa Branca"}</span></div>`;
-            }
-
-            const photoImg = document.getElementById("detail-photo");
-            const photoIcon = document.getElementById("detail-icon");
-            if (photoImg && photoIcon) {
-              if (s.photoURL || s.photoBase64) {
-                photoImg.src = s.photoURL || s.photoBase64;
-                photoImg.classList.remove("hidden");
-                photoIcon.classList.add("hidden");
-              } else {
-                photoImg.classList.add("hidden");
-                photoIcon.classList.remove("hidden");
-              }
-            }
-
-            const belt = (s.belt || "").toLowerCase();
-            let headerColor = "bg-gray-200 dark:bg-gray-600";
-            if (belt.includes("azul")) headerColor = "bg-blue-600";
-            else if (belt.includes("roxa")) headerColor = "bg-purple-600";
-            else if (belt.includes("marrom")) headerColor = "bg-amber-800";
-            else if (belt.includes("preta")) headerColor = "bg-black";
-            else if (belt.includes("amarela")) headerColor = "bg-yellow-400";
-            else if (belt.includes("laranja")) headerColor = "bg-orange-500";
-            else if (belt.includes("verde")) headerColor = "bg-green-600";
-            const headerBgEl = document.getElementById("detail-header-bg");
-            if (headerBgEl) headerBgEl.className = `h-24 w-full relative ${headerColor}`;
-
-            const attEl = document.getElementById("detail-attendance");
-            if (attEl) attEl.innerText = (Array.isArray(s.attendance) ? s.attendance.length : 0) + " aulas";
-
-            const statusEl = document.getElementById("detail-status");
-            if (statusEl) {
-              statusEl.innerText = s.archived ? "Arquivado" : (s.enrollmentStatus || "Ativo");
-              statusEl.className = (s.enrollmentStatus === "Ativo" && !s.archived)
-                ? "text-sm font-bold mt-1 text-green-600"
-                : "text-sm font-bold mt-1 text-red-600";
-            }
-          } catch (err) {
-            console.warn("Erro ao preencher dados de faixa e status:", err);
-          }
-
-          // DADOS CADASTRAIS (CPF, ALTURA, PESO, CONTATO, ACESSO)
-          try {
-            const cpfEl = document.getElementById("detail-cpf");
-            if (cpfEl) cpfEl.innerText = s.cpf || "-";
-            const hEl = document.getElementById("detail-height");
-            if (hEl) hEl.innerText = s.height ? s.height + " m" : "-";
-            const wEl = document.getElementById("detail-weight");
-            if (wEl) wEl.innerText = s.weight ? s.weight + " kg" : "-";
-
-            const phoneDisplay = document.getElementById("detail-phone");
-            if (phoneDisplay) {
-              if (String(s.phone || "").trim() !== "") {
-                const cleanPhone = String(s.phone).replace(/\D/g, "");
-                phoneDisplay.innerHTML = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold transition inline-flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${s.phone}</a>`;
-              } else {
-                phoneDisplay.innerText = "-";
-              }
-            }
-
-            const emEl = document.getElementById("detail-email");
-            if (emEl) emEl.innerText = s.email || "-";
-            const addrEl = document.getElementById("detail-address");
-            if (addrEl) addrEl.innerText = s.address || "-";
-            const logEl = document.getElementById("detail-login");
-            if (logEl) logEl.innerText = s.studentLogin || "Não configurado";
-            const passEl = document.getElementById("detail-pass");
-            if (passEl) passEl.innerText = s.studentPassword || "---";
-            const originEl = document.getElementById("detail-origin");
-            if (originEl) originEl.innerText = s.howDidYouFindUs || "Não informado";
-
-            const guardianBox = document.getElementById("detail-guardian-box");
-            if (guardianBox) {
-              if (s.guardian && String(s.guardian).trim() !== "") {
-                const gName = document.getElementById("detail-guardian-name");
-                if (gName) gName.innerText = s.guardian;
-                guardianBox.classList.remove("hidden");
-              } else {
-                guardianBox.classList.add("hidden");
-              }
-            }
-
-            const titularBox = document.getElementById("detail-titular-box");
-            if (titularBox) {
-              if (s.titularName && String(s.titularName).trim() !== "") {
-                const tName = document.getElementById("detail-titular-name");
-                if (tName) tName.innerText = s.titularName;
-                titularBox.classList.remove("hidden");
-              } else {
-                titularBox.classList.add("hidden");
-              }
-            }
-          } catch (err) {
-            console.warn("Erro ao preencher dados de contato e acesso:", err);
-          }
-
-          // PLANO E VENCIMENTOS
-          try {
-            const planInfo = (typeof window.getPlanInfo === "function") ? window.getPlanInfo(s.plan) : { short: s.plan || "Padrão", long: s.plan || "Plano Padrão" };
-            const planEl = document.getElementById("detail-plan");
-            if (planEl) planEl.innerText = planInfo.long || s.plan || "Padrão";
-
-            let nextDueText = "--";
-            if (s.nextDueDate) {
-              const adjDate = typeof getAdjustedNextDueDate === "function" ? getAdjustedNextDueDate(s) : s.nextDueDate;
-              nextDueText = adjDate ? (typeof formatDate === "function" ? formatDate(adjDate) : String(adjDate)) : (typeof formatDate === "function" ? formatDate(s.nextDueDate) : String(s.nextDueDate));
-            }
-            const dueEl = document.getElementById("detail-next-due");
-            if (dueEl) dueEl.innerText = nextDueText;
-
-            let contractEndText = "--";
-            if (s.contractEndDate) {
-              contractEndText = typeof formatDate === "function" ? formatDate(s.contractEndDate) : String(s.contractEndDate);
-            }
-            const cEndEl = document.getElementById("detail-contract-end");
-            if (cEndEl) cEndEl.innerText = contractEndText;
-
-            const contractStatusEl = document.getElementById("detail-contract-status");
-            if (contractStatusEl) {
-              if (s.contractSigned) {
-                contractStatusEl.innerHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 text-[10px] font-bold uppercase"><i class="fa-solid fa-file-circle-check"></i> ASSINADO</span>`;
-              } else {
-                contractStatusEl.innerHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 text-[10px] font-bold uppercase"><i class="fa-solid fa-file-circle-xmark"></i> PENDENTE</span>`;
-              }
-            }
-          } catch (err) {
-            console.warn("Erro ao preencher plano e vencimento:", err);
-          }
-
-          // QUEM INDICOU ESTE ALUNO
-          try {
-            const referredByNameEl = document.getElementById("detail-referred-by-name");
-            const referredByActionsEl = document.getElementById("detail-referred-by-actions");
-            const hasReferrer = !!(s.referredByStudentName || s.referralCodeUsed || s.referredByStudentId);
-
-            if (referredByNameEl) {
-              if (hasReferrer) {
-                const refDesc = s.referredByStudentName || `Cupom: ${s.referralCodeUsed}`;
-                const cupomUsed = s.referralCodeUsed ? ` (Cupom: ${s.referralCodeUsed})` : "";
-                referredByNameEl.innerHTML = `<span class="text-amber-900 dark:text-amber-200 font-bold">${refDesc}</span><span class="text-[10px] text-gray-500 block font-normal">${cupomUsed}</span>`;
-              } else {
-                referredByNameEl.innerHTML = `<span class="text-gray-400 font-normal italic">Nenhum indicador registrado</span>`;
-              }
-            }
-
-            if (referredByActionsEl) {
-              if (hasReferrer) {
-                referredByActionsEl.innerHTML = `
-                  <button type="button" onclick="window.removeStudentReferrer('${s.id}')" class="text-[11px] font-bold text-red-600 dark:text-red-400 hover:text-red-800 bg-red-50 dark:bg-red-950/40 px-2 py-1 rounded border border-red-200 dark:border-red-900 flex items-center gap-1 transition shadow-xs" title="Remover Vínculo de Quem Indicou">
-                    <i class="fa-solid fa-link-slash"></i> Remover Vínculo
-                  </button>`;
-              } else {
-                referredByActionsEl.innerHTML = `
-                  <button type="button" onclick="window.setStudentReferrer('${s.id}')" class="text-[11px] font-bold text-amber-700 dark:text-amber-300 hover:text-amber-900 bg-amber-100 dark:bg-amber-900/40 px-2 py-1 rounded border border-amber-300 dark:border-amber-700 flex items-center gap-1 transition shadow-xs" title="Vincular Indicador Manualmente">
-                    <i class="fa-solid fa-plus"></i> Vincular Indicador
-                  </button>`;
-              }
-            }
-          } catch (err) {
-            console.warn("Erro ao preencher quem indicou:", err);
-          }
-
-          // PROGRAMA DE INDICAÇÃO & DESCONTOS
-          try {
-            const currentConfiguredPct = window.referralConfig?.discountPercent || 50;
-            const studentRefCode = s.referralCode || (typeof window.generateStudentReferralCode === "function" ? window.generateStudentReferralCode(s) : "AMIGO-BJJ");
-            const refCodeEl = document.getElementById("detail-referral-code");
-            if (refCodeEl) refCodeEl.innerText = studentRefCode;
-
-            const allDiscounts = s.referralDiscounts || [];
-            const availDiscounts = allDiscounts.filter((d) => d && d.status === "disponivel");
-
-            const refBalanceEl = document.getElementById("detail-referral-balance");
-            if (refBalanceEl) {
-              refBalanceEl.innerText = `${availDiscounts.length} ${availDiscounts.length === 1 ? "mês" : "meses"} (${currentConfiguredPct}% OFF)`;
-            }
-
-            const refListContainer = document.getElementById("detail-referral-list-container");
-            if (refListContainer) {
-              if (allDiscounts.length === 0) {
-                refListContainer.innerHTML = `
-                  <div class="p-2.5 bg-amber-100/50 dark:bg-amber-950/20 rounded text-[11px] text-amber-800 dark:text-amber-300 flex items-center justify-between border border-amber-200/60 dark:border-amber-900/40">
-                    <span>Nenhum amigo indicado registrado no momento.</span>
-                    <span class="text-[10px] opacity-70">${currentConfiguredPct}% por indicação</span>
-                  </div>`;
-              } else {
-                let listHtml = `<div class="space-y-1.5 max-h-44 overflow-y-auto pr-1">`;
-                allDiscounts.forEach((disc) => {
-                  if (!disc) return;
-                  const isAvail = disc.status === "disponivel";
-                  const discPct = disc.discountPercent || currentConfiguredPct;
-                  const badgeHtml = isAvail
-                    ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1"><i class="fa-solid fa-check"></i> DISPONÍVEL</span>`
-                    : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">UTILIZADO (${disc.usedInMonth || "Passado"})</span>`;
-
-                  const discNameEscaped = (disc.referredStudentName || 'Amigo Indicado').replace(/'/g, "\\'");
-                  listHtml += `
-                    <div class="flex items-center justify-between p-2 rounded bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-900 text-xs shadow-xs">
-                      <div class="flex-1 pr-2">
-                        <div class="font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1">
-                          <i class="fa-solid fa-user-check text-emerald-500 text-[10px]"></i>
-                          <span>${disc.referredStudentName || "Amigo Indicado"}</span>
-                        </div>
-                        <span class="text-[10px] text-gray-500 block">${disc.createdAt ? formatDate(disc.createdAt) : "Cadastrado"} • <b>${discPct}% OFF</b></span>
-                      </div>
-                      <div class="flex items-center gap-1.5">
-                        ${badgeHtml}
-                        <button type="button" onclick="window.removeReferralDiscount('${s.id}', '${disc.id}', '${discNameEscaped}')" class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40 transition" title="Remover esta indicação">
-                          <i class="fa-solid fa-trash-can text-xs"></i>
-                        </button>
-                      </div>
-                    </div>`;
-                });
-                listHtml += `</div>`;
-                listHtml += `
-                  <div class="flex justify-between items-center pt-2 mt-2 border-t border-amber-200 dark:border-amber-900/50 text-[11px] text-gray-500">
-                    <span>Total: <b>${allDiscounts.length}</b> indicação(ões)</span>
-                    <button type="button" onclick="window.clearAllReferralDiscounts('${s.id}')" class="text-[10px] text-red-600 dark:text-red-400 hover:underline font-bold">
-                      <i class="fa-solid fa-trash"></i> Limpar todas as indicações
-                    </button>
-                  </div>`;
-                refListContainer.innerHTML = listHtml;
-              }
-            }
-          } catch (refErr) {
-            console.warn("Aviso ao carregar indicações no modal:", refErr);
-          }
-
-          // DADOS DO CARTÃO DE CRÉDITO RECORRENTE (PIN PROTECTED)
-          try {
-            const isUnlocked = Boolean(
-              window.revealedCardStudents && (
-                window.revealedCardStudents.has(s.id) ||
-                window.revealedCardStudents.has(String(s.id))
-              )
-            );
-            window.renderStudentCardBox(s, isUnlocked);
-          } catch (cardErr) {
-            console.warn("Aviso ao carregar cartão no modal:", cardErr);
-          }
-
-          // QR CODE E VÍNCULOS FAMILIARES
-          try {
-            const qrImg = document.getElementById("detail-qr-image");
-            if (qrImg) {
-              qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${s.id}`;
-            }
-            const qrIdInput = document.getElementById("detail-qr-id");
-            if (qrIdInput) qrIdInput.value = s.id;
-            const studentIdInput = document.getElementById("detail-student-id");
-            if (studentIdInput) studentIdInput.value = s.id;
-
-            const familyBox = document.getElementById("detail-family-box");
-            if (familyBox) {
-              familyBox.innerHTML = "";
-              if (window.getPlanType(s.plan) === "dependente" && s.titularId) {
-                const titular = window.findStudentById(s.titularId);
-                const tName = titular ? titular.name : "Titular Desconhecido";
-                familyBox.innerHTML = `<h4 class="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase mb-2"><i class="fa-solid fa-link"></i> Vínculo Familiar</h4><p class="text-sm text-purple-900 dark:text-purple-200 mb-2">Este aluno é dependente de <strong>${tName}</strong>.</p>`;
-                familyBox.classList.remove("hidden");
-              } else {
-                const deps = (window.students || []).filter(
-                  (d) =>
-                    d && (d.titularId === s.id || String(d.titularId) === String(s.id)) &&
-                    window.getPlanType(d.plan) === "dependente",
-                );
-                if (deps.length > 0) {
-                  let html = `<h4 class="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase mb-2"><i class="fa-solid fa-users"></i> Dependentes Vinculados (${deps.length})</h4><ul class="space-y-2">`;
-                  deps.forEach((d) => {
-                    html += `<li class="flex justify-between items-center bg-white dark:bg-gray-700 p-2 rounded shadow-sm border border-purple-100 dark:border-purple-800"><div><p class="font-bold text-xs text-purple-900 dark:text-purple-200">${d.name}</p><p class="text-[10px] text-purple-600 dark:text-purple-400">${d.belt || "Branca"} • Freq: ${d.attendance ? d.attendance.length : 0}</p></div></li>`;
-                  });
-                  html += `</ul>`;
-                  familyBox.innerHTML = html;
-                  familyBox.classList.remove("hidden");
-                } else {
-                  familyBox.classList.add("hidden");
-                }
-              }
-            }
-          } catch (famErr) {
-            console.warn("Aviso ao carregar família ou QR:", famErr);
-          }
-        } catch (e) {
-          console.error("Erro detalhes aluno:", e);
-          window.customAlert("Não foi possível carregar os detalhes deste aluno. Tente novamente.");
+      // DETALHES, PROGRESSO E EDIÇÃO
+      // GERADOR DE CÓDIGO DE CUPOM / INDICAÇÃO (À PROVA DE FALHAS)
+      window.generateStudentReferralCode = (student) => {
+        if (!student) return "TANQUE-AMIGO";
+        if (student.referralCode && String(student.referralCode).trim()) {
+          return String(student.referralCode).trim().toUpperCase();
         }
+        const namePart = (student.name || "ALUNO")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .trim()
+          .split(/\s+/)[0]
+          .toUpperCase()
+          .replace(/[^A-Z0-9]/g, "");
+        const rawMat = student.matricula || student.id || "101";
+        const suffix = String(rawMat).replace(/[^A-Za-z0-9]/g, "").slice(-4).toUpperCase();
+        return `${namePart || "TANQUE"}-${suffix || "BJJ"}`;
       };
 
-      window.closeDetailsModal = () => {
-        const modal = document.getElementById("details-modal");
-        if (modal) {
-          modal.classList.add("hidden");
-          modal.classList.remove("flex");
+      window.viewStudentDetails = (id) => {
+        try {
+          if (window.revealedCardStudents) window.revealedCardStudents.clear();
+          try { sessionStorage.removeItem("tanque_revealed_cards"); } catch (e) {}
+          const s = (window.students || []).find((st) => String(st.id) === String(id));
+          if (!s) {
+            console.warn("Aluno não encontrado:", id);
+            window.customAlert("Aluno não encontrado.");
+            return;
+          }
+          document.getElementById("detail-name").innerText = s.name || "Aluno";
+
+          // MATRÍCULA ÚNICA E INDIVIDUAL
+          const isKid = typeof isStudentKid === "function" ? isStudentKid(s) : false;
+          let studentMatricula = s.matricula || "";
+          if (!studentMatricula && typeof window.getNextMatricula === "function") {
+            try {
+              studentMatricula = window.getNextMatricula(isKid);
+            } catch (err) {
+              studentMatricula = "";
+            }
+          }
+
+          const matContainer = document.getElementById("detail-matricula-badge-container");
+          if (matContainer) {
+            matContainer.innerHTML = studentMatricula
+              ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono font-black text-xs sm:text-sm border shadow-xs ${String(studentMatricula).startsWith('K') ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/70 dark:text-amber-300 dark:border-amber-800' : 'bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700'}">
+                   <i class="fa-solid fa-id-card text-brand-red text-sm"></i> Matrícula: <strong class="text-brand-red">${studentMatricula}</strong>
+                 </span>`
+              : "";
+          }
+
+          const matEl = document.getElementById("detail-matricula");
+          if (matEl) matEl.innerText = studentMatricula || "--";
+
+          const matTag = document.getElementById("detail-matricula-tag");
+          if (matTag) {
+            const isK = String(studentMatricula).startsWith('K');
+            matTag.innerText = isK ? "Aluno Kids" : "Aluno Adulto";
+            matTag.className = isK
+              ? "px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
+              : "px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700";
+          }
+          const age = typeof getAge === "function" ? getAge(s.dob) : null;
+          document.getElementById("detail-age").innerText =
+            age !== null ? `${age} anos` : "--";
+          document.getElementById("detail-dob").innerText = s.dob
+            ? formatDate(s.dob)
+            : "--";
+          const beltIcon = typeof window.getBeltImageHtml === "function" ? window.getBeltImageHtml(s.belt) : "";
+          document.getElementById("detail-belt").innerHTML =
+            '<div class="flex items-center gap-2">' +
+            beltIcon +
+            "<span>" +
+            (s.belt || "Faixa Branca") +
+            "</span></div>";
+          const photoImg = document.getElementById("detail-photo");
+          const photoIcon = document.getElementById("detail-icon");
+          if (s.photoURL || s.photoBase64) {
+            photoImg.src = s.photoURL || s.photoBase64;
+            photoImg.classList.remove("hidden");
+            photoIcon.classList.add("hidden");
+          } else {
+            photoImg.classList.add("hidden");
+            photoIcon.classList.remove("hidden");
+          }
+          const belt = (s.belt || "").toLowerCase();
+          let headerColor = "bg-gray-200 dark:bg-gray-600";
+          if (belt.includes("azul")) headerColor = "bg-blue-600";
+          else if (belt.includes("roxa")) headerColor = "bg-purple-600";
+          else if (belt.includes("marrom")) headerColor = "bg-amber-800";
+          else if (belt.includes("preta")) headerColor = "bg-black";
+          else if (belt.includes("amarela")) headerColor = "bg-yellow-400";
+          else if (belt.includes("laranja")) headerColor = "bg-orange-500";
+          else if (belt.includes("verde")) headerColor = "bg-green-600";
+          document.getElementById("detail-header-bg").className =
+            `h-24 w-full relative ${headerColor}`;
+          const attendanceCount = Array.isArray(s.attendance) ? s.attendance.length : (s.attendance ? 1 : 0);
+          document.getElementById("detail-attendance").innerText =
+            attendanceCount + " aulas";
+          const statusEl = document.getElementById("detail-status");
+          statusEl.innerText = s.archived
+            ? "Arquivado"
+            : s.enrollmentStatus || "Ativo";
+          statusEl.className =
+            s.enrollmentStatus === "Ativo" && !s.archived
+              ? "text-sm font-bold mt-1 text-green-600"
+              : "text-sm font-bold mt-1 text-red-600";
+          document.getElementById("detail-cpf").innerText = s.cpf || "-";
+          document.getElementById("detail-height").innerText = s.height
+            ? s.height + " m"
+            : "-";
+          document.getElementById("detail-weight").innerText = s.weight
+            ? s.weight + " kg"
+            : "-";
+
+          const phoneDisplay = document.getElementById("detail-phone");
+          if (String(s.phone || "").trim() !== "") {
+            const cleanPhone = String(s.phone).replace(/\D/g, "");
+            phoneDisplay.innerHTML = `<a href="https://wa.me/55${cleanPhone}" target="_blank" class="text-green-600 hover:text-green-800 font-bold transition inline-flex items-center gap-1"><i class="fa-brands fa-whatsapp text-lg"></i> ${s.phone}</a>`;
+          } else {
+            phoneDisplay.innerText = "-";
+          }
+          document.getElementById("detail-email").innerText = s.email || "-";
+          document.getElementById("detail-address").innerText =
+            s.address || "-";
+          document.getElementById("detail-login").innerText =
+            s.studentLogin || "Não configurado";
+          document.getElementById("detail-pass").innerText =
+            s.studentPassword || "---";
+          const originEl = document.getElementById("detail-origin");
+          if (originEl)
+            originEl.innerText = s.howDidYouFindUs || "Não informado";
+          const guardianBox = document.getElementById("detail-guardian-box");
+          if (s.guardian && String(s.guardian).trim() !== "") {
+            document.getElementById("detail-guardian-name").innerText =
+              s.guardian;
+            guardianBox.classList.remove("hidden");
+          } else guardianBox.classList.add("hidden");
+
+          let planLong = "NÃO INFORMADO";
+          try {
+            const planInfoObj = typeof window.getPlanInfo === "function" ? window.getPlanInfo(s.plan) : null;
+            planLong = (planInfoObj && planInfoObj.long) ? planInfoObj.long : (s.plan || "NÃO INFORMADO");
+          } catch (pErr) {
+            planLong = s.plan || "NÃO INFORMADO";
+          }
+          document.getElementById("detail-plan").innerText = planLong;
+
+          const titularBox = document.getElementById("detail-titular-box");
+          if (s.titularName && String(s.titularName).trim() !== "") {
+            document.getElementById("detail-titular-name").innerText =
+              s.titularName;
+            titularBox.classList.remove("hidden");
+          } else titularBox.classList.add("hidden");
+
+          let nextDueText = "--";
+          if (s.nextDueDate) {
+            try {
+              const adjDate = typeof getAdjustedNextDueDate === "function" ? getAdjustedNextDueDate(s) : null;
+              nextDueText = adjDate
+                ? formatDate(adjDate)
+                : formatDate(s.nextDueDate);
+            } catch (dErr) {
+              nextDueText = formatDate(s.nextDueDate) || "--";
+            }
+          }
+          document.getElementById("detail-next-due").innerText = nextDueText;
+
+          let contractEndText = "--";
+          if (s.contractEndDate) {
+            contractEndText = formatDate(s.contractEndDate);
+          }
+          document.getElementById("detail-contract-end").innerText =
+            contractEndText;
+
+          const contractStatusEl = document.getElementById(
+            "detail-contract-status",
+          );
+          if (contractStatusEl) {
+            if (s.contractSigned) {
+              contractStatusEl.innerHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 text-[10px] font-bold uppercase"><i class="fa-solid fa-file-circle-check"></i> ASSINADO</span>`;
+            } else {
+              contractStatusEl.innerHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 text-[10px] font-bold uppercase"><i class="fa-solid fa-file-circle-xmark"></i> PENDENTE</span>`;
+            }
+          }
+
+          // WHO REFERRED THIS STUDENT (QUEM INDICOU)
+          const referredByNameEl = document.getElementById("detail-referred-by-name");
+          const referredByActionsEl = document.getElementById("detail-referred-by-actions");
+          const hasReferrer = !!(s.referredByStudentName || s.referralCodeUsed || s.referredByStudentId);
+
+          if (referredByNameEl) {
+            if (hasReferrer) {
+              const refDesc = s.referredByStudentName || `Cupom: ${s.referralCodeUsed}`;
+              const cupomUsed = s.referralCodeUsed ? ` (Cupom: ${s.referralCodeUsed})` : "";
+              referredByNameEl.innerHTML = `<span class="text-amber-900 dark:text-amber-200 font-bold">${refDesc}</span><span class="text-[10px] text-gray-500 block font-normal">${cupomUsed}</span>`;
+            } else {
+              referredByNameEl.innerHTML = `<span class="text-gray-400 font-normal italic">Nenhum indicador registrado</span>`;
+            }
+          }
+
+          if (referredByActionsEl) {
+            if (hasReferrer) {
+              referredByActionsEl.innerHTML = `
+                <button type="button" onclick="window.removeStudentReferrer('${s.id}')" class="text-[11px] font-bold text-red-600 dark:text-red-400 hover:text-red-800 bg-red-50 dark:bg-red-950/40 px-2 py-1 rounded border border-red-200 dark:border-red-900 flex items-center gap-1 transition shadow-xs" title="Remover Vínculo de Quem Indicou">
+                  <i class="fa-solid fa-link-slash"></i> Remover Vínculo
+                </button>`;
+            } else {
+              referredByActionsEl.innerHTML = `
+                <button type="button" onclick="window.setStudentReferrer('${s.id}')" class="text-[11px] font-bold text-amber-700 dark:text-amber-300 hover:text-amber-900 bg-amber-100 dark:bg-amber-900/40 px-2 py-1 rounded border border-amber-300 dark:border-amber-700 flex items-center gap-1 transition shadow-xs" title="Vincular Indicador Manualmente">
+                  <i class="fa-solid fa-plus"></i> Vincular Indicador
+                </button>`;
+            }
+          }
+
+          // REFERRAL PROGRAM DETAILS
+          const currentConfiguredPct = (window.referralConfig && typeof window.referralConfig.discountPercent === "number")
+            ? window.referralConfig.discountPercent
+            : 50;
+          const studentRefCode = s.referralCode || (typeof window.generateStudentReferralCode === "function" ? window.generateStudentReferralCode(s) : "AMIGO-BJJ");
+          const refCodeEl = document.getElementById("detail-referral-code");
+          if (refCodeEl) refCodeEl.innerText = studentRefCode;
+
+          const allDiscounts = Array.isArray(s.referralDiscounts) ? s.referralDiscounts : [];
+          const availDiscounts = allDiscounts.filter((d) => d && d.status === "disponivel");
+
+          const refBalanceEl = document.getElementById("detail-referral-balance");
+          if (refBalanceEl) {
+            refBalanceEl.innerText = `${availDiscounts.length} ${availDiscounts.length === 1 ? "mês" : "meses"} (${currentConfiguredPct}% OFF)`;
+          }
+
+          const refListContainer = document.getElementById("detail-referral-list-container");
+          if (refListContainer) {
+            if (allDiscounts.length === 0) {
+              refListContainer.innerHTML = `
+                <div class="p-2.5 bg-amber-100/50 dark:bg-amber-950/20 rounded text-[11px] text-amber-800 dark:text-amber-300 flex items-center justify-between border border-amber-200/60 dark:border-amber-900/40">
+                  <span>Nenhum amigo indicado registrado no momento.</span>
+                  <span class="text-[10px] opacity-70">${currentConfiguredPct}% por indicação</span>
+                </div>`;
+            } else {
+              let listHtml = `<div class="space-y-1.5 max-h-44 overflow-y-auto pr-1">`;
+              allDiscounts.forEach((disc) => {
+                if (!disc) return;
+                const isAvail = disc.status === "disponivel";
+                const discPct = disc.discountPercent || currentConfiguredPct;
+                const badgeHtml = isAvail
+                  ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1"><i class="fa-solid fa-check"></i> DISPONÍVEL</span>`
+                  : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">UTILIZADO (${disc.usedInMonth || "Passado"})</span>`;
+
+                listHtml += `
+                  <div class="flex items-center justify-between p-2 rounded bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-900 text-xs shadow-xs">
+                    <div class="flex-1 pr-2">
+                      <div class="font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1">
+                        <i class="fa-solid fa-user-check text-emerald-500 text-[10px]"></i>
+                        <span>${disc.referredStudentName || "Amigo Indicado"}</span>
+                      </div>
+                      <span class="text-[10px] text-gray-500 block">${disc.createdAt ? formatDate(disc.createdAt) : "Cadastrado"} • <b>${discPct}% OFF</b></span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                      ${badgeHtml}
+                      <button type="button" onclick="window.removeReferralDiscount('${s.id}', '${disc.id}', '${(disc.referredStudentName || 'Amigo Indicado').replace(/'/g, "\\'")}')" class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40 transition" title="Remover esta indicação">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                      </button>
+                    </div>
+                  </div>`;
+              });
+              listHtml += `</div>`;
+              listHtml += `
+                <div class="flex justify-between items-center pt-2 mt-2 border-t border-amber-200 dark:border-amber-900/50 text-[11px] text-gray-500">
+                  <span>Total: <b>${allDiscounts.length}</b> indicação(ões)</span>
+                  <button type="button" onclick="window.clearAllReferralDiscounts('${s.id}')" class="text-[10px] text-red-600 dark:text-red-400 hover:underline font-bold">
+                    <i class="fa-solid fa-trash"></i> Limpar todas as indicações
+                  </button>
+                </div>`;
+              refListContainer.innerHTML = listHtml;
+            }
+          }
+
+          // CREDIT CARD RECURRENT DETAILS (PIN PROTECTED)
+          if (typeof window.renderStudentCardBox === "function") {
+            try {
+              window.renderStudentCardBox(s, false);
+            } catch (cardErr) {
+              console.warn("Erro ao renderizar cartão:", cardErr);
+            }
+          }
+
+          const qrImg = document.getElementById("detail-qr-image");
+          if (qrImg) {
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(s.id)}`;
+          }
+          const qrId = document.getElementById("detail-qr-id");
+          if (qrId) qrId.value = s.id;
+          const detailStudentId = document.getElementById("detail-student-id");
+          if (detailStudentId) detailStudentId.value = s.id;
+
+          const familyBox = document.getElementById("detail-family-box");
+          if (familyBox) {
+            familyBox.innerHTML = "";
+            const sPlanType = typeof window.getPlanType === "function" ? window.getPlanType(s.plan) : "";
+            if (sPlanType === "dependente" && s.titularId) {
+              const titular = (window.students || []).find((t) => String(t.id) === String(s.titularId));
+              const tName = titular ? titular.name : "Titular Desconhecido";
+              familyBox.innerHTML = `<h4 class="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase mb-2"><i class="fa-solid fa-link"></i> Vínculo Familiar</h4><p class="text-sm text-purple-900 dark:text-purple-200 mb-2">Este aluno é dependente de <strong>${tName}</strong>.</p>`;
+              familyBox.classList.remove("hidden");
+            } else {
+              const deps = (window.students || []).filter(
+                (d) =>
+                  d &&
+                  String(d.titularId) === String(s.id) &&
+                  (typeof window.getPlanType === "function" ? window.getPlanType(d.plan) === "dependente" : false),
+              );
+              if (deps.length > 0) {
+                let html = `<h4 class="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase mb-2"><i class="fa-solid fa-users"></i> Dependentes Vinculados (${deps.length})</h4><ul class="space-y-2">`;
+                deps.forEach((d) => {
+                  const depAttendance = Array.isArray(d.attendance) ? d.attendance.length : (d.attendance ? 1 : 0);
+                  html += `<li class="flex justify-between items-center bg-white dark:bg-gray-700 p-2 rounded shadow-sm border border-purple-100 dark:border-purple-800"><div><p class="font-bold text-xs text-purple-900 dark:text-purple-200">${d.name || "Dependente"}</p><p class="text-[10px] text-purple-600 dark:text-purple-400">${d.belt || "Branca"} • Freq: ${depAttendance}</p></div></li>`;
+                });
+                html += `</ul>`;
+                familyBox.innerHTML = html;
+                familyBox.classList.remove("hidden");
+              } else familyBox.classList.add("hidden");
+            }
+          }
+          const modal = document.getElementById("details-modal");
+          if (modal) {
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+          }
+        } catch (e) {
+          console.error("Erro detalhes:", e);
+          window.customAlert("Ocorreu um erro ao carregar. Tente novamente.");
         }
+      };
+      window.closeDetailsModal = () => {
+        if (window.revealedCardStudents) window.revealedCardStudents.clear();
+        try { sessionStorage.removeItem("tanque_revealed_cards"); } catch (e) {}
+        document.getElementById("details-modal").classList.add("hidden");
+        document.getElementById("details-modal").classList.remove("flex");
       };
 
       window.handleAdminPlanChange = () => {
@@ -12551,40 +11906,25 @@ Belém-PA, [DATA_ATUAL].
 
       window.openEditModal = async (id) => {
         try {
-          if (typeof window.loadPlans === "function") {
-            try { await window.loadPlans(); } catch (err) { console.warn("Aviso planos edição:", err); }
-          }
-          const s = window.findStudentById(id);
-          if (!s) {
-            window.customAlert("Aluno não encontrado para edição.");
-            return;
-          }
-
-          const editModal = document.getElementById("edit-modal");
-          if (editModal) {
-            editModal.classList.remove("hidden");
-            editModal.classList.add("flex");
-          }
-
-          const editIdEl = document.getElementById("edit-id");
-          if (editIdEl) editIdEl.value = s.id;
-          const editNameEl = document.getElementById("edit-name");
-          if (editNameEl) editNameEl.value = s.name || "";
-
+          await window.loadPlans();
+          const s = window.students.find((st) => st.id === id);
+          if (!s) return;
+          document.getElementById("edit-id").value = id;
+          document.getElementById("edit-name").value = s.name || "";
           let formattedDob = String(s.dob || "");
           if (formattedDob && formattedDob.includes("-")) {
             const parts = formattedDob.split("-");
             if (parts.length === 3)
               formattedDob = `${parts[2].substring(0, 2)}/${parts[1]}/${parts[0]}`;
           }
-          const editDobEl = document.getElementById("edit-dob");
-          if (editDobEl) editDobEl.value = formattedDob;
+          document.getElementById("edit-dob").value = formattedDob;
 
           let addressBase = s.address || "";
           let addressNumber = "";
           if (addressBase.includes(",")) {
             const parts = addressBase.split(",");
             const lastPart = parts[parts.length - 1].trim();
+            // Check if last part looks like a house number (digits, digits+letter, or s/n)
             if (
               /^\d+$/.test(lastPart) ||
               /^\d+[a-zA-Z]$/.test(lastPart) ||
@@ -12597,42 +11937,36 @@ Belém-PA, [DATA_ATUAL].
             }
           }
 
-          const editCpfEl = document.getElementById("edit-cpf");
-          if (editCpfEl) editCpfEl.value = s.cpf || "";
-          const editAddrEl = document.getElementById("edit-address");
-          if (editAddrEl) editAddrEl.value = addressBase;
-          const editNumEl = document.getElementById("edit-address-number");
-          if (editNumEl) editNumEl.value = addressNumber;
-          const editGuardEl = document.getElementById("edit-guardian");
-          if (editGuardEl) editGuardEl.value = s.guardian || "";
-          const editCepEl = document.getElementById("edit-cep");
-          if (editCepEl) editCepEl.value = s.cep || "";
-          const editKinEl = document.getElementById("edit-guardian-kinship");
-          if (editKinEl) editKinEl.value = s.guardianKinship || "";
-          const editGuardCpfEl = document.getElementById("edit-guardian-cpf");
-          if (editGuardCpfEl) editGuardCpfEl.value = s.guardianCpf || "";
+          document.getElementById("edit-cpf").value = s.cpf || "";
+          document.getElementById("edit-address").value = addressBase;
+          if (document.getElementById("edit-address-number"))
+            document.getElementById("edit-address-number").value =
+              addressNumber;
+          document.getElementById("edit-guardian").value = s.guardian || "";
+          if (document.getElementById("edit-cep"))
+            document.getElementById("edit-cep").value = s.cep || "";
+          if (document.getElementById("edit-guardian-kinship"))
+            document.getElementById("edit-guardian-kinship").value =
+              s.guardianKinship || "";
+          if (document.getElementById("edit-guardian-cpf"))
+            document.getElementById("edit-guardian-cpf").value =
+              s.guardianCpf || "";
 
-          const editEmailEl = document.getElementById("edit-email");
-          if (editEmailEl) editEmailEl.value = s.email || "";
-          const editPhoneEl = document.getElementById("edit-phone");
-          if (editPhoneEl) editPhoneEl.value = s.phone || "";
-
-          const editMatEl = document.getElementById("edit-matricula");
-          if (editMatEl) {
-            const isKid = typeof isStudentKid === "function" ? isStudentKid(s) : false;
-            editMatEl.value = s.matricula || (typeof window.getNextMatricula === "function" ? window.getNextMatricula(isKid) : (s.id || ""));
+          document.getElementById("edit-email").value = s.email || "";
+          document.getElementById("edit-phone").value = s.phone || "";
+          if (document.getElementById("edit-matricula")) {
+            const isKid = isStudentKid(s);
+            document.getElementById("edit-matricula").value = s.matricula || (typeof window.getNextMatricula === "function" ? window.getNextMatricula(isKid) : "");
           }
 
           const preview = document.getElementById("edit-photo-preview");
-          if (preview) {
-            const photoSrc = s.photoURL || s.photoBase64;
-            if (photoSrc) {
-              preview.src = photoSrc;
-              preview.classList.remove("hidden");
-            } else {
-              preview.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name || "Aluno")}&background=random`;
-              preview.classList.remove("hidden");
-            }
+          const photoSrc = s.photoURL || s.photoBase64;
+          if (photoSrc) {
+            preview.src = photoSrc;
+            preview.classList.remove("hidden");
+          } else {
+            preview.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name || "Aluno")}&background=random`;
+            preview.classList.remove("hidden");
           }
           window.currentCroppedPhoto = null;
 
@@ -12643,9 +11977,8 @@ Belém-PA, [DATA_ATUAL].
             if (parts.length > 0) color = parts[0].replace("Faixa ", "");
             if (parts.length > 1) degree = parts[1].replace("º Grau", "");
           }
-          const origBeltEl = document.getElementById("edit-original-belt");
-          if (origBeltEl) origBeltEl.value = s.belt || "Faixa Branca - 0º Grau";
-
+          document.getElementById("edit-original-belt").value =
+            s.belt || "Faixa Branca - 0º Grau";
           const selColor = document.getElementById("edit-belt-color");
           if (selColor) {
             for (let i = 0; i < selColor.options.length; i++) {
@@ -12656,26 +11989,24 @@ Belém-PA, [DATA_ATUAL].
                 selColor.selectedIndex = i;
             }
           }
-          const degEl = document.getElementById("edit-belt-degree");
-          if (degEl) degEl.value = degree;
+          if (document.getElementById("edit-belt-degree"))
+            document.getElementById("edit-belt-degree").value = degree;
+          document.getElementById("edit-login").value = s.studentLogin || "";
+          document.getElementById("edit-password").value =
+            s.studentPassword || "";
+          if (document.getElementById("edit-enrollment-status"))
+            document.getElementById("edit-enrollment-status").value =
+              s.enrollmentStatus || "Ativo";
+          if (document.getElementById("edit-contract-signed"))
+            document.getElementById("edit-contract-signed").checked =
+              !!s.contractSigned;
 
-          const loginEl = document.getElementById("edit-login");
-          if (loginEl) loginEl.value = s.studentLogin || "";
-          const passEl = document.getElementById("edit-password");
-          if (passEl) passEl.value = s.studentPassword || "";
-
-          const statusEl = document.getElementById("edit-enrollment-status");
-          if (statusEl) statusEl.value = s.enrollmentStatus || "Ativo";
-
-          const contractSignedEl = document.getElementById("edit-contract-signed");
-          if (contractSignedEl) contractSignedEl.checked = !!s.contractSigned;
-
-          if (typeof window.checkAdminEditAge === "function") {
-            try { window.checkAdminEditAge(); } catch(ageErr) {}
-          }
+          window.checkAdminEditAge();
+          document.getElementById("edit-modal").classList.remove("hidden");
+          document.getElementById("edit-modal").classList.add("flex");
         } catch (e) {
           console.error("Erro edição:", e);
-          window.customAlert("Não foi possível carregar os dados de edição deste aluno.");
+          window.customAlert("Erro ao abrir.");
         }
       };
       window.closeEditModal = () => {
@@ -13312,6 +12643,10 @@ Belém-PA, [DATA_ATUAL].
             titularId: titularId,
             titularRelation: titularRelation,
             paymentStatus: payStatus,
+            referralCode: typeof window.generateStudentReferralCode === "function"
+              ? window.generateStudentReferralCode({ name, matricula })
+              : "",
+            referralDiscounts: [],
             enrollmentStatus: "Ativo",
             belt: beltStr,
             category,
@@ -13552,19 +12887,6 @@ Belém-PA, [DATA_ATUAL].
           window.customAlert("Aluno cadastrado com sucesso!");
         } catch (e) {
           console.error("Erro ao salvar matrícula:", e);
-          if (typeof studentData !== "undefined" && studentData) {
-            const localId = "local_" + Date.now();
-            window.students = window.students || [];
-            window.students.unshift({ id: localId, ...studentData });
-            try {
-              localStorage.setItem("tanque_students_backup", JSON.stringify(window.students));
-            } catch(err) {}
-            window.closeAdminRegisterModal();
-            updateStats();
-            if (window.currentView === "students") window.renderTable();
-            window.customAlert("Aluno cadastrado com sucesso em modo local! (Google Cloud temporariamente suspenso)");
-            return;
-          }
           window.customAlert(
             "Erro ao cadastrar: " + (e.message || "Erro desconhecido"),
           );
@@ -13733,19 +13055,7 @@ Belém-PA, [DATA_ATUAL].
           await window.loadData();
           window.customAlert("Dados atualizados com sucesso!");
         } catch (e) {
-          console.error("Erro ao salvar alterações no Firestore:", e);
-          const idx = window.students.findIndex((st) => st.id === id);
-          if (idx !== -1) {
-            window.students[idx] = { ...window.students[idx], ...updateData };
-            try {
-              localStorage.setItem("tanque_students_backup", JSON.stringify(window.students));
-            } catch(err) {}
-            window.closeEditModal();
-            updateStats();
-            if (window.currentView === "students") window.renderTable();
-            window.customAlert("Dados salvos em modo local offline! (Google Cloud temporariamente suspenso)");
-            return;
-          }
+          console.error("Erro ao salvar alterações:", e);
           window.customAlert(
             "Erro ao salvar: " + (e.message || "Erro desconhecido"),
           );
@@ -17058,7 +16368,7 @@ Belém-PA, [DATA_ATUAL].
                                         <span class="font-bold text-xs sm:text-sm text-gray-900 dark:text-white cursor-pointer hover:underline hover:text-brand-red transition-colors uppercase leading-snug tracking-wide" onclick="window.viewStudentDetails('${s.id}')">${s.name}</span>
                                         ${matriculaBadgeHtml}
                                         ${s.contractSigned ? `<i class="fa-solid fa-file-circle-check text-blue-500 text-[11px]" title="Contrato Assinado"></i>` : ""}
-                                        ${(s.cardDetails && (s.cardDetails.cardNumber || s.cardDetails.last4)) ? `<i class="fa-solid fa-credit-card text-emerald-500 hover:text-emerald-700 text-[11px] cursor-pointer transition transform hover:scale-125" onclick="event.stopPropagation(); window.viewCardWithPin('${s.id}')" title="Cartão de Crédito Cadastrado (${s.cardDetails.brand || 'Recorrente'}) - Clique para Visualizar com PIN"></i>` : ""}
+                                        ${(s.cardDetails && (s.cardDetails.cardNumber || s.cardDetails.last4)) ? `<i class="fa-solid fa-credit-card text-emerald-500 text-[11px] cursor-pointer" onclick="window.viewStudentDetails('${s.id}')" title="Cartão de Crédito Cadastrado (${s.cardDetails.brand || 'Recorrente'})"></i>` : ""}
                                     </div>
                                     <div class="flex flex-wrap gap-1 mt-1 max-w-[150px] sm:max-w-[200px] md:max-w-none">
                                         ${subNameHtml}
@@ -18816,7 +18126,7 @@ Belém-PA, [DATA_ATUAL].
         }
 
         const firstName = s.name.split(" ")[0];
-        const referralCode = s.referralCode || window.generateStudentReferralCode(s);
+        const referralCode = s.referralCode || (typeof window.generateStudentReferralCode === "function" ? window.generateStudentReferralCode(s) : "AMIGO-BJJ");
         const referralUrl = `https://www.tanqueteambjj.com.br/matricula.html?cupom=${encodeURIComponent(referralCode)}`;
         const pct =
           window.referralConfig && typeof window.referralConfig.discountPercent === "number"
@@ -20395,24 +19705,31 @@ Belém-PA, [DATA_ATUAL].
 
       // NAVEGAÇÃO
       window.switchMainView = (viewId) => {
+        if (
+          !isAdminUnlocked &&
+          ["finance", "pre-registrations", "marketing"].includes(viewId)
+        ) {
+          return checkAdminAccess(() => window.switchMainView(viewId));
+        }
         window.currentView = viewId;
-        const allViews = [
-          "students",
-          "experimental",
-          "notices",
-          "pre-registrations",
-          "attendance",
-          "finance",
-        ];
-        allViews.forEach((v) => {
-          const el = document.getElementById(`view-${v}`);
-          if (el) el.classList.add("hidden");
-        });
+        document.getElementById("view-students").classList.add("hidden");
+        document.getElementById("view-experimental").classList.add("hidden");
+        document.getElementById("view-notices").classList.add("hidden");
+        if (document.getElementById("view-pre-registrations"))
+          document
+            .getElementById("view-pre-registrations")
+            .classList.add("hidden");
+        if (document.getElementById("view-marketing"))
+          document.getElementById("view-marketing").classList.add("hidden");
+        const attView = document.getElementById("view-attendance");
+        if (attView) attView.classList.add("hidden");
+        const finView = document.getElementById("view-finance");
+        if (finView) finView.classList.add("hidden");
 
         const viewEl = document.getElementById(`view-${viewId}`);
         if (viewEl) viewEl.classList.remove("hidden");
 
-        document.querySelectorAll("#sidebar-menu a, nav a").forEach((l) => {
+        document.querySelectorAll("#sidebar-menu a").forEach((l) => {
           l.classList.remove("bg-brand-red", "text-white");
           l.classList.add(
             "text-gray-400",
@@ -20426,21 +19743,19 @@ Belém-PA, [DATA_ATUAL].
           activeLink.classList.add("bg-brand-red", "text-white");
         }
 
-        if (viewId === "students") {
-          if (typeof window.renderTable === "function") window.renderTable();
-        } else if (viewId === "pre-registrations") {
-          if (typeof window.loadPreRegistrations === "function") window.loadPreRegistrations();
-        } else if (viewId === "experimental") {
-          if (typeof window.renderExperimentalTable === "function") window.renderExperimentalTable();
-        } else if (viewId === "finance") {
-          const monthFilter = document.getElementById("finance-month-filter");
-          if (monthFilter && !monthFilter.value) {
+        if (viewId === "students") window.renderTable();
+        if (viewId === "pre-registrations") window.loadPreRegistrations();
+        if (viewId === "experimental") window.renderExperimentalTable();
+        if (viewId === "marketing") window.renderMarketingReport();
+        if (viewId === "finance") {
+          if (!document.getElementById("finance-month-filter").value) {
             const today = new Date();
             const yyyy = today.getFullYear();
             const mm = String(today.getMonth() + 1).padStart(2, "0");
-            monthFilter.value = `${yyyy}-${mm}`;
+            document.getElementById("finance-month-filter").value =
+              `${yyyy}-${mm}`;
           }
-          if (typeof window.renderFinanceReport === "function") window.renderFinanceReport();
+          window.renderFinanceReport();
         }
         if (viewId === "attendance") {
           if (!document.getElementById("attendance-date-filter").value) {
@@ -22725,50 +22040,6 @@ Belém-PA, [DATA_ATUAL].
           widget.classList.add("hidden");
         }
       };
-
-      // INICIALIZAÇÃO AUTOMÁTICA E DEFINITIVA DO PAINEL ADMIN
-      window.startApplication = async () => {
-        try {
-          isAdminUnlocked = true;
-          try { localStorage.setItem("tanque_admin_unlocked", "true"); } catch (e) {}
-          if (typeof window.removeRestrictedView === "function") {
-            window.removeRestrictedView();
-          }
-
-          if (typeof window.loadPlans === "function") {
-            try { await window.loadPlans(); } catch (err) { console.warn("Aviso planos:", err); }
-          }
-          if (typeof window.loadSchedules === "function") {
-            try { await window.loadSchedules(); } catch (err) { console.warn("Aviso horários:", err); }
-          }
-          if (typeof window.loadAbsenceConfig === "function") {
-            try { await window.loadAbsenceConfig(); } catch (err) { console.warn("Aviso ausência:", err); }
-          }
-          if (typeof window.loadData === "function") {
-            try { await window.loadData(); } catch (err) { console.warn("Aviso alunos:", err); }
-          }
-          if (typeof window.loadPreRegistrations === "function") {
-            try { await window.loadPreRegistrations(); } catch (err) { console.warn("Aviso pré-matrículas:", err); }
-          }
-          if (typeof window.loadNotices === "function") {
-            try { await window.loadNotices(); } catch (err) { console.warn("Aviso avisos:", err); }
-          }
-          if (typeof window.loadExperimentalData === "function") {
-            try { await window.loadExperimentalData(); } catch (err) { console.warn("Aviso aulas exp:", err); }
-          }
-          if (typeof window.renderTable === "function") {
-            try { window.renderTable(); } catch (err) { console.warn("Aviso render tabela:", err); }
-          }
-        } catch (initErr) {
-          console.error("Erro na inicialização da aplicação:", initErr);
-        }
-      };
-
-      // Dispara imediatamente
-      window.startApplication();
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", () => window.startApplication());
-      }
     </script>
     <!-- Modal: PIN de Acesso -->
     <div
