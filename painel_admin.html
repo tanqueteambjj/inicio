@@ -437,6 +437,62 @@
       <main
         class="flex-1 overflow-x-hidden overflow-y-auto p-4 pb-24 md:p-6 md:pb-24 relative"
       >
+        <!-- Banner de Contingência / Status do Banco de Dados -->
+        <div
+          id="db-status-banner"
+          class="hidden mb-4 p-3.5 sm:p-4 bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-300 dark:border-amber-700/60 rounded-xl shadow-md no-print"
+        >
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200">
+            <div class="flex items-start gap-2.5">
+              <div class="w-7 h-7 rounded-lg bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 flex items-center justify-center text-sm shrink-0 mt-0.5">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div>
+                <p id="db-status-banner-text" class="leading-relaxed">
+                  <strong>Modo de Contingência (Local):</strong> O banco de dados na nuvem (Google Firebase) está indisponível ou suspenso (<code class="bg-amber-100 dark:bg-amber-900 px-1 py-0.5 rounded font-mono text-[11px]">CONSUMER_SUSPENDED</code>). Seus dados locais estão ativos no navegador.
+                </p>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 shrink-0 self-end md:self-center">
+              <button
+                onclick="window.openFirebaseHelpModal()"
+                class="px-2.5 py-1.5 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-amber-300 dark:border-amber-700 hover:bg-amber-100 font-bold flex items-center gap-1 shadow-sm transition"
+              >
+                <i class="fa-solid fa-circle-question text-amber-600"></i> Como Reativar
+              </button>
+              <button
+                onclick="window.exportStudentsBackup()"
+                class="px-2.5 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1 shadow-sm transition"
+                title="Salvar cópia de segurança em seu computador"
+              >
+                <i class="fa-solid fa-file-export"></i> Exportar Backup
+              </button>
+              <button
+                onclick="window.triggerImportBackup()"
+                class="px-2.5 py-1.5 rounded bg-sky-600 hover:bg-sky-700 text-white font-bold flex items-center gap-1 shadow-sm transition"
+                title="Restaurar dados a partir de arquivo .JSON"
+              >
+                <i class="fa-solid fa-file-import"></i> Importar Backup
+              </button>
+              <button
+                onclick="window.loadData()"
+                class="px-2.5 py-1.5 rounded bg-amber-600 hover:bg-amber-700 text-white font-bold flex items-center gap-1 shadow-sm transition"
+                title="Tentar sincronizar novamente com o Firebase"
+              >
+                <i class="fa-solid fa-rotate"></i> Reconectar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <input
+          type="file"
+          id="import-backup-file-input"
+          accept=".json,application/json"
+          class="hidden"
+          onchange="window.handleBackupFileSelected(event)"
+        />
+
         <!-- VIEW: ALUNOS -->
         <div id="view-students" class="animate-fade-in">
           <div
@@ -627,6 +683,22 @@
                 >
                   <i class="fa-solid fa-plus"></i>
                   <span class="hidden sm:inline">NOVO ALUNO</span>
+                </button>
+                <button
+                  onclick="window.exportStudentsBackup()"
+                  class="text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-200 text-xs sm:text-sm bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 px-2.5 py-1.5 sm:px-3 rounded shadow-sm font-bold no-print flex items-center gap-1"
+                  title="Exportar Alunos em arquivo .JSON"
+                >
+                  <i class="fa-solid fa-file-export"></i>
+                  <span class="hidden sm:inline">BACKUP</span>
+                </button>
+                <button
+                  onclick="window.triggerImportBackup()"
+                  class="text-sky-700 dark:text-sky-400 hover:text-sky-900 dark:hover:text-sky-200 text-xs sm:text-sm bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-800 px-2.5 py-1.5 sm:px-3 rounded shadow-sm font-bold no-print flex items-center gap-1"
+                  title="Importar Alunos de arquivo .JSON"
+                >
+                  <i class="fa-solid fa-file-import"></i>
+                  <span class="hidden sm:inline">RESTAURAR</span>
                 </button>
                 <button
                   onclick="window.loadData()"
@@ -4357,6 +4429,125 @@
               class="px-5 py-2 bg-yellow-500 text-brand-dark rounded text-sm font-bold hover:bg-yellow-400 shadow-md"
             >
               Salvar Alterações
+            </button>
+          </div>
+        </div>
+      </div>
+    <!-- Modal de Ajuda / Diagnóstico Firebase (CONSUMER_SUSPENDED) -->
+    <div
+      id="modal-firebase-suspension"
+      class="fixed inset-0 z-[95] hidden bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-xl flex flex-col max-h-[90vh] overflow-hidden border-t-4 border-amber-500"
+      >
+        <!-- Modal Header -->
+        <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/60 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shrink-0">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-base text-gray-800 dark:text-white leading-tight">
+                Status do Banco de Dados Google Cloud
+              </h3>
+              <p class="text-[11px] text-gray-500 dark:text-gray-400">
+                Diagnóstico de conexão Firestore & Autenticação
+              </p>
+            </div>
+          </div>
+          <button
+            onclick="window.closeFirebaseHelpModal()"
+            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+          >
+            <i class="fa-solid fa-times"></i>
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6 overflow-y-auto space-y-4 text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
+          <!-- Status Banner -->
+          <div class="p-3.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl">
+            <div class="flex items-start gap-2.5">
+              <i class="fa-solid fa-circle-xmark text-red-600 dark:text-red-400 text-base mt-0.5 shrink-0"></i>
+              <div>
+                <p class="font-bold text-red-900 dark:text-red-200 text-sm mb-1">
+                  Erro Detectado: CONSUMER_SUSPENDED (HTTP 403)
+                </p>
+                <p class="text-red-800 dark:text-red-300 text-[11px]">
+                  Projeto afetado: <code class="font-mono font-bold">tanqueteambjj</code> (ID: <code>410605992451</code>). O Google Cloud suspendeu o acesso às APIs deste projeto.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Explicação -->
+          <div>
+            <h4 class="font-bold text-gray-900 dark:text-white text-sm mb-1.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-info text-blue-500"></i> Por que isso acontece?
+            </h4>
+            <p>
+              O status <strong>CONSUMER_SUSPENDED</strong> é emitido diretamente pelo Google Cloud quando há pendência administrativa ou financeira na conta de faturamento (Billing) vinculada ao projeto. As causas mais comuns são:
+            </p>
+            <ul class="list-disc pl-5 mt-1.5 space-y-1 text-gray-600 dark:text-gray-300 text-[11px]">
+              <li>Cartão de crédito cadastrado no Google Cloud expirou ou foi recusado pelo banco.</li>
+              <li>Fatura mensal em aberto no Google Cloud Billing.</li>
+              <li>Necessidade de confirmação de titularidade ou dados cadastrais no Google Cloud.</li>
+            </ul>
+          </div>
+
+          <!-- Passo a Passo -->
+          <div class="bg-gray-50 dark:bg-gray-700/40 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+            <h4 class="font-bold text-gray-900 dark:text-white text-sm mb-2 flex items-center gap-1.5">
+              <i class="fa-solid fa-list-check text-emerald-600"></i> Como regularizar (em 2 minutos):
+            </h4>
+            <ol class="list-decimal pl-5 space-y-1.5 text-[11px]">
+              <li>
+                Acesse o console de faturamento: 
+                <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 font-bold underline">
+                  console.cloud.google.com/billing <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                </a>
+              </li>
+              <li>Entre com a conta Google que gerencia a academia Tanque Team BJJ.</li>
+              <li>Selecione a conta de faturamento vinculada ao projeto <strong>tanqueteambjj</strong>.</li>
+              <li>Verifique a notificação em vermelho no topo da página e atualize a forma de pagamento (cartão de crédito).</li>
+              <li>Assim que regularizado, o Google Cloud reativa o projeto automaticamente em poucos minutos.</li>
+            </ol>
+          </div>
+
+          <!-- Proteção do Sistema -->
+          <div class="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-[11px] text-emerald-900 dark:text-emerald-200">
+            <p class="font-bold flex items-center gap-1.5 mb-1">
+              <i class="fa-solid fa-shield-halved text-emerald-600"></i> Suas operações não param:
+            </p>
+            <p>
+              O painel possui proteção de <strong>Modo Local Offline e Backup Automático</strong>. Você pode carregar alunos de emergência ou restaurar um backup JSON para continuar visualizando, matriculando e gerando relatórios normalmente.
+            </p>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-3.5 bg-gray-50 dark:bg-gray-700/60 border-t border-gray-200 dark:border-gray-700 flex flex-wrap justify-between items-center gap-2 shrink-0">
+          <a
+            href="https://console.cloud.google.com/billing"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition"
+          >
+            <i class="fa-solid fa-credit-card"></i> Abrir Google Cloud Billing
+          </a>
+          <div class="flex gap-2">
+            <button
+              onclick="window.loadData(); window.closeFirebaseHelpModal();"
+              class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition"
+            >
+              <i class="fa-solid fa-rotate"></i> Reconectar Agora
+            </button>
+            <button
+              onclick="window.closeFirebaseHelpModal()"
+              class="px-4 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 text-gray-800 dark:text-gray-200 font-bold rounded-lg text-xs transition"
+            >
+              Fechar
             </button>
           </div>
         </div>
@@ -10799,9 +10990,565 @@
         }
       };
 
+      // MODAL DE AJUDA FIREBASE SUSPENSÃO
+      window.openFirebaseHelpModal = () => {
+        const m = document.getElementById("modal-firebase-suspension");
+        if (m) {
+          m.classList.remove("hidden");
+          m.classList.add("flex");
+        }
+      };
+
+      window.closeFirebaseHelpModal = () => {
+        const m = document.getElementById("modal-firebase-suspension");
+        if (m) {
+          m.classList.add("hidden");
+          m.classList.remove("flex");
+        }
+      };
+
+      // STATUS BANNER DO BANCO DE DADOS
+      window.showDbSuspendedBanner = (hasCachedData, count = 0) => {
+        const banner = document.getElementById("db-status-banner");
+        const textEl = document.getElementById("db-status-banner-text");
+        if (!banner) return;
+        banner.classList.remove("hidden");
+        if (hasCachedData) {
+          if (textEl) {
+            textEl.innerHTML = `<strong>Modo Local / Cache Ativado (${count || window.students?.length || 0} alunos carregados):</strong> O banco de dados em nuvem Google Cloud está suspenso (<code class="bg-amber-100 dark:bg-amber-900 px-1 py-0.5 rounded font-mono text-[11px]">CONSUMER_SUSPENDED</code>). Seus dados locais estão ativos no navegador e você pode continuar trabalhando.`;
+          }
+        } else {
+          if (textEl) {
+            textEl.innerHTML = `<strong>Atenção:</strong> O banco de dados em nuvem Google Cloud está suspenso (<code class="bg-amber-100 dark:bg-amber-900 px-1 py-0.5 rounded font-mono text-[11px]">CONSUMER_SUSPENDED</code>) e não há cache salvo. Ative o <strong>Modo de Emergência</strong> ou <strong>Importe um Backup</strong> para liberar o sistema imediatamente.`;
+          }
+        }
+      };
+
+      window.hideDbSuspendedBanner = () => {
+        const banner = document.getElementById("db-status-banner");
+        if (banner) banner.classList.add("hidden");
+      };
+
+      // CARD DE ERRO QUANDO NÃO HÁ NENHUM CACHE LOCAL
+      window.renderSuspendedErrorState = (err) => {
+        const tbody = document.getElementById("students-table-body");
+        if (!tbody) return;
+        const errMsg = err?.message || "CONSUMER_SUSPENDED (HTTP 403: Consumer has been suspended)";
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="p-4 sm:p-6 text-center">
+              <div class="max-w-2xl mx-auto bg-amber-50 dark:bg-gray-800 border-2 border-amber-300 dark:border-amber-600/70 rounded-2xl p-5 sm:p-6 text-left shadow-xl animate-fade-in">
+                <div class="flex items-start gap-3 sm:gap-4">
+                  <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-2xl shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h4 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-1">
+                      Banco de Dados Google Cloud Suspenso (CONSUMER_SUSPENDED)
+                    </h4>
+                    <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-3">
+                      O projeto Google Cloud / Firebase (<code class="font-mono bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded font-bold">tanqueteambjj</code>) foi suspenso temporariamente pela Google por pendência na conta de faturamento (Billing/cartão).
+                    </p>
+                    <div class="p-2.5 bg-white dark:bg-gray-900/60 rounded-lg border border-amber-200 dark:border-amber-800/60 mb-4 text-[11px] text-gray-600 dark:text-gray-400 break-all">
+                      <strong>Diagnóstico técnico:</strong> ${errMsg}
+                    </div>
+                    <div class="flex flex-wrap gap-2 text-xs">
+                      <button onclick="window.loadEmergencyDemoData()" class="bg-brand-red hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-sm flex items-center gap-1.5 transition transform active:scale-95">
+                        <i class="fa-solid fa-shield-halved"></i> Ativar Modo de Emergência (Carregar Alunos Modelo)
+                      </button>
+                      <button onclick="window.triggerImportBackup()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-sm flex items-center gap-1.5 transition transform active:scale-95">
+                        <i class="fa-solid fa-file-import"></i> Importar Backup (.JSON)
+                      </button>
+                      <button onclick="window.openFirebaseHelpModal()" class="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2.5 px-4 rounded-lg border dark:border-gray-600 flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-circle-question text-amber-600"></i> Como Reativar no Google Cloud
+                      </button>
+                      <button onclick="window.loadData()" class="bg-white hover:bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold py-2.5 px-3.5 rounded-lg border dark:border-gray-600 flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-rotate"></i> Tentar Novamente
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      };
+
+      // EXPORTAR BACKUP DOS ALUNOS EM ARQUIVO JSON
+      window.exportStudentsBackup = () => {
+        const list = window.students || [];
+        if (!list.length) {
+          window.customAlert("Não há alunos carregados para exportar no momento.");
+          return;
+        }
+        try {
+          const exportData = {
+            exportDate: new Date().toISOString(),
+            app: "Tanque Team BJJ",
+            totalStudents: list.length,
+            students: list,
+          };
+          const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+          const dlAnchor = document.createElement("a");
+          const dateStr = new Date().toISOString().slice(0, 10);
+          dlAnchor.setAttribute("href", dataStr);
+          dlAnchor.setAttribute("download", `backup_alunos_tanqueteambjj_${dateStr}.json`);
+          document.body.appendChild(dlAnchor);
+          dlAnchor.click();
+          dlAnchor.remove();
+          window.customAlert(`Backup exportado com sucesso! (${list.length} alunos salvos em arquivo .JSON)`);
+        } catch(e) {
+          console.error("Erro ao exportar backup:", e);
+          window.customAlert("Erro ao exportar backup: " + e.message);
+        }
+      };
+
+      // IMPORTAR BACKUP DE ARQUIVO JSON
+      window.triggerImportBackup = () => {
+        const input = document.getElementById("import-backup-file-input");
+        if (input) {
+          input.value = "";
+          input.click();
+        }
+      };
+
+      window.handleBackupFileSelected = (event) => {
+        const file = event.target?.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const content = e.target?.result;
+            const parsed = JSON.parse(content);
+            let importedStudents = [];
+            if (Array.isArray(parsed)) {
+              importedStudents = parsed;
+            } else if (parsed && Array.isArray(parsed.students)) {
+              importedStudents = parsed.students;
+            } else {
+              throw new Error("Formato inválido. O arquivo JSON deve conter uma lista de alunos.");
+            }
+
+            if (!importedStudents.length) {
+              window.customAlert("O arquivo selecionado não contém nenhum aluno.");
+              return;
+            }
+
+            // Sanitizar dados
+            importedStudents.forEach((st, idx) => {
+              if (!st.id) st.id = "imported_" + Date.now() + "_" + idx;
+              if (st.name) st.name = String(st.name).toUpperCase();
+            });
+
+            window.students = importedStudents;
+            try {
+              localStorage.setItem("tanque_students_backup", JSON.stringify(window.students));
+            } catch(storageErr) {
+              console.warn("Aviso ao salvar backup no localStorage:", storageErr);
+            }
+
+            if (typeof window.ensureStudentMatriculas === "function") {
+              await window.ensureStudentMatriculas();
+            }
+
+            window.students.sort(
+              (a, b) =>
+                new Date(b.registrationDate || 0) -
+                new Date(a.registrationDate || 0),
+            );
+
+            window.populateTitularSelects();
+            updateStats();
+            if (window.currentView === "students") window.renderTable();
+            if (window.currentView === "attendance" && window.renderAttendanceTable) window.renderAttendanceTable();
+            if (window.renderBirthdays) window.renderBirthdays();
+
+            window.showDbSuspendedBanner(true, window.students.length);
+            window.customAlert(`Backup restaurado com sucesso! ${window.students.length} alunos carregados.`);
+          } catch(err) {
+            console.error("Erro ao importar arquivo:", err);
+            window.customAlert("Falha ao ler o arquivo JSON: " + err.message);
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      // CARREGAR DADOS DE EMERGÊNCIA / DEMONSTRATIVOS REALISTAS
+      window.loadEmergencyDemoData = async () => {
+        const today = new Date();
+        const fmtDate = (daysAgo) => {
+          const d = new Date(today);
+          d.setDate(d.getDate() - daysAgo);
+          return d.toISOString();
+        };
+        const fmtFuture = (daysAhead) => {
+          const d = new Date(today);
+          d.setDate(d.getDate() + daysAhead);
+          return d.toISOString();
+        };
+
+        const demoList = [
+          {
+            id: "tanque_demo_01",
+            matricula: "A-001",
+            name: "LUCAS SILVEIRA DOS SANTOS",
+            category: "Adulto",
+            dob: "1995-04-18",
+            cpf: "215.348.912-40",
+            email: "lucas.silveira@gmail.com",
+            phone: "(11) 98124-5544",
+            address: "Av. Paulista, 1500, Apto 82, Bela Vista",
+            cep: "01310-200",
+            belt: "Faixa Roxa - 2º Grau",
+            plan: "Adulto Mensal - R$ 168,90",
+            planValue: 168.90,
+            paymentStatus: "Em dia",
+            nextDueDate: fmtFuture(20),
+            registrationDate: fmtDate(240),
+            contractEndDate: fmtFuture(120),
+            contractSigned: true,
+            orderIndex: 1,
+            attendance: [fmtDate(1), fmtDate(3), fmtDate(5), fmtDate(8), fmtDate(10)],
+            paymentHistory: [
+              { date: fmtDate(10), amount: 168.90, method: "Cartão de Crédito", status: "Pago" },
+              { date: fmtDate(40), amount: 168.90, method: "Cartão de Crédito", status: "Pago" }
+            ],
+            cardBillingAddress: {
+              street: "Av. Paulista",
+              number: "1500",
+              complement: "Apto 82",
+              neighborhood: "Bela Vista",
+              city: "São Paulo",
+              state: "SP",
+              zip: "01310-200"
+            },
+            cardBillingSameAsRegistration: true,
+            archived: false
+          },
+          {
+            id: "tanque_demo_02",
+            matricula: "K-001",
+            name: "BERNARDO ALENCAR SILVA",
+            category: "Infantil",
+            dob: "2016-07-22",
+            cpf: "512.449.108-72",
+            email: "roberto.alencar@gmail.com",
+            phone: "(11) 97133-8822",
+            address: "Rua Vergueiro, 780, Casa 2, Paraíso",
+            cep: "04101-000",
+            guardian: "ROBERTO ALENCAR",
+            guardianCpf: "189.774.225-33",
+            guardianPhone: "(11) 97133-8822",
+            guardianKinship: "Pai",
+            belt: "Faixa Cinza e Branca - 3º Grau",
+            plan: "Infantil Trimestral - R$ 168,90",
+            planValue: 168.90,
+            paymentStatus: "Em dia",
+            nextDueDate: fmtFuture(15),
+            registrationDate: fmtDate(180),
+            contractEndDate: fmtFuture(90),
+            contractSigned: true,
+            orderIndex: 2,
+            attendance: [fmtDate(2), fmtDate(4), fmtDate(7), fmtDate(9)],
+            paymentHistory: [
+              { date: fmtDate(15), amount: 168.90, method: "PIX", status: "Pago" }
+            ],
+            cardBillingAddress: {
+              street: "Rua Vergueiro",
+              number: "780",
+              complement: "Casa 2",
+              neighborhood: "Paraíso",
+              city: "São Paulo",
+              state: "SP",
+              zip: "04101-000"
+            },
+            cardBillingSameAsRegistration: true,
+            archived: false
+          },
+          {
+            id: "tanque_demo_03",
+            matricula: "A-002",
+            name: "RAFAEL MENEZES OLIVEIRA",
+            category: "Adulto",
+            dob: "1991-11-05",
+            cpf: "304.551.982-15",
+            email: "rafa.menezes@outlook.com",
+            phone: "(11) 99871-2244",
+            address: "Rua Domingos de Morais, 1240, Vila Mariana",
+            cep: "04010-100",
+            belt: "Faixa Marrom - 1º Grau",
+            plan: "Adulto Mensal - R$ 168,90",
+            planValue: 168.90,
+            paymentStatus: "Vencendo",
+            nextDueDate: fmtFuture(2),
+            registrationDate: fmtDate(320),
+            contractEndDate: fmtFuture(40),
+            contractSigned: true,
+            orderIndex: 3,
+            attendance: [fmtDate(1), fmtDate(2), fmtDate(6), fmtDate(8)],
+            cardBillingAddress: {
+              street: "Rua Domingos de Morais",
+              number: "1240",
+              complement: "",
+              neighborhood: "Vila Mariana",
+              city: "São Paulo",
+              state: "SP",
+              zip: "04010-100"
+            },
+            cardBillingSameAsRegistration: true,
+            archived: false
+          },
+          {
+            id: "tanque_demo_04",
+            matricula: "K-002",
+            name: "ENZO GABRIEL FERREIRA",
+            category: "Infantil",
+            dob: "2017-03-14",
+            cpf: "612.339.810-09",
+            email: "patricia.ferreira@hotmail.com",
+            phone: "(11) 98555-1122",
+            address: "Rua Augusta, 2100, Consolação",
+            cep: "01412-000",
+            guardian: "PATRICIA FERREIRA",
+            guardianCpf: "228.663.991-55",
+            guardianPhone: "(11) 98555-1122",
+            guardianKinship: "Mãe",
+            belt: "Faixa Branca - 2º Grau",
+            plan: "Infantil Mensal - R$ 189,90",
+            planValue: 189.90,
+            paymentStatus: "Pendente",
+            nextDueDate: fmtDate(5),
+            registrationDate: fmtDate(90),
+            contractEndDate: fmtFuture(270),
+            contractSigned: true,
+            orderIndex: 4,
+            attendance: [fmtDate(3), fmtDate(6)],
+            archived: false
+          },
+          {
+            id: "tanque_demo_05",
+            matricula: "A-003",
+            name: "CARLOS EDUARDO LIMA",
+            category: "Adulto",
+            dob: "1988-08-30",
+            cpf: "145.882.339-77",
+            email: "carlos.lima@terra.com.br",
+            phone: "(11) 99441-3377",
+            address: "Av. Brigadeiro Luís Antônio, 3400, Jardim Paulista",
+            cep: "01402-001",
+            belt: "Faixa Preta - 1º Grau",
+            plan: "Adulto Semestral - R$ 147,90",
+            planValue: 147.90,
+            paymentStatus: "Em dia",
+            nextDueDate: fmtFuture(25),
+            registrationDate: fmtDate(500),
+            contractEndDate: fmtFuture(180),
+            contractSigned: true,
+            orderIndex: 5,
+            attendance: [fmtDate(1), fmtDate(3), fmtDate(4), fmtDate(6)],
+            archived: false
+          },
+          {
+            id: "tanque_demo_06",
+            matricula: "K-003",
+            name: "SOFIA RODRIGUES COSTA",
+            category: "Infantil",
+            dob: "2015-12-02",
+            cpf: "714.228.910-33",
+            email: "juliana.costa@gmail.com",
+            phone: "(11) 97722-4411",
+            address: "Rua Pamplona, 950, Jardim Paulista",
+            cep: "01405-001",
+            guardian: "JULIANA COSTA",
+            guardianCpf: "318.552.114-88",
+            guardianPhone: "(11) 97722-4411",
+            guardianKinship: "Mãe",
+            belt: "Faixa Amarela - 1º Grau",
+            plan: "Infantil Semestral - R$ 157,90",
+            planValue: 157.90,
+            paymentStatus: "Em dia",
+            nextDueDate: fmtFuture(18),
+            registrationDate: fmtDate(210),
+            contractEndDate: fmtFuture(150),
+            contractSigned: true,
+            orderIndex: 6,
+            attendance: [fmtDate(2), fmtDate(4), fmtDate(8)],
+            archived: false
+          },
+          {
+            id: "tanque_demo_07",
+            matricula: "A-004",
+            name: "AMANDA BEATRIZ CARVALHO",
+            category: "Adulto",
+            dob: "1998-02-14",
+            cpf: "419.882.115-66",
+            email: "amanda.carvalho@gmail.com",
+            phone: "(11) 98833-9988",
+            address: "Rua Haddock Lobo, 600, Cerqueira César",
+            cep: "01414-000",
+            belt: "Faixa Azul - 3º Grau",
+            plan: "Adulto Mensal - R$ 168,90",
+            planValue: 168.90,
+            paymentStatus: "Em dia",
+            nextDueDate: fmtFuture(22),
+            registrationDate: fmtDate(150),
+            contractEndDate: fmtFuture(210),
+            contractSigned: true,
+            orderIndex: 7,
+            attendance: [fmtDate(1), fmtDate(4), fmtDate(5), fmtDate(9)],
+            archived: false
+          },
+          {
+            id: "tanque_demo_08",
+            matricula: "A-005",
+            name: "PROF. MARCELO 'TANQUE' SILVA",
+            category: "Administração",
+            dob: "1985-06-10",
+            cpf: "098.765.432-11",
+            email: "marcelo.tanque@tanqueteambjj.com",
+            phone: "(11) 99999-0001",
+            address: "Rua do Dojô Central, 100, São Paulo",
+            cep: "01300-000",
+            belt: "Faixa Preta - 3º Grau",
+            plan: "Administração / Isento - R$ 0,00",
+            planValue: 0,
+            paymentStatus: "Isento",
+            nextDueDate: null,
+            registrationDate: fmtDate(1000),
+            contractEndDate: null,
+            contractSigned: true,
+            orderIndex: 8,
+            attendance: [fmtDate(1), fmtDate(2), fmtDate(3), fmtDate(4), fmtDate(5)],
+            archived: false
+          },
+          {
+            id: "tanque_demo_09",
+            matricula: "A-006",
+            name: "RODRIGO MARTINS DIAS",
+            category: "Adulto",
+            dob: "1993-09-25",
+            cpf: "331.774.220-41",
+            email: "rodrigo.dias@yahoo.com.br",
+            phone: "(11) 97661-3322",
+            address: "Rua Bela Cintra, 1100, Consolação",
+            cep: "01415-000",
+            belt: "Faixa Branca - 3º Grau",
+            plan: "Adulto Trimestral - R$ 147,90",
+            planValue: 147.90,
+            paymentStatus: "Em dia",
+            nextDueDate: fmtFuture(12),
+            registrationDate: fmtDate(75),
+            contractEndDate: fmtFuture(285),
+            contractSigned: true,
+            orderIndex: 9,
+            attendance: [fmtDate(2), fmtDate(5), fmtDate(8)],
+            archived: false
+          },
+          {
+            id: "tanque_demo_10",
+            matricula: "K-004",
+            name: "ARTHUR HENRIQUE BARBOSA",
+            category: "Infantil",
+            dob: "2018-01-19",
+            cpf: "882.114.993-18",
+            email: "marcos.barbosa@gmail.com",
+            phone: "(11) 98112-7744",
+            address: "Rua Oscar Freire, 1400, Cerqueira César",
+            cep: "01426-000",
+            guardian: "MARCOS BARBOSA",
+            guardianCpf: "192.441.773-20",
+            guardianPhone: "(11) 98112-7744",
+            guardianKinship: "Pai",
+            belt: "Faixa Branca - 1º Grau",
+            plan: "Infantil Mensal - R$ 189,90",
+            planValue: 189.90,
+            paymentStatus: "Em dia",
+            nextDueDate: fmtFuture(14),
+            registrationDate: fmtDate(45),
+            contractEndDate: fmtFuture(315),
+            contractSigned: true,
+            orderIndex: 10,
+            attendance: [fmtDate(1), fmtDate(4)],
+            archived: false
+          },
+          {
+            id: "tanque_demo_11",
+            matricula: "A-007",
+            name: "FERNANDO ALBUQUERQUE",
+            category: "Adulto",
+            dob: "1989-10-12",
+            cpf: "284.119.552-03",
+            email: "fernando.alb@gmail.com",
+            phone: "(11) 99112-3344",
+            address: "Rua Teodoro Sampaio, 850, Pinheiros",
+            cep: "05406-000",
+            belt: "Faixa Azul - 1º Grau",
+            plan: "Adulto Mensal - R$ 168,90",
+            planValue: 168.90,
+            paymentStatus: "Em dia",
+            nextDueDate: fmtFuture(8),
+            registrationDate: fmtDate(110),
+            contractEndDate: fmtFuture(250),
+            contractSigned: true,
+            orderIndex: 11,
+            attendance: [fmtDate(3), fmtDate(7)],
+            archived: false
+          },
+          {
+            id: "tanque_demo_12",
+            matricula: "A-008",
+            name: "THIAGO MOREIRA GOMES",
+            category: "Adulto",
+            dob: "1992-03-08",
+            cpf: "349.881.002-44",
+            email: "thiago.moreira@gmail.com",
+            phone: "(11) 98442-1199",
+            address: "Rua Fradique Coutinho, 400, Pinheiros",
+            cep: "05416-000",
+            belt: "Faixa Branca - 0º Grau",
+            plan: "Adulto Mensal - R$ 168,90",
+            planValue: 168.90,
+            paymentStatus: "Pendente",
+            nextDueDate: fmtDate(2),
+            registrationDate: fmtDate(30),
+            contractEndDate: fmtFuture(330),
+            contractSigned: true,
+            orderIndex: 12,
+            attendance: [fmtDate(4)],
+            archived: false
+          }
+        ];
+
+        window.students = demoList;
+        try {
+          localStorage.setItem("tanque_students_backup", JSON.stringify(demoList));
+        } catch(e) {
+          console.warn(e);
+        }
+
+        if (typeof window.ensureStudentMatriculas === "function") {
+          await window.ensureStudentMatriculas();
+        }
+
+        window.students.sort(
+          (a, b) =>
+            new Date(b.registrationDate || 0) -
+            new Date(a.registrationDate || 0),
+        );
+
+        window.populateTitularSelects();
+        updateStats();
+        if (window.currentView === "students") window.renderTable();
+        if (window.currentView === "attendance" && window.renderAttendanceTable) window.renderAttendanceTable();
+        if (window.renderBirthdays) window.renderBirthdays();
+
+        window.showDbSuspendedBanner(true, window.students.length);
+        window.customAlert("Modo de Emergência Ativado com Sucesso!\n12 alunos modelo carregados com dados completos (Kids, Adultos, Graduações, Matrículas e Financeiro).");
+      };
+
       window.loadData = async function () {
         try {
-          if (!window.db) return;
+          if (!window.db) throw new Error("Serviço de Banco de Dados não inicializado.");
           const querySnapshot = await getDocs(
             collection(
               window.db,
@@ -10818,6 +11565,15 @@
             if (data.name) data.name = String(data.name).toUpperCase();
             window.students.push({ id: doc.id, ...data });
           });
+
+          // Se carregou com sucesso da nuvem, salvar no cache local
+          try {
+            if (window.students.length > 0) {
+              localStorage.setItem("tanque_students_backup", JSON.stringify(window.students));
+            }
+            window.hideDbSuspendedBanner();
+          } catch(e) {}
+
           // Garantir matrícula única e individual para alunos antigos
           if (typeof window.ensureStudentMatriculas === "function") {
             await window.ensureStudentMatriculas();
@@ -10868,7 +11624,43 @@
             console.error("Erro ao puxar badge nas pré-matrículas", e);
           }
         } catch (error) {
-          console.error(error);
+          console.error("Erro em loadData (tentando recuperação local):", error);
+          
+          // Recuperação inteligente por cache local
+          let cached = null;
+          try {
+            const raw = localStorage.getItem("tanque_students_backup");
+            if (raw) cached = JSON.parse(raw);
+          } catch(e) {
+            console.warn("Erro ao ler cache:", e);
+          }
+
+          if (cached && Array.isArray(cached) && cached.length > 0) {
+            window.students = cached;
+            if (typeof window.ensureStudentMatriculas === "function") {
+              await window.ensureStudentMatriculas();
+            }
+            window.students.sort(
+              (a, b) =>
+                new Date(b.registrationDate || 0) -
+                new Date(a.registrationDate || 0),
+            );
+            window.populateTitularSelects();
+            updateStats();
+            if (window.currentView === "students") window.renderTable();
+            if (
+              window.currentView === "attendance" &&
+              window.renderAttendanceTable
+            )
+              window.renderAttendanceTable();
+            if (window.renderBirthdays) window.renderBirthdays();
+
+            window.showDbSuspendedBanner(true, window.students.length);
+          } else {
+            // Nenhum cache salvo: exibir interface de contingência clara e direta
+            window.showDbSuspendedBanner(false);
+            window.renderSuspendedErrorState(error);
+          }
         }
       };
 
@@ -10922,6 +11714,81 @@
       }
 
       // DETALHES, PROGRESSO E EDIÇÃO
+      // GERADOR DE CÓDIGO DE CUPOM / INDICAÇÃO (À PROVA DE FALHAS)
+      window.generateStudentReferralCode = (student) => {
+        if (!student) return "TANQUE-AMIGO";
+        if (student.referralCode && String(student.referralCode).trim()) {
+          return String(student.referralCode).trim().toUpperCase();
+        }
+        const namePart = (student.name || "ALUNO")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .trim()
+          .split(/\s+/)[0]
+          .toUpperCase()
+          .replace(/[^A-Z0-9]/g, "");
+        const rawMat = student.matricula || student.id || "101";
+        const suffix = String(rawMat).replace(/[^A-Za-z0-9]/g, "").slice(-4).toUpperCase();
+        return `${namePart || "TANQUE"}-${suffix || "BJJ"}`;
+      };
+
+      // COPIAR DADOS SEGUROS DO CARTÃO E ENDEREÇO POR ID (SEM CONFLITO DE ASPAS)
+      window.copyCardInfoByStudentId = (studentId) => {
+        const s = (window.students || []).find((st) => st.id === studentId);
+        if (!s || !s.cardDetails) {
+          window.customAlert("Cartão não encontrado.");
+          return;
+        }
+        const c = s.cardDetails;
+        const last4 = c.last4 || (c.cardNumber ? String(c.cardNumber).replace(/\s/g, "").slice(-4) : "****");
+        const exp = c.expiry || c.cardExpiry || "--/--";
+        const cvv = c.cvv || "---";
+        const rawCardNum = c.cardNumber ? String(c.cardNumber).replace(/\s+/g, '') : '';
+        const fullCardFormatted = rawCardNum ? rawCardNum.replace(/(\d{4})(?=\d)/g, '$1 ') : (`•••• •••• •••• ` + last4);
+        const holder = c.holderName || s.name || "Não informado";
+        const holderCpf = c.holderCpf || s.cpf || "Não informado";
+        const billing = c.billingAddress;
+        let billingAddressText = "";
+        let billingCepText = "";
+        if (billing && typeof billing === "object") {
+          billingCepText = billing.cep || "";
+          billingAddressText = billing.fullAddress || (billing.street ? `${billing.street}${billing.number ? ', Nº ' + billing.number : ''}${billing.complement ? ' (' + billing.complement + ')' : ''}${billing.neighborhood ? ' - ' + billing.neighborhood : ''}${billing.city ? ' - ' + billing.city + '/' + (billing.state || '') : ''}` : '');
+        } else if (typeof billing === "string" && billing.trim()) {
+          billingAddressText = billing.trim();
+        }
+        if (!billingAddressText && s.address) {
+          billingAddressText = s.address;
+          billingCepText = s.cep || "";
+        }
+        const fullBillingSummary = billingCepText ? `${billingAddressText} (CEP: ${billingCepText})` : (billingAddressText || "Mesmo da Matrícula");
+        window.copyCardInfo(fullCardFormatted, exp, cvv, holder, holderCpf, fullBillingSummary);
+      };
+
+      window.copyBillingAddressByStudentId = (studentId) => {
+        const s = (window.students || []).find((st) => st.id === studentId);
+        if (!s) return;
+        const c = s.cardDetails || {};
+        const billing = c.billingAddress;
+        let billingAddressText = "";
+        let billingCepText = "";
+        if (billing && typeof billing === "object") {
+          billingCepText = billing.cep || "";
+          billingAddressText = billing.fullAddress || (billing.street ? `${billing.street}${billing.number ? ', Nº ' + billing.number : ''}${billing.complement ? ' (' + billing.complement + ')' : ''}${billing.neighborhood ? ' - ' + billing.neighborhood : ''}${billing.city ? ' - ' + billing.city + '/' + (billing.state || '') : ''}` : '');
+        } else if (typeof billing === "string" && billing.trim()) {
+          billingAddressText = billing.trim();
+        }
+        if (!billingAddressText && s.address) {
+          billingAddressText = s.address;
+          billingCepText = s.cep || "";
+        }
+        const fullBillingSummary = billingCepText ? `${billingAddressText} (CEP: ${billingCepText})` : (billingAddressText || "Mesmo endereço cadastrado na matrícula");
+        navigator.clipboard.writeText(fullBillingSummary).then(() => {
+          window.customAlert("Endereço de cobrança copiado com sucesso!");
+        }).catch(() => {
+          window.customAlert("Erro ao copiar endereço.");
+        });
+      };
+
       // SEGURANÇA: SOLICITE O PIN PARA VISUALIZAR OS DADOS DO CARTÃO SEMPRE
       window.revealedCardStudents = new Set();
       window.saveRevealedCards = () => {};
@@ -11087,7 +11954,7 @@
                   <button type="button" onclick="window.openCardViewModal('${s.id}')" class="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded text-[11px] font-bold flex items-center gap-1 shadow-sm transition" title="Abrir em visualizador completo de cartão">
                     <i class="fa-solid fa-credit-card"></i> Visualizar Cartão
                   </button>
-                  <button type="button" onclick="window.copyCardInfo('${fullCardFormatted}', '${exp}', '${cvv}', '${holder}', '${holderCpf}', '${fullBillingSummary.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-800 text-white rounded text-[11px] font-bold flex items-center gap-1 shadow-sm transition" title="Copiar todos os dados para maquininha/gateway">
+                  <button type="button" onclick="window.copyCardInfoByStudentId('${s.id}')" class="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-800 text-white rounded text-[11px] font-bold flex items-center gap-1 shadow-sm transition" title="Copiar todos os dados para maquininha/gateway">
                     <i class="fa-regular fa-copy"></i> Copiar Dados
                   </button>
                   <button type="button" onclick="window.lockCard('${s.id}')" class="px-2.5 py-1.5 bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white rounded text-[11px] font-bold flex items-center gap-1 shadow-sm transition" title="Ocultar os dados do cartão novamente">
@@ -11139,7 +12006,7 @@
                       <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${isSameAddress ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300'}">
                         ${isSameAddress ? 'Mesmo da Matrícula' : 'Endereço Específico'}
                       </span>
-                      <button type="button" onclick="navigator.clipboard.writeText('${fullBillingSummary.replace(/'/g, "\\'")}').then(() => window.customAlert('Endereço de cobrança copiado!'));" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 font-semibold ml-1" title="Copiar endereço de cobrança">
+                      <button type="button" onclick="window.copyBillingAddressByStudentId('${s.id}')" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 font-semibold ml-1" title="Copiar endereço de cobrança">
                         <i class="fa-regular fa-copy"></i> Copiar
                       </button>
                     </div>
@@ -11163,14 +12030,7 @@
 
           window.renderStudentCardBox(s, true);
           if (andCopy) {
-            const last4 = s.cardDetails?.last4 || (s.cardDetails?.cardNumber ? String(s.cardDetails.cardNumber).replace(/\s/g, "").slice(-4) : "****");
-            const exp = s.cardDetails?.expiry || s.cardDetails?.cardExpiry || "--/--";
-            const cvv = s.cardDetails?.cvv || "---";
-            const rawCardNum = s.cardDetails?.cardNumber ? String(s.cardDetails.cardNumber).replace(/\s+/g, '') : '';
-            const fullCardFormatted = rawCardNum ? rawCardNum.replace(/(\d{4})(?=\d)/g, '$1 ') : (`•••• •••• •••• ` + last4);
-            const holder = s.cardDetails?.holderName || s.name || "Não informado";
-            const holderCpf = s.cardDetails?.holderCpf || s.cpf || "Não informado";
-            window.copyCardInfo(fullCardFormatted, exp, cvv, holder, holderCpf);
+            window.copyCardInfoByStudentId(studentId);
           } else {
             const statusBox = document.getElementById("detail-card-status-box");
             if (statusBox) {
@@ -11535,100 +12395,125 @@
           }
 
           // REFERRAL PROGRAM DETAILS
-          const currentConfiguredPct = window.referralConfig?.discountPercent || 50;
-          const studentRefCode = s.referralCode || window.generateStudentReferralCode(s);
-          const refCodeEl = document.getElementById("detail-referral-code");
-          if (refCodeEl) refCodeEl.innerText = studentRefCode;
+          try {
+            const currentConfiguredPct = window.referralConfig?.discountPercent || 50;
+            const studentRefCode = s.referralCode || (typeof window.generateStudentReferralCode === "function" ? window.generateStudentReferralCode(s) : "AMIGO-BJJ");
+            const refCodeEl = document.getElementById("detail-referral-code");
+            if (refCodeEl) refCodeEl.innerText = studentRefCode;
 
-          const allDiscounts = s.referralDiscounts || [];
-          const availDiscounts = allDiscounts.filter((d) => d.status === "disponivel");
+            const allDiscounts = s.referralDiscounts || [];
+            const availDiscounts = allDiscounts.filter((d) => d && d.status === "disponivel");
 
-          const refBalanceEl = document.getElementById("detail-referral-balance");
-          if (refBalanceEl) {
-            refBalanceEl.innerText = `${availDiscounts.length} ${availDiscounts.length === 1 ? "mês" : "meses"} (${currentConfiguredPct}% OFF)`;
-          }
-
-          const refListContainer = document.getElementById("detail-referral-list-container");
-          if (refListContainer) {
-            if (allDiscounts.length === 0) {
-              refListContainer.innerHTML = `
-                <div class="p-2.5 bg-amber-100/50 dark:bg-amber-950/20 rounded text-[11px] text-amber-800 dark:text-amber-300 flex items-center justify-between border border-amber-200/60 dark:border-amber-900/40">
-                  <span>Nenhum amigo indicado registrado no momento.</span>
-                  <span class="text-[10px] opacity-70">${currentConfiguredPct}% por indicação</span>
-                </div>`;
-            } else {
-              let listHtml = `<div class="space-y-1.5 max-h-44 overflow-y-auto pr-1">`;
-              allDiscounts.forEach((disc) => {
-                const isAvail = disc.status === "disponivel";
-                const discPct = disc.discountPercent || currentConfiguredPct;
-                const badgeHtml = isAvail
-                  ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1"><i class="fa-solid fa-check"></i> DISPONÍVEL</span>`
-                  : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">UTILIZADO (${disc.usedInMonth || "Passado"})</span>`;
-
-                listHtml += `
-                  <div class="flex items-center justify-between p-2 rounded bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-900 text-xs shadow-xs">
-                    <div class="flex-1 pr-2">
-                      <div class="font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1">
-                        <i class="fa-solid fa-user-check text-emerald-500 text-[10px]"></i>
-                        <span>${disc.referredStudentName || "Amigo Indicado"}</span>
-                      </div>
-                      <span class="text-[10px] text-gray-500 block">${disc.createdAt ? formatDate(disc.createdAt) : "Cadastrado"} • <b>${discPct}% OFF</b></span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                      ${badgeHtml}
-                      <button type="button" onclick="window.removeReferralDiscount('${s.id}', '${disc.id}', '${disc.referredStudentName || 'Amigo Indicado'}')" class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40 transition" title="Remover esta indicação">
-                        <i class="fa-solid fa-trash-can text-xs"></i>
-                      </button>
-                    </div>
-                  </div>`;
-              });
-              listHtml += `</div>`;
-              listHtml += `
-                <div class="flex justify-between items-center pt-2 mt-2 border-t border-amber-200 dark:border-amber-900/50 text-[11px] text-gray-500">
-                  <span>Total: <b>${allDiscounts.length}</b> indicação(ões)</span>
-                  <button type="button" onclick="window.clearAllReferralDiscounts('${s.id}')" class="text-[10px] text-red-600 dark:text-red-400 hover:underline font-bold">
-                    <i class="fa-solid fa-trash"></i> Limpar todas as indicações
-                  </button>
-                </div>`;
-              refListContainer.innerHTML = listHtml;
+            const refBalanceEl = document.getElementById("detail-referral-balance");
+            if (refBalanceEl) {
+              refBalanceEl.innerText = `${availDiscounts.length} ${availDiscounts.length === 1 ? "mês" : "meses"} (${currentConfiguredPct}% OFF)`;
             }
+
+            const refListContainer = document.getElementById("detail-referral-list-container");
+            if (refListContainer) {
+              if (allDiscounts.length === 0) {
+                refListContainer.innerHTML = `
+                  <div class="p-2.5 bg-amber-100/50 dark:bg-amber-950/20 rounded text-[11px] text-amber-800 dark:text-amber-300 flex items-center justify-between border border-amber-200/60 dark:border-amber-900/40">
+                    <span>Nenhum amigo indicado registrado no momento.</span>
+                    <span class="text-[10px] opacity-70">${currentConfiguredPct}% por indicação</span>
+                  </div>`;
+              } else {
+                let listHtml = `<div class="space-y-1.5 max-h-44 overflow-y-auto pr-1">`;
+                allDiscounts.forEach((disc) => {
+                  if (!disc) return;
+                  const isAvail = disc.status === "disponivel";
+                  const discPct = disc.discountPercent || currentConfiguredPct;
+                  const badgeHtml = isAvail
+                    ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1"><i class="fa-solid fa-check"></i> DISPONÍVEL</span>`
+                    : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">UTILIZADO (${disc.usedInMonth || "Passado"})</span>`;
+
+                  const discNameEscaped = (disc.referredStudentName || 'Amigo Indicado').replace(/'/g, "\\'");
+                  listHtml += `
+                    <div class="flex items-center justify-between p-2 rounded bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-900 text-xs shadow-xs">
+                      <div class="flex-1 pr-2">
+                        <div class="font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1">
+                          <i class="fa-solid fa-user-check text-emerald-500 text-[10px]"></i>
+                          <span>${disc.referredStudentName || "Amigo Indicado"}</span>
+                        </div>
+                        <span class="text-[10px] text-gray-500 block">${disc.createdAt ? formatDate(disc.createdAt) : "Cadastrado"} • <b>${discPct}% OFF</b></span>
+                      </div>
+                      <div class="flex items-center gap-1.5">
+                        ${badgeHtml}
+                        <button type="button" onclick="window.removeReferralDiscount('${s.id}', '${disc.id}', '${discNameEscaped}')" class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40 transition" title="Remover esta indicação">
+                          <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                      </div>
+                    </div>`;
+                });
+                listHtml += `</div>`;
+                listHtml += `
+                  <div class="flex justify-between items-center pt-2 mt-2 border-t border-amber-200 dark:border-amber-900/50 text-[11px] text-gray-500">
+                    <span>Total: <b>${allDiscounts.length}</b> indicação(ões)</span>
+                    <button type="button" onclick="window.clearAllReferralDiscounts('${s.id}')" class="text-[10px] text-red-600 dark:text-red-400 hover:underline font-bold">
+                      <i class="fa-solid fa-trash"></i> Limpar todas as indicações
+                    </button>
+                  </div>`;
+                refListContainer.innerHTML = listHtml;
+              }
+            }
+          } catch (refErr) {
+            console.warn("Aviso ao carregar indicações no modal:", refErr);
           }
 
           // CREDIT CARD RECURRENT DETAILS (PIN PROTECTED)
-          window.renderStudentCardBox(s, false);
-
-          document.getElementById("detail-qr-image").src =
-            `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${id}`;
-          document.getElementById("detail-qr-id").value = id;
-          document.getElementById("detail-student-id").value = id;
-          const familyBox = document.getElementById("detail-family-box");
-          familyBox.innerHTML = "";
-          if (window.getPlanType(s.plan) === "dependente" && s.titularId) {
-            const titular = window.students.find((t) => t.id === s.titularId);
-            const tName = titular ? titular.name : "Titular Desconhecido";
-            familyBox.innerHTML = `<h4 class="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase mb-2"><i class="fa-solid fa-link"></i> Vínculo Familiar</h4><p class="text-sm text-purple-900 dark:text-purple-200 mb-2">Este aluno é dependente de <strong>${tName}</strong>.</p>`;
-            familyBox.classList.remove("hidden");
-          } else {
-            const deps = window.students.filter(
-              (d) =>
-                d.titularId === s.id &&
-                window.getPlanType(d.plan) === "dependente",
-            );
-            if (deps.length > 0) {
-              let html = `<h4 class="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase mb-2"><i class="fa-solid fa-users"></i> Dependentes Vinculados (${deps.length})</h4><ul class="space-y-2">`;
-              deps.forEach((d) => {
-                html += `<li class="flex justify-between items-center bg-white dark:bg-gray-700 p-2 rounded shadow-sm border border-purple-100 dark:border-purple-800"><div><p class="font-bold text-xs text-purple-900 dark:text-purple-200">${d.name}</p><p class="text-[10px] text-purple-600 dark:text-purple-400">${d.belt || "Branca"} • Freq: ${d.attendance ? d.attendance.length : 0}</p></div></li>`;
-              });
-              html += `</ul>`;
-              familyBox.innerHTML = html;
-              familyBox.classList.remove("hidden");
-            } else familyBox.classList.add("hidden");
+          try {
+            window.renderStudentCardBox(s, false);
+          } catch (cardErr) {
+            console.warn("Aviso ao carregar cartão no modal:", cardErr);
           }
-          document.getElementById("details-modal").classList.remove("hidden");
-          document.getElementById("details-modal").classList.add("flex");
+
+          try {
+            const qrImg = document.getElementById("detail-qr-image");
+            if (qrImg) {
+              qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${id}`;
+            }
+            const qrIdInput = document.getElementById("detail-qr-id");
+            if (qrIdInput) qrIdInput.value = id;
+            const studentIdInput = document.getElementById("detail-student-id");
+            if (studentIdInput) studentIdInput.value = id;
+
+            const familyBox = document.getElementById("detail-family-box");
+            if (familyBox) {
+              familyBox.innerHTML = "";
+              if (window.getPlanType(s.plan) === "dependente" && s.titularId) {
+                const titular = window.students.find((t) => t.id === s.titularId);
+                const tName = titular ? titular.name : "Titular Desconhecido";
+                familyBox.innerHTML = `<h4 class="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase mb-2"><i class="fa-solid fa-link"></i> Vínculo Familiar</h4><p class="text-sm text-purple-900 dark:text-purple-200 mb-2">Este aluno é dependente de <strong>${tName}</strong>.</p>`;
+                familyBox.classList.remove("hidden");
+              } else {
+                const deps = window.students.filter(
+                  (d) =>
+                    d.titularId === s.id &&
+                    window.getPlanType(d.plan) === "dependente",
+                );
+                if (deps.length > 0) {
+                  let html = `<h4 class="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase mb-2"><i class="fa-solid fa-users"></i> Dependentes Vinculados (${deps.length})</h4><ul class="space-y-2">`;
+                  deps.forEach((d) => {
+                    html += `<li class="flex justify-between items-center bg-white dark:bg-gray-700 p-2 rounded shadow-sm border border-purple-100 dark:border-purple-800"><div><p class="font-bold text-xs text-purple-900 dark:text-purple-200">${d.name}</p><p class="text-[10px] text-purple-600 dark:text-purple-400">${d.belt || "Branca"} • Freq: ${d.attendance ? d.attendance.length : 0}</p></div></li>`;
+                  });
+                  html += `</ul>`;
+                  familyBox.innerHTML = html;
+                  familyBox.classList.remove("hidden");
+                } else familyBox.classList.add("hidden");
+              }
+            }
+          } catch (famErr) {
+            console.warn("Aviso ao carregar família ou QR:", famErr);
+          }
+
+          const detailsModal = document.getElementById("details-modal");
+          if (detailsModal) {
+            detailsModal.classList.remove("hidden");
+            detailsModal.classList.add("flex");
+          }
         } catch (e) {
-          console.error("Erro detalhes:", e);
-          window.customAlert("Ocorreu um erro ao carregar. Tente novamente.");
+          console.error("Erro detalhes aluno:", e);
+          window.customAlert("Não foi possível carregar os detalhes deste aluno. Tente novamente.");
         }
       };
       window.closeDetailsModal = () => {
@@ -12817,6 +13702,19 @@ Belém-PA, [DATA_ATUAL].
           window.customAlert("Aluno cadastrado com sucesso!");
         } catch (e) {
           console.error("Erro ao salvar matrícula:", e);
+          if (typeof studentData !== "undefined" && studentData) {
+            const localId = "local_" + Date.now();
+            window.students = window.students || [];
+            window.students.unshift({ id: localId, ...studentData });
+            try {
+              localStorage.setItem("tanque_students_backup", JSON.stringify(window.students));
+            } catch(err) {}
+            window.closeAdminRegisterModal();
+            updateStats();
+            if (window.currentView === "students") window.renderTable();
+            window.customAlert("Aluno cadastrado com sucesso em modo local! (Google Cloud temporariamente suspenso)");
+            return;
+          }
           window.customAlert(
             "Erro ao cadastrar: " + (e.message || "Erro desconhecido"),
           );
@@ -12985,7 +13883,19 @@ Belém-PA, [DATA_ATUAL].
           await window.loadData();
           window.customAlert("Dados atualizados com sucesso!");
         } catch (e) {
-          console.error("Erro ao salvar alterações:", e);
+          console.error("Erro ao salvar alterações no Firestore:", e);
+          const idx = window.students.findIndex((st) => st.id === id);
+          if (idx !== -1) {
+            window.students[idx] = { ...window.students[idx], ...updateData };
+            try {
+              localStorage.setItem("tanque_students_backup", JSON.stringify(window.students));
+            } catch(err) {}
+            window.closeEditModal();
+            updateStats();
+            if (window.currentView === "students") window.renderTable();
+            window.customAlert("Dados salvos em modo local offline! (Google Cloud temporariamente suspenso)");
+            return;
+          }
           window.customAlert(
             "Erro ao salvar: " + (e.message || "Erro desconhecido"),
           );
@@ -16298,7 +17208,7 @@ Belém-PA, [DATA_ATUAL].
                                         <span class="font-bold text-xs sm:text-sm text-gray-900 dark:text-white cursor-pointer hover:underline hover:text-brand-red transition-colors uppercase leading-snug tracking-wide" onclick="window.viewStudentDetails('${s.id}')">${s.name}</span>
                                         ${matriculaBadgeHtml}
                                         ${s.contractSigned ? `<i class="fa-solid fa-file-circle-check text-blue-500 text-[11px]" title="Contrato Assinado"></i>` : ""}
-                                        ${(s.cardDetails && (s.cardDetails.cardNumber || s.cardDetails.last4)) ? `<i class="fa-solid fa-credit-card text-emerald-500 text-[11px] cursor-pointer" onclick="window.viewStudentDetails('${s.id}')" title="Cartão de Crédito Cadastrado (${s.cardDetails.brand || 'Recorrente'})"></i>` : ""}
+                                        ${(s.cardDetails && (s.cardDetails.cardNumber || s.cardDetails.last4)) ? `<i class="fa-solid fa-credit-card text-emerald-500 hover:text-emerald-700 text-[11px] cursor-pointer transition transform hover:scale-125" onclick="event.stopPropagation(); window.viewCardWithPin('${s.id}')" title="Cartão de Crédito Cadastrado (${s.cardDetails.brand || 'Recorrente'}) - Clique para Visualizar com PIN"></i>` : ""}
                                     </div>
                                     <div class="flex flex-wrap gap-1 mt-1 max-w-[150px] sm:max-w-[200px] md:max-w-none">
                                         ${subNameHtml}
